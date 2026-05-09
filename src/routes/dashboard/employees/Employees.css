@@ -1,0 +1,148 @@
+.employees-container {
+  background-color: #F8F9FB;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.employees-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.employees-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 0;
+}
+
+.search-and-filters {
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.search-bar {
+  width: 100%;
+  max-width: 400px;
+}
+
+.filter-chips-container {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 14px;
+  border: 2px solid transparent;
+}
+
+.filter-chip.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.filter-chip:not(.active) {
+  background-color: white;
+  color: #6B7280;
+  border-color: #E5E7EB;
+}
+
+.filter-chip:hover:not(.active) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.employee-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+.profile-chip-garcom {
+  background-color: #34A853 !important;
+  color: white !important;
+}
+
+.profile-chip-cozinha {
+  background-color: #FB8C00 !important;
+  color: white !important;
+}
+
+.profile-chip-caixa {
+  background-color: #1E88E5 !important;
+  color: white !important;
+}
+
+.employee-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 20px;
+  color: white;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7B2CBF 100%);
+}
+
+.employee-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 4px;
+}
+
+.employee-info {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 2px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .employees-container {
+    padding: 16px;
+  }
+  
+  .employees-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .employees-title {
+    font-size: 24px;
+  }
+}
+

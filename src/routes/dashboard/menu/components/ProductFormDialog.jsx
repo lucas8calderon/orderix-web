@@ -1,0 +1,404 @@
+import React, { useState, useEffect, useContext, forwardRef } from "react";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  Slide,
+  Typography,
+  TextField,
+  Avatar,
+  Grid,
+  Divider,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
+  Alert,
+  Box,
+} from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { styled } from "@mui/material/styles";
+import { CategoryContext } from "../category/providers/CategoryContext";
+import { ProductContext } from "../product/providers/ProductContext";
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  width: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+});
+
+const Transition = forwardRef((props, ref) => (
+  <Slide direction="up" ref={ref} {...props} />
+));
+
+export function ProductFormDialog({
+  open,
+  onClose,
+  currentCategory,
+  onSaveCategory,
+  onSaveProduct,
+}) {
+  const { blockCategoriesFields, onAddCategoryResult } =
+    useContext(CategoryContext);
+  const { blockProductsFields, onAddProductResult } =
+    useContext(ProductContext);
+
+  const [category, setCategory] = useState({
+    name: "",
+    backgroundColor: "",
+    image: "",
+  });
+  const [productName, setProductName] = useState("");
+  const [productPortion, setProductPortion] = useState("");
+  const [productDescription, setProductDescription] = useState("");
+  const [productValue, setProductValue] = useState("");
+  const [productAvailable, setProductAvailable] = useState(true);
+  const [imageUpload, setImageUpload] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+
+  const isValid =
+    !blockProductsFields && productName.trim() && productValue.trim();
+
+  const handleProductSave = () => {
+    onSaveProduct({
+      name: productName,
+      portion: productPortion,
+      description: productDescription,
+      categoryId: currentCategory.id,
+      isAvailable: productAvailable,
+      value: productValue,
+      image: imageUpload,
+    });
+  };
+
+  useEffect(() => {
+    if (Object.keys(onAddProductResult).length) {
+      setShowAlert(true);
+      const timeout = setTimeout(() => setShowAlert(false), 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [onAddProductResult, onAddCategoryResult]);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result); // Base64 para preview
+      setImageUpload(reader.result); // para envio à API (se aceitasse)
+      setCategory({ ...category, image: reader.result });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageUrl = (url) => {
+    setImagePreview(url);
+    setImageUpload(url); // se a API aceita URL
+    setCategory({ ...category, image: url });
+  };
+
+  useEffect(() => {
+  if (onAddProductResult?.severity === "success") {
+    // limpa os campos após salvar com sucesso
+    setProductName("");
+    setProductPortion("");
+    setProductDescription("");
+    setProductValue("");
+    setProductAvailable(true);
+    setImageUpload("");
+    setImagePreview("");
+  }
+}, [onAddProductResult]);
+
+  return (
+    <Dialog
+      open={open}
+      TransitionComponent={Transition}
+      keepMounted
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+        }
+      }}
+    >
+      <DialogContent sx={{ padding: '32px' }}>
+        {/* Produto */}
+        <Box>
+          {showAlert && onAddProductResult?.message && (
+            <Alert 
+              sx={{ 
+                mb: 3, 
+                borderRadius: '12px',
+                '& .MuiAlert-message': {
+                  fontWeight: 500
+                }
+              }} 
+              severity={onAddProductResult.severity}
+            >
+              {onAddProductResult.message}
+            </Alert>
+          )}
+
+          <Typography variant="h5" sx={{ 
+            mb: 3, 
+            fontWeight: 600, 
+            color: '#333'
+          }}>
+            Novo Produto
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3 }}>
+            <Avatar 
+              sx={{ 
+                bgcolor: '#7b2cbf', 
+                width: 48, 
+                height: 48,
+                fontSize: '1.2rem',
+                fontWeight: 600
+              }} 
+              variant="square"
+            >
+              {productName.charAt(0).toUpperCase() || 'N'}
+            </Avatar>
+            
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <TextField
+                  disabled={blockProductsFields}
+                  fullWidth
+                  label="Nome do produto"
+                  inputProps={{ maxLength: 50 }}
+                  value={productName}
+                  onChange={(e) => setProductName(e.target.value)}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#7b2cbf',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7b2cbf',
+                    }
+                  }}
+                />
+                <TextField
+                  disabled={blockProductsFields}
+                  label="Porção"
+                  inputProps={{ maxLength: 25 }}
+                  value={productPortion}
+                  onChange={(e) => setProductPortion(e.target.value)}
+                  variant="outlined"
+                  sx={{
+                    width: 200,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#7b2cbf',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7b2cbf',
+                    }
+                  }}
+                />
+              </Box>
+              
+              <TextField
+                disabled={blockProductsFields}
+                fullWidth
+                label="Descrição"
+                inputProps={{ maxLength: 120 }}
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                variant="outlined"
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                  },
+                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#7b2cbf',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#7b2cbf',
+                  }
+                }}
+              />
+              
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <TextField
+                  disabled={blockProductsFields}
+                  label="Valor"
+                  inputProps={{ maxLength: 6 }}
+                  value={productValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value))
+                      setProductValue(value);
+                  }}
+                  variant="outlined"
+                  sx={{
+                    width: 200,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#7b2cbf',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7b2cbf',
+                    }
+                  }}
+                />
+
+                <FormControl 
+                  sx={{ 
+                    width: 200,
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#7b2cbf',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7b2cbf',
+                    }
+                  }} 
+                  variant="outlined"
+                >
+                  <InputLabel>Disponível?</InputLabel>
+                  <Select
+                    value={productAvailable}
+                    disabled={blockProductsFields}
+                    onChange={(e) => setProductAvailable(e.target.value)}
+                    label="Disponível?"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                      }
+                    }}
+                  >
+                    <MenuItem value={true}>Sim</MenuItem>
+                    <MenuItem value={false}>Não</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Upload ou URL */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Button
+                  component="label"
+                  variant="outlined"
+                  startIcon={<CloudUploadIcon />}
+                  sx={{
+                    borderRadius: '8px',
+                    borderColor: '#7b2cbf',
+                    color: '#7b2cbf',
+                    '&:hover': {
+                      borderColor: '#6a1b9a',
+                      backgroundColor: 'rgba(123, 44, 191, 0.04)',
+                    }
+                  }}
+                >
+                  Upload
+                  <VisuallyHiddenInput
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                </Button>
+                <TextField
+                  label="Ou URL da imagem"
+                  variant="outlined"
+                  size="small"
+                  value={imageUpload.startsWith('http') ? imageUpload : ''}
+                  onChange={(e) => handleImageUrl(e.target.value)}
+                  sx={{ 
+                    flexGrow: 1,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '8px',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#7b2cbf',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7b2cbf',
+                    }
+                  }}
+                />
+              </Box>
+
+              {/* Preview */}
+              {imagePreview && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                    Preview da imagem:
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={imagePreview}
+                    alt="Preview"
+                    sx={{
+                      width: 150,
+                      height: 100,
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '2px solid #e0e0e0'
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button 
+              onClick={onClose}
+              variant="outlined"
+              sx={{
+                borderRadius: '8px',
+                borderColor: '#e0e0e0',
+                color: '#666',
+                '&:hover': {
+                  borderColor: '#ccc',
+                  backgroundColor: '#f5f5f5',
+                }
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              disabled={!isValid}
+              onClick={handleProductSave}
+              variant="contained"
+              sx={{
+                borderRadius: '8px',
+                backgroundColor: '#7b2cbf',
+                '&:hover': {
+                  backgroundColor: '#6a1b9a',
+                },
+                '&:disabled': {
+                  backgroundColor: '#e0e0e0',
+                  color: '#999',
+                }
+              }}
+            >
+              Salvar produto
+            </Button>
+          </Box>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,0 +1,372 @@
+/* Kitchen Component Styles */
+.kitchen-container {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  min-height: 100vh;
+}
+
+/* Filter Section */
+.filter-section {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  border: 1px solid #e9ecef;
+}
+
+/* Floating Refresh Button */
+.floating-refresh-btn {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 1000 !important;
+  background-color: #7b2cbf !important;
+  box-shadow: 0 4px 20px rgba(123, 44, 191, 0.3) !important;
+}
+
+.floating-refresh-btn:hover {
+  background-color: #6a2599 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 25px rgba(123, 44, 191, 0.4) !important;
+}
+
+.floating-refresh-btn:disabled {
+  background-color: #a0a0a0 !important;
+  color: #ffffff !important;
+}
+
+.kanban-board {
+  margin-top: 24px;
+}
+
+.orders-container {
+  max-height: 650px;
+  overflow-y: auto;
+  padding-right: 8px;
+  transition: all 0.3s ease;
+}
+
+.orders-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orders-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.orders-container::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 3px;
+}
+
+.orders-container::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+/* Modal de Detalhes */
+.order-detail-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.order-detail-modal .MuiCard-root {
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Card animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .kitchen-container {
+    padding: 16px;
+  }
+  
+  .kitchen-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .kanban-board .MuiGrid-item {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kitchen-header {
+    padding: 16px;
+  }
+  
+  .kitchen-header h4 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Drag and drop styles */
+.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.drop-zone {
+  border: 2px dashed #7B3FF2;
+  background-color: rgba(123, 63, 242, 0.05);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.drop-zone.drag-over {
+  background-color: rgba(123, 63, 242, 0.1);
+  border-color: #7B3FF2;
+}
+
+/* Loading states */
+.refreshing {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty state */
+.empty-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #6c757d;
+  text-align: center;
+}
+
+.empty-column .MuiSvgIcon-root {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Hover effects */
+.MuiCard-root:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.MuiButton-root:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(123, 63, 242, 0.3);
+}
+
+/* Custom scrollbar for the entire page */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+/* Animações de Loading */
+.refreshing {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Melhorias visuais para cards */
+.MuiCard-root {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+/* Animações de slide para drag and drop */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Estilos para drop zones */
+.drop-zone {
+  border: 2px dashed #7B3FF2;
+  background-color: rgba(123, 63, 242, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.drop-zone::before {
+  content: 'Solte aqui';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #7B3FF2;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.drop-zone.drag-over {
+  background-color: rgba(123, 63, 242, 0.1);
+  border-color: #7B3FF2;
+  transform: scale(1.02);
+}
+
+
+
+/* Toast personalizado */
+.MuiSnackbar-root {
+  z-index: 9999;
+}
+
+.MuiAlert-root {
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+/* Responsividade melhorada */
+@media (max-width: 768px) {
+  .kitchen-container {
+    padding: 16px;
+  }
+  
+  .floating-refresh-btn {
+    bottom: 20px !important;
+    right: 16px !important;
+    padding: 8px 16px !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .kanban-board .MuiGrid-item {
+    margin-bottom: 16px;
+  }
+  
+  .order-detail-modal {
+    padding: 10px;
+  }
+  
+  .order-detail-modal .MuiCard-root {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-refresh-btn {
+    bottom: 16px !important;
+    right: 12px !important;
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .orders-container {
+    max-height: 400px;
+  }
+}
+
+/* Animações de entrada para colunas */
+.kanban-column-enter {
+  animation: slideInFromBottom 0.5s ease-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Melhorias nos ícones */
+.MuiSvgIcon-root {
+  transition: all 0.3s ease;
+}
+
+.MuiIconButton-root:hover .MuiSvgIcon-root {
+  transform: scale(1.1);
+}
+
+/* Estilos para o logo */
+.kitchen-header img {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.kitchen-header img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}

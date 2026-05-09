@@ -1,0 +1,146 @@
+/* Category Styles */
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 0 16px 0;
+  border-bottom: 2px solid #f0f0f0;
+  min-height: 40px; /* Altura mínima para alinhamento */
+}
+
+.category-title {
+  font-weight: 600;
+  color: #7b2cbf;
+  font-size: 1.5rem;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.add-category-btn {
+  background-color: transparent !important;
+  color: #7b2cbf !important;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: 1px solid #7b2cbf !important;
+  transition: all 0.2s ease;
+  text-transform: none;
+  font-size: 0.875rem;
+  height: 36px; /* Altura fixa para alinhamento */
+  min-width: 140px; /* Largura mínima para consistência */
+}
+
+.add-category-btn:hover {
+  background-color: #7b2cbf !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(123, 44, 191, 0.3);
+}
+
+/* Category List */
+.category-list {
+  display: flex;
+  flex-direction: row;
+  gap: 20px; /* Aumentado espaçamento entre cards */
+}
+
+.category-item {
+  width: 100%;
+}
+
+.category-button {
+  width: 100%;
+  padding: 0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.category-button:hover {
+  background-color: transparent;
+  transform: none;
+}
+
+/* Category Card */
+.category-card {
+  width: 100%;
+  transition: all 0.2s ease-in-out;
+}
+
+.category-card.selected {
+  border: 2px solid #7b2cbf !important;
+  box-shadow: 0 8px 32px rgba(123, 44, 191, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+.category-card:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.category-card.selected:hover {
+  transform: scale(1.01) translateY(-1px);
+  box-shadow: 0 12px 40px rgba(123, 44, 191, 0.3) !important;
+}
+
+/* Category Actions */
+.category-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.action-btn {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn.edit-btn {
+  color: #7b2cbf;
+  background-color: #f3e8ff;
+}
+
+.action-btn.edit-btn:hover {
+  background-color: #7b2cbf;
+  color: white;
+  transform: scale(1.1);
+}
+
+.action-btn.delete-btn {
+  color: #f44336;
+  background-color: #fee2e2;
+}
+
+.action-btn.delete-btn:hover {
+  background-color: #f44336;
+  color: white;
+  transform: scale(1.1);
+}
+
+.action-btn .MuiSvgIcon-root {
+  font-size: 18px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .category-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .add-category-btn {
+    width: 100%;
+  }
+  
+  .category-list {
+    gap: 12px;
+  }
+}

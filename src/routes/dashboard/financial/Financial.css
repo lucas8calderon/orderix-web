@@ -1,0 +1,487 @@
+/* Financial Dashboard Styles */
+.financial-dashboard {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header */
+.financial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #7b2cbf 0%, #9c4dcc 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(123, 44, 191, 0.3);
+}
+
+.header-content {
+  flex: 1;
+}
+
+.header-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 2.5rem;
+}
+
+.header-subtitle {
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.period-filter {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.period-filter .MuiToggleButton-root {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+}
+
+.period-filter .MuiToggleButton-root.Mui-selected {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.refresh-btn {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.refresh-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.refresh-btn .rotating {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  margin-bottom: 32px;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.metric-icon {
+  color: #7b2cbf;
+  margin-right: 12px;
+  font-size: 28px;
+}
+
+.metric-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.metric-value {
+  font-weight: 700;
+  color: #2d2d2d;
+  margin-bottom: 8px;
+  font-size: 2.2rem;
+}
+
+.metric-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.comparison {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.trend-icon {
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.trend-icon.positive {
+  color: #4caf50;
+}
+
+.trend-icon.negative {
+  color: #f44336;
+}
+
+.comparison-text {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.comparison-text.positive {
+  color: #4caf50;
+}
+
+.comparison-text.negative {
+  color: #f44336;
+}
+
+.payment-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Section Cards */
+.section-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.section-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Operational Section */
+.operational-section {
+  margin-bottom: 32px;
+}
+
+.kanban-mini {
+  display: flex;
+  gap: 16px;
+  justify-content: space-around;
+  margin-top: 16px;
+}
+
+.kanban-column {
+  text-align: center;
+  flex: 1;
+}
+
+.kanban-label {
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.kanban-count {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 auto;
+}
+
+.kanban-count.production {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.kanban-count.ready {
+  background: linear-gradient(135deg, #4caf50, #388e3c);
+}
+
+.kanban-count.delivered {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+}
+
+.prep-time {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.time-value {
+  font-weight: 700;
+  color: #7b2cbf;
+  margin-bottom: 8px;
+  font-size: 3rem;
+}
+
+.time-subtitle {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Tables and Waiters */
+.tables-waiters-section {
+  margin-bottom: 32px;
+}
+
+.tables-status {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.tables-count {
+  font-weight: 700;
+  color: #7b2cbf;
+  margin-bottom: 8px;
+  font-size: 2.5rem;
+}
+
+.tables-subtitle {
+  color: #666;
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+
+.tables-progress {
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background-color: #e0e0e0;
+}
+
+.tables-progress .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, #7b2cbf, #9c4dcc);
+  border-radius: 4px;
+}
+
+.tables-percentage {
+  color: #666;
+  font-weight: 500;
+}
+
+.waiters-list {
+  padding: 0;
+}
+
+.waiter-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.waiter-item:last-child {
+  border-bottom: none;
+}
+
+.waiter-avatar {
+  background: linear-gradient(135deg, #7b2cbf, #9c4dcc);
+  color: white;
+  font-weight: 600;
+  width: 40px;
+  height: 40px;
+}
+
+.ranking-chip {
+  background: linear-gradient(135deg, #7b2cbf, #9c4dcc);
+  color: white;
+  font-weight: 600;
+}
+
+/* Charts Section */
+.charts-section {
+  margin-bottom: 32px;
+}
+
+.chart-container {
+  height: 300px;
+  margin-top: 16px;
+}
+
+.products-list {
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.product-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.product-item:last-child {
+  border-bottom: none;
+}
+
+.product-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.product-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.product-sales {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Hourly and Weekly Sections */
+.hourly-section,
+.weekly-section {
+  margin-bottom: 32px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .financial-dashboard {
+    padding: 16px;
+  }
+  
+  .financial-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .header-title {
+    font-size: 2rem;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .period-filter {
+    width: 100%;
+  }
+  
+  .kanban-mini {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .kanban-count {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .metric-value {
+    font-size: 1.8rem;
+  }
+  
+  .time-value {
+    font-size: 2.5rem;
+  }
+  
+  .tables-count {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .financial-dashboard {
+    padding: 12px;
+  }
+  
+  .financial-header {
+    padding: 16px;
+  }
+  
+  .header-title {
+    font-size: 1.8rem;
+  }
+  
+  .metric-card {
+    margin-bottom: 16px;
+  }
+  
+  .section-card {
+    margin-bottom: 16px;
+  }
+}
+
+/* Custom Scrollbar */
+.products-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.products-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.products-list::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 3px;
+}
+
+.products-list::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+/* Animation for cards */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metric-card,
+.section-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.metric-card:nth-child(1) { animation-delay: 0.1s; }
+.metric-card:nth-child(2) { animation-delay: 0.2s; }
+.metric-card:nth-child(3) { animation-delay: 0.3s; }
+.metric-card:nth-child(4) { animation-delay: 0.4s; }

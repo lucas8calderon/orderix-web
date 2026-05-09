@@ -1,0 +1,99 @@
+/* Menu Container Styles */
+.menu-container {
+  background-color: #fafafa;
+  min-height: 100vh;
+  padding: 32px 24px 24px 24px; /* Aumentado padding-top para evitar sobreposição */
+  font-family: 'Inter', 'Roboto', sans-serif;
+  margin-top: 80px; /* Espaço para evitar sobreposição com header fixo */
+}
+
+.menu-content {
+  max-width: 1400px;
+  padding: 0 16px; /* Padding interno nas bordas */
+}
+
+/* Header removed */
+
+/* Grid Layout */
+.menu-grid {
+  margin-top: 0; /* Removido margin-top já que não há header */
+  display: flex;
+  align-items: flex-start; /* Alinha o topo dos cards */
+  gap: 32px; /* Espaçamento horizontal consistente entre colunas */
+}
+
+.categories-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 28px; /* Aumentado padding interno */
+  height: fit-content;
+  position: sticky;
+  top: 24px; /* Ajustado para sem header */
+  flex: 0 0 300px; /* Largura fixa para categorias */
+  min-height: 400px; /* Altura mínima para alinhamento */
+}
+
+/* Divider removed */
+
+.products-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 28px; /* Aumentado padding interno */
+  min-height: 600px;
+  flex: 1; /* Ocupa o espaço restante */
+  min-height: 400px; /* Altura mínima para alinhamento */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .menu-container {
+    padding: 16px 8px;
+    margin-top: 60px; /* Ajustado para mobile */
+  }
+  
+  .menu-content {
+    padding: 0 8px;
+  }
+  
+  .menu-grid {
+    margin-top: 0;
+    flex-direction: column; /* Empilha verticalmente em mobile */
+    gap: 24px; /* Espaçamento vertical em mobile */
+  }
+  
+  .categories-section,
+  .products-section {
+    padding: 20px;
+    margin-bottom: 0; /* Remove margin-bottom já que temos gap */
+    flex: none; /* Remove flex em mobile */
+    min-height: auto; /* Remove altura mínima em mobile */
+  }
+  
+  .categories-section {
+    position: static;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-container {
+    padding: 12px 4px;
+    margin-top: 50px;
+  }
+  
+  .menu-content {
+    padding: 0 4px;
+  }
+  
+  /* Header removed */
+  
+  .categories-section,
+  .products-section {
+    padding: 16px;
+    flex: none; /* Remove flex em mobile pequeno */
+    min-height: auto; /* Remove altura mínima em mobile pequeno */
+  }
+}

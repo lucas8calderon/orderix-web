@@ -1,0 +1,233 @@
+/* ===== OTIMIZAÇÕES ADICIONAIS DE PERFORMANCE ===== */
+
+/* === LAZY LOADING E OTIMIZAÇÕES === */
+
+/* Otimizar repaints e reflows */
+.settings-container {
+  contain: layout style paint;
+}
+
+.settings-card {
+  contain: layout style;
+}
+
+/* Otimizar animações com GPU */
+.settings-card,
+.save-button,
+.upload-button {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* === MICROINTERAÇÕES SUAVES === */
+
+/* Transições otimizadas */
+.settings-card {
+  transition: 
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.save-button,
+.upload-button {
+  transition: 
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover states otimizados */
+.settings-card:hover {
+  transform: translateY(-2px) translateZ(0);
+}
+
+.save-button:hover,
+.upload-button:hover {
+  transform: translateY(-1px) translateZ(0);
+}
+
+/* === TIPOGRAFIA OTIMIZADA === */
+
+/* Font loading otimizado */
+.settings-title,
+.settings-subtitle,
+.card-title,
+.setting-label {
+  font-display: swap;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hierarquia visual melhorada para mobile */
+@media (max-width: 768px) {
+  .settings-title {
+    font-size: clamp(1.5rem, 5vw, 2rem) !important;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  
+  .card-title {
+    font-size: clamp(1rem, 3vw, 1.125rem) !important;
+    line-height: 1.2;
+  }
+  
+  .setting-label {
+    font-size: 0.875rem !important;
+    line-height: 1.3;
+  }
+}
+
+/* === OTIMIZAÇÕES DE LAYOUT === */
+
+/* CSS Grid otimizado */
+.settings-grid {
+  grid-auto-rows: min-content;
+  align-items: start;
+}
+
+/* Flexbox otimizado para cards */
+.settings-card .MuiCardContent-root {
+  min-height: 0;
+}
+
+/* === OTIMIZAÇÕES DE ACESSIBILIDADE === */
+
+/* Focus management */
+.settings-container:focus-within {
+  outline: none;
+}
+
+/* Screen reader optimizations */
+.settings-card[role="region"] {
+  aria-label: "Configurações";
+}
+
+/* === OTIMIZAÇÕES DE PERFORMANCE === */
+
+/* Reduce motion para usuários sensíveis */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Otimizar para dispositivos de baixa potência */
+@media (prefers-reduced-data: reduce) {
+  .settings-card {
+    box-shadow: none;
+    border: 1px solid var(--settings-border);
+  }
+  
+  .settings-card:hover {
+    transform: none;
+  }
+}
+
+/* === OTIMIZAÇÕES DE CARREGAMENTO === */
+
+/* Critical CSS inline */
+.settings-container {
+  /* Evitar layout shift */
+  min-height: calc(100vh - 64px);
+}
+
+/* === OTIMIZAÇÕES DE MEMÓRIA === */
+
+/* Limpar seletores complexos */
+.settings-card .MuiCardContent-root .card-header {
+  /* Evitar seletores profundos */
+}
+
+/* === OTIMIZAÇÕES DE RENDERIZAÇÃO === */
+
+/* Otimizar repaints */
+.slider-container {
+  will-change: auto;
+}
+
+.custom-slider {
+  will-change: auto;
+}
+
+/* === OTIMIZAÇÕES DE BUNDLE SIZE === */
+
+/* Usar variáveis CSS para reduzir duplicação */
+:root {
+  --settings-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --settings-transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --settings-transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === OTIMIZAÇÕES DE SEO === */
+
+/* Meta tags para performance */
+.settings-container {
+  /* Otimizar para Core Web Vitals */
+  contain: layout style paint;
+}
+
+/* === OTIMIZAÇÕES DE CACHE === */
+
+/* Otimizar para cache do navegador */
+.settings-card {
+  /* Evitar mudanças desnecessárias no DOM */
+  position: relative;
+}
+
+/* === OTIMIZAÇÕES DE INTERAÇÃO === */
+
+/* Melhorar feedback tátil */
+.save-button:active,
+.upload-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* === OTIMIZAÇÕES DE LAYOUT SHIFT === */
+
+/* Evitar CLS (Cumulative Layout Shift) */
+.settings-grid {
+  /* Garantir que o layout seja estável */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+}
+
+/* === OTIMIZAÇÕES DE PERFORMANCE MOBILE === */
+
+/* Otimizar para dispositivos móveis */
+@media (max-width: 768px) {
+  .settings-container {
+    /* Reduzir complexidade de layout em mobile */
+    contain: layout style;
+  }
+  
+  .settings-card {
+    /* Simplificar animações em mobile */
+    transition: box-shadow 0.15s ease;
+  }
+  
+  .settings-card:hover {
+    transform: none;
+  }
+}
+
+/* === OTIMIZAÇÕES DE PERFORMANCE TABLET === */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .settings-grid {
+    /* Layout otimizado para tablet */
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--settings-spacing-lg);
+  }
+}
+
+/* === OTIMIZAÇÕES DE PERFORMANCE DESKTOP === */
+
+@media (min-width: 1025px) {
+  .settings-grid {
+    /* Layout otimizado para desktop */
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
