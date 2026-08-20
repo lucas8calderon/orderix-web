@@ -5,15 +5,17 @@ const EMPLOYEES_URL = `${API_BASE_URL}/api/employees`;
 
 function roleToProfile(role) {
   if (role === 'WAITER') return 'GARCOM';
-  if (role === 'ADMIN' || role === 'STORE_ADMIN') return 'ADMIN';
+  if (role === 'ADMIN' || role === 'STORE_ADMIN') return 'STORE_ADMIN';
+  if (role === 'KITCHEN') return 'KITCHEN';
+  if (role === 'CASHIER') return 'CASHIER';
   return role || '';
 }
 
 function profileToRole(profile) {
   if (profile === 'GARCOM' || profile === 'WAITER') return 'WAITER';
-  if (profile === 'ADMIN' || profile === 'STORE_ADMIN' || profile === 'COZINHA' || profile === 'CAIXA') {
-    return 'ADMIN';
-  }
+  if (profile === 'ADMIN' || profile === 'STORE_ADMIN') return 'STORE_ADMIN';
+  if (profile === 'COZINHA' || profile === 'KITCHEN') return 'KITCHEN';
+  if (profile === 'CAIXA' || profile === 'CASHIER') return 'CASHIER';
   return profile;
 }
 

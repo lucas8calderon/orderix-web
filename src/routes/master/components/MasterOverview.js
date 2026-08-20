@@ -1,0 +1,482 @@
+import React from 'react';
+import {
+  Box,
+  Chip,
+  Grid,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+  Button,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
+import {
+  PLAN_LABELS,
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_STATUS_LABELS,
+  formatCurrency,
+  formatDate,
+} from '../../../services/accessControl';
+import { buildMonthlyRevenueSeries } from '../data/mockRevenueHistory';
+
+const PRIMARY = '#0A6847';
+const PRIMARY_SOFT = 'rgba(10, 104, 71, 0.10)';
+
+const STATUS_CHART_COLORS = {
+  ACTIVE: '#0A6847',
+  OVERDUE: '#E6A700',
+  BLOCKED: '#D32F2F',
+  PENDING: '#90A4AE',
+  CANCELED: '#78909C',
+};
+
+function statusColor(status) {
+  switch (status) {
+    case SUBSCRIPTION_STATUS.ACTIVE:
+      return 'success';
+    case SUBSCRIPTION_STATUS.PENDING:
+    case SUBSCRIPTION_STATUS.OVERDUE:
+      return 'warning';
+    case SUBSCRIPTION_STATUS.BLOCKED:
+    case SUBSCRIPTION_STATUS.CANCELED:
+      return 'error';
+    default:
+      return 'default';
+  }
+}
+
+function MetricCard({ title, value, icon, accent, iconColor, hint }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2.5,
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        height: '100%',
+        bgcolor: '#fff',
+        transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+        '&:hover': {
+          boxShadow: '0 8px 24px rgba(10, 104, 71, 0.08)',
+          transform: 'translateY(-2px)',
+        },
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, mb: 1 }}>
+            {title}
+          </Typography>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: '#1a1a1a',
+              lineHeight: 1.1,
+            }}
+          >
+            {value}
+          </Typography>
+          {hint && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              {hint}
+            </Typography>
+          )}
+        </Box>
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: accent || PRIMARY_SOFT,
+            color: iconColor || PRIMARY,
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+      </Stack>
+    </Paper>
+  );
+}
+
+function ChartCard({ title, subtitle, children, action }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: '#fff',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+        <Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography variant="caption" color="text.secondary">
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
+        {action}
+      </Stack>
+      <Box sx={{ flex: 1, minHeight: 0 }}>{children}</Box>
+    </Paper>
+  );
+}
+
+function RevenueTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <Paper elevation={3} sx={{ px: 1.5, py: 1, borderRadius: 1.5 }}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 700, color: PRIMARY }}>
+        {formatCurrency(payload[0].value)}
+      </Typography>
+    </Paper>
+  );
+}
+
+export function MasterOverview({ summary, stores, onViewAllStores }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const totalStores = summary?.totalStores ?? stores.length;
+  const activeStores = summary?.activeStores ?? 0;
+  const blockedOrOverdue = summary?.blockedOrOverdueStores ?? 0;
+  const mrr = summary?.monthlyRecurringRevenue ?? 0;
+  const activeRate = totalStores > 0 ? Math.round((activeStores / totalStores) * 100) : 0;
+
+  const revenueSeries = buildMonthlyRevenueSeries(mrr);
+
+  const statusDistribution = React.useMemo(() => {
+    const counts = {
+      ACTIVE: 0,
+      OVERDUE: 0,
+      BLOCKED: 0,
+      PENDING: 0,
+      CANCELED: 0,
+    };
+    stores.forEach((store) => {
+      const status = store.subscriptionStatus || 'PENDING';
+      if (counts[status] !== undefined) {
+        counts[status] += 1;
+      }
+    });
+
+    return [
+      { key: 'ACTIVE', name: 'Ativas', value: counts.ACTIVE },
+      { key: 'OVERDUE', name: 'Inadimplentes', value: counts.OVERDUE },
+      { key: 'BLOCKED', name: 'Bloqueadas', value: counts.BLOCKED },
+      { key: 'PENDING', name: 'Pendentes', value: counts.PENDING },
+      { key: 'CANCELED', name: 'Canceladas', value: counts.CANCELED },
+    ].filter((item) => item.value > 0);
+  }, [stores]);
+
+  const recentStores = React.useMemo(() => {
+    return [...stores]
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : Number(a.id) || 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : Number(b.id) || 0;
+        return dateB - dateA;
+      })
+      .slice(0, 5);
+  }, [stores]);
+
+  const previousRevenue = revenueSeries.length > 1
+    ? revenueSeries[revenueSeries.length - 2].revenue
+    : null;
+  const revenueDelta = previousRevenue != null && previousRevenue > 0
+    ? Math.round(((Number(mrr) - previousRevenue) / previousRevenue) * 100)
+    : null;
+
+  return (
+    <Box>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ sm: 'flex-end' }}
+        spacing={1}
+        sx={{ mb: 3 }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+            Dashboard Administrativo
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Visão geral da base de lojas, assinaturas e faturamento
+          </Typography>
+        </Box>
+        {revenueDelta != null && (
+          <Chip
+            icon={<TrendingUpIcon />}
+            label={`MRR ${revenueDelta >= 0 ? '+' : ''}${revenueDelta}% vs mês anterior`}
+            size="small"
+            sx={{
+              bgcolor: PRIMARY_SOFT,
+              color: PRIMARY,
+              fontWeight: 600,
+              '& .MuiChip-icon': { color: PRIMARY },
+            }}
+          />
+        )}
+      </Stack>
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Total de lojas"
+            value={totalStores}
+            hint="Lojas cadastradas na plataforma"
+            icon={<StorefrontIcon />}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Lojas ativas"
+            value={activeStores}
+            hint={totalStores ? `${activeRate}% da base` : 'Sem lojas ainda'}
+            icon={<CheckCircleOutlineIcon />}
+            accent="rgba(10, 104, 71, 0.12)"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Bloqueadas / inadimplentes"
+            value={blockedOrOverdue}
+            hint="OVERDUE + BLOCKED + CANCELED"
+            icon={<WarningAmberIcon />}
+            accent="rgba(211, 47, 47, 0.10)"
+            iconColor="#D32F2F"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Faturamento MRR"
+            value={formatCurrency(mrr)}
+            hint="Soma das assinaturas ativas"
+            icon={<AttachMoneyIcon />}
+            accent="rgba(10, 104, 71, 0.14)"
+          />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={8}>
+          <ChartCard
+            title="Faturamento Mensal"
+            subtitle="Evolução do MRR nos últimos meses"
+          >
+            <Box sx={{ width: '100%', height: { xs: 240, sm: 280 } }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="mrrGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.35} />
+                      <stop offset="100%" stopColor={PRIMARY} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E8EEEB" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={56}
+                    tickFormatter={(value) => `R$ ${value}`}
+                  />
+                  <Tooltip content={<RevenueTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke={PRIMARY}
+                    strokeWidth={2.5}
+                    fill="url(#mrrGradient)"
+                    dot={{ r: 4, fill: PRIMARY, strokeWidth: 0 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Box>
+          </ChartCard>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <ChartCard
+            title="Status das lojas"
+            subtitle="Saúde da base de clientes"
+          >
+            {statusDistribution.length === 0 ? (
+              <Box sx={{ py: 6, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Nenhuma loja para exibir
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ width: '100%', height: { xs: 240, sm: 280 } }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusDistribution}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={isMobile ? 48 : 58}
+                      outerRadius={isMobile ? 78 : 88}
+                      paddingAngle={3}
+                      stroke="#fff"
+                      strokeWidth={2}
+                    >
+                      {statusDistribution.map((entry) => (
+                        <Cell
+                          key={entry.key}
+                          fill={STATUS_CHART_COLORS[entry.key] || '#90A4AE'}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value, name) => [`${value} loja(s)`, name]}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={48}
+                      formatter={(value, entry) => (
+                        <span style={{ color: '#374151', fontSize: 12 }}>
+                          {value} ({entry?.payload?.value ?? 0})
+                        </span>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            )}
+          </ChartCard>
+        </Grid>
+      </Grid>
+
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 2.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: '#fff',
+          overflow: 'hidden',
+        }}
+      >
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ sm: 'center' }}
+          spacing={1}
+          sx={{ px: 2.5, py: 2, borderBottom: '1px solid', borderColor: 'divider' }}
+        >
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              Lojas Recentes
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Últimas lojas cadastradas na plataforma
+            </Typography>
+          </Box>
+          <Button
+            endIcon={<ArrowForwardIcon />}
+            onClick={onViewAllStores}
+            sx={{ textTransform: 'none', color: PRIMARY, fontWeight: 600, alignSelf: { xs: 'flex-start', sm: 'center' } }}
+          >
+            Ver todas as lojas
+          </Button>
+        </Stack>
+
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 560 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Loja</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Plano</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Valor</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Vencimento</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {recentStores.map((store) => (
+                <TableRow key={store.id} hover>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {store.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{PLAN_LABELS[store.plan] || store.plan || '—'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={SUBSCRIPTION_STATUS_LABELS[store.subscriptionStatus] || store.subscriptionStatus || '—'}
+                      color={statusColor(store.subscriptionStatus)}
+                    />
+                  </TableCell>
+                  <TableCell>{formatCurrency(store.price)}</TableCell>
+                  <TableCell>{formatDate(store.expiresAt)}</TableCell>
+                </TableRow>
+              ))}
+              {recentStores.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    Nenhuma loja cadastrada ainda.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
+      </Paper>
+    </Box>
+  );
+}
+
+export { statusColor };

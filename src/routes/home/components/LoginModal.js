@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../../services/authService.js';
+import { login, resolveHomePath } from '../../../services/authService.js';
 import '../styles/LoginModal.css';
 
 const LoginModal = ({ isOpen, onClose }) => {
@@ -16,9 +16,9 @@ const LoginModal = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      await login(email.trim(), password);
+      const user = await login(email.trim(), password);
       onClose();
-      navigate('/dashboard');
+      navigate(resolveHomePath(user));
     } catch (err) {
       if (!err.response) {
         setError('Não foi possível conectar ao servidor. Confira se o backend está no ar.');

@@ -8,7 +8,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import * as LoginConstants from './loginConstants.js';
-import signIn from '../../services/authService.js';
+import signIn, { resolveHomePath } from '../../services/authService.js';
 import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -97,9 +97,9 @@ function FormSection({ setLoginError }) {
             setPasswordHelperText('')
 
             signIn(userEmail, userPassword)
-                .then(() => {
+                .then((user) => {
                     setLoginError(false);
-                    navigate('/dashboard');
+                    navigate(resolveHomePath(user));
                 })
                 .catch((error) => {
                     setLoginError(true);

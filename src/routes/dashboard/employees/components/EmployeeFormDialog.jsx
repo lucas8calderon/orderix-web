@@ -191,8 +191,10 @@ export function EmployeeFormDialog({
                   onChange={(e) => setProfile(e.target.value)}
                   label="Perfil"
                 >
+                  <MenuItem value="STORE_ADMIN">Administrador</MenuItem>
                   <MenuItem value="GARCOM">Garçom</MenuItem>
-                  <MenuItem value="ADMIN">Administrador</MenuItem>
+                  <MenuItem value="KITCHEN">Cozinha</MenuItem>
+                  <MenuItem value="CASHIER">Caixa</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

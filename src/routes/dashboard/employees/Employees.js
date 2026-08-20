@@ -80,7 +80,12 @@ export function Employees() {
 
     // Aplicar filtro de perfil
     if (activeFilter !== 'all') {
-      filtered = filtered.filter(emp => emp.profile === activeFilter);
+      filtered = filtered.filter((emp) => {
+        if (activeFilter === 'STORE_ADMIN') {
+          return emp.profile === 'STORE_ADMIN' || emp.profile === 'ADMIN';
+        }
+        return emp.profile === activeFilter;
+      });
     }
 
     setFilteredEmployees(filtered);

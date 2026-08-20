@@ -11,24 +11,24 @@ export function CardEmployee({ employee, onEdit, onDelete }) {
   const getProfileLabel = (profile) => {
     if (profile === 'GARCOM' || profile === 'WAITER') return 'Garçom';
     if (profile === 'ADMIN' || profile === 'STORE_ADMIN') return 'Administrador';
-    if (profile === 'COZINHA') return 'Cozinha';
-    if (profile === 'CAIXA') return 'Caixa';
+    if (profile === 'COZINHA' || profile === 'KITCHEN') return 'Cozinha';
+    if (profile === 'CAIXA' || profile === 'CASHIER') return 'Caixa';
     return profile;
   };
 
   const getProfileIcon = (profile) => {
     if (profile === 'GARCOM' || profile === 'WAITER') return <RestaurantIcon sx={{ fontSize: 16 }} />;
     if (profile === 'ADMIN' || profile === 'STORE_ADMIN') return <LocalAtmIcon sx={{ fontSize: 16 }} />;
-    if (profile === 'COZINHA') return <KitchenIcon sx={{ fontSize: 16 }} />;
-    if (profile === 'CAIXA') return <LocalAtmIcon sx={{ fontSize: 16 }} />;
+    if (profile === 'COZINHA' || profile === 'KITCHEN') return <KitchenIcon sx={{ fontSize: 16 }} />;
+    if (profile === 'CAIXA' || profile === 'CASHIER') return <LocalAtmIcon sx={{ fontSize: 16 }} />;
     return null;
   };
 
   const getProfileChipClass = (profile) => {
     if (profile === 'GARCOM' || profile === 'WAITER') return 'profile-chip-garcom';
     if (profile === 'ADMIN' || profile === 'STORE_ADMIN') return 'profile-chip-caixa';
-    if (profile === 'COZINHA') return 'profile-chip-cozinha';
-    if (profile === 'CAIXA') return 'profile-chip-caixa';
+    if (profile === 'COZINHA' || profile === 'KITCHEN') return 'profile-chip-cozinha';
+    if (profile === 'CAIXA' || profile === 'CASHIER') return 'profile-chip-caixa';
     return '';
   };
 
