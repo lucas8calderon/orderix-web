@@ -1,22 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login } from '../../../services/authService.js';
 import '../styles/LoginModal.css';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    // Credenciais de teste
-    if (email === 'testes@testes.com' && password === '123456') {
+    try {
+      await login(email.trim(), password);
+      onClose();
       navigate('/dashboard');
-    } else {
-      setError('Credenciais inválidas. Tente: testes@testes.com / 123456');
+    } catch (err) {
+      if (!err.response) {
+        setError('Não foi possível conectar ao servidor. Confira se o backend está no ar.');
+      } else if (err.response.status === 401 || err.response.status === 400) {
+        setError('Credenciais inválidas.');
+      } else {
+        setError('O servidor retornou um erro ao autenticar. Tente novamente em instantes.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -29,12 +41,12 @@ const LoginModal = ({ isOpen, onClose }) => {
         
         <div className="modal-header">
           <h2>Acesse seu painel</h2>
-          <p>Entre com suas credenciais para gerenciar seu restaurante</p>
+          <p>Entre com as credenciais da sua loja</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="email">E-mail ou CPF</label>
+            <label htmlFor="email">E-mail</label>
             <input
               type="text"
               id="email"
@@ -59,15 +71,9 @@ const LoginModal = ({ isOpen, onClose }) => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button type="submit" className="btn-submit">
-            Entrar
+          <button type="submit" className="btn-submit" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
           </button>
-
-          <a href="#forgot" className="forgot-link">Esqueci minha senha</a>
-
-          <div className="signup-link">
-            Ainda não tem conta? <a href="#signup">Cadastre-se e experimente grátis</a>
-          </div>
         </form>
       </div>
     </div>

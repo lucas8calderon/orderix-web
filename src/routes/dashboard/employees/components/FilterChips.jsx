@@ -5,8 +5,7 @@ export function FilterChips({ activeFilter, onFilterChange }) {
   const filters = [
     { id: 'all', label: 'Todos' },
     { id: 'GARCOM', label: 'Garçom' },
-    { id: 'COZINHA', label: 'Cozinha' },
-    { id: 'CAIXA', label: 'Caixa' },
+    { id: 'ADMIN', label: 'Administrador' },
   ];
 
   return (
@@ -23,4 +22,3 @@ export function FilterChips({ activeFilter, onFilterChange }) {
     </Box>
   );
 }
-

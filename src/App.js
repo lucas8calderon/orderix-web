@@ -10,6 +10,15 @@ import { CategoryProvider } from './routes/dashboard/menu/category/providers/Cat
 import { ProductProvider } from './routes/dashboard/menu/product/providers/ProductContext.js';
 import { TablesProvider } from './routes/dashboard/tables/provider/TablesContext.js';
 import { EmployeesProvider } from './routes/dashboard/employees/provider/EmployeesContext.js';
+import { isAuthenticated } from './services/session';
+import './services/apiConfig';
+
+function RequireAuth({ children }) {
+  if (!isAuthenticated()) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
 
 function App() {
   initializeFirebase();
@@ -23,15 +32,17 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/dashboard"
           element={
-            <ProductProvider>
-              <CategoryProvider>
-                <TablesProvider>
-                  <EmployeesProvider>
-                    <Dashboard />
-                  </EmployeesProvider>
-                </TablesProvider>
-              </CategoryProvider>
-            </ProductProvider>
+            <RequireAuth>
+              <ProductProvider>
+                <CategoryProvider>
+                  <TablesProvider>
+                    <EmployeesProvider>
+                      <Dashboard />
+                    </EmployeesProvider>
+                  </TablesProvider>
+                </CategoryProvider>
+              </ProductProvider>
+            </RequireAuth>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

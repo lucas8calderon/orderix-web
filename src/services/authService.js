@@ -1,13 +1,21 @@
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from './firebase.js'
+import axios from 'axios';
+import { API_BASE_URL } from './apiConfig';
+import { saveSession, clearSession, getCurrentUser } from './session';
 
-const signIn = async (email, password) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw error; 
-  }
-};
+export async function login(email, password) {
+  const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+    email,
+    password,
+  });
+  const { token, user } = response.data;
+  saveSession(token, user);
+  return user;
+}
 
-export default signIn;
+export function logout() {
+  clearSession();
+}
+
+export { getCurrentUser };
+
+export default login;

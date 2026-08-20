@@ -23,7 +23,8 @@ import { Kitchen } from './kitchen/Kitchen';
 import { Employees } from './employees/Employees';
 import { Settings } from './settings/Settings';
 import InventoryPanel from './inventory/Inventory';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { getCurrentUser, logout } from '../../services/authService';
 
 
 function Copyright(props) {
@@ -103,10 +104,17 @@ const defaultTheme = createTheme({
 export default function Dashboard() {
     const [selectedScreenIndex, setSelectedScreenIndex] = React.useState(0);
     const screens = [<DashboardGerencial />, <Employees />, <Menu />, <InventoryPanel />, <Tables/>, <Kitchen/>, <Settings />];
+    const user = getCurrentUser();
+    const navigate = useNavigate();
 
     const [open, setOpen] = React.useState(true);
     const toggleDrawer = () => {
         setOpen(!open);
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
     };
 
     return (
@@ -141,7 +149,14 @@ export default function Dashboard() {
                             noWrap
                             sx={{ flexGrow: 1, backgroundColor: "var(--color-primary)", color:"var(--color-white)" }}
                         >
-                            Padaria Belas Artes
+                            {user?.storeName || 'Orderix'}
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            sx={{ mr: 2, cursor: 'pointer' }}
+                            onClick={handleLogout}
+                        >
+                            Sair
                         </Typography>
                         <IconButton color="inherit">
                             <Badge badgeContent={4} color="secondary">

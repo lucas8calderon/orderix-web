@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import * as LoginConstants from './loginConstants.js';
 import signIn from '../../services/authService.js';
 import { Alert } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
     const [loginError, setLoginError] = useState(false);
@@ -70,6 +71,7 @@ function WelcomeMessage() {
 }
 
 function FormSection({ setLoginError }) {
+    const navigate = useNavigate();
     const [userEmail, setUserEmail] = useState('')
     const [userPassword, setUserPassword] = useState('')
     const [emailError, setEmailError] = useState(false)
@@ -95,9 +97,9 @@ function FormSection({ setLoginError }) {
             setPasswordHelperText('')
 
             signIn(userEmail, userPassword)
-                .then((user) => {
+                .then(() => {
                     setLoginError(false);
-                    console.log("User signed in:", user);
+                    navigate('/dashboard');
                 })
                 .catch((error) => {
                     setLoginError(true);

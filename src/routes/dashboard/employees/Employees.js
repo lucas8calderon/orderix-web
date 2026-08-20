@@ -71,10 +71,10 @@ export function Employees() {
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(emp => 
-        emp.name.toLowerCase().includes(lowerSearch) ||
-        emp.email.toLowerCase().includes(lowerSearch) ||
-        emp.phone.includes(lowerSearch) ||
-        emp.profile.toLowerCase().includes(lowerSearch)
+        emp.name?.toLowerCase().includes(lowerSearch) ||
+        emp.email?.toLowerCase().includes(lowerSearch) ||
+        (emp.phone || '').includes(lowerSearch) ||
+        (emp.profile || '').toLowerCase().includes(lowerSearch)
       );
     }
 

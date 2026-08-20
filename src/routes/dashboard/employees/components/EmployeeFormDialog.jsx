@@ -8,9 +8,7 @@ import {
   Slide,
   Typography,
   TextField,
-  Avatar,
   Grid,
-  Divider,
   FormControl,
   Select,
   MenuItem,
@@ -18,7 +16,6 @@ import {
   Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { styled } from "@mui/material/styles";
 import { EmployeesContext } from "../provider/EmployeesContext";
 import { usePostEmployees } from "../hook/usePostEmployees";
 
@@ -40,40 +37,45 @@ export function EmployeeFormDialog({
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [profile, setProfile] = useState("");
   const [showAlert, setShowAlert] = useState(false);
 
-  // Load employee data when editing or reset when adding new
+  const isEditing = Boolean((employee || selectedEmployee)?.id);
+
   useEffect(() => {
     const currentEmployee = employee || selectedEmployee;
     if (open) {
       if (currentEmployee && Object.keys(currentEmployee).length > 0 && currentEmployee.id) {
-        // Edição - carregar dados do funcionário
         setName(currentEmployee.name || "");
         setEmail(currentEmployee.email || "");
-        setPhone(currentEmployee.phone || "");
+        setPassword("");
         setProfile(currentEmployee.profile || "");
       } else {
-        // Novo - limpar campos
         setName("");
         setEmail("");
-        setPhone("");
+        setPassword("");
         setProfile("");
       }
     }
   }, [employee, selectedEmployee, open]);
 
   const handleEmployeeSave = () => {
-    console.log('Formulário - Campos preenchidos:', { name, email, phone, profile });
-    
-    // Validar campos (remover espaços em branco)
     const trimmedName = name?.trim();
     const trimmedEmail = email?.trim();
-    const trimmedPhone = phone?.trim();
-    
-    if (!trimmedName || !trimmedEmail || !trimmedPhone || !profile) {
-      console.log('Formulário - Validação falhou');
+    const trimmedPassword = password?.trim();
+
+    if (!trimmedName || !trimmedEmail || !profile) {
+      setShowAlert(true);
+      return;
+    }
+
+    if (!isEditing && (!trimmedPassword || trimmedPassword.length < 6)) {
+      setShowAlert(true);
+      return;
+    }
+
+    if (isEditing && trimmedPassword && trimmedPassword.length < 6) {
       setShowAlert(true);
       return;
     }
@@ -82,16 +84,17 @@ export function EmployeeFormDialog({
     const employeeData = {
       name: trimmedName,
       email: trimmedEmail,
-      phone: trimmedPhone,
-      profile
+      profile,
     };
 
-    // Add ID if editing
+    if (trimmedPassword) {
+      employeeData.password = trimmedPassword;
+    }
+
     if (currentEmployee && currentEmployee.id) {
       employeeData.id = currentEmployee.id;
     }
 
-    console.log('Formulário - Dados do funcionário a serem salvos:', employeeData);
     onSaveEmployee(employeeData);
   };
 
@@ -105,10 +108,9 @@ export function EmployeeFormDialog({
 
   useEffect(() => {
     if (successSavingEmployee) {
-      // Limpar campos após sucesso
       setName("");
       setEmail("");
-      setPhone("");
+      setPassword("");
       setProfile("");
       setShowAlert(false);
     }
@@ -131,8 +133,16 @@ export function EmployeeFormDialog({
             </Alert>
           )}
 
+          {showAlert && !onAddEmployeeResult?.message && (
+            <Alert sx={{ mb: 2 }} severity="error">
+              {isEditing
+                ? 'Preencha nome, e-mail e perfil. Senha, se informada, precisa ter ao menos 6 caracteres.'
+                : 'Preencha nome, e-mail, perfil e senha (mínimo 6 caracteres).'}
+            </Alert>
+          )}
+
           <Typography variant="h6" mb={2}>
-            {employee || selectedEmployee?.id ? 'Editar Funcionário' : 'Cadastro de Funcionário'}
+            {isEditing ? 'Editar Funcionário' : 'Cadastro de Funcionário'}
           </Typography>
 
           <Grid container spacing={2}>
@@ -162,12 +172,13 @@ export function EmployeeFormDialog({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                type="tel"
-                label="Telefone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                type="password"
+                label={isEditing ? 'Nova senha (opcional)' : 'Senha'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 variant="outlined"
-                required
+                required={!isEditing}
+                helperText={isEditing ? 'Deixe em branco para manter a senha atual' : 'Mínimo de 6 caracteres'}
               />
             </Grid>
 
@@ -181,7 +192,7 @@ export function EmployeeFormDialog({
                   label="Perfil"
                 >
                   <MenuItem value="GARCOM">Garçom</MenuItem>
-                  <MenuItem value="COZINHA">Cozinha</MenuItem>
+                  <MenuItem value="ADMIN">Administrador</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -207,7 +218,7 @@ export function EmployeeFormDialog({
                 onClick={handleEmployeeSave}
                 size="large"
               >
-                {employee || selectedEmployee?.id ? 'Salvar Alterações' : 'Cadastrar Funcionário'}
+                {isEditing ? 'Salvar Alterações' : 'Cadastrar Funcionário'}
               </Button>
             </Box>
           </Grid>
@@ -216,4 +227,3 @@ export function EmployeeFormDialog({
     </Dialog>
   );
 }
-
