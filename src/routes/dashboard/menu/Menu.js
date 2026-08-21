@@ -41,7 +41,7 @@ export function Menu() {
     <Box className="menu-container">
       <Container maxWidth="xl" className="menu-content">
         <Typography variant="h4" className="menu-page-title">
-          Cardápio
+          Catálogo
         </Typography>
         <Typography variant="body1" className="menu-page-subtitle">
           Gerencie categorias e produtos da sua loja. Todo produto deve pertencer a uma categoria.

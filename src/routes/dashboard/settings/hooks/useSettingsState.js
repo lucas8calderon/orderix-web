@@ -124,7 +124,7 @@ export const useSettingsState = () => {
     permissions: {
       viewDashboard: 'Visualizar Dashboard',
       manageEmployees: 'Gerenciar Funcionários',
-      manageMenu: 'Gerenciar Cardápio',
+      manageMenu: 'Gerenciar Catálogo',
       manageTables: 'Gerenciar Mesas',
       manageKitchen: 'Gerenciar Cozinha',
       manageSettings: 'Gerenciar Configurações'

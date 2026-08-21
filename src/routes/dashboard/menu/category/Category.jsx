@@ -232,7 +232,15 @@ export function CategoryContainer({
                     <Chip
                       size="small"
                       label={isActive ? 'Ativa' : 'Inativa'}
-                      color={isActive ? 'success' : 'default'}
+                      sx={
+                        isActive
+                          ? {
+                              backgroundColor: 'var(--color-primary)',
+                              color: '#fff',
+                              fontWeight: 600,
+                            }
+                          : undefined
+                      }
                     />
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
@@ -247,7 +255,11 @@ export function CategoryContainer({
                         color="secondary"
                       />
                     </Tooltip>
-                    <IconButton size="small" onClick={() => openEdit(category)} color="primary">
+                    <IconButton
+                      size="small"
+                      onClick={() => openEdit(category)}
+                      sx={{ color: 'var(--color-primary)' }}
+                    >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton

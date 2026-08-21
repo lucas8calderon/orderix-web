@@ -17,7 +17,7 @@ export const dashboardItems = [
     icon: <PeopleIcon />
   },
   {
-    title: 'Cardápio',
+    title: 'Catálogo',
     icon: <MenuBookIcon />
   },
   {

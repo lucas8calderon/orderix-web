@@ -287,11 +287,23 @@ export function ProductContainer({
                     <Chip
                       size="small"
                       label={product.isAvailable !== false ? 'Ativo' : 'Inativo'}
-                      color={product.isAvailable !== false ? 'success' : 'default'}
+                      sx={
+                        product.isAvailable !== false
+                          ? {
+                              backgroundColor: 'var(--color-primary)',
+                              color: '#fff',
+                              fontWeight: 600,
+                            }
+                          : undefined
+                      }
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small" onClick={() => openEdit(product)} color="primary">
+                    <IconButton
+                      size="small"
+                      onClick={() => openEdit(product)}
+                      sx={{ color: 'var(--color-primary)' }}
+                    >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
