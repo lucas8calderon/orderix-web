@@ -125,7 +125,7 @@ export const useSettingsState = () => {
       viewDashboard: 'Visualizar Dashboard',
       manageEmployees: 'Gerenciar Funcionários',
       manageMenu: 'Gerenciar Catálogo',
-      manageTables: 'Gerenciar Mesas',
+      manageTables: 'Gerenciar Atendimento',
       manageKitchen: 'Gerenciar Cozinha',
       manageSettings: 'Gerenciar Configurações'
     }

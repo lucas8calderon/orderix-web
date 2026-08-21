@@ -2,16 +2,16 @@
 
 /* === VARIABLES CSS === */
 :root {
-  --settings-bg: #F8F9FB;
-  --settings-card-bg: #FFFFFF;
+  --settings-bg: var(--color-bg);
+  --settings-card-bg: var(--color-surface);
   --settings-primary: var(--color-primary);
   --settings-primary-dark: var(--color-primary-dark);
-  --settings-text-primary: #1F2937;
-  --settings-text-secondary: #6B7280;
-  --settings-text-muted: #9CA3AF;
-  --settings-border: #E5E7EB;
-  --settings-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  --settings-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --settings-text-primary: var(--color-text-primary);
+  --settings-text-secondary: var(--color-text-secondary);
+  --settings-text-muted: var(--color-text-muted);
+  --settings-border: var(--color-border);
+  --settings-shadow: var(--color-shadow);
+  --settings-shadow-hover: var(--color-shadow-hover);
   --settings-radius: 16px;
   --settings-radius-sm: 8px;
   --settings-spacing-xs: 8px;
@@ -26,7 +26,7 @@
 .settings-container {
   padding: var(--settings-spacing-lg);
   background-color: var(--settings-bg);
-  min-height: calc(100vh - 64px);
+  min-height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -125,6 +125,7 @@
   font-weight: 500 !important;
   font-size: 14px !important;
   flex-shrink: 0;
+  min-height: 40px;
   transition: var(--settings-transition);
 }
 
@@ -271,7 +272,7 @@
 /* Mobile (até 768px) */
 @media (max-width: 768px) {
   .settings-container {
-    padding: var(--settings-spacing-md);
+    padding: 0;
   }
   
   .settings-header {
@@ -320,7 +321,7 @@
 /* Mobile pequeno (até 480px) */
 @media (max-width: 480px) {
   .settings-container {
-    padding: var(--settings-spacing-sm);
+    padding: 0;
   }
   
   .settings-title {

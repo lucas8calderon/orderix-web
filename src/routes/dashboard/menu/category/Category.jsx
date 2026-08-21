@@ -186,11 +186,11 @@ export function CategoryContainer({
           onClick={openCreate}
           sx={{
             backgroundColor: 'transparent !important',
-            color: '#7b2cbf !important',
-            border: '1px solid #7b2cbf !important',
+            color: 'var(--color-primary) !important',
+            border: '1px solid var(--color-primary) !important',
             textTransform: 'none',
             '&:hover': {
-              backgroundColor: '#7b2cbf !important',
+              backgroundColor: 'var(--color-primary) !important',
               color: '#fff !important',
             },
           }}
@@ -201,10 +201,10 @@ export function CategoryContainer({
 
       {categories.length === 0 ? (
         <Box className="category-empty">
-          <Typography sx={{ mb: 2, color: '#666' }}>
+          <Typography sx={{ mb: 2, color: 'text.secondary' }}>
             Nenhuma categoria cadastrada. Crie uma categoria para poder cadastrar produtos.
           </Typography>
-          <Button variant="contained" onClick={openCreate} sx={{ backgroundColor: '#7b2cbf' }}>
+          <Button variant="contained" onClick={openCreate} sx={{ backgroundColor: 'var(--color-primary)' }}>
             Criar categoria
           </Button>
         </Box>

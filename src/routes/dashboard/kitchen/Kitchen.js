@@ -146,8 +146,8 @@ const StyledCard = styled(Card)(({ theme, status }) => ({
     cursor: 'grab',
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: 'white',
-    border: '1px solid #e9ecef',
+    backgroundColor: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
     '&:hover': {
         boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
         transform: 'translateY(-2px)'
@@ -161,11 +161,14 @@ const StyledCard = styled(Card)(({ theme, status }) => ({
 const KanbanColumn = styled(Paper)(({ theme, status }) => ({
     padding: theme.spacing(2),
     borderRadius: 16,
-    backgroundColor: '#ffffff',
-    minHeight: '600px',
-    border: '1px solid #e9ecef',
+    backgroundColor: 'var(--color-surface)',
+    minHeight: 280,
+    border: '1px solid var(--color-border)',
     position: 'relative',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    [theme.breakpoints.up('md')]: {
+        minHeight: 600,
+    },
 }));
 
 const ColumnHeader = styled(Box)(({ theme, status }) => ({
@@ -175,7 +178,7 @@ const ColumnHeader = styled(Box)(({ theme, status }) => ({
     marginBottom: theme.spacing(2),
     padding: theme.spacing(2, 0),
     position: 'relative',
-    borderBottom: '1px solid #e9ecef'
+    borderBottom: '1px solid var(--color-border)'
 }));
 
 const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) => {
@@ -203,7 +206,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                     >
                         <CardContent>
                             <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                                <Typography variant="h6" fontWeight="bold" sx={{ color: '#7b2cbf' }}>
+                                <Typography variant="h6" fontWeight="bold" sx={{ color: 'var(--color-primary)' }}>
                                     {order.orderNumber}
                                 </Typography>
                             </Box>
@@ -218,7 +221,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                                     size="small"
                                     sx={{
                                         ml: 1,
-                                        backgroundColor: '#7b2cbf',
+                                        backgroundColor: 'var(--color-primary)',
                                         color: 'white',
                                         fontSize: '0.7rem',
                                         height: '20px'
@@ -245,7 +248,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                             ))}
 
                             <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-                                <Typography variant="body2" sx={{ color: '#7b2cbf' }} fontWeight="bold">
+                                <Typography variant="body2" sx={{ color: 'var(--color-primary)' }} fontWeight="bold">
                                     Mesa {order.tableNumber}
                                 </Typography>
                                 <Box display="flex" gap={1}>
@@ -436,27 +439,31 @@ export function Kitchen() {
                     }}
                     aria-label="tipo de pedido"
                     sx={{
-                        gap: 2,
+                        flexWrap: 'wrap',
+                        width: '100%',
+                        gap: { xs: 1, sm: 2 },
                         '& .MuiToggleButton-root': {
                             border: '1px solid #e0e0e0',
                             borderRadius: '8px',
-                            px: 3,
+                            px: { xs: 2, sm: 3 },
                             py: 1,
+                            minHeight: 40,
                             textTransform: 'none',
                             fontWeight: 500,
                             marginRight: '8px',
+                            marginBottom: '8px',
                             '&:last-child': {
                                 marginRight: 0
                             },
                             '&.Mui-selected': {
-                                backgroundColor: '#7b2cbf',
+                                backgroundColor: 'var(--color-primary)',
                                 color: 'white',
                                 '&:hover': {
                                     backgroundColor: '#6a2599'
                                 }
                             },
                             '&:hover': {
-                                backgroundColor: 'rgba(123, 44, 191, 0.1)'
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)'
                             }
                         }
                     }}
@@ -495,12 +502,12 @@ export function Kitchen() {
                     minWidth: 'auto',
                     px: 3,
                     py: 1.5,
-                    backgroundColor: '#7b2cbf',
-                    boxShadow: '0 4px 20px rgba(123, 44, 191, 0.3)',
+                    backgroundColor: 'var(--color-primary)',
+                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
                     '&:hover': {
                         backgroundColor: '#6a2599',
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 6px 25px rgba(123, 44, 191, 0.4)'
+                        boxShadow: '0 6px 25px rgba(139, 92, 246, 0.4)'
                     },
                     '&:disabled': {
                         backgroundColor: '#a0a0a0',
@@ -527,7 +534,7 @@ export function Kitchen() {
                                         sx={{ 
                                             '& .MuiBadge-badge': { 
                                                 fontSize: '0.75rem',
-                                                backgroundColor: '#7b2cbf',
+                                                backgroundColor: 'var(--color-primary)',
                                                 color: 'white'
                                             } 
                                         }}
@@ -574,10 +581,10 @@ export function Kitchen() {
                 <Fade in={!!selectedOrder}>
                     <Box className="order-detail-modal">
                         {selectedOrder && (
-                            <Card sx={{ maxWidth: 600, width: '90%', maxHeight: '90vh', overflow: 'auto' }}>
+                            <Card sx={{ maxWidth: 600, width: '100%', maxHeight: '90vh', overflow: 'auto' }}>
                                 <CardContent>
                                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                        <Typography variant="h5" fontWeight="bold" sx={{ color: '#7b2cbf' }}>
+                                        <Typography variant="h5" fontWeight="bold" sx={{ color: 'var(--color-primary)' }}>
                                             {selectedOrder.orderNumber}
                                         </Typography>
                                         <IconButton onClick={handleCloseModal}>
@@ -600,7 +607,7 @@ export function Kitchen() {
                                             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                                                 Mesa
                                             </Typography>
-                                            <Typography variant="body1" sx={{ color: '#7b2cbf', fontWeight: 'bold' }}>
+                                            <Typography variant="body1" sx={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
                                                 Mesa {selectedOrder.tableNumber}
                                             </Typography>
                                         </Grid>
@@ -621,7 +628,7 @@ export function Kitchen() {
                                                        selectedOrder.orderType === 'balcao' ? 'Balcão' : 'Comanda'}
                                                 size="small"
                                                 sx={{
-                                                    backgroundColor: '#7b2cbf',
+                                                    backgroundColor: 'var(--color-primary)',
                                                     color: 'white',
                                                     fontWeight: 'bold'
                                                 }}
@@ -659,16 +666,16 @@ export function Kitchen() {
                                         </Box>
                                     )}
 
-                                    <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+                                    <Box mt={3} display="flex" justifyContent="flex-end" gap={2} flexWrap="wrap">
                                         <Button
                                             variant="outlined"
                                             onClick={handleCloseModal}
                                             sx={{
-                                                borderColor: '#7b2cbf',
-                                                color: '#7b2cbf',
+                                                borderColor: 'var(--color-primary)',
+                                                color: 'var(--color-primary)',
                                                 '&:hover': {
                                                     borderColor: '#6a2599',
-                                                    backgroundColor: 'rgba(123, 44, 191, 0.04)'
+                                                    backgroundColor: 'rgba(139, 92, 246, 0.04)'
                                                 }
                                             }}
                                         >
@@ -681,7 +688,7 @@ export function Kitchen() {
                                                 handleCloseModal();
                                             }}
                                             sx={{
-                                                backgroundColor: '#7b2cbf',
+                                                backgroundColor: 'var(--color-primary)',
                                                 '&:hover': {
                                                     backgroundColor: '#6a2599'
                                                 }

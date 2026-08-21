@@ -27,13 +27,13 @@ export default function Chart() {
   return (
     <React.Fragment>
       <Title>Hoje</Title>
-      <div style={{ width: '100%', flexGrow: 1, overflow: 'hidden' }}>
+      <div style={{ width: '100%', flexGrow: 1, overflow: 'hidden', minWidth: 0 }}>
         <LineChart
           dataset={data}
           margin={{
             top: 16,
-            right: 20,
-            left: 70,
+            right: 16,
+            left: 50,
             bottom: 30,
           }}
           xAxis={[

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Eye, Lock, Database, UserCheck, FileText, AlertTriangle } from 'lucide-react';
 import '../home/styles/Footer.css';
 import './PrivacyPolicy.css';
+import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
@@ -19,6 +20,9 @@ const PrivacyPolicy = () => {
             <ArrowLeft size={20} />
             Voltar ao início
           </button>
+          <div className="privacy-theme-toggle">
+            <ThemeToggleButton className="header-theme-toggle" />
+          </div>
           <h1 className="privacy-title">
             <Shield className="privacy-icon" />
             Política de Privacidade

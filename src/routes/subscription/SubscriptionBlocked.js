@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../services/authService';
+import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 
 export default function SubscriptionBlocked() {
   const navigate = useNavigate();
@@ -18,10 +19,14 @@ export default function SubscriptionBlocked() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(160deg, #0A6847 0%, #0d3d2c 55%, #102018 100%)',
+        background: 'linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #020617 100%)',
         px: 2,
+        position: 'relative',
       }}
     >
+      <Box sx={{ position: 'absolute', top: 12, right: 12, color: '#fff' }}>
+        <ThemeToggleButton className="header-theme-toggle" />
+      </Box>
       <Paper
         elevation={0}
         sx={{
@@ -30,9 +35,10 @@ export default function SubscriptionBlocked() {
           p: { xs: 3, sm: 5 },
           borderRadius: 3,
           textAlign: 'center',
+          bgcolor: 'var(--color-surface)',
         }}
       >
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 2, color: '#1a1a1a' }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 2, color: 'var(--color-text-primary)' }}>
           Assinatura indisponível
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
@@ -42,8 +48,8 @@ export default function SubscriptionBlocked() {
           variant="contained"
           onClick={handleLogout}
           sx={{
-            backgroundColor: '#0A6847',
-            '&:hover': { backgroundColor: '#085538' },
+            backgroundColor: 'var(--color-primary)',
+            '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
             textTransform: 'none',
             px: 4,
           }}

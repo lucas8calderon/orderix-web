@@ -23,7 +23,7 @@ const FeatureCardsDemo = () => {
             borderRadius: 3,
             background: 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(123, 63, 242, 0.1)'
+            border: '1px solid rgba(139, 92, 246, 0.1)'
           }}
         >
           <Typography
@@ -34,7 +34,7 @@ const FeatureCardsDemo = () => {
               fontWeight: 700,
               color: '#2D2D2D',
               marginBottom: 2,
-              background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+              background: 'var(--gradient)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
@@ -62,12 +62,12 @@ const FeatureCardsDemo = () => {
             sx={{
               marginTop: 4,
               padding: 3,
-              background: 'rgba(123, 63, 242, 0.05)',
+              background: 'rgba(139, 92, 246, 0.05)',
               borderRadius: 2,
-              border: '1px solid rgba(123, 63, 242, 0.1)'
+              border: '1px solid rgba(139, 92, 246, 0.1)'
             }}
           >
-            <Typography variant="h6" sx={{ color: '#7B3FF2', marginBottom: 2 }}>
+            <Typography variant="h6" sx={{ color: 'var(--color-primary)', marginBottom: 2 }}>
               Características do Componente:
             </Typography>
             <Box component="ul" sx={{ color: '#666666', paddingLeft: 2 }}>

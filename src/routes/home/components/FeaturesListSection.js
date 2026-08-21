@@ -18,7 +18,7 @@ const FeatureCard = styled(Card)(({ theme }) => ({
   position: 'relative',
   background: 'rgba(255, 255, 255, 0.95)',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(123, 63, 242, 0.2)',
+  border: '1px solid rgba(139, 92, 246, 0.2)',
   borderRadius: '20px',
   overflow: 'hidden',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -31,13 +31,13 @@ const FeatureCard = styled(Card)(({ theme }) => ({
   
   '&:hover': {
     transform: 'translateY(-6px)',
-    boxShadow: '0 12px 30px rgba(123, 63, 242, 0.25)',
-    border: '1px solid rgba(123, 63, 242, 0.4)',
+    boxShadow: '0 12px 30px rgba(139, 92, 246, 0.25)',
+    border: '1px solid rgba(139, 92, 246, 0.4)',
     background: 'rgba(255, 255, 255, 1)',
     
     '& .icon-container': {
       transform: 'scale(1.1)',
-      boxShadow: '0 8px 25px rgba(123, 63, 242, 0.3)',
+      boxShadow: '0 8px 25px rgba(139, 92, 246, 0.3)',
     },
     
     '&::before': {
@@ -52,7 +52,7 @@ const FeatureCard = styled(Card)(({ theme }) => ({
     left: 0,
     width: '100%',
     height: '4px',
-    background: 'linear-gradient(90deg, #7B3FF2 0%, #B896F9 100%)',
+    background: 'var(--gradient)',
     transformOrigin: 'left',
     transform: 'scaleX(0)',
     transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -64,13 +64,13 @@ const IconContainer = styled(Box)(({ theme }) => ({
   width: '60px',
   height: '60px',
   borderRadius: '16px',
-  background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+  background: 'var(--gradient)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   marginBottom: theme.spacing(2),
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  boxShadow: '0 4px 15px rgba(123, 63, 242, 0.2)',
+  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)',
   color: '#FFFFFF',
   
   '& svg': {
@@ -134,7 +134,7 @@ const FeaturesListSection = () => {
       id="features"
       sx={{
         padding: { xs: '60px 1rem', md: '80px 2rem' },
-        background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+        background: 'var(--gradient)',
         position: 'relative',
         overflow: 'hidden'
       }}

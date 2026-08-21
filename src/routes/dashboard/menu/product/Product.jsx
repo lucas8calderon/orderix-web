@@ -198,11 +198,11 @@ export function ProductContainer({
           disabled={!categories.length}
           sx={{
             backgroundColor: 'transparent !important',
-            color: '#7b2cbf !important',
-            border: '1px solid #7b2cbf !important',
+            color: 'var(--color-primary) !important',
+            border: '1px solid var(--color-primary) !important',
             textTransform: 'none',
             '&:hover': {
-              backgroundColor: '#7b2cbf !important',
+              backgroundColor: 'var(--color-primary) !important',
               color: '#fff !important',
             },
             '&.Mui-disabled': {
@@ -244,7 +244,7 @@ export function ProductContainer({
         </Box>
       </Box>
 
-      <TableContainer component={Paper} className="product-table">
+      <TableContainer component={Paper} className="product-table product-table-desktop">
         <Table>
           <TableHead>
             <TableRow>
@@ -259,7 +259,7 @@ export function ProductContainer({
             {filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  <Typography sx={{ py: 3, color: '#666' }}>
+                  <Typography sx={{ py: 3, color: 'text.secondary' }}>
                     Nenhum produto encontrado
                   </Typography>
                 </TableCell>
@@ -268,14 +268,14 @@ export function ProductContainer({
               filteredProducts.map((product) => (
                 <TableRow key={product.id} hover>
                   <TableCell>
-                    <Typography fontWeight={600}>{product.name}</Typography>
+                    <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>{product.name}</Typography>
                     {product.observation ? (
-                      <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 280 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: { sm: 280 }, wordBreak: 'break-word' }}>
                         {product.observation}
                       </Typography>
                     ) : null}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ wordBreak: 'break-word' }}>
                     {product.categoryId
                       ? categories.find((c) => c.id === product.categoryId)?.name ||
                         product.categoryName ||
@@ -320,6 +320,73 @@ export function ProductContainer({
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Box className="product-cards-mobile">
+        {filteredProducts.length === 0 ? (
+          <Typography sx={{ py: 3, color: 'text.secondary', textAlign: 'center' }}>
+            Nenhum produto encontrado
+          </Typography>
+        ) : (
+          filteredProducts.map((product) => (
+            <Paper key={product.id} className="product-mobile-card" elevation={0}>
+              <Box className="product-mobile-card-header">
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>
+                    {product.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
+                    {product.categoryId
+                      ? categories.find((c) => c.id === product.categoryId)?.name ||
+                        product.categoryName ||
+                        '—'
+                      : '—'}
+                  </Typography>
+                </Box>
+                <Chip
+                  size="small"
+                  label={product.isAvailable !== false ? 'Ativo' : 'Inativo'}
+                  sx={
+                    product.isAvailable !== false
+                      ? {
+                          backgroundColor: 'var(--color-primary)',
+                          color: '#fff',
+                          fontWeight: 600,
+                          flexShrink: 0,
+                        }
+                      : { flexShrink: 0 }
+                  }
+                />
+              </Box>
+              {product.observation ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, wordBreak: 'break-word' }}>
+                  {product.observation}
+                </Typography>
+              ) : null}
+              <Box className="product-mobile-card-footer">
+                <Typography fontWeight={700}>{formatPrice(product.value)}</Typography>
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={() => openEdit(product)}
+                    sx={{ color: 'var(--color-primary)' }}
+                    aria-label="Editar produto"
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => setDeleteTarget(product)}
+                    color="error"
+                    aria-label="Excluir produto"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Paper>
+          ))
+        )}
+      </Box>
 
       <Snackbar
         open={toast.open}

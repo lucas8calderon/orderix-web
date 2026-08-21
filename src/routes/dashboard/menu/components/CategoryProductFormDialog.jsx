@@ -6,6 +6,7 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { CategoryContext } from '../category/providers/CategoryContext';
+import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -27,6 +28,12 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
     const [imageUpload, setImageUpload] = useState("");
     const [imagePreview, setImagePreview] = useState("");
     const [showAlert, setShowAlert] = useState(false);
+    const dialogProps = useDialogResponsiveProps({
+      paperSx: {
+        borderRadius: { xs: 0, sm: '16px' },
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      },
+    });
 
   const handleCategorySave = () => onSaveCategory(category);
 
@@ -91,21 +98,15 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
       keepMounted
       onClose={handleOnClose}
       maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-        }
-      }}
+      {...dialogProps}
     >
-      <DialogContent sx={{ padding: '32px' }}>
+      <DialogContent sx={{ p: { xs: 2, sm: 4 }, overflowY: 'auto' }}>
         {/* Categoria */}
         <Box>
           <Typography variant="h5" sx={{ 
             mb: 3, 
             fontWeight: 600, 
-            color: '#333'
+            color: 'var(--color-text-primary)'
           }}>
             Nova Categoria
           </Typography>
@@ -125,10 +126,10 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
             </Alert>
           )}
           
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
             <Avatar 
               sx={{ 
-                bgcolor: '#7b2cbf', 
+                bgcolor: 'var(--color-primary)', 
                 width: 48, 
                 height: 48,
                 fontSize: '1.2rem',
@@ -153,27 +154,27 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
                     borderRadius: '8px',
                   },
                   '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#7b2cbf',
+                    borderColor: 'var(--color-primary)',
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#7b2cbf',
+                    color: 'var(--color-primary)',
                   }
                 }}
               />
               
               {/* Upload ou URL */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <Button
                   component="label"
                   variant="outlined"
                   startIcon={<CloudUploadIcon />}
                   sx={{
                     borderRadius: '8px',
-                    borderColor: '#7b2cbf',
-                    color: '#7b2cbf',
+                    borderColor: 'var(--color-primary)',
+                    color: 'var(--color-primary)',
                     '&:hover': {
-                      borderColor: '#6a1b9a',
-                      backgroundColor: 'rgba(123, 44, 191, 0.04)',
+                      borderColor: 'var(--color-primary-dark)',
+                      backgroundColor: 'rgba(139, 92, 246, 0.04)',
                     }
                   }}
                 >
@@ -196,10 +197,10 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
                       borderRadius: '8px',
                     },
                     '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#7b2cbf',
+                      borderColor: 'var(--color-primary)',
                     },
                     '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#7b2cbf',
+                      color: 'var(--color-primary)',
                     }
                   }}
                 />
@@ -208,7 +209,7 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
               {/* Preview */}
               {imagePreview && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: '#666' }}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: 'var(--color-text-secondary)' }}>
                     Preview da imagem:
                   </Typography>
                   <Box
@@ -228,14 +229,14 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
             </Box>
           </Box>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap', '& > button': { flex: { xs: '1 1 140px', sm: '0 0 auto' }, minHeight: 44 } }}>
             <Button 
               onClick={handleOnClose}
               variant="outlined"
               sx={{
                 borderRadius: '8px',
                 borderColor: '#e0e0e0',
-                color: '#666',
+                color: 'var(--color-text-secondary)',
                 '&:hover': {
                   borderColor: '#ccc',
                   backgroundColor: '#f5f5f5',
@@ -250,9 +251,9 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
               variant="contained"
               sx={{
                 borderRadius: '8px',
-                backgroundColor: '#7b2cbf',
+                backgroundColor: 'var(--color-primary)',
                 '&:hover': {
-                  backgroundColor: '#6a1b9a',
+                  backgroundColor: 'var(--color-primary-dark)',
                 },
                 '&:disabled': {
                   backgroundColor: '#e0e0e0',

@@ -21,25 +21,25 @@ const variants = {
     },
   },
   outline: {
-    border: "1px solid #ccc",
-    backgroundColor: "#fff",
-    color: "#333",
+    border: "1px solid var(--color-border)",
+    backgroundColor: "var(--color-surface)",
+    color: "var(--color-text-primary)",
     "&:hover": {
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "var(--color-surface-muted)",
     },
   },
   secondary: {
-    backgroundColor: "#9c27b0",
-    color: "#fff",
+    backgroundColor: "var(--color-primary)",
+    color: "var(--color-on-primary)",
     "&:hover": {
-      backgroundColor: "#7b1fa2",
+      backgroundColor: "var(--color-primary-dark)",
     },
   },
   ghost: {
     backgroundColor: "transparent",
-    color: "#333",
+    color: "var(--color-text-primary)",
     "&:hover": {
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "var(--color-hover)",
     },
   },
   link: {

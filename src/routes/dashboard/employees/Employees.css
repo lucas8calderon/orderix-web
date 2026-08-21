@@ -1,6 +1,6 @@
 .employees-container {
-  background-color: #F8F9FB;
-  min-height: 100vh;
+  background-color: var(--color-bg);
+  min-height: auto;
   padding: 24px;
 }
 
@@ -13,10 +13,11 @@
 }
 
 .employees-title {
-  font-size: 28px;
+  font-size: clamp(1.5rem, 4vw, 28px);
   font-weight: 700;
-  color: #1F2937;
+  color: var(--color-text-primary);
   margin: 0;
+  word-break: break-word;
 }
 
 .search-and-filters {
@@ -52,9 +53,9 @@
 }
 
 .filter-chip:not(.active) {
-  background-color: white;
-  color: #6B7280;
-  border-color: #E5E7EB;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
 }
 
 .filter-chip:hover:not(.active) {
@@ -63,9 +64,9 @@
 }
 
 .employee-card {
-  background: white;
+  background: var(--color-surface);
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--color-shadow);
   transition: all 0.3s ease;
   height: 100%;
   display: flex;
@@ -102,20 +103,22 @@
   font-weight: 600;
   font-size: 20px;
   color: white;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7B2CBF 100%);
+  background: var(--gradient);
 }
 
 .employee-name {
   font-size: 18px;
   font-weight: 600;
-  color: #1F2937;
+  color: var(--color-text-primary);
   margin-bottom: 4px;
+  word-break: break-word;
 }
 
 .employee-info {
   font-size: 14px;
-  color: #6B7280;
+  color: var(--color-text-secondary);
   margin-bottom: 2px;
+  word-break: break-word;
 }
 
 .action-buttons {
@@ -132,17 +135,31 @@
 
 @media (max-width: 600px) {
   .employees-container {
-    padding: 16px;
+    padding: 8px 0 16px;
   }
   
   .employees-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 16px;
+    padding: 0;
+  }
+
+  .employees-header .MuiButton-root {
+    width: 100%;
+    min-height: 44px;
   }
   
   .employees-title {
     font-size: 24px;
+  }
+
+  .search-bar {
+    max-width: 100%;
+  }
+
+  .search-and-filters {
+    padding: 0;
   }
 }
 

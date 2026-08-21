@@ -1,40 +1,40 @@
 import * as React from 'react';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import TableBarIcon from '@mui/icons-material/TableBar';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import KitchenIcon from '@mui/icons-material/Kitchen';
-import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import TableRestaurantOutlinedIcon from '@mui/icons-material/TableRestaurantOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import SoupKitchenOutlinedIcon from '@mui/icons-material/SoupKitchenOutlined';
+import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 export const dashboardItems = [
   {
     title: 'Dashboard',
-    icon: <DashboardIcon />
+    icon: <DashboardOutlinedIcon />
   },
   {
     title: 'Colaboradores',
-    icon: <PeopleIcon />
+    icon: <BadgeOutlinedIcon />
   },
   {
     title: 'Catálogo',
-    icon: <MenuBookIcon />
+    icon: <MenuBookOutlinedIcon />
   },
   {
     title: 'Inventário',
-    icon: <InventoryIcon />
+    icon: <Inventory2OutlinedIcon />
   },
   {
-    title: 'Mesas',
-    icon: <TableBarIcon />
+    title: 'Atendimento',
+    icon: <TableRestaurantOutlinedIcon />
   },
   {
     title: 'Cozinha',
-    icon: <KitchenIcon />
+    icon: <SoupKitchenOutlinedIcon />
   },
   {
     title: 'Configurações',
-    icon: <SettingsIcon />,
+    icon: <SettingsOutlinedIcon />,
     adminOnly: true
   },
 ];

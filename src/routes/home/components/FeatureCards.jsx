@@ -16,7 +16,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(123, 63, 242, 0.1)',
+  border: '1px solid rgba(139, 92, 246, 0.1)',
   borderRadius: '20px',
   overflow: 'hidden',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -24,12 +24,12 @@ const StyledCard = styled(Card)(({ theme }) => ({
   
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 8px 25px rgba(123, 63, 242, 0.12)',
-    border: '1px solid rgba(123, 63, 242, 0.2)',
+    boxShadow: '0 8px 25px rgba(139, 92, 246, 0.12)',
+    border: '1px solid rgba(139, 92, 246, 0.2)',
     
     '& .icon-container': {
       transform: 'scale(1.05) rotate(2deg)',
-      boxShadow: '0 6px 20px rgba(123, 63, 242, 0.25)',
+      boxShadow: '0 6px 20px rgba(139, 92, 246, 0.25)',
     },
     
     
@@ -45,7 +45,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
     left: 0,
     width: '100%',
     height: '4px',
-    background: 'linear-gradient(90deg, #7B3FF2 0%, #B896F9 100%)',
+    background: 'var(--gradient)',
     transformOrigin: 'left',
     transform: 'scaleX(0)',
     transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -61,10 +61,10 @@ const IconContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+  background: 'var(--gradient)',
   borderRadius: '50%',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  boxShadow: '0 4px 20px rgba(123, 63, 242, 0.2)',
+  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
   
 }));
 
@@ -74,37 +74,37 @@ const features = [
     icon: Smartphone,
     title: 'Módulo do Garçom',
     description: 'Lançamento rápido de pedidos com interface intuitiva e responsiva para smartphones e tablets.',
-    color: '#7B3FF2'
+    color: 'var(--color-primary)'
   },
   {
     icon: ClipboardList,
     title: 'Mesas e Comandas',
     description: 'Controle em tempo real de todas as mesas, comandas abertas e fechadas, com histórico completo.',
-    color: '#B896F9'
+    color: 'var(--color-brand-home-soft)'
   },
   {
     icon: Monitor,
     title: 'Balcão',
     description: 'Vendas rápidas e práticas para atendimento no balcão, com impressão automática de cupom fiscal.',
-    color: '#7B3FF2'
+    color: 'var(--color-primary)'
   },
   {
     icon: CreditCard,
     title: 'Pagamentos Integrados',
     description: 'Integração com principais adquirentes e maquininhas do mercado, facilitando o processo de pagamento.',
-    color: '#B896F9'
+    color: 'var(--color-brand-home-soft)'
   },
   {
     icon: BarChart3,
     title: 'Painel Administrativo',
     description: 'Relatórios detalhados, gestão de estoque, controle de funcionários e muito mais em um só lugar.',
-    color: '#7B3FF2'
+    color: 'var(--color-primary)'
   },
   {
     icon: Users,
     title: 'Autoatendimento',
     description: 'Tablet na mesa para que os clientes façam pedidos diretamente, sem precisar chamar o garçom.',
-    color: '#B896F9'
+    color: 'var(--color-brand-home-soft)'
   }
 ];
 

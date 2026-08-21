@@ -7,7 +7,7 @@ export function Loading({ loadingMessage }) {
             <CircularProgress 
                 sx={{ 
                     marginLeft: 20,
-                    color: '#7b2cbf'
+                    color: 'var(--color-primary)'
                 }} 
             />
         </Box>

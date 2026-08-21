@@ -6,6 +6,9 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Title from './Title';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 // Generate Order Data
 function createData(id, date, name, shipTo, paymentMethod, amount) {
@@ -56,6 +59,7 @@ export default function Orders() {
   return (
     <React.Fragment>
       <Title>Últimos pedidos</Title>
+      <Box sx={{ overflowX: 'auto', display: { xs: 'none', sm: 'block' } }}>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -78,6 +82,22 @@ export default function Orders() {
           ))}
         </TableBody>
       </Table>
+      </Box>
+      <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' }, mt: 1 }}>
+        {rows.map((row) => (
+          <Box key={row.id} sx={{ p: 1.5, borderRadius: 2, bgcolor: '#f8f9fb' }}>
+            <Typography variant="body2" fontWeight={600}>
+              Mesa {row.name} · {row.date}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {row.shipTo} · {row.paymentMethod}
+            </Typography>
+            <Typography variant="body2" fontWeight={700}>
+              R$ {row.amount}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
       <Link color="primary" href="#" onClick={preventDefault} sx={{ mt: 3 }}>
         Ver mais pedidos
       </Link>

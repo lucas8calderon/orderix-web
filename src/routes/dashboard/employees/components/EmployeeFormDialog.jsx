@@ -16,13 +16,14 @@ import {
   Alert,
 } from "@mui/material";
 import { EmployeesContext } from "../provider/EmployeesContext";
+import { useDialogResponsiveProps } from "../../../../commons/hooks/useResponsive";
 
 const Transition = forwardRef((props, ref) => (
   <Slide direction="up" ref={ref} {...props} />
 ));
 
-const PRIMARY_PURPLE = "var(--color-primary)";
-const DISABLED_PURPLE = "rgba(123, 31, 162, 0.38)";
+const PRIMARY_COLOR = "var(--color-primary)";
+const DISABLED_PRIMARY = "rgba(139, 92, 246, 0.38)";
 
 export function EmployeeFormDialog({
   open,
@@ -43,6 +44,7 @@ export function EmployeeFormDialog({
   const [showAlert, setShowAlert] = useState(false);
 
   const isEditing = Boolean((employee || selectedEmployee)?.id);
+  const dialogProps = useDialogResponsiveProps();
   const trimmedName = name.trim();
   const trimmedEmail = email.trim();
   const trimmedPassword = password.trim();
@@ -110,9 +112,9 @@ export function EmployeeFormDialog({
       keepMounted
       onClose={onClose}
       maxWidth="md"
-      fullWidth
+      {...dialogProps}
     >
-      <DialogContent>
+      <DialogContent sx={{ p: { xs: 2, sm: 3 }, overflowY: 'auto' }}>
         <DialogContentText sx={{ mt: 3 }} component="div">
           {(showAlert || onAddEmployeeResult?.message) && onAddEmployeeResult?.message && (
             <Alert sx={{ mb: 2 }} severity={onAddEmployeeResult.severity || 'success'}>
@@ -198,15 +200,18 @@ export function EmployeeFormDialog({
                 <Button
                   disabled={!isFormValid || saving}
                   sx={{
-                    backgroundColor: PRIMARY_PURPLE,
+                    backgroundColor: PRIMARY_COLOR,
                     color: "var(--color-white)",
                     textTransform: "none",
+                    minHeight: 44,
+                    width: { xs: "100%", sm: "auto" },
+                    px: 3,
                     ":hover": {
                       backgroundColor: "var(--color-secondary)",
                       color: "var(--color-black)"
                     },
                     "&.Mui-disabled": {
-                      backgroundColor: DISABLED_PURPLE,
+                      backgroundColor: DISABLED_PRIMARY,
                       color: "var(--color-white)",
                       opacity: 1,
                     },

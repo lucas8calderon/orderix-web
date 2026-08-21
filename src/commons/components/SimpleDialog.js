@@ -42,6 +42,16 @@ export function CustomizedDialog({ open, onClose, onSave }) {
                 onClose={onClose}
                 aria-labelledby="customized-dialog-title"
                 open={open}
+                fullWidth
+                maxWidth="sm"
+                scroll="paper"
+                PaperProps={{
+                    sx: {
+                        m: { xs: 2, sm: 4 },
+                        width: { xs: 'calc(100% - 32px)', sm: 'auto' },
+                        maxHeight: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 64px)' },
+                    },
+                }}
             >
                 <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
                     Adicionar nova mesa

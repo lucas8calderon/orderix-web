@@ -43,11 +43,11 @@ import {
 } from '../../../services/accessControl';
 import { buildMonthlyRevenueSeries } from '../data/mockRevenueHistory';
 
-const PRIMARY = '#0A6847';
-const PRIMARY_SOFT = 'rgba(10, 104, 71, 0.10)';
+const PRIMARY = '#8B5CF6';
+const PRIMARY_SOFT = 'rgba(139, 92, 246, 0.10)';
 
 const STATUS_CHART_COLORS = {
-  ACTIVE: '#0A6847',
+  ACTIVE: '#10B981',
   OVERDUE: '#E6A700',
   BLOCKED: '#D32F2F',
   PENDING: '#90A4AE',
@@ -79,7 +79,7 @@ function MetricCard({ title, value, icon, accent, iconColor, hint }) {
         border: '1px solid',
         borderColor: 'divider',
         height: '100%',
-        bgcolor: '#fff',
+        bgcolor: 'background.paper',
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         '&:hover': {
           boxShadow: '0 8px 24px rgba(10, 104, 71, 0.08)',
@@ -97,7 +97,7 @@ function MetricCard({ title, value, icon, accent, iconColor, hint }) {
             sx={{
               fontWeight: 800,
               letterSpacing: '-0.02em',
-              color: '#1a1a1a',
+              color: 'text.primary',
               lineHeight: 1.1,
             }}
           >
@@ -138,7 +138,7 @@ function ChartCard({ title, subtitle, children, action }) {
         borderRadius: 2.5,
         border: '1px solid',
         borderColor: 'divider',
-        bgcolor: '#fff',
+        bgcolor: 'background.paper',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -179,6 +179,9 @@ function RevenueTooltip({ active, payload, label }) {
 export function MasterOverview({ summary, stores, onViewAllStores }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+  const axisColor = isDark ? '#B0B7C3' : '#6B7280';
+  const gridColor = isDark ? '#343B48' : '#E8EEEB';
 
   const totalStores = summary?.totalStores ?? stores.length;
   const activeStores = summary?.activeStores ?? 0;
@@ -315,19 +318,19 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
                       <stop offset="100%" stopColor={PRIMARY} stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E8EEEB" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                   <XAxis
                     dataKey="month"
-                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    tick={{ fill: axisColor, fontSize: 12 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                    tick={{ fill: axisColor, fontSize: 12 }}
                     axisLine={false}
                     tickLine={false}
-                    width={56}
-                    tickFormatter={(value) => `R$ ${value}`}
+                    width={isMobile ? 40 : 56}
+                    tickFormatter={(value) => (isMobile ? `${value}` : `R$ ${value}`)}
                   />
                   <Tooltip content={<RevenueTooltip />} />
                   <Area
@@ -386,7 +389,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
                       verticalAlign="bottom"
                       height={48}
                       formatter={(value, entry) => (
-                        <span style={{ color: '#374151', fontSize: 12 }}>
+                        <span style={{ color: 'var(--color-text-primary)', fontSize: 12 }}>
                           {value} ({entry?.payload?.value ?? 0})
                         </span>
                       )}
@@ -405,7 +408,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
           borderRadius: 2.5,
           border: '1px solid',
           borderColor: 'divider',
-          bgcolor: '#fff',
+          bgcolor: 'background.paper',
           overflow: 'hidden',
         }}
       >
@@ -433,7 +436,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
           </Button>
         </Stack>
 
-        <Box sx={{ overflowX: 'auto' }}>
+        <Box sx={{ display: { xs: 'none', sm: 'block' }, overflowX: 'auto' }}>
           <Table size="small" sx={{ minWidth: 560 }}>
             <TableHead>
               <TableRow>
@@ -474,6 +477,36 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
             </TableBody>
           </Table>
         </Box>
+        <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' }, p: 1.5 }}>
+          {recentStores.length === 0 && (
+            <Typography align="center" sx={{ py: 3 }} color="text.secondary">
+              Nenhuma loja cadastrada ainda.
+            </Typography>
+          )}
+          {recentStores.map((store) => (
+            <Box
+              key={store.id}
+              sx={{ p: 1.5, borderRadius: 2, bgcolor: '#f8faf9' }}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
+                <Typography variant="body2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+                  {store.name}
+                </Typography>
+                <Chip
+                  size="small"
+                  label={SUBSCRIPTION_STATUS_LABELS[store.subscriptionStatus] || store.subscriptionStatus || '—'}
+                  color={statusColor(store.subscriptionStatus)}
+                />
+              </Stack>
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                {PLAN_LABELS[store.plan] || store.plan || '—'} · {formatCurrency(store.price)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Vencimento: {formatDate(store.expiresAt)}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
       </Paper>
     </Box>
   );

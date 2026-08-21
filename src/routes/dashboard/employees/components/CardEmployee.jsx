@@ -67,11 +67,11 @@ export function CardEmployee({ employee, onEdit, onDelete }) {
           </Box>
         </Box>
 
-        <Typography className="employee-name">
+        <Typography className="employee-name" sx={{ wordBreak: 'break-word' }}>
           {employee.name}
         </Typography>
 
-        <Typography className="employee-info">
+        <Typography className="employee-info" sx={{ wordBreak: 'break-word' }}>
           {employee.email}
         </Typography>
 

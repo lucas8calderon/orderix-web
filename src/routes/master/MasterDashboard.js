@@ -28,6 +28,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 import { logout } from '../../services/authService';
 import {
   PLAN_LABELS,
@@ -39,6 +40,7 @@ import {
 import { useMasterStores } from './hook/useMasterStores';
 import { createStore, updateStore } from './service/storesService';
 import { MasterOverview, statusColor } from './components/MasterOverview';
+import { useIsMobile, useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
 
 const emptyForm = {
   name: '',
@@ -56,6 +58,7 @@ const emptyForm = {
 
 function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
   const [form, setForm] = useState(emptyForm);
+  const dialogProps = useDialogResponsiveProps();
 
   React.useEffect(() => {
     if (!open) return;
@@ -103,7 +106,7 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
   const isEdit = Boolean(initialValues?.id);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} maxWidth="md" {...dialogProps}>
       <DialogTitle>{isEdit ? 'Editar loja' : 'Cadastrar loja'}</DialogTitle>
       <DialogContent>
         <Typography variant="subtitle2" sx={{ mt: 1, mb: 1.5 }}>
@@ -215,7 +218,7 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions sx={{ px: 3, pb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Button onClick={onClose} disabled={saving}>
           Cancelar
         </Button>
@@ -223,7 +226,7 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
           variant="contained"
           onClick={handleSave}
           disabled={saving}
-          sx={{ backgroundColor: '#0A6847', '&:hover': { backgroundColor: '#085538' } }}
+          sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}
         >
           {saving ? 'Salvando...' : 'Salvar'}
         </Button>
@@ -304,22 +307,23 @@ export default function MasterDashboard() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7f6' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'var(--color-bg)' }}>
       <Box
         sx={{
-          bgcolor: '#0A6847',
-          color: '#fff',
-          px: 3,
-          py: 2,
+          bgcolor: 'var(--color-sidebar)',
+          color: 'var(--color-sidebar-text)',
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
           display: 'flex',
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           justifyContent: 'space-between',
           gap: 2,
           flexWrap: 'wrap',
+          flexDirection: { xs: 'column', sm: 'row' },
         }}
       >
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-sidebar-brand)' }}>
             Orderix Master
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.85 }}>
@@ -327,6 +331,7 @@ export default function MasterDashboard() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+          <ThemeToggleButton className="header-theme-toggle" />
           <Button
             color="inherit"
             onClick={() => setScreen('dashboard')}
@@ -360,7 +365,7 @@ export default function MasterDashboard() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress sx={{ color: '#0A6847' }} />
+            <CircularProgress sx={{ color: 'var(--color-primary)' }} />
           </Box>
         )}
 
@@ -395,9 +400,11 @@ export default function MasterDashboard() {
                 startIcon={<AddIcon />}
                 onClick={openCreate}
                 sx={{
-                  backgroundColor: '#0A6847',
-                  '&:hover': { backgroundColor: '#085538' },
+                  backgroundColor: 'var(--color-primary)',
+                  '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
                   textTransform: 'none',
+                  width: { xs: '100%', sm: 'auto' },
+                  minHeight: 44,
                 }}
               >
                 Cadastrar Loja
@@ -406,8 +413,9 @@ export default function MasterDashboard() {
 
             <Paper
               elevation={0}
-              sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', overflow: 'auto' }}
+              sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}
             >
+              <Box sx={{ display: { xs: 'none', md: 'block' }, overflowX: 'auto' }}>
               <Table size="small" sx={{ minWidth: 720 }}>
                 <TableHead>
                   <TableRow>
@@ -423,8 +431,8 @@ export default function MasterDashboard() {
                 <TableBody>
                   {stores.map((store) => (
                     <TableRow key={store.id} hover>
-                      <TableCell>{store.name}</TableCell>
-                      <TableCell>{store.responsibleName || store.adminName || '—'}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-word' }}>{store.name}</TableCell>
+                      <TableCell sx={{ wordBreak: 'break-word' }}>{store.responsibleName || store.adminName || '—'}</TableCell>
                       <TableCell>{PLAN_LABELS[store.plan] || store.plan || '—'}</TableCell>
                       <TableCell>{formatCurrency(store.price)}</TableCell>
                       <TableCell>
@@ -455,6 +463,55 @@ export default function MasterDashboard() {
                   )}
                 </TableBody>
               </Table>
+              </Box>
+
+              <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' }, p: 1.5 }}>
+                {stores.length === 0 && (
+                  <Typography align="center" sx={{ py: 4 }} color="text.secondary">
+                    Nenhuma loja cadastrada.
+                  </Typography>
+                )}
+                {stores.map((store) => (
+                  <Paper
+                    key={store.id}
+                    elevation={0}
+                    sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+                  >
+                    <Stack spacing={1}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
+                        <Typography fontWeight={700} sx={{ wordBreak: 'break-word' }}>
+                          {store.name}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={
+                            SUBSCRIPTION_STATUS_LABELS[store.subscriptionStatus]
+                            || store.subscriptionStatus
+                            || '—'
+                          }
+                          color={statusColor(store.subscriptionStatus)}
+                        />
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
+                        {store.responsibleName || store.adminName || '—'}
+                      </Typography>
+                      <Typography variant="body2">
+                        {PLAN_LABELS[store.plan] || store.plan || '—'} · {formatCurrency(store.price)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Vencimento: {formatDate(store.expiresAt)}
+                      </Typography>
+                      <Button
+                        size="small"
+                        onClick={() => openEdit(store)}
+                        sx={{ textTransform: 'none', alignSelf: 'flex-start', minHeight: 40 }}
+                      >
+                        Editar
+                      </Button>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
             </Paper>
           </>
         )}

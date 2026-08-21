@@ -13,8 +13,9 @@ export function CardTable({ table, onShowQRCode }) {
       sx={{
         display: "flex",
         borderRadius: 4,
-        width: 238,
-        height: 187,
+        width: "100%",
+        maxWidth: { sm: 238 },
+        minHeight: 187,
         backgroundColor: "#0000",
         boxShadow: 3,
         transition: "transform 0.3s",
@@ -42,6 +43,9 @@ export function CardTable({ table, onShowQRCode }) {
             alignItems: "start",
             fontWeight: "bold",
             mt: 3,
+            px: 1,
+            textAlign: "center",
+            wordBreak: "break-word",
           }}
         >
           Mesa {table.number ?? "Sem número"}

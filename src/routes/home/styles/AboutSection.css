@@ -1,6 +1,6 @@
 .about-section {
   padding: 80px 2rem;
-  background: white;
+  background: var(--color-surface);
 }
 
 .about-container {
@@ -62,7 +62,7 @@
 
 .about-feature-item:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(123, 63, 242, 0.12);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.12);
 }
 
 .feature-icon {
@@ -111,7 +111,7 @@
 
 .stat-box:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(123, 63, 242, 0.15);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.15);
 }
 
 .stat-value {
@@ -137,12 +137,12 @@
   }
 
   .about-title {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 6vw, 2rem);
   }
 
   .about-stats {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 }
 

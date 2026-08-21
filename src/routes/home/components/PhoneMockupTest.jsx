@@ -21,7 +21,7 @@ const PhoneMockupTest = () => {
               fontWeight: 700,
               color: '#2D2D2D',
               mb: 2,
-              background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+              background: 'var(--gradient)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
@@ -126,7 +126,7 @@ const PhoneMockupTest = () => {
             variant="contained"
             onClick={() => setShowPlaceholder(!showPlaceholder)}
             sx={{
-              background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+              background: 'var(--gradient)',
               borderRadius: '12px',
               px: 3,
               py: 1.5,

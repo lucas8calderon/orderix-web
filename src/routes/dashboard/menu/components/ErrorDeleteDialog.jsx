@@ -5,10 +5,13 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 
 export default function ErrorDeleteDialog({ open, onClose, itemName }) {
+  const dialogProps = useDialogResponsiveProps({ fullScreenOnMobile: false });
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} {...dialogProps}>
       <DialogTitle>Erro ao excluir</DialogTitle>
       <DialogContent>
         <Typography>

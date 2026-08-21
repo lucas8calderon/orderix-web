@@ -5,6 +5,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 
 export function ConfirmDeleteDialog({
   open,
@@ -17,35 +18,38 @@ export function ConfirmDeleteDialog({
   const typeLabels = {
     category: "a categoria",
     product: "o produto",
-    table: "a mesa"
+    table: "a mesa",
+    comanda: "a comanda",
   };
+  const dialogProps = useDialogResponsiveProps({
+    fullScreenOnMobile: false,
+    paperSx: {
+      borderRadius: '16px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+    },
+  });
 
   return (
     <Dialog 
       open={open} 
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-        }
-      }}
+      {...dialogProps}
     >
       <DialogTitle sx={{ 
         fontWeight: 600, 
-        color: '#333',
+        color: 'var(--color-text-primary)',
         fontSize: '1.25rem'
       }}>
         Confirmar exclusão
       </DialogTitle>
       <DialogContent sx={{ padding: '0 24px 24px 24px' }}>
         <Typography sx={{ 
-          color: '#666',
+          color: 'var(--color-text-secondary)',
           fontSize: '1rem',
           lineHeight: 1.5
         }}>
           Tem certeza que deseja excluir {typeLabels[itemType] || "o item"}{" "}
-          <b style={{ color: '#7b2cbf' }}>{itemName}</b>?
+          <b style={{ color: 'var(--color-primary)' }}>{itemName}</b>?
           {itemType === 'category' ? (
             <>
               {' '}
@@ -54,17 +58,17 @@ export function ConfirmDeleteDialog({
           ) : null}
         </Typography>
       </DialogContent>
-      <DialogActions sx={{ padding: '0 24px 24px 24px', gap: 2 }}>
+      <DialogActions sx={{ padding: '0 24px 24px 24px', gap: 2, flexWrap: 'wrap' }}>
         <Button 
           onClick={onClose} 
           variant="outlined"
           sx={{
             borderRadius: '8px',
-            borderColor: '#e0e0e0',
-            color: '#666',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-secondary)',
             '&:hover': {
-              borderColor: '#ccc',
-              backgroundColor: '#f5f5f5',
+              borderColor: 'var(--color-text-muted)',
+              backgroundColor: 'var(--color-surface-muted)',
             }
           }}
         >
@@ -75,9 +79,9 @@ export function ConfirmDeleteDialog({
           variant="contained"
           sx={{
             borderRadius: '8px',
-            backgroundColor: '#7b2cbf',
+            backgroundColor: 'var(--color-primary)',
             '&:hover': {
-              backgroundColor: '#6a1b9a',
+              backgroundColor: 'var(--color-primary-dark)',
             }
           }}
         >

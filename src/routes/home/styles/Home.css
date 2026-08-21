@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 * {
   margin: 0;
@@ -7,17 +7,12 @@
 }
 
 :root {
-  --primary-color: #7B3FF2;
-  --secondary-color: #B896F9;
-  --white: #FFFFFF;
-  --light-gray: #F5F5F7;
-  --dark-gray: #2D2D2D;
-  --text-gray: #666666;
-  --gradient: linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%);
+  --primary-color: var(--color-brand-home);
+  --secondary-color: var(--color-brand-home-soft);
 }
 
 body {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -26,6 +21,8 @@ body {
 .home {
   width: 100%;
   overflow-x: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
 }
 
 /* Smooth scroll */

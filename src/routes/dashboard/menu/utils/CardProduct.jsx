@@ -24,8 +24,10 @@ export function CardProduct({ image, name, description, value, portion, isAvaila
         sx={{
           display: "flex",
           borderRadius: 4,
-          width: 350,
-          height: 350,
+          width: '100%',
+          maxWidth: 350,
+          minHeight: 280,
+          height: 'auto',
           backgroundColor: "var(--color-white)",
           color: "var(--color-black)",
           boxShadow: 3,

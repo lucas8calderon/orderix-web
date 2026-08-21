@@ -10,9 +10,15 @@ import {
 } from "@mui/material";
 import { QRCodeSVG } from "qrcode.react";
 import { Download, X } from "lucide-react";
+import { useIsMobile, useDialogResponsiveProps } from "../../../../commons/hooks/useResponsive";
 
 export function TableQRCodeDialog({ open, onClose, table }) {
   const [downloading, setDownloading] = useState(false);
+  const isMobile = useIsMobile();
+  const dialogProps = useDialogResponsiveProps({
+    fullScreenOnMobile: false,
+  });
+  const qrSize = isMobile ? 200 : 256;
 
   // Gerar dados da mesa para o QR Code (JSON com id e número da mesa)
   const tableData = table ? JSON.stringify({
@@ -51,11 +57,11 @@ export function TableQRCodeDialog({ open, onClose, table }) {
       open={open} 
       onClose={onClose}
       maxWidth="sm"
-      fullWidth
+      {...dialogProps}
     >
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
+          <Typography variant="h6" sx={{ pr: 1, wordBreak: 'break-word' }}>
             QR Code - Mesa {table?.number}
           </Typography>
           <IconButton onClick={onClose} size="small">
@@ -81,7 +87,7 @@ export function TableQRCodeDialog({ open, onClose, table }) {
             >
               <QRCodeSVG 
                 value={tableData} 
-                size={256}
+                size={qrSize}
                 level="H"
                 includeMargin={true}
               />
@@ -100,6 +106,8 @@ export function TableQRCodeDialog({ open, onClose, table }) {
             sx={{
               backgroundColor: "var(--color-primary)",
               color: "var(--color-white)",
+              minHeight: 44,
+              width: { xs: '100%', sm: 'auto' },
               ":hover": {
                 backgroundColor: "var(--color-secondary)",
                 color: "var(--color-black)",

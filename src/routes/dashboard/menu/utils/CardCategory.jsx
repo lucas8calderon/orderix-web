@@ -25,12 +25,12 @@ export function CardCategory({ width = 250, height = 80, image, name, descriptio
         sx={{
           width: width,
           maxWidth: isCategory ? "100%" : "700px",
-          backgroundColor: "white",
+          backgroundColor: "var(--color-surface)",
           borderRadius: "12px",
-          border: applySelectedStyle ? "2px solid #7b2cbf" : "1px solid #e0e0e0",
+          border: applySelectedStyle ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
           boxShadow: applySelectedStyle
-            ? "0 8px 32px rgba(123, 44, 191, 0.2)"
-            : "0 2px 8px rgba(0, 0, 0, 0.1)",
+            ? "0 8px 32px rgba(var(--color-primary-rgb), 0.2)"
+            : "var(--color-shadow)",
           transition: "all 0.3s ease",
           "&:hover": {
             transform: "translateY(-2px)",

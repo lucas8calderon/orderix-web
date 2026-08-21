@@ -13,7 +13,7 @@ const AboutCard = styled(Card)(({ theme }) => ({
   position: 'relative',
   background: 'rgba(255, 255, 255, 0.8)',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(123, 63, 242, 0.1)',
+  border: '1px solid rgba(139, 92, 246, 0.1)',
   borderRadius: '20px',
   overflow: 'hidden',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -28,12 +28,12 @@ const AboutCard = styled(Card)(({ theme }) => ({
   
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 8px 25px rgba(123, 63, 242, 0.12)',
-    border: '1px solid rgba(123, 63, 242, 0.2)',
+    boxShadow: '0 8px 25px rgba(139, 92, 246, 0.12)',
+    border: '1px solid rgba(139, 92, 246, 0.2)',
     
     '& .icon-container': {
       transform: 'scale(1.05) rotate(2deg)',
-      boxShadow: '0 6px 20px rgba(123, 63, 242, 0.25)',
+      boxShadow: '0 6px 20px rgba(139, 92, 246, 0.25)',
     },
     
     '& .icon-glow': {
@@ -53,7 +53,7 @@ const AboutCard = styled(Card)(({ theme }) => ({
     left: 0,
     width: '100%',
     height: '4px',
-    background: 'linear-gradient(90deg, #7B3FF2 0%, #B896F9 100%)',
+    background: 'var(--gradient)',
     transformOrigin: 'left',
     transform: 'scaleX(0)',
     transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -65,13 +65,13 @@ const IconContainer = styled(Box)(({ theme }) => ({
   width: '80px',
   height: '80px',
   borderRadius: '50%',
-  background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+  background: 'var(--gradient)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   marginBottom: theme.spacing(3),
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  boxShadow: '0 4px 15px rgba(123, 63, 242, 0.2)',
+  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)',
   color: '#FFFFFF',
   
   '& .icon-glow': {
@@ -79,7 +79,7 @@ const IconContainer = styled(Box)(({ theme }) => ({
     width: '100%',
     height: '100%',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(123, 63, 242, 0.6) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, transparent 70%)',
     opacity: 0,
     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     transform: 'scale(0.8)',
@@ -227,9 +227,9 @@ const AboutSection = () => {
             sx={{
               textAlign: 'center',
               padding: { xs: 2, md: 3 },
-              background: 'rgba(123, 63, 242, 0.05)',
+              background: 'rgba(139, 92, 246, 0.05)',
               borderRadius: '16px',
-              border: '1px solid rgba(123, 63, 242, 0.1)',
+              border: '1px solid rgba(139, 92, 246, 0.1)',
               minWidth: '120px'
             }}
           >
@@ -237,7 +237,7 @@ const AboutSection = () => {
               variant="h4"
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+                background: 'var(--gradient)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -255,9 +255,9 @@ const AboutSection = () => {
             sx={{
               textAlign: 'center',
               padding: { xs: 2, md: 3 },
-              background: 'rgba(123, 63, 242, 0.05)',
+              background: 'rgba(139, 92, 246, 0.05)',
               borderRadius: '16px',
-              border: '1px solid rgba(123, 63, 242, 0.1)',
+              border: '1px solid rgba(139, 92, 246, 0.1)',
               minWidth: '120px'
             }}
           >
@@ -265,7 +265,7 @@ const AboutSection = () => {
               variant="h4"
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+                background: 'var(--gradient)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -283,9 +283,9 @@ const AboutSection = () => {
             sx={{
               textAlign: 'center',
               padding: { xs: 2, md: 3 },
-              background: 'rgba(123, 63, 242, 0.05)',
+              background: 'rgba(139, 92, 246, 0.05)',
               borderRadius: '16px',
-              border: '1px solid rgba(123, 63, 242, 0.1)',
+              border: '1px solid rgba(139, 92, 246, 0.1)',
               minWidth: '120px'
             }}
           >
@@ -293,7 +293,7 @@ const AboutSection = () => {
               variant="h4"
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #7B3FF2 0%, #B896F9 100%)',
+                background: 'var(--gradient)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',

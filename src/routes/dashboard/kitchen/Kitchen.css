@@ -1,18 +1,19 @@
 /* Kitchen Component Styles */
 .kitchen-container {
   padding: 24px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  min-height: 100vh;
+  background: var(--color-bg);
+  min-height: auto;
 }
 
 /* Filter Section */
 .filter-section {
-  background: white;
+  background: var(--color-surface);
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--color-shadow);
   margin-bottom: 24px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
 }
 
 /* Floating Refresh Button */
@@ -21,14 +22,14 @@
   bottom: 24px !important;
   right: 24px !important;
   z-index: 1000 !important;
-  background-color: #7b2cbf !important;
-  box-shadow: 0 4px 20px rgba(123, 44, 191, 0.3) !important;
+  background-color: var(--color-primary) !important;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3) !important;
 }
 
 .floating-refresh-btn:hover {
   background-color: #6a2599 !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 25px rgba(123, 44, 191, 0.4) !important;
+  box-shadow: 0 6px 25px rgba(139, 92, 246, 0.4) !important;
 }
 
 .floating-refresh-btn:disabled {
@@ -105,7 +106,7 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .kitchen-container {
-    padding: 16px;
+    padding: 8px 0 80px;
   }
   
   .kitchen-header {
@@ -136,15 +137,15 @@
 }
 
 .drop-zone {
-  border: 2px dashed #7B3FF2;
-  background-color: rgba(123, 63, 242, 0.05);
+  border: 2px dashed var(--color-primary);
+  background-color: rgba(139, 92, 246, 0.05);
   border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 .drop-zone.drag-over {
-  background-color: rgba(123, 63, 242, 0.1);
-  border-color: #7B3FF2;
+  background-color: rgba(139, 92, 246, 0.1);
+  border-color: var(--color-primary);
 }
 
 /* Loading states */
@@ -178,15 +179,14 @@
   opacity: 0.5;
 }
 
-/* Hover effects */
-.MuiCard-root:hover {
+.kitchen-container .MuiCard-root:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.MuiButton-root:hover {
+.kitchen-container .MuiButton-root:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(123, 63, 242, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 /* Custom scrollbar for the entire page */
@@ -222,11 +222,11 @@
 }
 
 /* Melhorias visuais para cards */
-.MuiCard-root {
+.kitchen-container .MuiCard-root {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.MuiCard-root:hover {
+.kitchen-container .MuiCard-root:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
 }
@@ -256,8 +256,8 @@
 
 /* Estilos para drop zones */
 .drop-zone {
-  border: 2px dashed #7B3FF2;
-  background-color: rgba(123, 63, 242, 0.05);
+  border: 2px dashed var(--color-primary);
+  background-color: rgba(139, 92, 246, 0.05);
   border-radius: 12px;
   transition: all 0.3s ease;
   position: relative;
@@ -269,7 +269,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #7B3FF2;
+  color: var(--color-primary);
   font-weight: bold;
   font-size: 14px;
   opacity: 0.7;
@@ -277,8 +277,8 @@
 }
 
 .drop-zone.drag-over {
-  background-color: rgba(123, 63, 242, 0.1);
-  border-color: #7B3FF2;
+  background-color: rgba(139, 92, 246, 0.1);
+  border-color: var(--color-primary);
   transform: scale(1.02);
 }
 
@@ -297,7 +297,7 @@
 /* Responsividade melhorada */
 @media (max-width: 768px) {
   .kitchen-container {
-    padding: 16px;
+    padding: 8px 0 80px;
   }
   
   .floating-refresh-btn {
@@ -351,11 +351,11 @@
 }
 
 /* Melhorias nos ícones */
-.MuiSvgIcon-root {
+.kitchen-container .MuiSvgIcon-root {
   transition: all 0.3s ease;
 }
 
-.MuiIconButton-root:hover .MuiSvgIcon-root {
+.kitchen-container .MuiIconButton-root:hover .MuiSvgIcon-root {
   transform: scale(1.1);
 }
 

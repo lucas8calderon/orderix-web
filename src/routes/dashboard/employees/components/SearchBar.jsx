@@ -29,7 +29,7 @@ export function SearchBar({ onSearch, placeholder = "Buscar colaborador por nome
       }}
       sx={{
         '& .MuiOutlinedInput-root': {
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-input-bg)',
           borderRadius: '12px',
           '&:hover': {
             '& .MuiOutlinedInput-notchedOutline': {
@@ -42,6 +42,8 @@ export function SearchBar({ onSearch, placeholder = "Buscar colaborador por nome
             },
           },
         },
+        width: '100%',
+        maxWidth: { xs: '100%', sm: 420 },
       }}
     />
   );

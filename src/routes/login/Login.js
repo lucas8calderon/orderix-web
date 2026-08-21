@@ -11,21 +11,44 @@ import * as LoginConstants from './loginConstants.js';
 import signIn, { resolveHomePath } from '../../services/authService.js';
 import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 
 function Login() {
     const [loginError, setLoginError] = useState(false);
 
     return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover' }}>
-            <Container maxWidth="sm" sx={{ marginTop: 32, marginBottom: 32, marginRight: 20, marginLeft: 20, borderRadius: '12px', bgcolor: '#FFFFFF' }}>
-                <Box sx={{ marginLeft: -3, display: 'flex', height: '8vh', width: '62vh', flexDirection: 'column' }}>
-                    {loginError && (
-                        <AlertMessage/>
-                    )}
-                </Box>
-                <Box sx={{ bgcolor: '#FFFFFF', height: '70vh', display: 'flex', justifyContent: 'center' }}>
-                    <LoginContent setLoginError={setLoginError} />
-                </Box>
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                width: '100%',
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                px: { xs: 2, sm: 3 },
+                py: { xs: 3, sm: 6 },
+                position: 'relative',
+            }}
+        >
+            <Box sx={{ position: 'absolute', top: 12, right: 12, color: '#fff' }}>
+                <ThemeToggleButton className="header-theme-toggle" />
+            </Box>
+            <Container
+                maxWidth="sm"
+                sx={{
+                    borderRadius: '12px',
+                    bgcolor: 'var(--color-surface)',
+                    color: 'var(--color-text-primary)',
+                    px: { xs: 2.5, sm: 5 },
+                    py: { xs: 3, sm: 5 },
+                    width: '100%',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
+                }}
+            >
+                {loginError && <AlertMessage />}
+                <LoginContent setLoginError={setLoginError} />
             </Container>
         </Box>
     );
@@ -33,7 +56,7 @@ function Login() {
 
 function AlertMessage() {
     return (
-        <Alert variant="filled" severity="error">
+        <Alert variant="filled" severity="error" sx={{ mb: 2, wordBreak: 'break-word' }}>
             Credenciais inválidas. Você <Link to="/forgot-password" style={{ color: '#FFFFFF' }}>
                 esqueceu a sua senha
             </Link>?
@@ -43,7 +66,7 @@ function AlertMessage() {
 
 function LoginContent({ setLoginError }) {
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
             <Logo />
             <WelcomeMessage />
             <FormSection setLoginError={setLoginError} />
@@ -53,17 +76,34 @@ function LoginContent({ setLoginError }) {
 
 function Logo() {
     return (
-        <img src={orderixLogo} height={200} width={280} />
+        <Box
+            component="img"
+            src={orderixLogo}
+            alt="Orderix"
+            sx={{
+                width: '100%',
+                maxWidth: 280,
+                height: 'auto',
+            }}
+        />
     );
 }
 
 function WelcomeMessage() {
     return (
-        <Box sx={{ alignSelf: 'flex-start', marginTop: 4 }}>
-            <Typography variant="h4" component="h4" sx={{ fontWeight: 'bold', marginLeft: '-40px' }}>
+        <Box sx={{ alignSelf: 'stretch', mt: { xs: 2, sm: 4 } }}>
+            <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                    fontWeight: 'bold',
+                    fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                    wordBreak: 'break-word',
+                }}
+            >
                 {LoginConstants.WELCOME_TEXT}
             </Typography>
-            <Typography variant="subtitle1" component="subtitle1" sx={{ marginLeft: '-40px' }}>
+            <Typography variant="subtitle1" component="p">
                 {LoginConstants.CREDENTIALS_TEXT}
             </Typography>
         </Box>
@@ -110,45 +150,52 @@ function FormSection({ setLoginError }) {
 
 
     return (
-        <>
+        <Box sx={{ width: '100%' }}>
             <TextField
-                id="filled-basic"
+                id="login-email"
                 label={LoginConstants.EMAIL_LABEL}
                 variant="filled"
                 type="email"
-                color="success"
+                color="primary"
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
                 error={emailError}
                 helperText={emailHelperText}
-                sx={{ marginTop: 6, width: '130%' }}
+                fullWidth
+                sx={{ mt: { xs: 3, sm: 6 } }}
             />
 
             <TextField
-                id="filled-basic"
+                id="login-password"
                 label={LoginConstants.PASSWORD_LABEL}
                 variant="filled"
                 type="password"
-                color="success"
+                color="primary"
                 value={userPassword}
                 onChange={(e) => setUserPassword(e.target.value)}
                 error={passwordError}
                 helperText={passwordHelperText}
-                sx={{ marginTop: 2, width: '130%' }}
+                fullWidth
+                sx={{ mt: 2 }}
             />
 
-            <Box sx={{ alignSelf: 'flex-end', marginTop: 2, marginRight: -5 }}>
-                <Typography variant="subtitle1" component="subtitle1" sx={{ fontWeight: 'bold' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Typography variant="subtitle1" component="p" sx={{ fontWeight: 'bold' }}>
                     <Link to="/forgot-password" style={{ color: '#2D6187' }}>
                         {LoginConstants.FORGOT_PASSWORD_TEXT}
                     </Link>
                 </Typography>
             </Box>
 
-            <Button onClick={login} variant="contained" color="success" sx={{ marginTop: 8, width: '100%', height: '40px' }}>
+            <Button
+                onClick={login}
+                variant="contained"
+                color="primary"
+                sx={{ mt: { xs: 4, sm: 6 }, width: '100%', minHeight: 44 }}
+            >
                 {LoginConstants.LOGIN_BUTTON_TEXT}
             </Button>
-        </>
+        </Box>
     );
 }
 

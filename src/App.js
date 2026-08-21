@@ -1,6 +1,5 @@
 import './App.css';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import CssBaseline from '@mui/material/CssBaseline';
 import Home from './routes/home/Home';
 import Login from './routes/login/Login';
 import PrivacyPolicy from './routes/privacy/PrivacyPolicy';
@@ -11,6 +10,7 @@ import SubscriptionBlocked from './routes/subscription/SubscriptionBlocked';
 import { CategoryProvider } from './routes/dashboard/menu/category/providers/CategoryContext.js';
 import { ProductProvider } from './routes/dashboard/menu/product/providers/ProductContext.js';
 import { TablesProvider } from './routes/dashboard/tables/provider/TablesContext.js';
+import { ComandasProvider } from './routes/dashboard/comandas/provider/ComandasContext.js';
 import { EmployeesProvider } from './routes/dashboard/employees/provider/EmployeesContext.js';
 import { getCurrentUser, isAuthenticated } from './services/session';
 import {
@@ -18,6 +18,7 @@ import {
   isPlatformAdmin,
   isSubscriptionActive,
 } from './services/accessControl';
+import { AppThemeProvider } from './theme/ThemeContext';
 import './services/apiConfig';
 
 function RequireMaster({ children }) {
@@ -63,9 +64,9 @@ function App() {
   initializeFirebase();
 
   return (
-    <Router>
-      <CssBaseline />
-      <Routes>
+    <AppThemeProvider>
+      <Router>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -92,9 +93,11 @@ function App() {
               <ProductProvider>
                 <CategoryProvider>
                   <TablesProvider>
-                    <EmployeesProvider>
-                      <Dashboard />
-                    </EmployeesProvider>
+                    <ComandasProvider>
+                      <EmployeesProvider>
+                        <Dashboard />
+                      </EmployeesProvider>
+                    </ComandasProvider>
                   </TablesProvider>
                 </CategoryProvider>
               </ProductProvider>
@@ -103,7 +106,8 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+      </Router>
+    </AppThemeProvider>
   );
 }
 

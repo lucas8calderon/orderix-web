@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
+import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -55,6 +56,9 @@ export function ProductFormDialog({
 }) {
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState('');
+  const dialogProps = useDialogResponsiveProps({
+    paperSx: { borderRadius: { xs: 0, sm: '16px' } },
+  });
 
   const isEdit = Boolean(product?.id);
 
@@ -135,11 +139,10 @@ export function ProductFormDialog({
       keepMounted
       onClose={handleClose}
       maxWidth="sm"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: '16px' } }}
+      {...dialogProps}
     >
-      <DialogContent sx={{ padding: '32px' }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#333' }}>
+      <DialogContent sx={{ p: { xs: 2, sm: 4 }, overflowY: 'auto' }}>
+        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           {isEdit ? 'Editar produto' : 'Novo produto'}
         </Typography>
 
@@ -220,12 +223,20 @@ export function ProductFormDialog({
           sx={{ mb: 2 }}
         />
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            mb: 2,
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+          }}
+        >
           <Button
             component="label"
             variant="outlined"
             startIcon={<CloudUploadIcon />}
-            sx={{ borderColor: '#7b2cbf', color: '#7b2cbf' }}
+            sx={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
           >
             Upload
             <VisuallyHiddenInput
@@ -262,7 +273,15 @@ export function ProductFormDialog({
           />
         ) : null}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 2,
+            flexWrap: 'wrap',
+            '& > button': { minHeight: 44, flex: { xs: '1 1 140px', sm: '0 0 auto' } },
+          }}
+        >
           <Button onClick={handleClose} variant="outlined">
             Cancelar
           </Button>
@@ -270,7 +289,7 @@ export function ProductFormDialog({
             disabled={!canSave}
             variant="contained"
             onClick={handleSave}
-            sx={{ backgroundColor: '#7b2cbf', '&:hover': { backgroundColor: '#6a1b9a' } }}
+            sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}
           >
             {saving ? 'Salvando...' : 'Salvar produto'}
           </Button>

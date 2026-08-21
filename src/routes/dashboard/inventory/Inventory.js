@@ -58,6 +58,7 @@ import {
   PriorityHigh
 } from '@mui/icons-material';
 import { PieChart as RechartsPieChart, Cell, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import './Inventory.css';
 
 const InventoryPanel = () => {
@@ -67,6 +68,7 @@ const InventoryPanel = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const dialogProps = useDialogResponsiveProps();
 
   // Mock data - em produção viria de APIs
   const [inventoryData, setInventoryData] = useState({
@@ -79,7 +81,7 @@ const InventoryPanel = () => {
       { name: 'Vegetais', count: 38, value: 8900, color: '#4caf50' },
       { name: 'Bebidas', count: 32, value: 12000, color: '#2196f3' },
       { name: 'Temperos', count: 25, value: 3200, color: '#ff9800' },
-      { name: 'Outros', count: 16, value: 3000, color: '#9c27b0' }
+      { name: 'Outros', count: 16, value: 3000, color: '#8B5CF6' }
     ],
     lowStockProducts: [
       { id: 1, name: 'Tomate', current: 5, min: 10, unit: 'kg', category: 'Vegetais', lastUpdate: '2h atrás', price: 8.50, supplier: 'Hortifruti ABC' },
@@ -360,7 +362,7 @@ const InventoryPanel = () => {
               </Typography>
               <List className="products-list">
                 {inventoryData.lowStockProducts.slice(0, 5).map((product) => (
-                  <ListItem key={product.id} className="product-item">
+                  <ListItem key={product.id} className="product-item" sx={{ pr: { xs: 2, sm: 16 } }}>
                     <ListItemAvatar>
                       <Avatar 
                         className="product-avatar"
@@ -420,7 +422,7 @@ const InventoryPanel = () => {
               <Typography variant="h6" className="section-title">
                 📋 Movimentações Recentes
               </Typography>
-              <TableContainer>
+              <TableContainer sx={{ overflowX: 'auto', display: { xs: 'none', md: 'block' } }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -470,6 +472,32 @@ const InventoryPanel = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+              <Box className="movements-cards-mobile">
+                {inventoryData.recentMovements.map((movement) => (
+                  <Box key={movement.id} className="movement-mobile-card">
+                    <Box className="movement-mobile-header">
+                      <Typography variant="body1" className="product-name" sx={{ wordBreak: 'break-word' }}>
+                        {movement.product}
+                      </Typography>
+                      <Chip
+                        icon={getMovementIcon(movement.type)}
+                        label={movement.type === 'entrada' ? 'Entrada' : 'Saída'}
+                        size="small"
+                        style={{
+                          backgroundColor: getMovementColor(movement.type),
+                          color: 'white',
+                        }}
+                      />
+                    </Box>
+                    <Typography variant="body2">
+                      {movement.quantity} {movement.unit} · R$ {movement.value.toFixed(2)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {movement.user} · {movement.date}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -483,7 +511,7 @@ const InventoryPanel = () => {
               </Typography>
               <List className="suppliers-list">
                 {inventoryData.suppliers.map((supplier, index) => (
-                  <ListItem key={index} className="supplier-item">
+                  <ListItem key={index} className="supplier-item" sx={{ pr: { xs: 2, sm: 12 } }}>
                     <ListItemAvatar>
                       <Avatar className="supplier-avatar">
                         {supplier.name.charAt(0)}
@@ -526,7 +554,7 @@ const InventoryPanel = () => {
               <Box className="chart-container">
                 <ResponsiveContainer width="100%" height={300}>
                   <RechartsBarChart data={inventoryData.monthlyUsage}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                     <XAxis dataKey="month" />
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" />
@@ -536,7 +564,7 @@ const InventoryPanel = () => {
                         name === 'usage' ? 'Uso' : 'Custo'
                       ]}
                     />
-                    <Bar yAxisId="left" dataKey="usage" fill="#7b2cbf" name="usage" />
+                    <Bar yAxisId="left" dataKey="usage" fill="#8B5CF6" name="usage" />
                     <Bar yAxisId="right" dataKey="cost" fill="#ff9800" name="cost" />
                   </RechartsBarChart>
                 </ResponsiveContainer>
@@ -547,7 +575,7 @@ const InventoryPanel = () => {
       </Grid>
 
       {/* Dialog para Adicionar/Editar Produto */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" {...dialogProps}>
         <DialogTitle>
           {selectedProduct ? 'Editar Produto' : 'Adicionar Novo Produto'}
         </DialogTitle>
@@ -603,8 +631,8 @@ const InventoryPanel = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button variant="contained" onClick={handleCloseDialog}>
+          <Button onClick={handleCloseDialog} sx={{ minHeight: 44 }}>Cancelar</Button>
+          <Button variant="contained" onClick={handleCloseDialog} sx={{ minHeight: 44 }}>
             {selectedProduct ? 'Salvar' : 'Adicionar'}
           </Button>
         </DialogActions>

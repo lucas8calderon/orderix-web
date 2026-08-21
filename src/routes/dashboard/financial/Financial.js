@@ -69,7 +69,7 @@ const Financial = () => {
       { name: 'Salada Caesar', sales: 28, revenue: 1400 }
     ],
     paymentMethods: [
-      { name: 'PIX', value: 45, color: '#7b2cbf' },
+      { name: 'PIX', value: 45, color: '#8B5CF6' },
       { name: 'Cartão', value: 30, color: '#2196F3' },
       { name: 'Dinheiro', value: 15, color: '#4CAF50' },
       { name: 'Vale Refeição', value: 10, color: '#FF9800' }
@@ -469,7 +469,7 @@ const Financial = () => {
                     <XAxis dataKey="hour" />
                     <YAxis />
                     <RechartsTooltip formatter={(value) => [`R$ ${value.toLocaleString()}`, 'Vendas']} />
-                    <Bar dataKey="sales" fill="#7b2cbf" />
+                    <Bar dataKey="sales" fill="#8B5CF6" />
                   </RechartsBarChart>
                 </ResponsiveContainer>
               </Box>
@@ -493,7 +493,7 @@ const Financial = () => {
                     <XAxis dataKey="day" />
                     <YAxis />
                     <RechartsTooltip formatter={(value) => [`R$ ${value.toLocaleString()}`, 'Vendas']} />
-                    <Bar dataKey="current" fill="#7b2cbf" name="Esta Semana" />
+                    <Bar dataKey="current" fill="#8B5CF6" name="Esta Semana" />
                     <Bar dataKey="previous" fill="#e0e0e0" name="Semana Anterior" />
                   </RechartsBarChart>
                 </ResponsiveContainer>

@@ -8,9 +8,7 @@ import {
   Slide,
   Typography,
   TextField,
-  Avatar,
   Grid,
-  Divider,
   FormControl,
   Select,
   MenuItem,
@@ -18,21 +16,9 @@ import {
   Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { styled } from "@mui/material/styles";
-import  {TablesContext}  from "../../tables/provider/TablesContext";
+import { TablesContext } from "../../tables/provider/TablesContext";
 import { usePostTables } from "../../tables/hook/usePostTables";
-
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  width: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-});
+import { useDialogResponsiveProps } from "../../../../commons/hooks/useResponsive";
 
 const Transition = forwardRef((props, ref) => (
   <Slide direction="up" ref={ref} {...props} />
@@ -56,6 +42,7 @@ export function TableFormDialog({
  const [tableCapacity, setTableCapacity] = useState();
  const [tableIsAvailable, setTableIsAvailable] = useState();
  const [showAlert, setShowAlert] = useState();
+ const dialogProps = useDialogResponsiveProps();
 
   const handleTableSave = () => {
     onSaveTable({
@@ -86,12 +73,11 @@ export function TableFormDialog({
       TransitionComponent={Transition}
       keepMounted
       onClose={onClose}
-      maxWidth="md"
-      fullWidth
+      maxWidth="sm"
+      {...dialogProps}
     >
-      <DialogContent>
-        {/* Produto */}
-        <DialogContentText sx={{ mt: 3 }}>
+      <DialogContent sx={{ p: { xs: 2, sm: 3 }, overflowY: 'auto' }}>
+        <DialogContentText sx={{ mt: { xs: 1, sm: 3 } }} component="div">
           {showAlert && onAddTableResult?.message && (
             <Alert sx={{ mb: 2 }} severity={onAddTableResult.severity}>
               {onAddTableResult.message}
@@ -101,15 +87,10 @@ export function TableFormDialog({
           <Typography variant="h6" mb={2}>
             Mesa
           </Typography>
-          <Grid container spacing={2} columns={16}>
-            <Grid item xs={1}>
-              <Avatar sx={{ bgcolor: "red" }} variant="square">
-                N
-              </Avatar>
-            </Grid>
-            <Grid item xs={15} sx={{ display: "flex", alignContent: "center" }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
               <TextField
-                sx={{ mr: 2, ml: 3 }}
+                fullWidth
                 type="number"
                 label="Número da mesa"
                 inputProps={{ maxLength: 4 }}
@@ -117,18 +98,19 @@ export function TableFormDialog({
                 onChange={(e) => setTableNumber(e.target.value)}
                 variant="outlined"
               />
+            </Grid>
+            <Grid item xs={12} sm={4}>
               <TextField
-                sx={{ mr: 2 }}
+                fullWidth
                 label="Capacidade"
                 inputProps={{ maxLength: 10 }}
                 value={tableCapacity}
                 onChange={(e) => setTableCapacity(e.target.value)}
                 variant="outlined"
               />
-              <FormControl
-                sx={{ display: "flex", flexWrap: "wrap", minWidth: 200 }} // largura mínima
-                variant="outlined"
-              >
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="table-available-label">
                   Está disponível?
                 </InputLabel>
@@ -143,32 +125,34 @@ export function TableFormDialog({
                 </Select>
               </FormControl>
             </Grid>
-            <Box
-            sx={{
-              display: "flex",
-              width: "100%",
-              justifyContent: "center", 
-              mt: 2
-            }}
-            >
-
-            
-            <Button
-              sx={{
-                backgroundColor: "var(--color-primary)",
-                color: "var(--color-white)",
-                ":hover": {
-                  backgroundColor: "var(--color-secondary)",
-                  color: "var(--color-black)"
-                }
-              }}
-              startIcon={<AddIcon />}
-              onClick={() => handleTableSave(true)}
-              size="large"
-            >
-              Nova mesa
-            </Button>
-            </Box>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  display: "flex",
+                  width: "100%",
+                  justifyContent: "center",
+                  mt: 1
+                }}
+              >
+                <Button
+                  sx={{
+                    backgroundColor: "var(--color-primary)",
+                    color: "var(--color-white)",
+                    minHeight: 44,
+                    width: { xs: "100%", sm: "auto" },
+                    ":hover": {
+                      backgroundColor: "var(--color-secondary)",
+                      color: "var(--color-black)"
+                    }
+                  }}
+                  startIcon={<AddIcon />}
+                  onClick={() => handleTableSave(true)}
+                  size="large"
+                >
+                  Nova mesa
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
         </DialogContentText>
       </DialogContent>

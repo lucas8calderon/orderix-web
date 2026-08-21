@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Header.css';
+import { ThemeToggleButton } from '../../../commons/components/ThemeToggleButton';
 
 const Header = ({ onLoginClick }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -44,9 +45,19 @@ const Header = ({ onLoginClick }) => {
           <button onClick={() => scrollToSection('plans')}>Planos</button>
           <button onClick={() => scrollToSection('clients')}>Clientes</button>
           <button onClick={() => scrollToSection('support')}>Suporte</button>
+          <button
+            className="nav-login-mobile"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onLoginClick();
+            }}
+          >
+            Entrar no painel
+          </button>
         </nav>
 
         <div className="header-actions">
+          <ThemeToggleButton className="home-theme-toggle" />
           <button className="btn-login" onClick={onLoginClick}>
             Entrar no painel
           </button>

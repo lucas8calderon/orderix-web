@@ -168,13 +168,15 @@ export function Tables() {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent: { xs: "stretch", sm: "flex-end" },
         }}
       >
         <Button
           sx={{
             backgroundColor: "var(--color-primary)",
             color: "var(--color-white)",
+            width: { xs: "100%", sm: "auto" },
+            minHeight: 44,
             ":hover": {
               backgroundColor: "var(--color-secondary)",
               color: "var(--color-black)",
@@ -191,10 +193,12 @@ export function Tables() {
         {tables
           .filter((table) => table.number !== 999)
           .map((table) => (
-            <Grid item key={table.id} xs={12} sm={6} md={4} lg={2}>
+            <Grid item key={table.id} xs={12} sm={6} md={4} lg={3} xl={2}>
               <ListItemButton
                 sx={{
                   boxShadow: "none",
+                  width: "100%",
+                  p: { xs: 0, sm: 1 },
                   "&:hover": {
                     boxShadow: "none",
                     backgroundColor: "transparent",
