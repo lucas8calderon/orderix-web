@@ -1,52 +1,103 @@
-import { useState, useEffect } from 'react';
-import { getAllCategories, postCategory, postNewCategory } from '../service/categoryService';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  getAllCategories,
+  postNewCategory,
+  updateCategory,
+} from '../service/categoryService';
 
-export const useGetCategories = (tryAgain) => {
-    const [categories, setCategories] = useState([]);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [emptyResult, setEmptyResult] = useState(false);
+export const useGetCategories = (refreshKey = 0) => {
+  const [categories, setCategories] = useState([]);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [emptyResult, setEmptyResult] = useState(false);
 
-    useEffect(() => {
-        getAllCategories().then(response => {
-            setCategories(response.data);
-            setSuccess(true)
-            setError(false);
-            setLoading(false);
+  const fetchCategories = useCallback(() => {
+    setLoading(true);
+    getAllCategories()
+      .then((response) => {
+        const data = Array.isArray(response.data) ? response.data : [];
+        setCategories(data);
+        setSuccess(true);
+        setEmptyResult(data.length === 0);
+        setError(false);
+      })
+      .catch(() => {
+        setCategories([]);
+        setSuccess(false);
+        setEmptyResult(false);
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-        }).catch(error => {
-            const errorCode = error.response ? error.response.status : 500;
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories, refreshKey]);
 
-            if (errorCode === 404) {
-                setEmptyResult(true);
-            } else {
-                setError(true);
-            }
-
-            setSuccess(false)
-            setLoading(false);
-        })
-    }, [tryAgain]);
-
-    return { categories, error, success, emptyResult, loading, setSuccess };
+  return {
+    categories,
+    error,
+    success,
+    emptyResult,
+    loading,
+    refetch: fetchCategories,
+  };
 };
 
 export const usePostCategory = () => {
-    const [successOnSaveCategory, setSuccessOnSaveCategory] = useState(false);
-    const [errorOnSaveCategory, setErrorOnSaveCategory] = useState(false);
+  const [successOnSaveCategory, setSuccessOnSaveCategory] = useState(false);
+  const [errorOnSaveCategory, setErrorOnSaveCategory] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-    const postCategory = (category) => {
-        postNewCategory(category)
-            .then(response => {
-                setSuccessOnSaveCategory(response.data);
-                setErrorOnSaveCategory(false);
-            })
-            .catch(error => {
-                const errorCode = error.response ? error.response.status : 500;
-                setErrorOnSaveCategory(true);
-            });
+  const saveCategory = (category) => {
+    const payload = {
+      name: category?.name?.trim(),
+      backgroundColor: category?.backgroundColor || null,
+      image: category?.image || null,
+      active: category?.active !== false,
     };
 
-    return { successOnSaveCategory, setSuccessOnSaveCategory, errorOnSaveCategory, postCategory };
+    setSaving(true);
+    setErrorOnSaveCategory(false);
+    setErrorMessage('');
+
+    const request = category?.id
+      ? updateCategory(category.id, payload)
+      : postNewCategory(payload);
+
+    return request
+      .then((response) => {
+        setSuccessOnSaveCategory(true);
+        return response.data;
+      })
+      .catch((err) => {
+        setErrorOnSaveCategory(true);
+        setSuccessOnSaveCategory(false);
+        setErrorMessage(
+          err?.response?.data?.message || 'Erro ao salvar categoria'
+        );
+        throw err;
+      })
+      .finally(() => setSaving(false));
+  };
+
+  const resetSaveState = () => {
+    setSuccessOnSaveCategory(false);
+    setErrorOnSaveCategory(false);
+    setErrorMessage('');
+  };
+
+  return {
+    successOnSaveCategory,
+    setSuccessOnSaveCategory,
+    errorOnSaveCategory,
+    setErrorOnSaveCategory,
+    errorMessage,
+    saving,
+    postCategory: saveCategory,
+    saveCategory,
+    resetSaveState,
+  };
 };

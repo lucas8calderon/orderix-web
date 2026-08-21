@@ -5,11 +5,7 @@ import {
   Button,
   Dialog,
   DialogContent,
-  FormControl,
   FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
   Slide,
   Switch,
   TextField,
@@ -37,62 +33,38 @@ const Transition = forwardRef((props, ref) => (
 const emptyForm = {
   id: null,
   name: '',
-  observation: '',
-  value: '',
-  categoryId: '',
-  isAvailable: true,
   image: '',
+  active: true,
 };
 
-export function ProductFormDialog({
+export function CategoryFormDialog({
   open,
   onClose,
   onSave,
-  product,
-  categories = [],
+  category,
   saving = false,
   errorMessage = '',
 }) {
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState('');
 
-  const isEdit = Boolean(product?.id);
-
-  const availableCategories = categories.filter(
-    (cat) =>
-      cat.active !== false ||
-      String(cat.id) === String(form.categoryId || product?.categoryId)
-  );
+  const isEdit = Boolean(category?.id);
 
   useEffect(() => {
     if (!open) return;
-
-    const defaultCategoryId =
-      product?.categoryId != null
-        ? String(product.categoryId)
-        : availableCategories[0]?.id != null
-          ? String(availableCategories[0].id)
-          : '';
-
-    if (product?.id) {
+    if (category?.id) {
       setForm({
-        id: product.id,
-        name: product.name || '',
-        observation: product.observation || product.description || '',
-        value: product.value != null ? String(product.value) : '',
-        categoryId: product.categoryId != null ? String(product.categoryId) : defaultCategoryId,
-        isAvailable: product.isAvailable !== false,
-        image: product.image || '',
+        id: category.id,
+        name: category.name || '',
+        image: category.image || '',
+        active: category.active !== false,
       });
-      setImagePreview(product.image || '');
+      setImagePreview(category.image || '');
     } else {
-      setForm({
-        ...emptyForm,
-        categoryId: defaultCategoryId,
-      });
+      setForm(emptyForm);
       setImagePreview('');
     }
-  }, [open, product]);
+  }, [open, category]);
 
   const handleClose = () => {
     setForm(emptyForm);
@@ -111,22 +83,7 @@ export function ProductFormDialog({
     reader.readAsDataURL(file);
   };
 
-  const numericValue = Number(String(form.value).replace(',', '.'));
-  const hasCategory = form.categoryId !== '' && form.categoryId != null;
-  const canSave =
-    form.name.trim().length > 0 &&
-    hasCategory &&
-    !Number.isNaN(numericValue) &&
-    numericValue > 0 &&
-    !saving;
-
-  const handleSave = () => {
-    onSave({
-      ...form,
-      categoryId: Number(form.categoryId),
-      value: numericValue,
-    });
-  };
+  const canSave = form.name.trim().length > 0 && !saving;
 
   return (
     <Dialog
@@ -140,7 +97,7 @@ export function ProductFormDialog({
     >
       <DialogContent sx={{ padding: '32px' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#333' }}>
-          {isEdit ? 'Editar produto' : 'Novo produto'}
+          {isEdit ? 'Editar categoria' : 'Nova categoria'}
         </Typography>
 
         {errorMessage ? (
@@ -149,74 +106,26 @@ export function ProductFormDialog({
           </Alert>
         ) : null}
 
-        {availableCategories.length === 0 ? (
-          <Alert severity="warning" sx={{ mb: 2, borderRadius: '12px' }}>
-            Cadastre ao menos uma categoria ativa antes de criar produtos.
-          </Alert>
-        ) : null}
-
         <TextField
           autoFocus
           fullWidth
-          label="Nome do produto"
+          label="Nome da categoria"
           value={form.name}
           onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
           sx={{ mb: 2 }}
         />
 
-        <TextField
-          fullWidth
-          label="Descrição"
-          multiline
-          minRows={2}
-          value={form.observation}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, observation: e.target.value }))
-          }
-          sx={{ mb: 2 }}
-        />
-
-        <TextField
-          fullWidth
-          label="Preço"
-          type="number"
-          inputProps={{ min: 0, step: '0.01' }}
-          value={form.value}
-          onChange={(e) => setForm((prev) => ({ ...prev, value: e.target.value }))}
-          sx={{ mb: 2 }}
-        />
-
-        <FormControl fullWidth sx={{ mb: 2 }} required>
-          <InputLabel id="product-category-label">Categoria</InputLabel>
-          <Select
-            labelId="product-category-label"
-            label="Categoria"
-            value={form.categoryId || ''}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, categoryId: e.target.value }))
-            }
-            disabled={availableCategories.length === 0}
-          >
-            {availableCategories.map((cat) => (
-              <MenuItem key={cat.id} value={String(cat.id)}>
-                {cat.name}
-                {cat.active === false ? ' (inativa)' : ''}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
         <FormControlLabel
           control={
             <Switch
-              checked={form.isAvailable}
+              checked={form.active}
               onChange={(e) =>
-                setForm((prev) => ({ ...prev, isAvailable: e.target.checked }))
+                setForm((prev) => ({ ...prev, active: e.target.checked }))
               }
               color="secondary"
             />
           }
-          label={form.isAvailable ? 'Ativo' : 'Inativo'}
+          label={form.active ? 'Ativa' : 'Inativa'}
           sx={{ mb: 2 }}
         />
 
@@ -269,10 +178,10 @@ export function ProductFormDialog({
           <Button
             disabled={!canSave}
             variant="contained"
-            onClick={handleSave}
+            onClick={() => onSave(form)}
             sx={{ backgroundColor: '#7b2cbf', '&:hover': { backgroundColor: '#6a1b9a' } }}
           >
-            {saving ? 'Salvando...' : 'Salvar produto'}
+            {saving ? 'Salvando...' : 'Salvar categoria'}
           </Button>
         </Box>
       </DialogContent>

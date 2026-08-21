@@ -1,61 +1,69 @@
 import { Box, Container, Typography } from '@mui/material';
 import * as React from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ProductContainer } from './product/Product';
 import { CategoryContainer } from './category/Category';
-import { useContext } from 'react';
-import { CategoryContext } from './category/providers/CategoryContext';
-import { ProductContext } from './product/providers/ProductContext';
-import { NavActionButtons } from './components/NavActionButtons';
 import './Menu.css';
 
 export function Menu() {
-  const { showCategories } = useContext(CategoryContext);
-  const { showProducts } = useContext(ProductContext);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [productsRefreshToken, setProductsRefreshToken] = useState(0);
+  const [categoriesRefreshToken, setCategoriesRefreshToken] = useState(0);
+
+  const handleCategoriesChange = useCallback((nextCategories) => {
+    setCategories(nextCategories || []);
+  }, []);
+
+  const handleProductsChange = useCallback((nextProducts) => {
+    setProducts(Array.isArray(nextProducts) ? nextProducts : []);
+  }, []);
+
+  const handleCategoryDeleted = useCallback(() => {
+    setProductsRefreshToken((token) => token + 1);
+  }, []);
+
+  const handleProductsChanged = useCallback(() => {
+    setCategoriesRefreshToken((token) => token + 1);
+  }, []);
+
+  const productCounts = useMemo(() => {
+    const counts = {};
+    products.forEach((product) => {
+      if (product?.categoryId == null) return;
+      const key = String(product.categoryId);
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
 
   return (
     <Box className="menu-container">
       <Container maxWidth="xl" className="menu-content">
-        <NavActionButtons />
+        <Typography variant="h4" className="menu-page-title">
+          Cardápio
+        </Typography>
+        <Typography variant="body1" className="menu-page-subtitle">
+          Gerencie categorias e produtos da sua loja. Todo produto deve pertencer a uma categoria.
+        </Typography>
 
-        <Box className="menu-grid">
-          {/* Top - Categories Section */}
-          <Box
-            className="categories-section"
-            sx={{
-              mb: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
-            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Categorias
-            </Typography>
-            <CategoryContainer />
-          </Box>
-
-          {/* Bottom - Products Section */}
-          <Box
-            className="products-section"
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Produtos
-            </Typography>
-            <ProductContainer />
-          </Box>
+        <Box className="menu-section">
+          <CategoryContainer
+            onCategoriesChange={handleCategoriesChange}
+            onCategoryDeleted={handleCategoryDeleted}
+            refreshToken={categoriesRefreshToken}
+            productCounts={productCounts}
+          />
         </Box>
 
-        {!showCategories && !showProducts && (
-          <Typography variant="h6" sx={{ marginTop: 6, textAlign: 'center' }}>
-            Carregando cardápio...
-          </Typography>
-        )}
+        <Box className="menu-section">
+          <ProductContainer
+            categories={categories}
+            refreshToken={productsRefreshToken}
+            onProductsChanged={handleProductsChanged}
+            onProductsLoaded={handleProductsChange}
+          />
+        </Box>
       </Container>
     </Box>
   );

@@ -1,275 +1,284 @@
-import * as React from 'react';
-import { useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  Snackbar,
+  Switch,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { Box } from '@mui/material';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import { useGetCategories, usePostCategory } from './hooks/useGetCategories';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-import { CategoryProductFormDialog } from '../components/CategoryProductFormDialog';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { Loading } from '../../../../commons/components/Loading';
-import { CardCategory } from '../utils/CardCategory';
-import { CategoryContext } from './providers/CategoryContext';
-import { ProductContext } from '../product/providers/ProductContext';
-import { useState, useContext } from 'react';
 import { GenericError } from '../../../../commons/components/GenericError';
-import { useDeleteCategory } from './hooks/useDeleteCategories';
+import { CategoryFormDialog } from '../components/CategoryFormDialog';
 import { ConfirmDeleteDialog } from '../components/ConfirmDeleteDialog';
+import { useGetCategories, usePostCategory } from './hooks/useGetCategories';
+import { useDeleteCategory } from './hooks/useDeleteCategories';
+import { CategoryContext } from './providers/CategoryContext';
 import './Category.css';
 
-export function CategoryContainer() {
-    const [tryAgain, setTryAgain] = useState(false);
+export function CategoryContainer({
+  onCategoriesChange,
+  onCategoryDeleted,
+  refreshToken = 0,
+  productCounts = {},
+}) {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
-    const [lastCategoryAux, setLastCategoryAux] = useState({});
+  const { categories, loading, error, refetch } = useGetCategories(refreshKey + refreshToken);
+  const {
+    saveCategory,
+    saving,
+    errorMessage,
+    resetSaveState,
+  } = usePostCategory();
+  const {
+    deleteCategoryById,
+    successToDeleteCategory,
+    errorToDeleteCategory,
+    resetDeleteStateCategory,
+    errorMessage: deleteErrorMessage,
+  } = useDeleteCategory();
 
-    const { categories, error, success, emptyResult, loading } = useGetCategories(tryAgain);
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    setShowCategories,
+    setErrorToLoadCategories,
+  } = useContext(CategoryContext);
 
-    const { successOnSaveCategory, setSuccessOnSaveCategory, errorOnSaveCategory, postCategory } = usePostCategory();
-    const { loadingToDeleteCategory, errorToDeleteCategory, successToDeleteCategory, deleteCategoryById, resetDeleteStateCategory } = useDeleteCategory();
+  useEffect(() => {
+    setShowCategories(true);
+    setErrorToLoadCategories(false);
+    onCategoriesChange?.(categories);
+  }, [categories, onCategoriesChange, setShowCategories, setErrorToLoadCategories]);
 
-    const { setShowProducts, setBlockProductsFields, showProducts } = useContext(ProductContext);
-
-    const { setSelectedCategory,
-        setShowCategories,
-        selectedCategory,
-        setOpenMenuForm,
-        openMenuForm,
-        setOnAddCategoryResult,
-        handleSuccess,
-        handleError,
-        handleAddNewCategory,
-        setHandleAddNewCategory,
-        setErrorToLoadCategories,
-        setBlockCategoriesFields,
-        handleDeleteCategory,
-        openDeleteDialogCategory,
-        setOpenDeleteDialogCategory,
-        setHandleDeleteCategory } = useContext(CategoryContext);
-
-    const handleOnFormClose = () => {
-        setOnAddCategoryResult({});
-        setSelectedCategory(lastCategoryAux);
-        setOpenMenuForm(false);
-        setShowProducts(true);
-        setHandleAddNewCategory(false);
+  useEffect(() => {
+    if (categories.length === 0) return;
+    const stillExists = selectedCategory?.id
+      && categories.some((c) => c.id === selectedCategory.id);
+    if (!stillExists) {
+      setSelectedCategory(categories[0]);
     }
+  }, [categories, selectedCategory, setSelectedCategory]);
 
-    const handleOnTryAgain = () => {
-        setTryAgain(!tryAgain);
+  useEffect(() => {
+    if (successToDeleteCategory) {
+      setToast({
+        open: true,
+        message: 'Categoria excluída',
+        severity: 'success',
+      });
+      setDeleteTarget(null);
+      resetDeleteStateCategory();
+      setRefreshKey((k) => k + 1);
+      setSelectedCategory({});
+      onCategoryDeleted?.();
     }
+  }, [successToDeleteCategory, resetDeleteStateCategory, setSelectedCategory, onCategoryDeleted]);
 
-    const handleOnSaveCategory = (category) => {
-      setOnAddCategoryResult({}); // limpa mensagens anteriores
-      postCategory(category);
-    };
+  useEffect(() => {
+    if (errorToDeleteCategory) {
+      setToast({
+        open: true,
+        message:
+          deleteErrorMessage ||
+          'Não foi possível excluir a categoria. Verifique se há produtos vinculados.',
+        severity: 'error',
+      });
+      resetDeleteStateCategory();
+    }
+  }, [errorToDeleteCategory, deleteErrorMessage, resetDeleteStateCategory]);
 
-    useEffect(() => {
-        if (handleAddNewCategory == true) {
-            setOnAddCategoryResult({});
-            setBlockCategoriesFields(false);
-            setBlockProductsFields(true);
-            setShowProducts(false);
-            setLastCategoryAux(selectedCategory);
-            setSelectedCategory({});
-            setOpenMenuForm(true);
-        }
-    }, [handleAddNewCategory]);
+  const openCreate = () => {
+    resetSaveState();
+    setEditingCategory(null);
+    setFormOpen(true);
+  };
 
-    useEffect(() => {
-        if (success && showProducts) {
-            setShowCategories(true);
-            setShowProducts(true);
-            setErrorToLoadCategories(false);
-        }
-    }, [success, showProducts]);
+  const openEdit = (category) => {
+    resetSaveState();
+    setEditingCategory(category);
+    setFormOpen(true);
+  };
 
-    useEffect(() => {
-  if (successOnSaveCategory || successToDeleteCategory) {
-    setOnAddCategoryResult(handleSuccess);
-    setBlockCategoriesFields(true);
-    setBlockProductsFields(false);
-    setSelectedCategory("");
-    setShowProducts(true);
+  const handleSave = async (form) => {
+    try {
+      await saveCategory(form);
+      setFormOpen(false);
+      setEditingCategory(null);
+      setToast({
+        open: true,
+        message: form.id ? 'Categoria atualizada' : 'Categoria criada',
+        severity: 'success',
+      });
+      setRefreshKey((k) => k + 1);
+    } catch (_) {
+      // erro exibido no dialog
+    }
+  };
 
-    // força refetch de forma segura
-    setTryAgain(prev => !prev);
+  const handleToggleActive = async (category) => {
+    try {
+      await saveCategory({
+        ...category,
+        active: !(category.active !== false),
+      });
+      setToast({
+        open: true,
+        message: category.active !== false ? 'Categoria desativada' : 'Categoria ativada',
+        severity: 'success',
+      });
+      setRefreshKey((k) => k + 1);
+    } catch (_) {
+      setToast({ open: true, message: 'Erro ao atualizar status', severity: 'error' });
+    }
+  };
 
-    // fecha o form aqui, somente após sucesso
-    setOpenMenuForm(false);
-    setHandleAddNewCategory(false);
-    setSuccessOnSaveCategory(false);
+  if (loading) {
+    return <Loading loadingMessage="Carregando categorias..." />;
   }
-}, [successOnSaveCategory, successToDeleteCategory]);
 
-    useEffect(() => {
-        setShowProducts(!loading);
+  if (error) {
+    return <GenericError onTryAgain={refetch} />;
+  }
 
-    }, [loading]);
+  return (
+    <>
+      <CategoryFormDialog
+        open={formOpen}
+        onClose={() => {
+          setFormOpen(false);
+          setEditingCategory(null);
+          resetSaveState();
+        }}
+        onSave={handleSave}
+        category={editingCategory}
+        saving={saving}
+        errorMessage={errorMessage}
+      />
 
-    useEffect(() => {
-        if (Object.keys(handleDeleteCategory).length !== 0) {
-            deleteCategoryById(handleDeleteCategory.id);
-        }
-    }, [handleDeleteCategory]);
+      <ConfirmDeleteDialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteCategoryById(deleteTarget.id)}
+        itemType="category"
+        itemName={deleteTarget?.name}
+      />
 
-    useEffect(() => {
-        if (successToDeleteCategory) {
-            setTryAgain(!tryAgain);
-            setSelectedCategory({});
-            setShowProducts(false);
-            resetDeleteStateCategory();
-            setOpenDeleteDialogCategory(false);
-        }
-    }, [successToDeleteCategory]);
+      <Box className="category-header">
+        <Typography variant="h5" className="category-title">
+          Categorias
+        </Typography>
+        <Button
+          startIcon={<AddIcon />}
+          onClick={openCreate}
+          sx={{
+            backgroundColor: 'transparent !important',
+            color: '#7b2cbf !important',
+            border: '1px solid #7b2cbf !important',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: '#7b2cbf !important',
+              color: '#fff !important',
+            },
+          }}
+        >
+          Criar categoria
+        </Button>
+      </Box>
 
-    useEffect(() => {
-        setShowProducts(!emptyResult);
-        setShowCategories(!emptyResult);
-    }, [emptyResult]);
-
-    useEffect(() => {
-        setShowProducts(!error);
-        setShowCategories(!error);
-
-        if (error) {
-            setOnAddCategoryResult(handleError);
-            setErrorToLoadCategories(true);
-        }
-    }, [error]);
-
-    // Seleciona a primeira categoria como padrão se nenhuma estiver selecionada
-    useEffect(() => {
-        if (success && categories && categories.length > 0 && (!selectedCategory || !selectedCategory.id)) {
-            setSelectedCategory(categories[0]);
-        }
-    }, [success, categories, selectedCategory, setSelectedCategory]);
-
-    useEffect(() => {   
-            if (Object.keys(handleDeleteCategory).length !== 0) {
-                deleteCategoryById(handleDeleteCategory.id);
-            }
-        }, [handleDeleteCategory]);
-    
-        const confirmDelete = () => {
-          setHandleDeleteCategory(selectedCategory);
-        };
-
-    return (
-      <>
-        <CategoryProductFormDialog
-          open={openMenuForm}
-          onClose={handleOnFormClose}
-          disableEditCategory={false}
-          onSaveCategory={handleOnSaveCategory}
-        />
-
-        <ConfirmDeleteDialog
-          open={openDeleteDialogCategory}
-          onClose={() => setOpenDeleteDialogCategory(false)}
-          onConfirm={confirmDelete}
-          itemType={"category"}
-          itemName={selectedCategory.name}
-        />
-
-        {loading && <Loading loadingMessage="Carregando cardápio..." />}
-        {emptyResult && (
-          <EmptyMenu
-            handleOnSaveCategory={handleOnSaveCategory}
-            handleOnClose={handleOnFormClose}
-          />
-        )}
-        {error && <GenericError onTryAgain={handleOnTryAgain} />}
-
-        {success ? (
-          <>
-            <Box className="category-header">
-              <Typography variant="h5" className="category-title">
-                Categorias
-              </Typography>
-              <Button
-                className="add-category-btn"
-                onClick={() => setHandleAddNewCategory(true)}
-                size="medium"
-                sx={{
-                  backgroundColor: 'transparent !important',
-                  color: '#7b2cbf !important',
-                  border: '1px solid #7b2cbf !important',
-                  '&:hover': {
-                    backgroundColor: '#7b2cbf !important',
-                    color: '#fff !important'
-                  }
-                }}
-              >
-                Nova Categoria
-              </Button>
-            </Box>
-            <CategoryList
-              categories={categories}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              setShowProducts={setShowProducts}
-            />
-          </>
-        ) : null}
-      </>
-    );
-}
-
-function EmptyMenu() {
-    const { setOpenMenuForm } = useContext(CategoryContext);
-
-    return (
-        <>
-            <Typography variant="h7" sx={{ display: 'block', textAlign: 'center', marginTop: 6 }}>O cardápio está vazio</Typography>
-            <Button onClick={() => setOpenMenuForm(true)} variant="contained">Criar cardápio</Button>
-        </>
-    );
-}
-
-function CategoryList({ categories, selectedCategory, setSelectedCategory, setShowProducts }) {
-    const [firstTimeOpened, setFirstTimeOpened] = useState(true);
-
-    const handleSetSelectedCategory = (category) => {
-        setShowProducts(true);
-        setSelectedCategory(category);
-    }
-
-
-    //O código não é executado apenas uma vez
-    /* if (firstTimeOpened && categories.length > 0) {
-         let firstCategory = categories[0];
-         console.log('caiu');
- 
-         setSelectedCategory(firstCategory);
-         setFirstTimeOpened(false);
-     }*/
-
-    return (
-        <Box className="category-list">
-            {categories.map((category) => {
-                return (
-                  <Box key={category.id} className="category-item">
-                    <ListItemButton
-                      sx={{
-                        boxShadow: "none", // remove sombra padrão
-                        "&:hover": {
-                          boxShadow: "none", // remove sombra no hover
-                          backgroundColor: "transparent", // opcional: remove fundo cinza
-                        },
-                      }}
-                      className="category-button"
-                      onClick={() => handleSetSelectedCategory(category)}
-                    >
-                      <CardCategory
-                        {...category}
-                        isSelected={selectedCategory.id === category.id}
-                      />
-                    </ListItemButton>
-                  </Box>
-                );
-            })}
+      {categories.length === 0 ? (
+        <Box className="category-empty">
+          <Typography sx={{ mb: 2, color: '#666' }}>
+            Nenhuma categoria cadastrada. Crie uma categoria para poder cadastrar produtos.
+          </Typography>
+          <Button variant="contained" onClick={openCreate} sx={{ backgroundColor: '#7b2cbf' }}>
+            Criar categoria
+          </Button>
         </Box>
-    );
+      ) : (
+        <Box className="category-list">
+          {categories.map((category) => {
+            const isSelected = selectedCategory?.id === category.id;
+            const isActive = category.active !== false;
+            const fromProducts = productCounts[String(category.id)];
+            const productCount =
+              typeof fromProducts === 'number'
+                ? fromProducts
+                : Number(category.productCount) || 0;
+            return (
+              <Card
+                key={category.id}
+                className={`category-manage-card ${isSelected ? 'selected' : ''} ${!isActive ? 'inactive' : ''}`}
+                onClick={() => setSelectedCategory(category)}
+              >
+                <CardContent>
+                  <Box className="category-card-top">
+                    <Typography variant="h6" className="category-card-name">
+                      {category.name}
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={isActive ? 'Ativa' : 'Inativa'}
+                      color={isActive ? 'success' : 'default'}
+                    />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    {productCount} {productCount === 1 ? 'produto' : 'produtos'}
+                  </Typography>
+                  <Box className="category-card-actions" onClick={(e) => e.stopPropagation()}>
+                    <Tooltip title={isActive ? 'Desativar' : 'Ativar'}>
+                      <Switch
+                        size="small"
+                        checked={isActive}
+                        onChange={() => handleToggleActive(category)}
+                        color="secondary"
+                      />
+                    </Tooltip>
+                    <IconButton size="small" onClick={() => openEdit(category)} color="primary">
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDeleteTarget(category)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      )}
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={toast.severity}
+          onClose={() => setToast((t) => ({ ...t, open: false }))}
+          sx={{ width: '100%' }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
+    </>
+  );
 }

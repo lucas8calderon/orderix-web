@@ -46,6 +46,12 @@ export function ConfirmDeleteDialog({
         }}>
           Tem certeza que deseja excluir {typeLabels[itemType] || "o item"}{" "}
           <b style={{ color: '#7b2cbf' }}>{itemName}</b>?
+          {itemType === 'category' ? (
+            <>
+              {' '}
+              Só é possível excluir categorias sem produtos vinculados.
+            </>
+          ) : null}
         </Typography>
       </DialogContent>
       <DialogActions sx={{ padding: '0 24px 24px 24px', gap: 2 }}>

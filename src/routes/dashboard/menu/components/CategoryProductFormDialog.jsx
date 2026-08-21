@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useContext, forwardRef } from 'react';
 import {
-  Button, Dialog, DialogContent, DialogContentText,
-  Slide, Typography, TextField, Avatar, Grid,
-  Divider, FormControl, Select, MenuItem, InputLabel, Alert, Box
+  Button, Dialog, DialogContent,
+  Slide, Typography, TextField, Avatar, Alert, Box
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { CategoryContext } from '../category/providers/CategoryContext';
-import { ProductContext } from '../product/providers/ProductContext';
-import { usePostCategory } from '../category/hooks/useGetCategories';
-
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -25,8 +21,7 @@ const VisuallyHiddenInput = styled('input')({
 const Transition = forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSaveProduct }) {
-  const { blockCategoriesFields, onAddCategoryResult } = useContext(CategoryContext);
-  const { successOnSaveCategory } = usePostCategory();
+  const { onAddCategoryResult, setBlockCategoriesFields } = useContext(CategoryContext);
 
   const [category, setCategory] = useState({ name: "", backgroundColor: "", image: "" });
     const [imageUpload, setImageUpload] = useState("");
@@ -42,6 +37,16 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
     setShowAlert(false);
     onClose();
   };
+
+  useEffect(() => {
+    if (open) {
+      setBlockCategoriesFields(false);
+      setCategory({ name: "", backgroundColor: "", image: "" });
+      setImageUpload("");
+      setImagePreview("");
+      setShowAlert(false);
+    }
+  }, [open, setBlockCategoriesFields]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -95,21 +100,6 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
       }}
     >
       <DialogContent sx={{ padding: '32px' }}>
-        {showAlert && onAddCategoryResult?.message && (
-          <Alert 
-            sx={{ 
-              mb: 3, 
-              borderRadius: '12px',
-              '& .MuiAlert-message': {
-                fontWeight: 500
-              }
-            }} 
-            severity={onAddCategoryResult.severity}
-          >
-            {onAddCategoryResult.message}
-          </Alert>
-        )}
-
         {/* Categoria */}
         <Box>
           <Typography variant="h5" sx={{ 
@@ -119,6 +109,21 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
           }}>
             Nova Categoria
           </Typography>
+
+          {showAlert && onAddCategoryResult?.message && (
+            <Alert
+              sx={{
+                mb: 3,
+                borderRadius: '12px',
+                '& .MuiAlert-message': {
+                  fontWeight: 500
+                }
+              }}
+              severity={onAddCategoryResult.severity}
+            >
+              {onAddCategoryResult.message}
+            </Alert>
+          )}
           
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 3 }}>
             <Avatar 
@@ -136,7 +141,7 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
             
             <Box sx={{ flex: 1 }}>
               <TextField
-                disabled={blockCategoriesFields}
+                autoFocus
                 fullWidth
                 label="Nome da categoria"
                 variant="outlined"
@@ -240,7 +245,7 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
               Cancelar
             </Button>
             <Button 
-              disabled={blockCategoriesFields} 
+              disabled={!category.name?.trim()} 
               onClick={handleCategorySave} 
               variant="contained"
               sx={{
