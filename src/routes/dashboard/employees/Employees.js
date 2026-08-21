@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Grid, Box, Button, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import { Loading } from "../../../commons/components/Loading";
 import { CardEmployee } from "./components/CardEmployee";
 import { SearchBar } from "./components/SearchBar";
@@ -36,7 +35,6 @@ export function Employees() {
   } = useContext(EmployeesContext);
 
   const { employees, loading, error, fetchEmployees } = useGetEmployees();
-  console.log("Employees data:", employees);
 
   // Estados para busca e filtro
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,9 +47,9 @@ export function Employees() {
   const {
     successSavingEmployee,
     errorSavingEmployee,
+    errorSavingEmployeeMessage,
     postEmployee,
     newEmployeeLoading,
-    setSuccessSavingEmployee,
     resetPostState,
   } = usePostEmployees();
   
@@ -101,14 +99,14 @@ export function Employees() {
 
   const handleOnClose = () => {
     setOnAddEmployeeResult({});
+    resetPostState();
     setOpenAddEmployee(false);
     setHandleAddNewEmployee(false);
   };
 
   const onHandleSaveEmployee = (employee) => {
+    setOnAddEmployeeResult({});
     postEmployee(employee);
-    setSelectedEmployee({});
-    setSuccessSavingEmployee(false);
   };
 
   const handleToastOpen = (message, severity = 'success') => {
@@ -161,6 +159,7 @@ export function Employees() {
   useEffect(() => {
     if (handleAddNewEmployee === true) {
       setOnAddEmployeeResult({});
+      resetPostState();
       setBlockEmployeesFields(false);
       setOpenAddEmployee(true);
     }
@@ -174,9 +173,12 @@ export function Employees() {
 
   useEffect(() => {
     if (errorSavingEmployee) {
-      setOnAddEmployeeResult(handleError);
+      setOnAddEmployeeResult({
+        ...handleError,
+        message: errorSavingEmployeeMessage || handleError.message,
+      });
     }
-  }, [errorSavingEmployee]);
+  }, [errorSavingEmployee, errorSavingEmployeeMessage]);
 
   useEffect(() => {
     if (successSavingEmployee) {
@@ -221,6 +223,7 @@ export function Employees() {
         open={openAddEmployee}
         onClose={handleOnClose}
         onSaveEmployee={onHandleSaveEmployee}
+        saving={newEmployeeLoading}
       />
 
       <EmployeeFormDialog
@@ -228,9 +231,12 @@ export function Employees() {
         onClose={() => {
           setOpenEditEmployee(false);
           setSelectedEmployee({});
+          resetPostState();
+          setOnAddEmployeeResult({});
         }}
         onSaveEmployee={onHandleSaveEmployee}
         employee={selectedEmployee}
+        saving={newEmployeeLoading}
       />
 
       {/* Toast Notifications */}
@@ -264,10 +270,9 @@ export function Employees() {
               transform: "translateY(-1px)",
             },
           }}
-          startIcon={<AddIcon />}
           onClick={() => setHandleAddNewEmployee(true)}
         >
-          Novo Funcionário
+          Novo colaborador
         </Button>
       </Box>
 

@@ -13,7 +13,7 @@ export const dashboardItems = [
     icon: <DashboardIcon />
   },
   {
-    title: 'Funcionários',
+    title: 'Colaboradores',
     icon: <PeopleIcon />
   },
   {

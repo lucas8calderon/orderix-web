@@ -15,25 +15,26 @@ import {
   InputLabel,
   Alert,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import { EmployeesContext } from "../provider/EmployeesContext";
-import { usePostEmployees } from "../hook/usePostEmployees";
 
 const Transition = forwardRef((props, ref) => (
   <Slide direction="up" ref={ref} {...props} />
 ));
+
+const PRIMARY_PURPLE = "var(--color-primary)";
+const DISABLED_PURPLE = "rgba(123, 31, 162, 0.38)";
 
 export function EmployeeFormDialog({
   open,
   onClose,
   onSaveEmployee,
   employee = null,
+  saving = false,
 }) {
   const {
     onAddEmployeeResult,
     selectedEmployee,
   } = useContext(EmployeesContext);
-  const { successSavingEmployee } = usePostEmployees();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,6 +43,15 @@ export function EmployeeFormDialog({
   const [showAlert, setShowAlert] = useState(false);
 
   const isEditing = Boolean((employee || selectedEmployee)?.id);
+  const trimmedName = name.trim();
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  const hasValidPassword = isEditing
+    ? trimmedPassword.length === 0 || trimmedPassword.length >= 6
+    : trimmedPassword.length >= 6;
+  const isFormValid = Boolean(
+    trimmedName && trimmedEmail && profile && hasValidPassword
+  );
 
   useEffect(() => {
     const currentEmployee = employee || selectedEmployee;
@@ -57,25 +67,12 @@ export function EmployeeFormDialog({
         setPassword("");
         setProfile("");
       }
+      setShowAlert(false);
     }
   }, [employee, selectedEmployee, open]);
 
   const handleEmployeeSave = () => {
-    const trimmedName = name?.trim();
-    const trimmedEmail = email?.trim();
-    const trimmedPassword = password?.trim();
-
-    if (!trimmedName || !trimmedEmail || !profile) {
-      setShowAlert(true);
-      return;
-    }
-
-    if (!isEditing && (!trimmedPassword || trimmedPassword.length < 6)) {
-      setShowAlert(true);
-      return;
-    }
-
-    if (isEditing && trimmedPassword && trimmedPassword.length < 6) {
+    if (!isFormValid || saving) {
       setShowAlert(true);
       return;
     }
@@ -106,16 +103,6 @@ export function EmployeeFormDialog({
     }
   }, [onAddEmployeeResult]);
 
-  useEffect(() => {
-    if (successSavingEmployee) {
-      setName("");
-      setEmail("");
-      setPassword("");
-      setProfile("");
-      setShowAlert(false);
-    }
-  }, [successSavingEmployee]);
-
   return (
     <Dialog
       open={open}
@@ -126,7 +113,7 @@ export function EmployeeFormDialog({
       fullWidth
     >
       <DialogContent>
-        <DialogContentText sx={{ mt: 3 }}>
+        <DialogContentText sx={{ mt: 3 }} component="div">
           {(showAlert || onAddEmployeeResult?.message) && onAddEmployeeResult?.message && (
             <Alert sx={{ mb: 2 }} severity={onAddEmployeeResult.severity || 'success'}>
               {onAddEmployeeResult.message}
@@ -136,8 +123,8 @@ export function EmployeeFormDialog({
           {showAlert && !onAddEmployeeResult?.message && (
             <Alert sx={{ mb: 2 }} severity="error">
               {isEditing
-                ? 'Preencha nome, e-mail e perfil. Senha, se informada, precisa ter ao menos 6 caracteres.'
-                : 'Preencha nome, e-mail, perfil e senha (mínimo 6 caracteres).'}
+                ? 'Preencha nome e sobrenome, e-mail e cargo. Senha, se informada, precisa ter ao menos 6 caracteres.'
+                : 'Preencha nome e sobrenome, e-mail, cargo e senha (mínimo 6 caracteres).'}
             </Alert>
           )}
 
@@ -149,7 +136,7 @@ export function EmployeeFormDialog({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Nome completo"
+                label="Nome e sobrenome"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 variant="outlined"
@@ -184,12 +171,12 @@ export function EmployeeFormDialog({
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined" required>
-                <InputLabel id="profile-label">Perfil</InputLabel>
+                <InputLabel id="profile-label">Cargo</InputLabel>
                 <Select
                   labelId="profile-label"
                   value={profile}
                   onChange={(e) => setProfile(e.target.value)}
-                  label="Perfil"
+                  label="Cargo"
                 >
                   <MenuItem value="STORE_ADMIN">Administrador</MenuItem>
                   <MenuItem value="GARCOM">Garçom</MenuItem>
@@ -199,30 +186,40 @@ export function EmployeeFormDialog({
               </FormControl>
             </Grid>
 
-            <Box
-              sx={{
-                display: "flex",
-                width: "100%",
-                justifyContent: "center",
-                mt: 2
-              }}
-            >
-              <Button
+            <Grid item xs={12}>
+              <Box
                 sx={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-white)",
-                  ":hover": {
-                    backgroundColor: "var(--color-secondary)",
-                    color: "var(--color-black)"
-                  }
+                  display: "flex",
+                  width: "100%",
+                  justifyContent: "center",
+                  mt: 2
                 }}
-                startIcon={<AddIcon />}
-                onClick={handleEmployeeSave}
-                size="large"
               >
-                {isEditing ? 'Salvar Alterações' : 'Cadastrar Funcionário'}
-              </Button>
-            </Box>
+                <Button
+                  disabled={!isFormValid || saving}
+                  sx={{
+                    backgroundColor: PRIMARY_PURPLE,
+                    color: "var(--color-white)",
+                    textTransform: "none",
+                    ":hover": {
+                      backgroundColor: "var(--color-secondary)",
+                      color: "var(--color-black)"
+                    },
+                    "&.Mui-disabled": {
+                      backgroundColor: DISABLED_PURPLE,
+                      color: "var(--color-white)",
+                      opacity: 1,
+                    },
+                  }}
+                  onClick={handleEmployeeSave}
+                  size="large"
+                >
+                  {saving
+                    ? (isEditing ? 'Salvando...' : 'Cadastrando...')
+                    : (isEditing ? 'Salvar Alterações' : 'Cadastrar colaborador')}
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
         </DialogContentText>
       </DialogContent>
