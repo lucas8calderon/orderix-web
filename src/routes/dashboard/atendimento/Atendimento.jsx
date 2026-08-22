@@ -1,45 +1,45 @@
-import * as React from "react";
-import { Box, Tab, Tabs } from "@mui/material";
-import TableBarIcon from "@mui/icons-material/TableBar";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import { Tables } from "../tables/Tables";
-import { Comandas } from "../comandas/Comandas";
+import { Box, Container, Typography } from '@mui/material';
+import * as React from 'react';
+import { useState } from 'react';
+import { Tables } from '../tables/Tables';
+import { Comandas } from '../comandas/Comandas';
+import { CheckoutDialog } from './components/CheckoutDialog';
+import './Atendimento.css';
 
 export function Atendimento() {
-  const [tab, setTab] = React.useState(0);
+  const [accountTarget, setAccountTarget] = useState(null);
+  const [floorVersion, setFloorVersion] = useState(0);
+
+  const handlePaid = () => {
+    setAccountTarget(null);
+    setFloorVersion((version) => version + 1);
+  };
 
   return (
-    <Box>
-      <Tabs
-        value={tab}
-        onChange={(_, value) => setTab(value)}
-        variant="scrollable"
-        scrollButtons="auto"
-        allowScrollButtonsMobile
-        sx={{
-          mb: 2,
-          minHeight: 48,
-          "& .MuiTab-root": {
-            textTransform: "none",
-            fontWeight: 600,
-            minHeight: 48,
-            minWidth: 'auto',
-            px: { xs: 1.5, sm: 2 },
-          },
-          "& .Mui-selected": {
-            color: "var(--color-primary) !important",
-          },
-          "& .MuiTabs-indicator": {
-            backgroundColor: "var(--color-primary)",
-          },
-        }}
-      >
-        <Tab icon={<TableBarIcon />} iconPosition="start" label="Mesas" />
-        <Tab icon={<ReceiptLongIcon />} iconPosition="start" label="Comandas" />
-      </Tabs>
+    <Box className="atendimento-container">
+      <Container maxWidth="xl" className="atendimento-content">
+        <Typography variant="h4" className="atendimento-page-title">
+          Atendimento
+        </Typography>
+        <Typography variant="body1" className="atendimento-page-subtitle">
+          Clique na mesa ou comanda para conferir os pedidos, fechar a conta e liberar o atendimento.
+        </Typography>
 
-      {tab === 0 && <Tables />}
-      {tab === 1 && <Comandas />}
+        <Box className="atendimento-section">
+          <Tables onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
+        </Box>
+
+        <Box className="atendimento-section">
+          <Comandas onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
+        </Box>
+      </Container>
+
+      <CheckoutDialog
+        open={Boolean(accountTarget)}
+        target={accountTarget}
+        onClose={() => setAccountTarget(null)}
+        onPaid={handlePaid}
+      />
     </Box>
   );
 }

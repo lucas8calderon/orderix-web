@@ -4,6 +4,7 @@ import {
   postNewCategory,
   updateCategory,
 } from '../service/categoryService';
+import { imageForSave } from '../../utils/defaultMenuImage';
 
 export const useGetCategories = (refreshKey = 0) => {
   const [categories, setCategories] = useState([]);
@@ -55,7 +56,7 @@ export const usePostCategory = () => {
     const payload = {
       name: category?.name?.trim(),
       backgroundColor: category?.backgroundColor || null,
-      image: category?.image || null,
+      image: imageForSave(category?.image),
       active: category?.active !== false,
     };
 

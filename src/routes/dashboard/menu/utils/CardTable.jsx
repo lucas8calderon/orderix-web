@@ -4,13 +4,14 @@ import { Users2, Edit, Trash2, QrCode } from "lucide-react";
 import Button from '../../menu/components/ui/Button';
 import { TablesContext } from "../../tables/provider/TablesContext";
 
-export function CardTable({ table, onShowQRCode }) {
+export function CardTable({ table, onShowQRCode, canManage = true }) {
 
-  const {setOpenDeleteDialogTable} = useContext(TablesContext);
+  const { setOpenDeleteDialogTable, setSelectedTable } = useContext(TablesContext);
 
   return (
     <Card
       sx={{
+        cursor: "pointer",
         display: "flex",
         borderRadius: 4,
         width: "100%",
@@ -81,6 +82,7 @@ export function CardTable({ table, onShowQRCode }) {
             flexShrink: 0,
           }}
         />
+        {canManage && (
         <Box
           sx={{
             display: "flex",
@@ -88,6 +90,7 @@ export function CardTable({ table, onShowQRCode }) {
             gap: 1,
             mt: 1
           }}
+          onClick={(event) => event.stopPropagation()}
         >
           <Button
             size="sm"
@@ -108,13 +111,17 @@ export function CardTable({ table, onShowQRCode }) {
           <Button
             size="sm"
             variant="default"
-            onClick={() => setOpenDeleteDialogTable(true)}
+            onClick={() => {
+              setSelectedTable(table);
+              setOpenDeleteDialogTable(true);
+            }}
           >
             <Tooltip title="Excluir">
               <Trash2 className="h-4 w-4" size={26} />
             </Tooltip>
           </Button>
         </Box>
+        )}
       </CardContent>
     </Card>
   );

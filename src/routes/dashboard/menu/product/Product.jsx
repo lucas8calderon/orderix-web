@@ -27,6 +27,7 @@ import { useGetProducts } from './hooks/useGetProducts';
 import { usePostProducts } from './hooks/usePostProducts';
 import { useDeleteProduct } from './hooks/useDeleteProduct';
 import './Product.css';
+import { resolveMenuImage } from '../utils/defaultMenuImage';
 
 function formatPrice(value) {
   const number = Number(value);
@@ -268,12 +269,30 @@ export function ProductContainer({
               filteredProducts.map((product) => (
                 <TableRow key={product.id} hover>
                   <TableCell>
-                    <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>{product.name}</Typography>
-                    {product.observation ? (
-                      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: { sm: 280 }, wordBreak: 'break-word' }}>
-                        {product.observation}
-                      </Typography>
-                    ) : null}
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                      <Box
+                        component="img"
+                        src={resolveMenuImage(product.image)}
+                        alt=""
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          objectFit: 'contain',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: '#fff',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>{product.name}</Typography>
+                        {product.observation ? (
+                          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: { sm: 280 }, wordBreak: 'break-word' }}>
+                            {product.observation}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                    </Box>
                   </TableCell>
                   <TableCell sx={{ wordBreak: 'break-word' }}>
                     {product.categoryId
@@ -330,17 +349,33 @@ export function ProductContainer({
           filteredProducts.map((product) => (
             <Paper key={product.id} className="product-mobile-card" elevation={0}>
               <Box className="product-mobile-card-header">
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>
-                    {product.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
-                    {product.categoryId
-                      ? categories.find((c) => c.id === product.categoryId)?.name ||
-                        product.categoryName ||
-                        '—'
-                      : '—'}
-                  </Typography>
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0, flex: 1 }}>
+                  <Box
+                    component="img"
+                    src={resolveMenuImage(product.image)}
+                    alt=""
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      objectFit: 'contain',
+                      borderRadius: '8px',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: '#fff',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>
+                      {product.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
+                      {product.categoryId
+                        ? categories.find((c) => c.id === product.categoryId)?.name ||
+                          product.categoryName ||
+                          '—'
+                        : '—'}
+                    </Typography>
+                  </Box>
                 </Box>
                 <Chip
                   size="small"

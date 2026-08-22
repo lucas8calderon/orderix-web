@@ -56,6 +56,10 @@ export function isSubscriptionActive(user) {
   return user?.subscriptionStatus === SUBSCRIPTION_STATUS.ACTIVE;
 }
 
+export function canManageFloor(user) {
+  return isPlatformAdmin(user) || isStoreAdmin(user);
+}
+
 export function getPostLoginPath(user) {
   if (!user) {
     return '/login';

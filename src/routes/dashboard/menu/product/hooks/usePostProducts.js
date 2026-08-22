@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { addNewProduct, updateProduct } from '../service/productService';
+import { imageForSave } from '../../utils/defaultMenuImage';
 
 export const usePostProducts = () => {
   const [successSavingProduct, setSuccessSavingProduct] = useState(false);
@@ -12,7 +13,7 @@ export const usePostProducts = () => {
       name: product?.name?.trim(),
       observation: product?.observation || product?.description || null,
       portion: product?.portion || null,
-      image: product?.image || null,
+      image: imageForSave(product?.image),
       categoryId: product?.categoryId != null ? Number(product.categoryId) : null,
       isAvailable: product?.isAvailable !== false,
       value: Number(product?.value),

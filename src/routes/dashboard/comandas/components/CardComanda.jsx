@@ -4,12 +4,13 @@ import { Edit, Trash2 } from 'lucide-react';
 import Button from '../../menu/components/ui/Button';
 import { ComandasContext } from '../provider/ComandasContext';
 
-export function CardComanda({ comanda }) {
-  const { setOpenDeleteDialogComanda } = useContext(ComandasContext);
+export function CardComanda({ comanda, canManage = true }) {
+  const { setOpenDeleteDialogComanda, setSelectedComanda } = useContext(ComandasContext);
 
   return (
     <Card
       sx={{
+        cursor: 'pointer',
         display: 'flex',
         borderRadius: 4,
         width: '100%',
@@ -77,6 +78,7 @@ export function CardComanda({ comanda }) {
           }}
         />
 
+        {canManage && (
         <Box
           sx={{
             display: 'flex',
@@ -84,6 +86,7 @@ export function CardComanda({ comanda }) {
             gap: 1,
             mt: 1,
           }}
+          onClick={(event) => event.stopPropagation()}
         >
           <Button size="sm" variant="default">
             <Tooltip title="Editar">
@@ -94,13 +97,17 @@ export function CardComanda({ comanda }) {
           <Button
             size="sm"
             variant="default"
-            onClick={() => setOpenDeleteDialogComanda(true)}
+            onClick={() => {
+              setSelectedComanda(comanda);
+              setOpenDeleteDialogComanda(true);
+            }}
           >
             <Tooltip title="Excluir">
               <Trash2 className="h-4 w-4" size={26} />
             </Tooltip>
           </Button>
         </Box>
+        )}
       </CardContent>
     </Card>
   );

@@ -7,7 +7,7 @@ import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import menuDefault from "../../../../assets/images/menu-default.svg";
+import menuDefault from "../../../../assets/images/sem-imagem.jpg";
 import Divider from '@mui/material/Divider';
 import { useContext } from 'react';
 import { ProductContext } from '../product/providers/ProductContext';
@@ -45,7 +45,7 @@ export function CardCategory({ width = 250, height = 80, image, name, descriptio
               borderRadius: "12px 12px 0 0",
               objectFit: "cover"
             }} 
-            image={image} 
+            image={image || menuDefault} 
           />
         ) : (
           <Box sx={{ position: "relative" }}>

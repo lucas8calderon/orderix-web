@@ -293,6 +293,21 @@ export function createAppTheme(mode = 'light') {
           },
         },
       },
+      MuiSwitch: {
+        defaultProps: {
+          color: 'primary',
+        },
+        styleOverrides: {
+          switchBase: {
+            '&.Mui-checked': {
+              color: 'var(--color-primary)',
+            },
+            '&.Mui-checked + .MuiSwitch-track': {
+              backgroundColor: 'var(--color-primary)',
+            },
+          },
+        },
+      },
       MuiIconButton: {
         styleOverrides: {
           root: {

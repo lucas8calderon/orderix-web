@@ -18,6 +18,8 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
+import { fileToCompressedDataUrl } from '../utils/compressImage';
+import { isUserProvidedImage } from '../utils/defaultMenuImage';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -56,6 +58,7 @@ export function ProductFormDialog({
 }) {
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState('');
+  const [imageError, setImageError] = useState('');
   const dialogProps = useDialogResponsiveProps({
     paperSx: { borderRadius: { xs: 0, sm: '16px' } },
   });
@@ -78,6 +81,7 @@ export function ProductFormDialog({
           ? String(availableCategories[0].id)
           : '';
 
+    setImageError('');
     if (product?.id) {
       setForm({
         id: product.id,
@@ -88,7 +92,7 @@ export function ProductFormDialog({
         isAvailable: product.isAvailable !== false,
         image: product.image || '',
       });
-      setImagePreview(product.image || '');
+      setImagePreview(isUserProvidedImage(product.image) ? product.image : '');
     } else {
       setForm({
         ...emptyForm,
@@ -101,18 +105,22 @@ export function ProductFormDialog({
   const handleClose = () => {
     setForm(emptyForm);
     setImagePreview('');
+    setImageError('');
     onClose();
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      setForm((prev) => ({ ...prev, image: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    setImageError('');
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      setImagePreview(dataUrl);
+      setForm((prev) => ({ ...prev, image: dataUrl }));
+    } catch (err) {
+      setImageError(err?.message || 'Não foi possível processar a imagem.');
+    }
   };
 
   const numericValue = Number(String(form.value).replace(',', '.'));
@@ -146,9 +154,9 @@ export function ProductFormDialog({
           {isEdit ? 'Editar produto' : 'Novo produto'}
         </Typography>
 
-        {errorMessage ? (
+        {errorMessage || imageError ? (
           <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>
-            {errorMessage}
+            {errorMessage || imageError}
           </Alert>
         ) : null}
 
@@ -216,7 +224,7 @@ export function ProductFormDialog({
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, isAvailable: e.target.checked }))
               }
-              color="secondary"
+              color="primary"
             />
           }
           label={form.isAvailable ? 'Ativo' : 'Inativo'}

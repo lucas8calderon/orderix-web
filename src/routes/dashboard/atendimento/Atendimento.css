@@ -1,0 +1,121 @@
+.atendimento-container {
+  background-color: var(--color-bg);
+  min-height: 100%;
+  padding: 8px 0 32px;
+}
+
+.atendimento-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.atendimento-page-title {
+  font-weight: 700 !important;
+  color: var(--color-text-primary);
+  margin-bottom: 4px !important;
+}
+
+.atendimento-page-subtitle {
+  color: var(--color-text-secondary);
+  margin-bottom: 24px !important;
+}
+
+.atendimento-section {
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--color-shadow);
+  margin-bottom: 24px;
+}
+
+.atendimento-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.atendimento-section-title {
+  font-weight: 600 !important;
+  color: var(--color-primary) !important;
+}
+
+.atendimento-empty {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+@media (max-width: 768px) {
+  .atendimento-container {
+    padding: 0 0 24px;
+  }
+
+  .atendimento-section {
+    padding: 16px;
+  }
+
+  .atendimento-section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .atendimento-page-title {
+    font-size: 1.5rem !important;
+  }
+
+  .atendimento-section {
+    padding: 12px;
+  }
+}
+
+.order-detail-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.order-detail-modal .MuiCard-root {
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.checkout-order-block {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.checkout-order-block:last-child {
+  border-bottom: none;
+}
+
+.checkout-item {
+  margin-bottom: 10px;
+}
+
+.checkout-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-payments {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkout-payments .MuiToggleButton-root {
+  text-transform: none;
+  border-radius: 8px !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.checkout-payments .Mui-selected {
+  background-color: var(--color-primary) !important;
+  color: #fff !important;
+}

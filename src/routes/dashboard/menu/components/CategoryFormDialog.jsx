@@ -14,6 +14,8 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
+import { fileToCompressedDataUrl } from '../utils/compressImage';
+import { isUserProvidedImage } from '../utils/defaultMenuImage';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -48,6 +50,7 @@ export function CategoryFormDialog({
 }) {
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState('');
+  const [imageError, setImageError] = useState('');
   const dialogProps = useDialogResponsiveProps({
     paperSx: { borderRadius: { xs: 0, sm: '16px' } },
   });
@@ -56,6 +59,7 @@ export function CategoryFormDialog({
 
   useEffect(() => {
     if (!open) return;
+    setImageError('');
     if (category?.id) {
       setForm({
         id: category.id,
@@ -63,7 +67,7 @@ export function CategoryFormDialog({
         image: category.image || '',
         active: category.active !== false,
       });
-      setImagePreview(category.image || '');
+      setImagePreview(isUserProvidedImage(category.image) ? category.image : '');
     } else {
       setForm(emptyForm);
       setImagePreview('');
@@ -73,18 +77,22 @@ export function CategoryFormDialog({
   const handleClose = () => {
     setForm(emptyForm);
     setImagePreview('');
+    setImageError('');
     onClose();
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      setForm((prev) => ({ ...prev, image: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    setImageError('');
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      setImagePreview(dataUrl);
+      setForm((prev) => ({ ...prev, image: dataUrl }));
+    } catch (err) {
+      setImageError(err?.message || 'Não foi possível processar a imagem.');
+    }
   };
 
   const canSave = form.name.trim().length > 0 && !saving;
@@ -103,9 +111,9 @@ export function CategoryFormDialog({
           {isEdit ? 'Editar categoria' : 'Nova categoria'}
         </Typography>
 
-        {errorMessage ? (
+        {errorMessage || imageError ? (
           <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>
-            {errorMessage}
+            {errorMessage || imageError}
           </Alert>
         ) : null}
 
@@ -125,7 +133,7 @@ export function CategoryFormDialog({
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, active: e.target.checked }))
               }
-              color="secondary"
+              color="primary"
             />
           }
           label={form.active ? 'Ativa' : 'Inativa'}

@@ -8,7 +8,7 @@ import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import menuDefault from "../../../../assets/images/menu-default.svg";
+import menuDefault from "../../../../assets/images/sem-imagem.jpg";
 import Divider from '@mui/material/Divider';
 import { useContext } from 'react';
 import { ProductContext } from '../product/providers/ProductContext';

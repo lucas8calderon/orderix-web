@@ -22,6 +22,7 @@ import { ConfirmDeleteDialog } from '../components/ConfirmDeleteDialog';
 import { useGetCategories, usePostCategory } from './hooks/useGetCategories';
 import { useDeleteCategory } from './hooks/useDeleteCategories';
 import { CategoryContext } from './providers/CategoryContext';
+import { resolveMenuImage } from '../utils/defaultMenuImage';
 import './Category.css';
 
 export function CategoryContainer({
@@ -226,9 +227,25 @@ export function CategoryContainer({
               >
                 <CardContent>
                   <Box className="category-card-top">
-                    <Typography variant="h6" className="category-card-name">
-                      {category.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0, flex: 1 }}>
+                      <Box
+                        component="img"
+                        src={resolveMenuImage(category.image)}
+                        alt=""
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          objectFit: 'contain',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: '#fff',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography variant="h6" className="category-card-name">
+                        {category.name}
+                      </Typography>
+                    </Box>
                     <Chip
                       size="small"
                       label={isActive ? 'Ativa' : 'Inativa'}
@@ -252,7 +269,7 @@ export function CategoryContainer({
                         size="small"
                         checked={isActive}
                         onChange={() => handleToggleActive(category)}
-                        color="secondary"
+                        color="primary"
                       />
                     </Tooltip>
                     <IconButton

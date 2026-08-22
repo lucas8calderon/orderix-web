@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import { Grid, ListItemButton, Button, Box } from "@mui/material";
+import { Grid, ListItemButton, Button, Box, Typography } from "@mui/material";
 import { Loading } from "../../../commons/components/Loading";
 import { CardTable } from "../menu/utils/CardTable";
 import { TablesContext } from "./provider/TablesContext";
@@ -12,8 +12,10 @@ import ErrorDeleteDialog from "../menu/components/ErrorDeleteDialog";
 import { ConfirmDeleteDialog } from "../menu/components/ConfirmDeleteDialog";
 import { TableFormDialog } from "../menu/components/TableFormDialog";
 import { TableQRCodeDialog } from "../menu/components/TableQRCodeDialog";
+import { getCurrentUser } from "../../../services/session";
+import { canManageFloor } from "../../../services/accessControl";
 
-export function Tables() {
+export function Tables({ onOpenAccount, floorVersion = 0 }) {
   const {
     showTables,
     setShowTables,
@@ -34,7 +36,7 @@ export function Tables() {
   } = useContext(TablesContext);
 
   const { tables, loading, error, emptyResult, fetchTable } = useGetTables();
-  console.log("Tables data:", tables);
+  const canManage = canManageFloor(getCurrentUser());
   const {
     successSavingTable,
     errorSavingTable,
@@ -64,7 +66,14 @@ export function Tables() {
 
   const handleSelectedTable = (table) => {
     setSelectedTable(table);
+    onOpenAccount?.({ kind: "table", id: table.id, number: table.number });
   };
+
+  useEffect(() => {
+    if (floorVersion > 0) {
+      fetchTable();
+    }
+  }, [floorVersion, fetchTable]);
 
   const [openAddTable, setOpenAddTable] = useState(false);
   const [openQRCodeDialog, setOpenQRCodeDialog] = useState(false);
@@ -165,31 +174,35 @@ export function Tables() {
         table={selectedTableForQR}
       />
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: { xs: "stretch", sm: "flex-end" },
-        }}
-      >
+      <Box className="atendimento-section-header">
+        <Typography variant="h5" className="atendimento-section-title">
+          Mesas
+        </Typography>
+        {canManage && (
         <Button
-          sx={{
-            backgroundColor: "var(--color-primary)",
-            color: "var(--color-white)",
-            width: { xs: "100%", sm: "auto" },
-            minHeight: 44,
-            ":hover": {
-              backgroundColor: "var(--color-secondary)",
-              color: "var(--color-black)",
-            },
-          }}
           startIcon={<AddIcon />}
           onClick={() => setHandleAddNewTable(true)}
-          size="large"
+          sx={{
+            backgroundColor: "transparent !important",
+            color: "var(--color-primary) !important",
+            border: "1px solid var(--color-primary) !important",
+            textTransform: "none",
+            "&:hover": {
+              backgroundColor: "var(--color-primary) !important",
+              color: "#fff !important",
+            },
+          }}
         >
-          Nova mesa
+          Criar mesa
         </Button>
+        )}
       </Box>
-      <Grid container spacing={2} sx={{ marginTop: 4, marginBottom: 4 }}>
+      {!loading && tables.filter((table) => table.number !== 999).length === 0 && (
+        <Typography className="atendimento-empty" sx={{ color: "text.secondary" }}>
+          Nenhuma mesa cadastrada ainda.
+        </Typography>
+      )}
+      <Grid container spacing={2}>
         {tables
           .filter((table) => table.number !== 999)
           .map((table) => (
@@ -206,7 +219,7 @@ export function Tables() {
                 }}
                 onClick={() => handleSelectedTable(table)}
               >
-                <CardTable table={table} onShowQRCode={handleShowQRCode} />
+                <CardTable table={table} onShowQRCode={handleShowQRCode} canManage={canManage} />
               </ListItemButton>
             </Grid>
           ))}

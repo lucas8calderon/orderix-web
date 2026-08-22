@@ -11,8 +11,10 @@ import { useDeleteComanda } from './hook/useDeleteComandas';
 import ErrorDeleteDialog from '../menu/components/ErrorDeleteDialog';
 import { ConfirmDeleteDialog } from '../menu/components/ConfirmDeleteDialog';
 import { ComandaFormDialog } from './components/ComandaFormDialog';
+import { getCurrentUser } from '../../../services/session';
+import { canManageFloor } from '../../../services/accessControl';
 
-export function Comandas() {
+export function Comandas({ onOpenAccount, floorVersion = 0 }) {
   const {
     setBlockComandaFields,
     setOnAddComandaResult,
@@ -29,6 +31,7 @@ export function Comandas() {
   } = useContext(ComandasContext);
 
   const { comandas, loading, error, emptyResult, fetchComandas } = useGetComandas();
+  const canManage = canManageFloor(getCurrentUser());
   const {
     successSavingComanda,
     errorSavingComanda,
@@ -60,7 +63,14 @@ export function Comandas() {
 
   const handleSelectedComanda = (comanda) => {
     setSelectedComanda(comanda);
+    onOpenAccount?.({ kind: 'comanda', id: comanda.id, number: comanda.number });
   };
+
+  useEffect(() => {
+    if (floorVersion > 0) {
+      fetchComandas();
+    }
+  }, [floorVersion, fetchComandas]);
 
   useEffect(() => {
     if (Object.keys(handleDeleteComanda).length !== 0) {
@@ -147,38 +157,37 @@ export function Comandas() {
         onSaveComanda={onHandleSaveComanda}
       />
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: { xs: 'stretch', sm: 'flex-end' },
-        }}
-      >
+      <Box className="atendimento-section-header">
+        <Typography variant="h5" className="atendimento-section-title">
+          Comandas
+        </Typography>
+        {canManage && (
         <Button
-          sx={{
-            backgroundColor: 'var(--color-primary)',
-            color: 'var(--color-white)',
-            width: { xs: '100%', sm: 'auto' },
-            minHeight: 44,
-            ':hover': {
-              backgroundColor: 'var(--color-secondary)',
-              color: 'var(--color-black)',
-            },
-          }}
           startIcon={<AddIcon />}
           onClick={() => setHandleAddNewComanda(true)}
-          size="large"
+          sx={{
+            backgroundColor: 'transparent !important',
+            color: 'var(--color-primary) !important',
+            border: '1px solid var(--color-primary) !important',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: 'var(--color-primary) !important',
+              color: '#fff !important',
+            },
+          }}
         >
           Nova comanda
         </Button>
+        )}
       </Box>
 
       {emptyResult && !loading && (
-        <Typography sx={{ mt: 4, color: 'text.secondary' }} align="center">
+        <Typography className="atendimento-empty" sx={{ color: 'text.secondary' }}>
           Nenhuma comanda cadastrada ainda.
         </Typography>
       )}
 
-      <Grid container spacing={2} sx={{ marginTop: 4, marginBottom: 4 }}>
+      <Grid container spacing={2}>
         {comandas.map((comanda) => (
           <Grid item key={comanda.id} xs={12} sm={6} md={4} lg={3} xl={2}>
             <ListItemButton
@@ -193,7 +202,7 @@ export function Comandas() {
               }}
               onClick={() => handleSelectedComanda(comanda)}
             >
-              <CardComanda comanda={comanda} />
+              <CardComanda comanda={comanda} canManage={canManage} />
             </ListItemButton>
           </Grid>
         ))}

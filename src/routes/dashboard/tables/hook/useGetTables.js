@@ -11,7 +11,6 @@ export const useGetTables = () => {
   setLoading(true);
   getTables()
     .then(response => {
-      console.log("Use Get aqui", response.data)
       setEmptyResult(false);
       setError(false);
       setTables(response.data);
