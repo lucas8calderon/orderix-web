@@ -68,7 +68,7 @@ export function Comandas({ onOpenAccount, floorVersion = 0 }) {
 
   useEffect(() => {
     if (floorVersion > 0) {
-      fetchComandas();
+      fetchComandas({ silent: true });
     }
   }, [floorVersion, fetchComandas]);
 

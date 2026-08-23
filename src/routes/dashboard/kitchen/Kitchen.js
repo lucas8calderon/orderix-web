@@ -353,9 +353,11 @@ export function Kitchen() {
             .then((response) => {
                 const data = Array.isArray(response.data) ? response.data : [];
                 setOrders(data.map(mapKitchenOrder));
+                return true;
             })
             .catch(() => {
                 showToastMessage('Não foi possível carregar os pedidos da cozinha.');
+                return false;
             });
     };
 
@@ -423,10 +425,15 @@ export function Kitchen() {
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        loadOrders().finally(() => {
-            setIsRefreshing(false);
-            showToastMessage('Pedidos atualizados com sucesso!');
-        });
+        loadOrders()
+            .then((updated) => {
+                if (updated) {
+                    showToastMessage('Pedidos atualizados com sucesso!');
+                }
+            })
+            .finally(() => {
+                setIsRefreshing(false);
+            });
     };
 
     const handleCardClick = (order) => {
@@ -439,6 +446,36 @@ export function Kitchen() {
 
     return (
         <Box className="kitchen-container">
+            <Box className="kitchen-header">
+                <Box>
+                    <Typography variant="h4" className="kitchen-page-title">
+                        Cozinha
+                    </Typography>
+                    <Typography variant="body1" className="kitchen-page-subtitle">
+                        Acompanhe os pedidos e atualize o status de cada etapa.
+                    </Typography>
+                </Box>
+                <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon className={isRefreshing ? 'refreshing' : ''} />}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="kitchen-refresh-btn"
+                    sx={{
+                        borderColor: 'var(--color-primary)',
+                        color: 'var(--color-primary)',
+                        textTransform: 'none',
+                        alignSelf: 'flex-start',
+                        '&:hover': {
+                            borderColor: '#6a2599',
+                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                        },
+                    }}
+                >
+                    {isRefreshing ? 'Atualizando...' : 'Atualizar'}
+                </Button>
+            </Box>
+
             {/* Filter Section */}
             <Box className="filter-section">
                 <Typography variant="h6" fontWeight="600" color="text.primary" mb={2}>

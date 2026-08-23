@@ -71,7 +71,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
 
   useEffect(() => {
     if (floorVersion > 0) {
-      fetchTable();
+      fetchTable({ silent: true });
     }
   }, [floorVersion, fetchTable]);
 
