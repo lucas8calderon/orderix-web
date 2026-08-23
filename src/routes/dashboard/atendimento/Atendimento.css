@@ -10,6 +10,14 @@
   gap: 8px;
 }
 
+.atendimento-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
 .atendimento-page-title {
   font-weight: 700 !important;
   color: var(--color-text-primary);
@@ -18,7 +26,19 @@
 
 .atendimento-page-subtitle {
   color: var(--color-text-secondary);
-  margin-bottom: 24px !important;
+}
+
+.atendimento-refresh-icon {
+  animation: atendimento-refresh-spin 1s linear infinite;
+}
+
+@keyframes atendimento-refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .atendimento-section {
@@ -50,6 +70,11 @@
 @media (max-width: 768px) {
   .atendimento-container {
     padding: 0 0 24px;
+  }
+
+  .atendimento-page-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .atendimento-section {

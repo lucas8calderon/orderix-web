@@ -7,9 +7,11 @@ export const useGetComandas = () => {
   const [error, setError] = useState(false);
   const [emptyResult, setEmptyResult] = useState(false);
 
-  const fetchComandas = useCallback(() => {
-    setLoading(true);
-    getComandas()
+  const fetchComandas = useCallback((options = {}) => {
+    if (!options.silent) {
+      setLoading(true);
+    }
+    return getComandas()
       .then((response) => {
         setEmptyResult(false);
         setError(false);

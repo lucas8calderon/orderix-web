@@ -5,6 +5,24 @@
   min-height: auto;
 }
 
+.kitchen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kitchen-page-title {
+  font-weight: 700 !important;
+  color: var(--color-text-primary);
+  margin-bottom: 4px !important;
+}
+
+.kitchen-page-subtitle {
+  color: var(--color-text-secondary);
+}
+
 /* Filter Section */
 .filter-section {
   background: var(--color-surface);
@@ -111,8 +129,8 @@
   
   .kitchen-header {
     flex-direction: column;
+    align-items: stretch;
     gap: 16px;
-    text-align: center;
   }
   
   .kanban-board .MuiGrid-item {
@@ -121,12 +139,9 @@
 }
 
 @media (max-width: 480px) {
-  .kitchen-header {
-    padding: 16px;
-  }
-  
-  .kitchen-header h4 {
-    font-size: 1.5rem;
+  .kitchen-header h4,
+  .kitchen-page-title {
+    font-size: 1.5rem !important;
   }
 }
 

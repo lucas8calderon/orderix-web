@@ -13,25 +13,27 @@ export const useGetTables = () => {
   const [error, setError] = useState(false);
   const [emptyResult, setEmptyResult] = useState(false);
 
-  const fetchTable = useCallback(() => {
-  setLoading(true);
-  getTables()
-    .then(response => {
-      setEmptyResult(false);
-      setError(false);
-      setTables(sortTablesByNumber(response.data));
-    })
-    .catch(error => {
-      const errorCode = error.response ? error.response.status : 500;
-      if (errorCode === 404) {
-        setEmptyResult(true);
-      } else {
-        setError(true);
-      }
-      setTables([]);
-    })
-    .finally(() => setLoading(false));
-}, []);
+  const fetchTable = useCallback((options = {}) => {
+    if (!options.silent) {
+      setLoading(true);
+    }
+    return getTables()
+      .then(response => {
+        setEmptyResult(false);
+        setError(false);
+        setTables(sortTablesByNumber(response.data));
+      })
+      .catch(error => {
+        const errorCode = error.response ? error.response.status : 500;
+        if (errorCode === 404) {
+          setEmptyResult(true);
+        } else {
+          setError(true);
+        }
+        setTables([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     fetchTable();
