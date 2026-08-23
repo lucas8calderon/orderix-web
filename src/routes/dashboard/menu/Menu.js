@@ -10,6 +10,7 @@ export function Menu() {
   const [products, setProducts] = useState([]);
   const [productsRefreshToken, setProductsRefreshToken] = useState(0);
   const [categoriesRefreshToken, setCategoriesRefreshToken] = useState(0);
+  const [newProductCategoryId, setNewProductCategoryId] = useState(null);
 
   const handleCategoriesChange = useCallback((nextCategories) => {
     setCategories(nextCategories || []);
@@ -21,6 +22,15 @@ export function Menu() {
 
   const handleCategoryDeleted = useCallback(() => {
     setProductsRefreshToken((token) => token + 1);
+  }, []);
+
+  const handleAddProductToCategory = useCallback((category) => {
+    if (category?.id == null) return;
+    setNewProductCategoryId(category.id);
+  }, []);
+
+  const handlePresetCategoryConsumed = useCallback(() => {
+    setNewProductCategoryId(null);
   }, []);
 
   const handleProductsChanged = useCallback(() => {
@@ -51,6 +61,7 @@ export function Menu() {
           <CategoryContainer
             onCategoriesChange={handleCategoriesChange}
             onCategoryDeleted={handleCategoryDeleted}
+            onAddProduct={handleAddProductToCategory}
             refreshToken={categoriesRefreshToken}
             productCounts={productCounts}
           />
@@ -60,6 +71,8 @@ export function Menu() {
           <ProductContainer
             categories={categories}
             refreshToken={productsRefreshToken}
+            presetCategoryId={newProductCategoryId}
+            onPresetCategoryConsumed={handlePresetCategoryConsumed}
             onProductsChanged={handleProductsChanged}
             onProductsLoaded={handleProductsChange}
           />

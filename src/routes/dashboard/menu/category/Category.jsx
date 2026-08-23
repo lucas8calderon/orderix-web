@@ -32,6 +32,7 @@ import './Category.css';
 export function CategoryContainer({
   onCategoriesChange,
   onCategoryDeleted,
+  onAddProduct,
   refreshToken = 0,
   productCounts = {},
 }) {
@@ -182,6 +183,14 @@ export function CategoryContainer({
           resetSaveState();
         }}
         onSave={handleSave}
+        onDelete={
+          editingCategory?.id
+            ? () => {
+                setFormOpen(false);
+                setDeleteTarget(editingCategory);
+              }
+            : undefined
+        }
         category={editingCategory}
         categories={categories}
         saving={saving}
@@ -246,9 +255,8 @@ export function CategoryContainer({
                 onEdit={() => openEdit(root)}
                 onDelete={() => setDeleteTarget(root)}
                 onAddChild={() => openCreateSubcategory(root)}
-                onSelectChild={(child) => setSelectedCategory(child)}
                 onEditChild={(child) => openEdit(child)}
-                onDeleteChild={(child) => setDeleteTarget(child)}
+                onAddProduct={(child) => onAddProduct?.(child)}
               />
             );
           })}
@@ -286,9 +294,8 @@ function CategoryManageCard({
   onEdit,
   onDelete,
   onAddChild,
-  onSelectChild,
   onEditChild,
-  onDeleteChild,
+  onAddProduct,
 }) {
   const isActive = category.active !== false;
   const details = [
@@ -391,9 +398,8 @@ function CategoryManageCard({
                   category={child}
                   isSelected={selectedCategoryId === child.id}
                   productCount={productCountForCategory(child, productCounts, categories)}
-                  onSelect={() => onSelectChild(child)}
                   onEdit={() => onEditChild(child)}
-                  onDelete={() => onDeleteChild(child)}
+                  onAddProduct={() => onAddProduct?.(child)}
                 />
               ))}
             </Box>
@@ -408,16 +414,15 @@ function SubcategoryCarouselCard({
   category,
   isSelected,
   productCount = 0,
-  onSelect,
   onEdit,
-  onDelete,
+  onAddProduct,
 }) {
   const isActive = category.active !== false;
 
   return (
     <Card
       className={`subcategory-carousel-card ${isSelected ? 'selected' : ''} ${!isActive ? 'inactive' : ''}`}
-      onClick={onSelect}
+      onClick={onEdit}
     >
       <Box
         component="img"
@@ -430,14 +435,24 @@ function SubcategoryCarouselCard({
         <Typography variant="caption" color="text.secondary">
           {productCount} {productCount === 1 ? 'produto' : 'produtos'}
         </Typography>
-        <Box className="subcategory-carousel-actions" onClick={(e) => e.stopPropagation()}>
-          <IconButton size="small" onClick={onEdit} sx={{ color: 'var(--color-primary)' }}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={onDelete} color="error">
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
+        <Button
+          size="small"
+          fullWidth
+          startIcon={<AddIcon />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddProduct?.();
+          }}
+          sx={{
+            mt: 0.75,
+            textTransform: 'none',
+            color: 'var(--color-primary)',
+            border: '1px solid var(--color-primary)',
+            minHeight: 32,
+          }}
+        >
+          Produto
+        </Button>
       </Box>
     </Card>
   );

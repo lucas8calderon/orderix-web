@@ -43,13 +43,14 @@ function formatPrice(value) {
 export function ProductContainer({
   categories = [],
   refreshToken = 0,
+  presetCategoryId = null,
+  onPresetCategoryConsumed,
   onProductsChanged,
   onProductsLoaded,
 }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -103,14 +104,8 @@ export function ProductContainer({
       list = list.filter((p) => ids.has(String(p.categoryId)));
     }
 
-    if (statusFilter === 'active') {
-      list = list.filter((p) => p.isAvailable !== false);
-    } else if (statusFilter === 'inactive') {
-      list = list.filter((p) => p.isAvailable === false);
-    }
-
     return list;
-  }, [products, searchTerm, categoryFilter, statusFilter, categories]);
+  }, [products, searchTerm, categoryFilter, categories]);
 
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
@@ -144,11 +139,13 @@ export function ProductContainer({
     ];
   }, [categories, categoryFilter, categoryTree]);
 
-  const statusFilters = [
-    { id: 'all', label: 'Todos' },
-    { id: 'active', label: 'Ativos' },
-    { id: 'inactive', label: 'Inativos' },
-  ];
+  useEffect(() => {
+    if (presetCategoryId == null) return;
+    resetPostState();
+    setEditingProduct({ categoryId: presetCategoryId });
+    setFormOpen(true);
+    onPresetCategoryConsumed?.();
+  }, [presetCategoryId, resetPostState, onPresetCategoryConsumed]);
 
   const openCreate = () => {
     if (!categories.length) {
@@ -283,17 +280,6 @@ export function ProductContainer({
             ))}
           </Box>
         ) : null}
-        <Box className="filter-chips-container">
-          {statusFilters.map((filter) => (
-            <Box
-              key={`status-${filter.id}`}
-              className={`filter-chip ${statusFilter === filter.id ? 'active' : ''}`}
-              onClick={() => setStatusFilter(filter.id)}
-            >
-              {filter.label}
-            </Box>
-          ))}
-        </Box>
       </Box>
 
       <TableContainer component={Paper} className="product-table product-table-desktop">

@@ -50,6 +50,7 @@ export function CategoryFormDialog({
   open,
   onClose,
   onSave,
+  onDelete,
   category,
   categories = [],
   saving = false,
@@ -130,7 +131,9 @@ export function CategoryFormDialog({
       <DialogContent sx={{ p: { xs: 2, sm: 4 }, overflowY: 'auto' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           {isEdit
-            ? 'Editar categoria'
+            ? isSubcategory
+              ? 'Editar subcategoria'
+              : 'Editar categoria'
             : isSubcategory
               ? 'Nova subcategoria'
               : 'Nova categoria'}
@@ -252,23 +255,44 @@ export function CategoryFormDialog({
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: isEdit && onDelete ? 'space-between' : 'flex-end',
+            alignItems: 'center',
             gap: 2,
             flexWrap: 'wrap',
-            '& > button': { minHeight: 44, flex: { xs: '1 1 140px', sm: '0 0 auto' } },
+            '& > button, & > div > button': { minHeight: 44 },
           }}
         >
-          <Button onClick={handleClose} variant="outlined">
-            Cancelar
-          </Button>
-          <Button
-            disabled={!canSave}
-            variant="contained"
-            onClick={() => onSave(form)}
-            sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}
+          {isEdit && onDelete ? (
+            <Button
+              color="error"
+              variant="outlined"
+              onClick={onDelete}
+              sx={{ flex: { xs: '1 1 140px', sm: '0 0 auto' } }}
+            >
+              Excluir
+            </Button>
+          ) : null}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              ml: 'auto',
+              flexWrap: 'wrap',
+              '& > button': { minHeight: 44, flex: { xs: '1 1 140px', sm: '0 0 auto' } },
+            }}
           >
-            {saving ? 'Salvando...' : isSubcategory ? 'Salvar subcategoria' : 'Salvar categoria'}
-          </Button>
+            <Button onClick={handleClose} variant="outlined">
+              Cancelar
+            </Button>
+            <Button
+              disabled={!canSave}
+              variant="contained"
+              onClick={() => onSave(form)}
+              sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}
+            >
+              {saving ? 'Salvando...' : isSubcategory ? 'Salvar subcategoria' : 'Salvar categoria'}
+            </Button>
+          </Box>
         </Box>
       </DialogContent>
     </Dialog>

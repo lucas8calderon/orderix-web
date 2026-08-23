@@ -7,6 +7,8 @@ import {
   DialogContent,
   FormControl,
   FormControlLabel,
+  FormHelperText,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -20,7 +22,7 @@ import { styled } from '@mui/material/styles';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { fileToCompressedDataUrl } from '../utils/compressImage';
 import { isUserProvidedImage } from '../utils/defaultMenuImage';
-import { getCategorySelectOptions } from '../utils/categoryTree';
+import { buildCategoryTree } from '../utils/categoryTree';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -48,6 +50,20 @@ const emptyForm = {
   image: '',
 };
 
+function formatPriceInput(value) {
+  if (value === '' || value == null || Number.isNaN(Number(value))) return '';
+  return Number(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function parsePriceInput(raw) {
+  const digits = String(raw ?? '').replace(/\D/g, '').slice(0, 8);
+  if (!digits) return '';
+  return Number(digits) / 100;
+}
+
 export function ProductFormDialog({
   open,
   onClose,
@@ -66,26 +82,34 @@ export function ProductFormDialog({
 
   const isEdit = Boolean(product?.id);
 
-  const availableCategories = categories.filter(
-    (cat) =>
+  const availableCategories = categories.filter((cat) => {
+    if (cat?.id == null || cat.categoryId != null) return false;
+    return (
       cat.active !== false ||
       String(cat.id) === String(form.categoryId || product?.categoryId)
-  );
-  const categoryOptions = getCategorySelectOptions(availableCategories);
+    );
+  });
+  const categoryTree = buildCategoryTree(availableCategories);
+  const selectableIds = new Set();
+  categoryTree.forEach((root) => {
+    selectableIds.add(String(root.id));
+    (root.children || []).forEach((child) => selectableIds.add(String(child.id)));
+  });
   const selectedCategoryId =
     form.categoryId != null && form.categoryId !== ''
       ? String(form.categoryId)
       : '';
-
-  const defaultAssignableId = () => categoryOptions[0]?.id || '';
+  const selectedCategoryLabel = (() => {
+    for (const root of categoryTree) {
+      if (String(root.id) === selectedCategoryId) return root.name;
+      const child = (root.children || []).find((item) => String(item.id) === selectedCategoryId);
+      if (child) return `${root.name} › ${child.name}`;
+    }
+    return '';
+  })();
 
   useEffect(() => {
     if (!open) return;
-
-    const defaultCategoryId =
-      product?.categoryId != null
-        ? String(product.categoryId)
-        : defaultAssignableId();
 
     setImageError('');
     if (product?.id) {
@@ -93,8 +117,10 @@ export function ProductFormDialog({
         id: product.id,
         name: product.name || '',
         observation: product.observation || product.description || '',
-        value: product.value != null ? String(product.value) : '',
-        categoryId: product.categoryId != null ? String(product.categoryId) : defaultCategoryId,
+        value: product.value != null && !Number.isNaN(Number(product.value))
+          ? Number(product.value)
+          : '',
+        categoryId: product.categoryId != null ? String(product.categoryId) : '',
         isAvailable: product.isAvailable !== false,
         image: product.image || '',
       });
@@ -102,7 +128,7 @@ export function ProductFormDialog({
     } else {
       setForm({
         ...emptyForm,
-        categoryId: defaultCategoryId,
+        categoryId: product?.categoryId != null ? String(product.categoryId) : '',
       });
       setImagePreview('');
     }
@@ -129,7 +155,7 @@ export function ProductFormDialog({
     }
   };
 
-  const numericValue = Number(String(form.value).replace(',', '.'));
+  const numericValue = form.value === '' ? NaN : Number(form.value);
   const hasCategory = form.categoryId !== '' && form.categoryId != null;
   const canSave =
     form.name.trim().length > 0 &&
@@ -150,7 +176,7 @@ export function ProductFormDialog({
     <Dialog
       open={open}
       TransitionComponent={Transition}
-      keepMounted
+      keepMounted={false}
       onClose={handleClose}
       maxWidth="sm"
       {...dialogProps}
@@ -196,43 +222,69 @@ export function ProductFormDialog({
         <TextField
           fullWidth
           label="Preço"
-          type="number"
-          inputProps={{ min: 0, step: '0.01' }}
-          value={form.value}
-          onChange={(e) => setForm((prev) => ({ ...prev, value: e.target.value }))}
+          placeholder="0,00"
+          value={formatPriceInput(form.value)}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, value: parsePriceInput(e.target.value) }))
+          }
+          inputMode="numeric"
+          autoComplete="off"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">R$</InputAdornment>
+            ),
+          }}
+          inputProps={{
+            inputMode: 'numeric',
+            'aria-label': 'Preço em reais',
+          }}
           sx={{ mb: 2 }}
         />
 
         <FormControl fullWidth sx={{ mb: 2 }} required>
-          <InputLabel id="product-category-label">Categoria</InputLabel>
+          <InputLabel id="product-category-label" shrink>
+            Categoria
+          </InputLabel>
           <Select
             labelId="product-category-label"
             label="Categoria"
-            value={
-              categoryOptions.some((option) => option.id === selectedCategoryId)
-                ? selectedCategoryId
-                : ''
-            }
+            notched
+            displayEmpty
+            value={selectableIds.has(selectedCategoryId) ? selectedCategoryId : ''}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, categoryId: String(e.target.value) }))
             }
-            disabled={categoryOptions.length === 0}
-            displayEmpty
+            disabled={selectableIds.size === 0}
+            renderValue={(value) =>
+              value && selectedCategoryLabel ? selectedCategoryLabel : 'Selecione uma categoria'
+            }
             MenuProps={{
               container: typeof document !== 'undefined' ? document.body : undefined,
-              PaperProps: { sx: { maxHeight: 320 } },
+              PaperProps: { sx: { maxHeight: 360 } },
               sx: { zIndex: 2000 },
             }}
           >
-            <MenuItem value="" disabled>
-              Selecione uma categoria
-            </MenuItem>
-            {categoryOptions.map((option) => (
-              <MenuItem key={option.id} value={option.id}>
-                {option.label}
-              </MenuItem>
-            ))}
+            {categoryTree.flatMap((root) => {
+              const items = [
+                <MenuItem key={root.id} value={String(root.id)}>
+                  {root.name}
+                  {root.active === false ? ' (inativa)' : ''}
+                </MenuItem>,
+              ];
+              (root.children || []).forEach((child) => {
+                items.push(
+                  <MenuItem key={child.id} value={String(child.id)} sx={{ pl: 4 }}>
+                    {child.name}
+                    {child.active === false ? ' (inativa)' : ''}
+                  </MenuItem>
+                );
+              });
+              return items;
+            })}
           </Select>
+          <FormHelperText>
+            O produto entra só em categoria ou subcategoria, nunca em outro produto.
+          </FormHelperText>
         </FormControl>
 
         <FormControlLabel

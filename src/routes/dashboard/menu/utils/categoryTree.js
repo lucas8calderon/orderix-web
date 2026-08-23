@@ -35,24 +35,6 @@ export function getRootCategories(categories = []) {
     .filter(isRootCategory);
 }
 
-export function getCategorySelectOptions(categories = []) {
-  const tree = buildCategoryTree(categories);
-  const options = [];
-  tree.forEach((root) => {
-    options.push({
-      id: String(root.id),
-      label: `${root.name}${root.active === false ? ' (inativa)' : ''}`,
-    });
-    (root.children || []).forEach((child) => {
-      options.push({
-        id: String(child.id),
-        label: `${root.name} › ${child.name}${child.active === false ? ' (inativa)' : ''}`,
-      });
-    });
-  });
-  return options;
-}
-
 export function categoryPathLabel(category, categories = []) {
   if (!category) return '—';
   if (category.parentId == null) return category.name || '—';
