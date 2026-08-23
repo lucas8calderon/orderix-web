@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -41,6 +41,7 @@ export function CategoryContainer({
   const [editingCategory, setEditingCategory] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const { categories, loading, error, refetch } = useGetCategories(refreshKey + refreshToken);
   const {
@@ -107,6 +108,25 @@ export function CategoryContainer({
     }
   }, [errorToDeleteCategory, deleteErrorMessage, resetDeleteStateCategory]);
 
+  const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
+  const categoryFilters = useMemo(
+    () => [
+      { id: 'all', label: 'Todas' },
+      ...categoryTree.map((root) => ({ id: String(root.id), label: root.name })),
+    ],
+    [categoryTree]
+  );
+  const visibleCategoryTree = useMemo(() => {
+    if (categoryFilter === 'all') return categoryTree;
+    return categoryTree.filter((root) => String(root.id) === String(categoryFilter));
+  }, [categoryTree, categoryFilter]);
+
+  useEffect(() => {
+    if (categoryFilter === 'all') return;
+    const stillExists = categoryTree.some((root) => String(root.id) === String(categoryFilter));
+    if (!stillExists) setCategoryFilter('all');
+  }, [categoryTree, categoryFilter]);
+
   const openCreate = (parentId = null) => {
     resetSaveState();
     setEditingCategory(parentId != null ? { parentId } : null);
@@ -170,8 +190,6 @@ export function CategoryContainer({
   if (error) {
     return <GenericError onTryAgain={refetch} />;
   }
-
-  const categoryTree = buildCategoryTree(categories);
 
   return (
     <>
@@ -237,30 +255,51 @@ export function CategoryContainer({
           </Button>
         </Box>
       ) : (
-        <Box className="category-list">
-          {categoryTree.map((root) => {
-            const children = root.children || [];
-            return (
-              <CategoryManageCard
-                key={root.id}
-                category={root}
-                isSelected={selectedCategory?.id === root.id}
-                productCount={productCountForCategory(root, productCounts, categories)}
-                subcategories={children}
-                productCounts={productCounts}
-                categories={categories}
-                selectedCategoryId={selectedCategory?.id}
-                onSelect={() => setSelectedCategory(root)}
-                onToggle={() => handleToggleActive(root)}
-                onEdit={() => openEdit(root)}
-                onDelete={() => setDeleteTarget(root)}
-                onAddChild={() => openCreateSubcategory(root)}
-                onEditChild={(child) => openEdit(child)}
-                onAddProduct={(child) => onAddProduct?.(child)}
-              />
-            );
-          })}
-        </Box>
+        <>
+          <Box className="category-filters">
+            <Box className="filter-chips-container">
+              {categoryFilters.map((filter) => (
+                <Box
+                  key={`cat-filter-${filter.id}`}
+                  className={`filter-chip ${categoryFilter === filter.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setCategoryFilter(filter.id);
+                    if (filter.id !== 'all') {
+                      const root = categoryTree.find((item) => String(item.id) === filter.id);
+                      if (root) setSelectedCategory(root);
+                    }
+                  }}
+                >
+                  {filter.label}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+          <Box className="category-list">
+            {visibleCategoryTree.map((root) => {
+              const children = root.children || [];
+              return (
+                <CategoryManageCard
+                  key={root.id}
+                  category={root}
+                  isSelected={selectedCategory?.id === root.id}
+                  productCount={productCountForCategory(root, productCounts, categories)}
+                  subcategories={children}
+                  productCounts={productCounts}
+                  categories={categories}
+                  selectedCategoryId={selectedCategory?.id}
+                  onSelect={() => setSelectedCategory(root)}
+                  onToggle={() => handleToggleActive(root)}
+                  onEdit={() => openEdit(root)}
+                  onDelete={() => setDeleteTarget(root)}
+                  onAddChild={() => openCreateSubcategory(root)}
+                  onEditChild={(child) => openEdit(child)}
+                  onAddProduct={(child) => onAddProduct?.(child)}
+                />
+              );
+            })}
+          </Box>
+        </>
       )}
 
       <Snackbar

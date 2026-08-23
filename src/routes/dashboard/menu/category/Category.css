@@ -3,6 +3,14 @@
   min-height: 40px;
 }
 
+.category-filters {
+  margin: 0 0 16px;
+}
+
+.category-filters .filter-chips-container {
+  margin-top: 0;
+}
+
 .add-category-btn {
   text-transform: none;
 }
