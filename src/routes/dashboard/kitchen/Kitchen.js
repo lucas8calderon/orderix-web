@@ -633,7 +633,17 @@ export function Kitchen() {
                 <Fade in={!!selectedOrder}>
                     <Box className="order-detail-modal">
                         {selectedOrder && (
-                            <Card sx={{ maxWidth: 600, width: '100%', maxHeight: '90vh', overflow: 'auto' }}>
+                            <Card
+                                sx={{
+                                    maxWidth: 600,
+                                    width: '100%',
+                                    maxHeight: '90vh',
+                                    overflow: 'auto',
+                                    backgroundColor: 'var(--color-surface)',
+                                    color: 'var(--color-text-primary)',
+                                    backgroundImage: 'none',
+                                }}
+                            >
                                 <CardContent>
                                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                                         <Typography variant="h5" fontWeight="bold" sx={{ color: 'var(--color-primary)' }}>

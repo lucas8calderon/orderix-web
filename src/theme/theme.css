@@ -196,3 +196,10 @@ body,
   border: 1px solid var(--color-border) !important;
   color: var(--color-text-primary) !important;
 }
+
+.MuiDialog-paper,
+.MuiModal-root .MuiCard-root {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  background-image: none !important;
+}

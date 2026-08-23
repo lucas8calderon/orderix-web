@@ -260,6 +260,28 @@ export function createAppTheme(mode = 'light') {
           },
         },
       },
+      MuiFormControlLabel: {
+        styleOverrides: {
+          label: {
+            color: 'var(--color-text-primary)',
+          },
+        },
+      },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            color: 'var(--color-text-primary)',
+            borderColor: 'var(--color-border)',
+            '&.Mui-selected': {
+              backgroundColor: 'var(--color-primary)',
+              color: 'var(--color-on-primary)',
+              '&:hover': {
+                backgroundColor: 'var(--color-primary-dark)',
+              },
+            },
+          },
+        },
+      },
       MuiDivider: {
         styleOverrides: {
           root: {

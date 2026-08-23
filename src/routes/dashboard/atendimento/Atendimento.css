@@ -108,6 +108,27 @@
 .order-detail-modal .MuiCard-root {
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  background-image: none !important;
+}
+
+.checkout-dialog .MuiDialogTitle-root {
+  color: var(--color-text-primary);
+}
+
+.checkout-dialog .MuiDialogContent-root,
+.checkout-dialog .MuiDialogActions-root {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.checkout-dialog .MuiFormControlLabel-label {
+  color: var(--color-text-primary);
+}
+
+.checkout-dialog .MuiInputLabel-root {
+  color: var(--color-text-secondary);
 }
 
 .checkout-order-block {
@@ -144,9 +165,12 @@
   text-transform: none;
   border-radius: 8px !important;
   border: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-surface-muted) !important;
 }
 
 .checkout-payments .Mui-selected {
   background-color: var(--color-primary) !important;
-  color: #fff !important;
+  color: var(--color-on-primary) !important;
+  border-color: var(--color-primary) !important;
 }
