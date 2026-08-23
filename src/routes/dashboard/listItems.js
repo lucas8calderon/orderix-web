@@ -14,9 +14,14 @@ export const dashboardItems = [
     roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
-    title: 'Colaboradores',
-    icon: <BadgeOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN'],
+    title: 'Atendimento',
+    icon: <TableRestaurantOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN', 'CASHIER', 'WAITER'],
+  },
+  {
+    title: 'Cozinha',
+    icon: <SoupKitchenOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN', 'KITCHEN'],
   },
   {
     title: 'Catálogo',
@@ -29,14 +34,9 @@ export const dashboardItems = [
     roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
-    title: 'Atendimento',
-    icon: <TableRestaurantOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN', 'CASHIER', 'WAITER'],
-  },
-  {
-    title: 'Cozinha',
-    icon: <SoupKitchenOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN', 'KITCHEN'],
+    title: 'Colaboradores',
+    icon: <BadgeOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
     title: 'Configurações',
