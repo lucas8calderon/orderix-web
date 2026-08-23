@@ -47,6 +47,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
   const {
     loadingToDelete,
     errorToDelete,
+    errorMessage,
     successToDelete,
     deleteTableById,
     resetDeleteState,
@@ -149,7 +150,8 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
         <ErrorDeleteDialog
           open={errorToDelete}
           onClose={resetDeleteState}
-          itemName={selectedTable.name}
+          itemName={selectedTable?.number != null ? `Mesa ${selectedTable.number}` : 'a mesa'}
+          detail={errorMessage}
         />
       )}
 
@@ -158,7 +160,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
         onClose={() => setOpenDeleteDialogTable(false)}
         onConfirm={confirmDelete}
         itemType={"table"}
-        itemName={selectedTable?.name}
+        itemName={selectedTable?.number != null ? `Mesa ${selectedTable.number}` : 'esta mesa'}
       />
 
       <TableFormDialog

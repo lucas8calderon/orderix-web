@@ -42,6 +42,7 @@ export function Comandas({ onOpenAccount, floorVersion = 0 }) {
   const {
     loadingToDelete,
     errorToDelete,
+    errorMessage: deleteErrorMessage,
     successToDelete,
     deleteComandaById,
     resetDeleteState,
@@ -136,6 +137,7 @@ export function Comandas({ onOpenAccount, floorVersion = 0 }) {
           open={errorToDelete}
           onClose={resetDeleteState}
           itemName={selectedComanda?.number ? `Comanda ${selectedComanda.number}` : 'Comanda'}
+          detail={deleteErrorMessage}
         />
       )}
 

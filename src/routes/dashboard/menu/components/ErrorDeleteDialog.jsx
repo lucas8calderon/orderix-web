@@ -7,7 +7,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 
-export default function ErrorDeleteDialog({ open, onClose, itemName }) {
+export default function ErrorDeleteDialog({ open, onClose, itemName, detail }) {
   const dialogProps = useDialogResponsiveProps({ fullScreenOnMobile: false });
 
   return (
@@ -15,8 +15,12 @@ export default function ErrorDeleteDialog({ open, onClose, itemName }) {
       <DialogTitle>Erro ao excluir</DialogTitle>
       <DialogContent>
         <Typography>
-          Não foi possível excluir o produto <b>{itemName || 'selecionado'}</b>.  
-          Tente novamente mais tarde.
+          {detail || (
+            <>
+              Não foi possível excluir <b>{itemName || 'o item selecionado'}</b>.
+              Tente novamente mais tarde.
+            </>
+          )}
         </Typography>
       </DialogContent>
       <DialogActions>
