@@ -10,31 +10,38 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 export const dashboardItems = [
   {
     title: 'Dashboard',
-    icon: <DashboardOutlinedIcon />
+    icon: <DashboardOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
     title: 'Colaboradores',
-    icon: <BadgeOutlinedIcon />
+    icon: <BadgeOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
     title: 'Catálogo',
-    icon: <MenuBookOutlinedIcon />
+    icon: <MenuBookOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
     title: 'Inventário',
-    icon: <Inventory2OutlinedIcon />
+    icon: <Inventory2OutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN'],
   },
   {
     title: 'Atendimento',
-    icon: <TableRestaurantOutlinedIcon />
+    icon: <TableRestaurantOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN', 'CASHIER', 'WAITER'],
   },
   {
     title: 'Cozinha',
-    icon: <SoupKitchenOutlinedIcon />
+    icon: <SoupKitchenOutlinedIcon />,
+    roles: ['ADMIN', 'STORE_ADMIN', 'KITCHEN'],
   },
   {
     title: 'Configurações',
     icon: <SettingsOutlinedIcon />,
-    adminOnly: true
+    adminOnly: true,
+    roles: ['ADMIN', 'STORE_ADMIN'],
   },
 ];

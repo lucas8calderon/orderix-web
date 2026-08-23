@@ -25,6 +25,7 @@ import { Settings } from './settings/Settings';
 import InventoryPanel from './inventory/Inventory';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser, logout } from '../../services/authService';
+import { getVisibleDashboardItems } from '../../services/accessControl';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 
 function Copyright(props) {
@@ -87,9 +88,19 @@ const DesktopDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 
 );
 
 export default function Dashboard() {
-    const [selectedScreenIndex, setSelectedScreenIndex] = React.useState(0);
-    const screens = [<DashboardGerencial />, <Employees />, <Menu />, <InventoryPanel />, <Atendimento />, <Kitchen/>, <Settings />];
     const user = getCurrentUser();
+    const visibleItems = getVisibleDashboardItems(user, dashboardItems);
+    const [selectedScreenIndex, setSelectedScreenIndex] = React.useState(0);
+    const screenByTitle = {
+        Dashboard: <DashboardGerencial />,
+        Colaboradores: <Employees />,
+        Catálogo: <Menu />,
+        Inventário: <InventoryPanel />,
+        Atendimento: <Atendimento />,
+        Cozinha: <Kitchen />,
+        Configurações: <Settings />,
+    };
+    const screens = visibleItems.map((item) => screenByTitle[item.title]);
     const navigate = useNavigate();
     const isMobile = useMediaQuery('(max-width:900px)');
 
@@ -156,7 +167,7 @@ export default function Dashboard() {
             </Toolbar>
             <Divider sx={{ borderColor: 'rgba(190, 198, 224, 0.16)' }} />
             <List component="nav" sx={{ px: 0.5, py: 1 }}>
-                {dashboardItems.map((item, index) => (
+                {visibleItems.map((item, index) => (
                     <ListItemButton
                         onClick={() => handleSelectScreen(index)}
                         key={item.title}

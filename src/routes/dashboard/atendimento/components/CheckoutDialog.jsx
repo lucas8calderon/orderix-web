@@ -255,7 +255,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                                   </Typography>
                                 ))}
                                 {product.observation && (
-                                  <Typography variant="body2" color="text.secondary">
+                                  <Typography className="checkout-item-obs" variant="body2">
                                     Obs.: {product.observation}
                                   </Typography>
                                 )}
@@ -263,7 +263,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                             );
                           })}
                           {order.observation && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            <Typography className="checkout-item-obs" variant="body2" sx={{ mt: 0.5 }}>
                               Observação do pedido: {order.observation}
                             </Typography>
                           )}

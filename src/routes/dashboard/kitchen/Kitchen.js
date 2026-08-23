@@ -37,107 +37,119 @@ import {
 import { styled } from '@mui/material/styles';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
+import { getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
+import { resolveMandatorySelections } from '../atendimento/utils/accountTotals';
 
-// Dados mockados para demonstração
-const mockOrders = [
-    {
-        id: 1,
-        orderNumber: '#123',
-        customerName: 'João Silva',
-        items: ['Pizza Margherita', 'Coca-Cola 350ml', 'Batata Frita'],
-        status: 'novo',
-        createdAt: new Date(Date.now() - 15 * 60000), // 15 min atrás
-        tableNumber: 5,
-        waiter: 'Carlos',
-        notes: 'Sem cebola na pizza',
-        orderType: 'mesa'
-    },
-    {
-        id: 2,
-        orderNumber: '#124',
-        customerName: 'Maria Santos',
-        items: ['Hambúrguer Artesanal', 'Suco de Laranja'],
-        status: 'em_producao',
-        createdAt: new Date(Date.now() - 8 * 60000), // 8 min atrás
-        tableNumber: 3,
-        waiter: 'Ana',
-        notes: 'Hambúrguer bem passado',
-        orderType: 'mesa'
-    },
-    {
-        id: 3,
-        orderNumber: '#125',
-        customerName: 'Pedro Costa',
-        items: ['Salada Caesar', 'Água Mineral'],
-        status: 'feito',
-        createdAt: new Date(Date.now() - 25 * 60000), // 25 min atrás
-        tableNumber: 7,
-        waiter: 'João',
-        notes: 'Sem croutons',
-        orderType: 'mesa'
-    },
-    {
-        id: 4,
-        orderNumber: '#126',
-        customerName: 'Ana Oliveira',
-        items: ['Pasta Carbonara', 'Vinho Tinto'],
-        status: 'entregue',
-        createdAt: new Date(Date.now() - 35 * 60000), // 35 min atrás
-        tableNumber: 2,
-        waiter: 'Maria',
-        notes: 'Pasta al dente',
-        orderType: 'mesa'
-    },
-    {
-        id: 5,
-        orderNumber: '#127',
-        customerName: 'Carlos Lima',
-        items: ['Risotto de Camarão', 'Cerveja Artesanal'],
-        status: 'novo',
-        createdAt: new Date(Date.now() - 5 * 60000), // 5 min atrás
-        tableNumber: 1,
-        waiter: 'Pedro',
-        notes: 'Risotto cremoso',
-        orderType: 'mesa'
-    },
-    {
-        id: 6,
-        orderNumber: '#128',
-        customerName: 'Balcão - Delivery',
-        items: ['Pizza Quatro Queijos', 'Refrigerante'],
-        status: 'novo',
-        createdAt: new Date(Date.now() - 3 * 60000), // 3 min atrás
-        tableNumber: null,
-        waiter: 'Sistema',
-        notes: 'Entrega em 30 min',
-        orderType: 'balcao'
-    },
-    {
-        id: 7,
-        orderNumber: '#129',
-        customerName: 'Comanda #45',
-        items: ['Café Expresso', 'Pão de Açúcar'],
-        status: 'em_producao',
-        createdAt: new Date(Date.now() - 12 * 60000), // 12 min atrás
-        tableNumber: null,
-        waiter: 'Sistema',
-        notes: 'Para viagem',
-        orderType: 'comanda'
-    },
-    {
-        id: 8,
-        orderNumber: '#130',
-        customerName: 'Balcão - Retirada',
-        items: ['Sanduíche Natural', 'Suco Verde'],
-        status: 'feito',
-        createdAt: new Date(Date.now() - 20 * 60000), // 20 min atrás
-        tableNumber: null,
-        waiter: 'Sistema',
-        notes: 'Cliente aguardando',
-        orderType: 'balcao'
+const UI_TO_KITCHEN = {
+    novo: 'NEW',
+    em_producao: 'IN_PREPARATION',
+    feito: 'READY',
+    entregue: 'DELIVERED',
+};
+
+const KITCHEN_TO_UI = {
+    NEW: 'novo',
+    IN_PREPARATION: 'em_producao',
+    READY: 'feito',
+    DELIVERED: 'entregue',
+};
+
+function mapKitchenOrder(order) {
+    const products = order.products || [];
+    const items = products.map((product) => {
+        const quantity = Number(product.quantity) > 0 ? Number(product.quantity) : 1;
+        const extras = (product.extras || [])
+            .map((extra) => {
+                const extraQty = Number(extra.quantity) > 1 ? ` x${extra.quantity}` : '';
+                return extra.name ? `${extra.name}${extraQty}` : '';
+            })
+            .filter(Boolean);
+        const selections = resolveMandatorySelections(product).map(
+            (selection) => `${selection.groupName}: ${selection.itemName}`
+        );
+        return {
+            label: `${quantity}x ${product.name}`,
+            observation: (product.observation || '').trim(),
+            extras,
+            selections,
+        };
+    });
+    let orderType = 'balcao';
+    if (order.comandaId) {
+        orderType = 'comanda';
+    } else if (order.fromTable || (order.tableId && order.tableId !== 999)) {
+        orderType = 'mesa';
     }
-];
+    return {
+        id: order.id,
+        orderNumber: `#${order.id}`,
+        customerName: order.customerName || 'Cliente',
+        items,
+        status: KITCHEN_TO_UI[order.kitchenStatus] || 'novo',
+        createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
+        tableNumber: order.tableNumber || order.comandaNumber || '—',
+        waiter: order.waiterName || '—',
+        notes: (order.observation || '').trim(),
+        orderType,
+    };
+}
 
+function KitchenItemLines({ items, notes, compact = false }) {
+    const textVariant = compact ? 'body2' : 'body1';
+    return (
+        <>
+            {items.map((item, index) => (
+                <Box key={`${item.label}-${index}`} sx={{ mb: compact ? 0.75 : 1.25 }}>
+                    <Typography variant={textVariant} color="text.secondary">
+                        • {item.label}
+                    </Typography>
+                    {item.selections.map((selection) => (
+                        <Typography
+                            key={selection}
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                            sx={{ pl: 2 }}
+                        >
+                            {selection}
+                        </Typography>
+                    ))}
+                    {item.extras.map((extra) => (
+                        <Typography
+                            key={extra}
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                            sx={{ pl: 2 }}
+                        >
+                            Extra: {extra}
+                        </Typography>
+                    ))}
+                    {item.observation ? (
+                        <Typography
+                            className="kitchen-item-obs"
+                            variant="caption"
+                            display="block"
+                            sx={{ pl: 2, fontWeight: 700 }}
+                        >
+                            Obs.: {item.observation}
+                        </Typography>
+                    ) : null}
+                </Box>
+            ))}
+            {notes ? (
+                <Typography
+                    className="kitchen-item-obs"
+                    variant={compact ? 'caption' : 'body2'}
+                    display="block"
+                    sx={{ mt: 0.5, fontWeight: 700 }}
+                >
+                    Pedido: {notes}
+                </Typography>
+            ) : null}
+        </>
+    );
+}
 const StyledCard = styled(Card)(({ theme, status }) => ({
     marginBottom: theme.spacing(1.5),
     borderRadius: 16,
@@ -241,11 +253,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                             <Typography variant="subtitle2" fontWeight="bold" mb={1}>
                                 Itens do Pedido:
                             </Typography>
-                            {order.items.map((item, index) => (
-                                <Typography key={index} variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                    • {item}
-                                </Typography>
-                            ))}
+                            <KitchenItemLines items={order.items} notes={order.notes} compact />
 
                             <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
                                 <Typography variant="body2" sx={{ color: 'var(--color-primary)' }} fontWeight="bold">
@@ -299,7 +307,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
 };
 
 export function Kitchen() {
-    const [orders, setOrders] = useState(mockOrders);
+    const [orders, setOrders] = useState([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showToast, setShowToast] = useState(false);
@@ -340,78 +348,85 @@ export function Kitchen() {
         setTimeout(() => setShowToast(false), 3000);
     };
 
-    const handleStatusChange = (orderId) => {
-        setOrders(prevOrders => 
-            prevOrders.map(order => {
-                if (order.id === orderId) {
-                    const statusFlow = ['novo', 'em_producao', 'feito', 'entregue'];
-                    const currentIndex = statusFlow.indexOf(order.status);
-                    const nextStatus = currentIndex < statusFlow.length - 1 
-                        ? statusFlow[currentIndex + 1] 
-                        : order.status;
-                    
-                    const statusNames = {
-                        'novo': 'Novo',
-                        'em_producao': 'Em Produção',
-                        'feito': 'Feito',
-                        'entregue': 'Entregue'
-                    };
-                    
-                    showToastMessage(`Pedido ${order.orderNumber} movido para ${statusNames[nextStatus]}`);
-                    return { ...order, status: nextStatus };
-                }
-                return order;
+    const loadOrders = () => {
+        return getKitchenOrders()
+            .then((response) => {
+                const data = Array.isArray(response.data) ? response.data : [];
+                setOrders(data.map(mapKitchenOrder));
             })
-        );
+            .catch(() => {
+                showToastMessage('Não foi possível carregar os pedidos da cozinha.');
+            });
+    };
+
+    useEffect(() => {
+        loadOrders();
+        const timer = setInterval(loadOrders, 12000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const persistStatus = (orderId, uiStatus) => {
+        const kitchenStatus = UI_TO_KITCHEN[uiStatus];
+        if (!kitchenStatus) return;
+        updateKitchenOrderStatus(orderId, kitchenStatus)
+            .then(() => loadOrders())
+            .catch(() => {
+                showToastMessage('Não foi possível atualizar o status do pedido.');
+                loadOrders();
+            });
+    };
+
+    const handleStatusChange = (orderId) => {
+        const current = orders.find((order) => order.id === orderId);
+        if (!current) return;
+        const statusFlow = ['novo', 'em_producao', 'feito', 'entregue'];
+        const currentIndex = statusFlow.indexOf(current.status);
+        const nextStatus = currentIndex < statusFlow.length - 1
+            ? statusFlow[currentIndex + 1]
+            : current.status;
+        if (nextStatus === current.status) return;
+        setOrders((prev) => prev.map((order) => (
+            order.id === orderId ? { ...order, status: nextStatus } : order
+        )));
+        persistStatus(orderId, nextStatus);
+        const statusNames = {
+            novo: 'Novo',
+            em_producao: 'Em Produção',
+            feito: 'Feito',
+            entregue: 'Entregue',
+        };
+        showToastMessage(`Pedido ${current.orderNumber} movido para ${statusNames[nextStatus]}`);
     };
 
     const handleDragEnd = (result) => {
         const { destination, source, draggableId } = result;
-
-        // Se não há destino, não faz nada
-        if (!destination) {
+        if (!destination) return;
+        if (destination.droppableId === source.droppableId && destination.index === source.index) {
             return;
         }
-
-        // Se o item foi solto na mesma posição, não faz nada
-        if (
-            destination.droppableId === source.droppableId &&
-            destination.index === source.index
-        ) {
-            return;
-        }
-
-        // Atualiza o status do pedido baseado na coluna de destino
         const newStatus = destination.droppableId;
-        const order = orders.find(o => o.id.toString() === draggableId);
-        
+        const order = orders.find((item) => item.id.toString() === draggableId);
         if (order) {
             const statusNames = {
-                'novo': 'Novo',
-                'em_producao': 'Em Produção',
-                'feito': 'Feito',
-                'entregue': 'Entregue'
+                novo: 'Novo',
+                em_producao: 'Em Produção',
+                feito: 'Feito',
+                entregue: 'Entregue',
             };
-            
             showToastMessage(`Pedido ${order.orderNumber} movido para ${statusNames[newStatus]}`);
+            persistStatus(order.id, newStatus);
         }
-
-        setOrders(prevOrders => 
-            prevOrders.map(order => 
-                order.id.toString() === draggableId 
-                    ? { ...order, status: newStatus }
-                    : order
-            )
-        );
+        setOrders((prev) => prev.map((item) => (
+            item.id.toString() === draggableId ? { ...item, status: newStatus } : item
+        )));
     };
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        // Simular refresh
-        setTimeout(() => {
+        loadOrders().finally(() => {
             setIsRefreshing(false);
             showToastMessage('Pedidos atualizados com sucesso!');
-        }, 1000);
+        });
     };
 
     const handleCardClick = (order) => {
@@ -648,23 +663,19 @@ export function Kitchen() {
                                         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                                             Itens do Pedido
                                         </Typography>
-                                        {selectedOrder.items.map((item, index) => (
-                                            <Typography key={index} variant="body1" sx={{ mb: 1 }}>
-                                                • {item}
-                                            </Typography>
-                                        ))}
+                                        <KitchenItemLines items={selectedOrder.items} notes="" />
                                     </Box>
 
-                                    {selectedOrder.notes && (
-                                        <Box mt={3}>
+                                    {selectedOrder.notes ? (
+                                        <Box mt={3} className="kitchen-notes-box">
                                             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Observações
+                                                Observação do pedido
                                             </Typography>
-                                            <Typography variant="body1" color="text.secondary">
+                                            <Typography className="kitchen-item-obs" variant="body1">
                                                 {selectedOrder.notes}
                                             </Typography>
                                         </Box>
-                                    )}
+                                    ) : null}
 
                                     <Box mt={3} display="flex" justifyContent="flex-end" gap={2} flexWrap="wrap">
                                         <Button

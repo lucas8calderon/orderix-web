@@ -205,6 +205,8 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
       <Grid container spacing={2}>
         {tables
           .filter((table) => table.number !== 999)
+          .slice()
+          .sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0))
           .map((table) => (
             <Grid item key={table.id} xs={12} sm={6} md={4} lg={3} xl={2}>
               <ListItemButton

@@ -370,3 +370,14 @@
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
+
+.kitchen-item-obs {
+  color: #b45309;
+}
+
+.kitchen-notes-box {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(180, 83, 9, 0.08);
+  border: 1px solid rgba(180, 83, 9, 0.25);
+}

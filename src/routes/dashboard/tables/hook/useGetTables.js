@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getTables } from '../service/tablesService';
 
+function sortTablesByNumber(tables) {
+  return [...(tables || [])].sort(
+    (a, b) => (Number(a?.number) || 0) - (Number(b?.number) || 0)
+  );
+}
+
 export const useGetTables = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,7 +19,7 @@ export const useGetTables = () => {
     .then(response => {
       setEmptyResult(false);
       setError(false);
-      setTables(response.data);
+      setTables(sortTablesByNumber(response.data));
     })
     .catch(error => {
       const errorCode = error.response ? error.response.status : 500;

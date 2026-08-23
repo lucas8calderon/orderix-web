@@ -60,6 +60,22 @@ export function canManageFloor(user) {
   return isPlatformAdmin(user) || isStoreAdmin(user);
 }
 
+export function canAccessDashboardItem(user, item) {
+  if (!item) return false;
+  if (isPlatformAdmin(user)) {
+    return true;
+  }
+  const allowed = item.roles;
+  if (!allowed || allowed.length === 0) {
+    return isStoreAdmin(user);
+  }
+  return allowed.includes(user?.role);
+}
+
+export function getVisibleDashboardItems(user, items) {
+  return (items || []).filter((item) => canAccessDashboardItem(user, item));
+}
+
 export function getPostLoginPath(user) {
   if (!user) {
     return '/login';
