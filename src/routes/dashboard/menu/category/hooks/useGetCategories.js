@@ -5,6 +5,7 @@ import {
   updateCategory,
 } from '../service/categoryService';
 import { imageForSave } from '../../utils/defaultMenuImage';
+import { normalizeCategory } from '../../utils/categoryTree';
 
 export const useGetCategories = (refreshKey = 0) => {
   const [categories, setCategories] = useState([]);
@@ -14,11 +15,10 @@ export const useGetCategories = (refreshKey = 0) => {
   const [emptyResult, setEmptyResult] = useState(false);
 
   const fetchCategories = useCallback(() => {
-    setLoading(true);
     getAllCategories()
       .then((response) => {
         const data = Array.isArray(response.data) ? response.data : [];
-        setCategories(data);
+        setCategories(data.map(normalizeCategory));
         setSuccess(true);
         setEmptyResult(data.length === 0);
         setError(false);
@@ -58,6 +58,9 @@ export const usePostCategory = () => {
       backgroundColor: category?.backgroundColor || null,
       image: imageForSave(category?.image),
       active: category?.active !== false,
+      parentId: category?.parentId != null && category.parentId !== ''
+        ? Number(category.parentId)
+        : null,
     };
 
     setSaving(true);

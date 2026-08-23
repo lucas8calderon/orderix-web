@@ -53,7 +53,7 @@ export function ConfirmDeleteDialog({
           {itemType === 'category' ? (
             <>
               {' '}
-              Só é possível excluir categorias sem produtos vinculados.
+              Só é possível excluir categorias sem produtos e sem subcategorias vinculadas.
             </>
           ) : null}
         </Typography>

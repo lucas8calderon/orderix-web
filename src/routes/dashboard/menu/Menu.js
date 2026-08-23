@@ -44,7 +44,7 @@ export function Menu() {
           Catálogo
         </Typography>
         <Typography variant="body1" className="menu-page-subtitle">
-          Gerencie categorias e produtos da sua loja. Todo produto deve pertencer a uma categoria.
+          Gerencie categorias, subcategorias e produtos da sua loja. Subcategorias são opcionais: lojas simples podem continuar só com categoria e produto.
         </Typography>
 
         <Box className="menu-section">

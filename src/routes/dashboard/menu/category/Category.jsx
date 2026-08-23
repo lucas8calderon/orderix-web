@@ -23,6 +23,10 @@ import { useGetCategories, usePostCategory } from './hooks/useGetCategories';
 import { useDeleteCategory } from './hooks/useDeleteCategories';
 import { CategoryContext } from './providers/CategoryContext';
 import { resolveMenuImage } from '../utils/defaultMenuImage';
+import {
+  buildCategoryTree,
+  productCountForCategory,
+} from '../utils/categoryTree';
 import './Category.css';
 
 export function CategoryContainer({
@@ -70,7 +74,7 @@ export function CategoryContainer({
     const stillExists = selectedCategory?.id
       && categories.some((c) => c.id === selectedCategory.id);
     if (!stillExists) {
-      setSelectedCategory(categories[0]);
+      setSelectedCategory(categories.find((c) => c.parentId == null) || categories[0]);
     }
   }, [categories, selectedCategory, setSelectedCategory]);
 
@@ -102,10 +106,14 @@ export function CategoryContainer({
     }
   }, [errorToDeleteCategory, deleteErrorMessage, resetDeleteStateCategory]);
 
-  const openCreate = () => {
+  const openCreate = (parentId = null) => {
     resetSaveState();
-    setEditingCategory(null);
+    setEditingCategory(parentId != null ? { parentId } : null);
     setFormOpen(true);
+  };
+
+  const openCreateSubcategory = (parent) => {
+    openCreate(parent.id);
   };
 
   const openEdit = (category) => {
@@ -116,12 +124,19 @@ export function CategoryContainer({
 
   const handleSave = async (form) => {
     try {
-      await saveCategory(form);
+      await saveCategory({
+        ...form,
+        parentId: form.parentId || editingCategory?.parentId || '',
+      });
       setFormOpen(false);
       setEditingCategory(null);
       setToast({
         open: true,
-        message: form.id ? 'Categoria atualizada' : 'Categoria criada',
+        message: form.id
+          ? 'Categoria atualizada'
+          : form.parentId
+            ? 'Subcategoria criada'
+            : 'Categoria criada',
         severity: 'success',
       });
       setRefreshKey((k) => k + 1);
@@ -155,6 +170,8 @@ export function CategoryContainer({
     return <GenericError onTryAgain={refetch} />;
   }
 
+  const categoryTree = buildCategoryTree(categories);
+
   return (
     <>
       <CategoryFormDialog
@@ -166,6 +183,7 @@ export function CategoryContainer({
         }}
         onSave={handleSave}
         category={editingCategory}
+        categories={categories}
         saving={saving}
         errorMessage={errorMessage}
       />
@@ -184,7 +202,7 @@ export function CategoryContainer({
         </Typography>
         <Button
           startIcon={<AddIcon />}
-          onClick={openCreate}
+          onClick={() => openCreate()}
           sx={{
             backgroundColor: 'transparent !important',
             color: 'var(--color-primary) !important',
@@ -205,90 +223,33 @@ export function CategoryContainer({
           <Typography sx={{ mb: 2, color: 'text.secondary' }}>
             Nenhuma categoria cadastrada. Crie uma categoria para poder cadastrar produtos.
           </Typography>
-          <Button variant="contained" onClick={openCreate} sx={{ backgroundColor: 'var(--color-primary)' }}>
+          <Button variant="contained" onClick={() => openCreate()} sx={{ backgroundColor: 'var(--color-primary)' }}>
             Criar categoria
           </Button>
         </Box>
       ) : (
         <Box className="category-list">
-          {categories.map((category) => {
-            const isSelected = selectedCategory?.id === category.id;
-            const isActive = category.active !== false;
-            const fromProducts = productCounts[String(category.id)];
-            const productCount =
-              typeof fromProducts === 'number'
-                ? fromProducts
-                : Number(category.productCount) || 0;
+          {categoryTree.map((root) => {
+            const children = root.children || [];
             return (
-              <Card
-                key={category.id}
-                className={`category-manage-card ${isSelected ? 'selected' : ''} ${!isActive ? 'inactive' : ''}`}
-                onClick={() => setSelectedCategory(category)}
-              >
-                <CardContent>
-                  <Box className="category-card-top">
-                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0, flex: 1 }}>
-                      <Box
-                        component="img"
-                        src={resolveMenuImage(category.image)}
-                        alt=""
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          objectFit: 'contain',
-                          borderRadius: '8px',
-                          border: '1px solid var(--color-border)',
-                          backgroundColor: '#fff',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography variant="h6" className="category-card-name">
-                        {category.name}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      size="small"
-                      label={isActive ? 'Ativa' : 'Inativa'}
-                      sx={
-                        isActive
-                          ? {
-                              backgroundColor: 'var(--color-primary)',
-                              color: '#fff',
-                              fontWeight: 600,
-                            }
-                          : undefined
-                      }
-                    />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    {productCount} {productCount === 1 ? 'produto' : 'produtos'}
-                  </Typography>
-                  <Box className="category-card-actions" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title={isActive ? 'Desativar' : 'Ativar'}>
-                      <Switch
-                        size="small"
-                        checked={isActive}
-                        onChange={() => handleToggleActive(category)}
-                        color="primary"
-                      />
-                    </Tooltip>
-                    <IconButton
-                      size="small"
-                      onClick={() => openEdit(category)}
-                      sx={{ color: 'var(--color-primary)' }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDeleteTarget(category)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
+              <CategoryManageCard
+                key={root.id}
+                category={root}
+                isSelected={selectedCategory?.id === root.id}
+                productCount={productCountForCategory(root, productCounts, categories)}
+                subcategories={children}
+                productCounts={productCounts}
+                categories={categories}
+                selectedCategoryId={selectedCategory?.id}
+                onSelect={() => setSelectedCategory(root)}
+                onToggle={() => handleToggleActive(root)}
+                onEdit={() => openEdit(root)}
+                onDelete={() => setDeleteTarget(root)}
+                onAddChild={() => openCreateSubcategory(root)}
+                onSelectChild={(child) => setSelectedCategory(child)}
+                onEditChild={(child) => openEdit(child)}
+                onDeleteChild={(child) => setDeleteTarget(child)}
+              />
             );
           })}
         </Box>
@@ -309,5 +270,175 @@ export function CategoryContainer({
         </Alert>
       </Snackbar>
     </>
+  );
+}
+
+function CategoryManageCard({
+  category,
+  isSelected,
+  productCount = 0,
+  subcategories = [],
+  productCounts = {},
+  categories = [],
+  selectedCategoryId,
+  onSelect,
+  onToggle,
+  onEdit,
+  onDelete,
+  onAddChild,
+  onSelectChild,
+  onEditChild,
+  onDeleteChild,
+}) {
+  const isActive = category.active !== false;
+  const details = [
+    `${productCount} ${productCount === 1 ? 'produto' : 'produtos'}`,
+  ];
+  if (subcategories.length > 0) {
+    details.push(`${subcategories.length} ${subcategories.length === 1 ? 'subcategoria' : 'subcategorias'}`);
+  }
+
+  return (
+    <Card
+      className={`category-manage-card ${isSelected ? 'selected' : ''} ${!isActive ? 'inactive' : ''}`}
+      onClick={onSelect}
+    >
+      <CardContent>
+        <Box className="category-card-top">
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <Box
+              component="img"
+              src={resolveMenuImage(category.image)}
+              alt=""
+              sx={{
+                width: 48,
+                height: 48,
+                objectFit: 'contain',
+                borderRadius: '8px',
+                border: '1px solid var(--color-border)',
+                backgroundColor: '#fff',
+                flexShrink: 0,
+              }}
+            />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h6" className="category-card-name">
+                {category.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {details.join(' · ')}
+              </Typography>
+            </Box>
+          </Box>
+          <Chip
+            size="small"
+            label={isActive ? 'Ativa' : 'Inativa'}
+            sx={
+              isActive
+                ? {
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#fff',
+                    fontWeight: 600,
+                  }
+                : undefined
+            }
+          />
+        </Box>
+        <Box className="category-card-actions" onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={onAddChild}
+            sx={{
+              textTransform: 'none',
+              color: 'var(--color-primary)',
+              mr: 'auto',
+            }}
+          >
+            Subcategoria
+          </Button>
+          <Tooltip title={isActive ? 'Desativar' : 'Ativar'}>
+            <Switch
+              size="small"
+              checked={isActive}
+              onChange={onToggle}
+              color="primary"
+            />
+          </Tooltip>
+          <IconButton
+            size="small"
+            onClick={onEdit}
+            sx={{ color: 'var(--color-primary)' }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={onDelete}
+            color="error"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        {subcategories.length > 0 ? (
+          <Box className="subcategory-carousel-wrap" onClick={(e) => e.stopPropagation()}>
+            <Typography className="subcategory-carousel-label">
+              Subcategorias
+            </Typography>
+            <Box className="subcategory-carousel">
+              {subcategories.map((child) => (
+                <SubcategoryCarouselCard
+                  key={child.id}
+                  category={child}
+                  isSelected={selectedCategoryId === child.id}
+                  productCount={productCountForCategory(child, productCounts, categories)}
+                  onSelect={() => onSelectChild(child)}
+                  onEdit={() => onEditChild(child)}
+                  onDelete={() => onDeleteChild(child)}
+                />
+              ))}
+            </Box>
+          </Box>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SubcategoryCarouselCard({
+  category,
+  isSelected,
+  productCount = 0,
+  onSelect,
+  onEdit,
+  onDelete,
+}) {
+  const isActive = category.active !== false;
+
+  return (
+    <Card
+      className={`subcategory-carousel-card ${isSelected ? 'selected' : ''} ${!isActive ? 'inactive' : ''}`}
+      onClick={onSelect}
+    >
+      <Box
+        component="img"
+        src={resolveMenuImage(category.image)}
+        alt=""
+        className="subcategory-carousel-image"
+      />
+      <Box className="subcategory-carousel-body">
+        <Typography className="subcategory-carousel-name">{category.name}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {productCount} {productCount === 1 ? 'produto' : 'produtos'}
+        </Typography>
+        <Box className="subcategory-carousel-actions" onClick={(e) => e.stopPropagation()}>
+          <IconButton size="small" onClick={onEdit} sx={{ color: 'var(--color-primary)' }}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={onDelete} color="error">
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
+    </Card>
   );
 }

@@ -28,6 +28,11 @@ import { usePostProducts } from './hooks/usePostProducts';
 import { useDeleteProduct } from './hooks/useDeleteProduct';
 import './Product.css';
 import { resolveMenuImage } from '../utils/defaultMenuImage';
+import {
+  buildCategoryTree,
+  categoryPathLabel,
+  collectCategoryAndDescendantIds,
+} from '../utils/categoryTree';
 
 function formatPrice(value) {
   const number = Number(value);
@@ -94,7 +99,8 @@ export function ProductContainer({
     }
 
     if (categoryFilter !== 'all') {
-      list = list.filter((p) => String(p.categoryId) === String(categoryFilter));
+      const ids = collectCategoryAndDescendantIds(categoryFilter, categories);
+      list = list.filter((p) => ids.has(String(p.categoryId)));
     }
 
     if (statusFilter === 'active') {
@@ -104,15 +110,39 @@ export function ProductContainer({
     }
 
     return list;
-  }, [products, searchTerm, categoryFilter, statusFilter]);
+  }, [products, searchTerm, categoryFilter, statusFilter, categories]);
+
+  const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
   const categoryFilters = useMemo(
     () => [
       { id: 'all', label: 'Todas' },
-      ...categories.map((c) => ({ id: String(c.id), label: c.name })),
+      ...categoryTree.map((c) => ({ id: String(c.id), label: c.name })),
     ],
-    [categories]
+    [categoryTree]
   );
+
+  const selectedFilterCategory = useMemo(
+    () => categories.find((c) => String(c.id) === String(categoryFilter)),
+    [categories, categoryFilter]
+  );
+  const activeRootFilterId =
+    selectedFilterCategory?.parentId != null
+      ? String(selectedFilterCategory.parentId)
+      : categoryFilter;
+
+  const subcategoryFilters = useMemo(() => {
+    if (categoryFilter === 'all') return [];
+    const selected = categories.find((c) => String(c.id) === String(categoryFilter));
+    const rootId = selected?.parentId != null ? selected.parentId : categoryFilter;
+    const root = categoryTree.find((c) => String(c.id) === String(rootId));
+    const children = root?.children || [];
+    if (children.length === 0) return [];
+    return [
+      { id: String(root.id), label: `Todas em ${root.name}` },
+      ...children.map((child) => ({ id: String(child.id), label: child.name })),
+    ];
+  }, [categories, categoryFilter, categoryTree]);
 
   const statusFilters = [
     { id: 'all', label: 'Todos' },
@@ -225,13 +255,34 @@ export function ProductContainer({
           {categoryFilters.map((filter) => (
             <Box
               key={`cat-${filter.id}`}
-              className={`filter-chip ${categoryFilter === filter.id ? 'active' : ''}`}
+              className={`filter-chip ${
+                filter.id === 'all'
+                  ? categoryFilter === 'all'
+                    ? 'active'
+                    : ''
+                  : activeRootFilterId === filter.id
+                    ? 'active'
+                    : ''
+              }`}
               onClick={() => setCategoryFilter(filter.id)}
             >
               {filter.label}
             </Box>
           ))}
         </Box>
+        {subcategoryFilters.length > 0 ? (
+          <Box className="filter-chips-container subcategory-filters">
+            {subcategoryFilters.map((filter) => (
+              <Box
+                key={`subcat-${filter.id}`}
+                className={`filter-chip nested ${categoryFilter === filter.id ? 'active' : ''}`}
+                onClick={() => setCategoryFilter(filter.id)}
+              >
+                {filter.label}
+              </Box>
+            ))}
+          </Box>
+        ) : null}
         <Box className="filter-chips-container">
           {statusFilters.map((filter) => (
             <Box
@@ -296,9 +347,10 @@ export function ProductContainer({
                   </TableCell>
                   <TableCell sx={{ wordBreak: 'break-word' }}>
                     {product.categoryId
-                      ? categories.find((c) => c.id === product.categoryId)?.name ||
-                        product.categoryName ||
-                        '—'
+                      ? categoryPathLabel(
+                          categories.find((c) => String(c.id) === String(product.categoryId)),
+                          categories
+                        ) || product.categoryName || '—'
                       : '—'}
                   </TableCell>
                   <TableCell>{formatPrice(product.value)}</TableCell>
@@ -370,9 +422,10 @@ export function ProductContainer({
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
                       {product.categoryId
-                        ? categories.find((c) => c.id === product.categoryId)?.name ||
-                          product.categoryName ||
-                          '—'
+                        ? categoryPathLabel(
+                            categories.find((c) => String(c.id) === String(product.categoryId)),
+                            categories
+                          ) || product.categoryName || '—'
                         : '—'}
                     </Typography>
                   </Box>

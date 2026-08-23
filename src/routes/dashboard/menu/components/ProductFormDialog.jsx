@@ -20,6 +20,7 @@ import { styled } from '@mui/material/styles';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { fileToCompressedDataUrl } from '../utils/compressImage';
 import { isUserProvidedImage } from '../utils/defaultMenuImage';
+import { getCategorySelectOptions } from '../utils/categoryTree';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -70,6 +71,13 @@ export function ProductFormDialog({
       cat.active !== false ||
       String(cat.id) === String(form.categoryId || product?.categoryId)
   );
+  const categoryOptions = getCategorySelectOptions(availableCategories);
+  const selectedCategoryId =
+    form.categoryId != null && form.categoryId !== ''
+      ? String(form.categoryId)
+      : '';
+
+  const defaultAssignableId = () => categoryOptions[0]?.id || '';
 
   useEffect(() => {
     if (!open) return;
@@ -77,9 +85,7 @@ export function ProductFormDialog({
     const defaultCategoryId =
       product?.categoryId != null
         ? String(product.categoryId)
-        : availableCategories[0]?.id != null
-          ? String(availableCategories[0].id)
-          : '';
+        : defaultAssignableId();
 
     setImageError('');
     if (product?.id) {
@@ -202,16 +208,28 @@ export function ProductFormDialog({
           <Select
             labelId="product-category-label"
             label="Categoria"
-            value={form.categoryId || ''}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, categoryId: e.target.value }))
+            value={
+              categoryOptions.some((option) => option.id === selectedCategoryId)
+                ? selectedCategoryId
+                : ''
             }
-            disabled={availableCategories.length === 0}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, categoryId: String(e.target.value) }))
+            }
+            disabled={categoryOptions.length === 0}
+            displayEmpty
+            MenuProps={{
+              container: typeof document !== 'undefined' ? document.body : undefined,
+              PaperProps: { sx: { maxHeight: 320 } },
+              sx: { zIndex: 2000 },
+            }}
           >
-            {availableCategories.map((cat) => (
-              <MenuItem key={cat.id} value={String(cat.id)}>
-                {cat.name}
-                {cat.active === false ? ' (inativa)' : ''}
+            <MenuItem value="" disabled>
+              Selecione uma categoria
+            </MenuItem>
+            {categoryOptions.map((option) => (
+              <MenuItem key={option.id} value={option.id}>
+                {option.label}
               </MenuItem>
             ))}
           </Select>

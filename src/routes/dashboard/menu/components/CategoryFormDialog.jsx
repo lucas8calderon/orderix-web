@@ -3,9 +3,14 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogContent,
+  FormControl,
   FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
   Slide,
   Switch,
   TextField,
@@ -38,6 +43,7 @@ const emptyForm = {
   name: '',
   image: '',
   active: true,
+  parentId: '',
 };
 
 export function CategoryFormDialog({
@@ -45,6 +51,7 @@ export function CategoryFormDialog({
   onClose,
   onSave,
   category,
+  categories = [],
   saving = false,
   errorMessage = '',
 }) {
@@ -56,6 +63,16 @@ export function CategoryFormDialog({
   });
 
   const isEdit = Boolean(category?.id);
+  const parentCategory = categories.find(
+    (item) => String(item.id) === String(form.parentId || category?.parentId)
+  );
+  const isSubcategory = Boolean(form.parentId);
+  const hasChildren = categories.some(
+    (item) => String(item.parentId) === String(form.id)
+  );
+  const parentOptions = categories.filter(
+    (item) => item.parentId == null && String(item.id) !== String(form.id)
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -66,10 +83,14 @@ export function CategoryFormDialog({
         name: category.name || '',
         image: category.image || '',
         active: category.active !== false,
+        parentId: category.parentId != null ? String(category.parentId) : '',
       });
       setImagePreview(isUserProvidedImage(category.image) ? category.image : '');
     } else {
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        parentId: category?.parentId != null ? String(category.parentId) : '',
+      });
       setImagePreview('');
     }
   }, [open, category]);
@@ -108,7 +129,11 @@ export function CategoryFormDialog({
     >
       <DialogContent sx={{ p: { xs: 2, sm: 4 }, overflowY: 'auto' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'var(--color-text-primary)' }}>
-          {isEdit ? 'Editar categoria' : 'Nova categoria'}
+          {isEdit
+            ? 'Editar categoria'
+            : isSubcategory
+              ? 'Nova subcategoria'
+              : 'Nova categoria'}
         </Typography>
 
         {errorMessage || imageError ? (
@@ -117,10 +142,44 @@ export function CategoryFormDialog({
           </Alert>
         ) : null}
 
+        {!isEdit && parentCategory ? (
+          <Chip
+            size="small"
+            label={`Dentro de ${parentCategory.name}`}
+            sx={{
+              mb: 2,
+              fontWeight: 600,
+              backgroundColor: 'var(--color-primary)',
+              color: '#fff',
+            }}
+          />
+        ) : null}
+
+        {isEdit && !hasChildren ? (
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel id="parent-category-label">Exibir dentro de</InputLabel>
+            <Select
+              labelId="parent-category-label"
+              label="Exibir dentro de"
+              value={form.parentId}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, parentId: e.target.value }))
+              }
+            >
+              <MenuItem value="">Categoria principal</MenuItem>
+              {parentOptions.map((item) => (
+                <MenuItem key={item.id} value={String(item.id)}>
+                  {item.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : null}
+
         <TextField
           autoFocus
           fullWidth
-          label="Nome da categoria"
+          label={isSubcategory ? 'Nome da subcategoria' : 'Nome da categoria'}
           value={form.name}
           onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
           sx={{ mb: 2 }}
@@ -208,7 +267,7 @@ export function CategoryFormDialog({
             onClick={() => onSave(form)}
             sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' } }}
           >
-            {saving ? 'Salvando...' : 'Salvar categoria'}
+            {saving ? 'Salvando...' : isSubcategory ? 'Salvar subcategoria' : 'Salvar categoria'}
           </Button>
         </Box>
       </DialogContent>
