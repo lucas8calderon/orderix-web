@@ -61,7 +61,7 @@ import { PieChart as RechartsPieChart, Cell, BarChart as RechartsBarChart, Bar, 
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import './Inventory.css';
 
-const InventoryPanel = () => {
+const InventoryPanel = ({ stockFilter }) => {
   const [period, setPeriod] = useState('today');
   const [refreshing, setRefreshing] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -69,6 +69,12 @@ const InventoryPanel = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const dialogProps = useDialogResponsiveProps();
+
+  useEffect(() => {
+    if (stockFilter === 'critical') {
+      document.getElementById('inventory-critical')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [stockFilter]);
 
   // Mock data - em produção viria de APIs
   const [inventoryData, setInventoryData] = useState({
@@ -354,7 +360,7 @@ const InventoryPanel = () => {
         </Grid>
 
         {/* Produtos com Estoque Baixo */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} id="inventory-critical">
           <Card className="section-card">
             <CardContent>
               <Typography variant="h6" className="section-title">

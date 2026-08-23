@@ -1,384 +1,512 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
-  Typography,
+  Button,
   Card,
   CardContent,
-  Grid,
-  Chip,
-  Avatar,
-  LinearProgress,
-  IconButton,
-  Tooltip,
-  Paper,
-  Divider
+  Typography,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import {
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  AttachMoney as MoneyIcon,
-  ShoppingCart as CartIcon,
-  Restaurant as RestaurantIcon,
-  People as PeopleIcon,
-  Star as StarIcon,
-  MoreVert as MoreVertIcon,
-  Refresh as RefreshIcon,
-  Download as DownloadIcon
-} from '@mui/icons-material';
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { formatCurrency } from '../../../services/accessControl';
+import { Loading } from '../../../commons/components/Loading';
+import { useDashboardOverview } from './hook/useDashboardOverview';
 import './DashboardGerencial.css';
 
-// Componente de gráfico simples
-const SimpleChart = ({ title, type = 'bar' }) => (
-  <Box className="chart-container">
-    <Box className="chart-placeholder">
-      <Typography variant="h6" color="text.secondary">
-        📊 {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        Visualização dos dados de {title.toLowerCase()}
-      </Typography>
-      <Box className="chart-mock">
-        {type === 'bar' ? (
-          <Box className="chart-bars">
-            {[65, 80, 45, 90, 75, 85, 95].map((height, index) => (
-              <Box
-                key={index}
-                className="chart-bar"
-                sx={{
-                  height: `${height}%`,
-                  backgroundColor: 'var(--dashboard-primary)',
-                  borderRadius: '4px 4px 0 0',
-                  minHeight: '20px'
-                }}
-              />
-            ))}
+const PERIODS = [
+  { id: 'TODAY', label: 'Hoje' },
+  { id: 'DAYS_7', label: '7 dias' },
+  { id: 'DAYS_30', label: '30 dias' },
+  { id: 'MONTH', label: 'Este mês' },
+];
+
+const PRODUCT_SORTS = [
+  { id: 'qty', label: 'Mais vendidos' },
+  { id: 'revenue', label: 'Maior faturamento' },
+  { id: 'least', label: 'Menos vendidos' },
+];
+
+const STATUS_CLASS = {
+  NEW: 'awaiting',
+  IN_PREPARATION: 'in-progress',
+  READY: 'ready',
+  DELIVERED: 'delivered',
+};
+
+function formatChange(changePercent) {
+  const value = Number(changePercent) || 0;
+  const abs = Math.abs(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: value % 1 === 0 ? 0 : 1,
+    maximumFractionDigits: 1,
+  });
+  return `${value >= 0 ? '+' : '-'}${abs}%`;
+}
+
+function previousLabel(period) {
+  if (period === 'TODAY') return 'vs ontem';
+  if (period === 'DAYS_7') return 'vs 7 dias anteriores';
+  if (period === 'DAYS_30') return 'vs 30 dias anteriores';
+  return 'vs mês anterior';
+}
+
+function formatClock(dateTime) {
+  if (!dateTime) return '—';
+  const date = new Date(dateTime);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function operationTone(kind, operation) {
+  if (kind === 'kitchen') return Number(operation.lateOrders) > 0 ? 'danger' : Number(operation.kitchenOrders) > 0 ? 'warn' : 'ok';
+  if (kind === 'stock') return Number(operation.criticalStockCount) > 0 ? 'danger' : 'ok';
+  if (kind === 'tables') {
+    if (!operation.tablesTotal) return 'ok';
+    const ratio = operation.tablesOccupied / operation.tablesTotal;
+    if (ratio >= 1) return 'danger';
+    if (ratio >= 0.8) return 'warn';
+    return 'ok';
+  }
+  return Number(operation.openComandas) > 12 ? 'warn' : 'ok';
+}
+
+function MetricCard({ title, value, changePercent, previous, period }) {
+  const current = Number(value) || 0;
+  const prior = Number(previous) || 0;
+  const isPositive = Number(changePercent) >= 0;
+  const showChange = current > 0 || prior > 0;
+  return (
+    <Card className="overview-metric-card" elevation={0}>
+      <CardContent className="overview-metric-content">
+        <Typography className="overview-metric-title">{title}</Typography>
+        <Typography className="overview-metric-value">{value}</Typography>
+        {showChange ? (
+          <Box className={`overview-metric-change ${isPositive ? 'is-up' : 'is-down'}`}>
+            {isPositive ? <TrendingUpIcon fontSize="inherit" /> : <TrendingDownIcon fontSize="inherit" />}
+            <span>{formatChange(changePercent)} {previousLabel(period)}</span>
           </Box>
         ) : (
-          <Box className="chart-line">
-            <svg width="100%" height="120" viewBox="0 0 300 120">
-              <polyline
-                points="0,100 50,80 100,60 150,40 200,50 250,30 300,20"
-                fill="none"
-                stroke="var(--dashboard-success)"
-                strokeWidth="3"
-              />
-              <circle cx="300" cy="20" r="4" fill="var(--dashboard-success)" />
-            </svg>
-          </Box>
+          <Box className="overview-metric-change is-muted">Sem movimento no período</Box>
         )}
-        <Box className="chart-labels">
-          {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((label, index) => (
-            <Typography key={index} variant="caption" className="chart-label">
-              {label}
-            </Typography>
-          ))}
-        </Box>
-      </Box>
-    </Box>
-  </Box>
-);
+      </CardContent>
+    </Card>
+  );
+}
 
-// Componente de card de métrica
-const MetricCard = React.memo(({ title, value, change, changeType, icon, color = 'primary' }) => (
-  <Card className="metric-card">
-    <CardContent className="metric-card-content">
-      <Box className="metric-header">
-        <Box className="metric-title-section">
-          <Avatar className={`metric-icon metric-icon--${color}`}>
-            {icon}
-          </Avatar>
-          <Typography className="metric-title">{title}</Typography>
-        </Box>
-        <IconButton size="small" className="metric-menu">
-          <MoreVertIcon />
-        </IconButton>
-      </Box>
-      
-      <Box className="metric-value-section">
-        <Typography className="metric-value">{value}</Typography>
-        <Box className="metric-change">
-          {changeType === 'positive' ? (
-            <TrendingUpIcon className="metric-trend metric-trend--positive" />
-          ) : (
-            <TrendingDownIcon className="metric-trend metric-trend--negative" />
-          )}
-          <Typography className={`metric-change-text metric-change-text--${changeType}`}>
-            {change}
-          </Typography>
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-));
+function DualCurrencyTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const current = payload.find((item) => item.dataKey === 'current');
+  const previous = payload.find((item) => item.dataKey === 'previous');
+  return (
+    <div className="overview-chart-tooltip">
+      <strong>{label}</strong>
+      <span>Atual: {formatCurrency(current?.value)}</span>
+      <span>Anterior: {formatCurrency(previous?.value)}</span>
+    </div>
+  );
+}
 
-// Componente de produto mais vendido
-const TopProductCard = React.memo(({ product, rank, sales, revenue }) => (
-  <Card className="top-product-card">
-    <CardContent className="top-product-content">
-      <Box className="product-rank">
-        <Typography className="product-rank-number">#{rank}</Typography>
-      </Box>
-      
-      <Box className="product-info">
-        <Avatar className="product-avatar">
-          <RestaurantIcon />
-        </Avatar>
-        <Box className="product-details">
-          <Typography className="product-name">{product}</Typography>
-          <Typography className="product-sales">{sales} vendas</Typography>
-        </Box>
-      </Box>
-      
-      <Box className="product-revenue">
-        <Typography className="product-revenue-value">R$ {revenue}</Typography>
-      </Box>
-    </CardContent>
-  </Card>
-));
+function CountTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="overview-chart-tooltip">
+      <strong>{label}</strong>
+      <span>{payload[0].value} pedidos</span>
+    </div>
+  );
+}
 
-// Componente de funcionário
-const EmployeeCard = React.memo(({ name, role, avatar, orders, rating, performance }) => (
-  <Card className="employee-card">
-    <CardContent className="employee-content">
-      <Box className="employee-header">
-        <Avatar className="employee-avatar" src={avatar}>
-          {name.charAt(0)}
-        </Avatar>
-        <Box className="employee-info">
-          <Typography className="employee-name">{name}</Typography>
-          <Typography className="employee-role">{role}</Typography>
-        </Box>
-        <Box className="employee-rating">
-          <StarIcon className="rating-icon" />
-          <Typography className="rating-value">{rating}</Typography>
-        </Box>
-      </Box>
-      
-      <Box className="employee-stats">
-        <Box className="employee-stat">
-          <Typography className="stat-label">Pedidos</Typography>
-          <Typography className="stat-value">{orders}</Typography>
-        </Box>
-        <Box className="employee-stat">
-          <Typography className="stat-label">Performance</Typography>
-          <Box className="performance-bar">
-            <LinearProgress 
-              variant="determinate" 
-              value={performance} 
-              className="performance-progress"
-            />
-            <Typography className="performance-value">{performance}%</Typography>
-          </Box>
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-));
+export function DashboardGerencial({ onNavigate }) {
+  const [period, setPeriod] = useState('DAYS_7');
+  const [productSort, setProductSort] = useState('qty');
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
+  const { overview, loading, error, refetch } = useDashboardOverview(period);
+  const operation = overview.operation || {};
+  const kitchen = overview.kitchen || {};
+  const alerts = overview.alerts || [];
 
-export function DashboardGerencial() {
-  const [dashboardData, setDashboardData] = useState({
-    metrics: {
-      revenue: {
-        current: 'R$ 12.450,00',
-        change: '+12.5%',
-        changeType: 'positive'
-      },
-      orders: {
-        current: '156',
-        change: '+8.2%',
-        changeType: 'positive'
-      },
-      customers: {
-        current: '89',
-        change: '+15.3%',
-        changeType: 'positive'
-      },
-      avgOrder: {
-        current: 'R$ 79,80',
-        change: '-2.1%',
-        changeType: 'negative'
-      }
-    },
-    topProducts: [
-      { product: 'Pizza Margherita', rank: 1, sales: 45, revenue: '1.350,00' },
-      { product: 'Hambúrguer Artesanal', rank: 2, sales: 38, revenue: '1.140,00' },
-      { product: 'Salada Caesar', rank: 3, sales: 32, revenue: '640,00' },
-      { product: 'Pasta Carbonara', rank: 4, sales: 28, revenue: '840,00' },
-      { product: 'Sushi Combo', rank: 5, sales: 25, revenue: '1.250,00' }
-    ],
-    employees: [
-      { name: 'Ana Silva', role: 'Garçom', orders: 45, rating: 4.8, performance: 92 },
-      { name: 'Carlos Santos', role: 'Cozinheiro', orders: 38, rating: 4.6, performance: 88 },
-      { name: 'Maria Costa', role: 'Caixa', orders: 52, rating: 4.9, performance: 95 },
-      { name: 'João Oliveira', role: 'Garçom', orders: 41, rating: 4.7, performance: 89 }
-    ],
-    recentOrders: [
-      { id: '#001', customer: 'João Silva', amount: 'R$ 45,00', status: 'Concluído', time: '2 min' },
-      { id: '#002', customer: 'Maria Santos', amount: 'R$ 78,50', status: 'Preparando', time: '5 min' },
-      { id: '#003', customer: 'Pedro Costa', amount: 'R$ 32,00', status: 'Aguardando', time: '1 min' },
-      { id: '#004', customer: 'Ana Oliveira', amount: 'R$ 65,00', status: 'Concluído', time: '3 min' }
-    ]
-  });
+  const revenueSeries = useMemo(
+    () => (overview.revenueSeries || []).map((point) => ({
+      label: point.label,
+      current: Number(point.current) || 0,
+      previous: Number(point.previous) || 0,
+    })),
+    [overview.revenueSeries]
+  );
 
-  const [selectedPeriod, setSelectedPeriod] = useState('today');
+  const hourlyData = useMemo(
+    () => (overview.salesByHour || []).map((point) => ({
+      label: point.label,
+      value: Number(point.value) || 0,
+    })),
+    [overview.salesByHour]
+  );
 
-  const handleRefresh = useCallback(() => {
-    console.log('Atualizando dados do dashboard...');
-    // Simular atualização de dados
-  }, []);
-
-  const handleExport = useCallback(() => {
-    console.log('Exportando relatório...');
-    // Implementar exportação
-  }, []);
-
-  const metricsConfig = useMemo(() => [
-    {
-      title: 'Faturamento',
-      value: dashboardData.metrics.revenue.current,
-      change: dashboardData.metrics.revenue.change,
-      changeType: dashboardData.metrics.revenue.changeType,
-      icon: <MoneyIcon />,
-      color: 'success'
-    },
-    {
-      title: 'Pedidos',
-      value: dashboardData.metrics.orders.current,
-      change: dashboardData.metrics.orders.change,
-      changeType: dashboardData.metrics.orders.changeType,
-      icon: <CartIcon />,
-      color: 'primary'
-    },
-    {
-      title: 'Clientes',
-      value: dashboardData.metrics.customers.current,
-      change: dashboardData.metrics.customers.change,
-      changeType: dashboardData.metrics.customers.changeType,
-      icon: <PeopleIcon />,
-      color: 'info'
-    },
-    {
-      title: 'Ticket Médio',
-      value: dashboardData.metrics.avgOrder.current,
-      change: dashboardData.metrics.avgOrder.change,
-      changeType: dashboardData.metrics.avgOrder.changeType,
-      icon: <TrendingUpIcon />,
-      color: 'warning'
+  const rankedProducts = useMemo(() => {
+    const list = [...(overview.products || [])];
+    if (productSort === 'revenue') {
+      list.sort((a, b) => Number(b.revenue) - Number(a.revenue));
+    } else if (productSort === 'least') {
+      list.sort((a, b) => Number(a.quantity) - Number(b.quantity));
+    } else {
+      list.sort((a, b) => Number(b.quantity) - Number(a.quantity));
     }
-  ], [dashboardData.metrics]);
+    return list.slice(0, 5);
+  }, [overview.products, productSort]);
+
+  const visibleAlerts = showAllAlerts ? alerts : alerts.slice(0, 4);
+
+  const go = (title, intent) => {
+    if (typeof onNavigate === 'function') onNavigate(title, intent);
+  };
+
+  const handleAlert = (alert) => {
+    if (alert.action === 'kitchen-late') go('Cozinha', { kitchenFilter: 'atrasados' });
+    if (alert.action === 'inventory-critical') go('Inventário', { stockFilter: 'critical' });
+    if (alert.action === 'atendimento') go('Atendimento');
+  };
+
+  if (loading) {
+    return <Loading loadingMessage="Carregando visão geral..." />;
+  }
+
+  if (error) {
+    return (
+      <Box className="dashboard-gerencial">
+        <Typography className="overview-error-title">Não foi possível carregar o dashboard</Typography>
+        <Button variant="contained" onClick={refetch}>Tentar novamente</Button>
+      </Box>
+    );
+  }
 
   return (
     <div className="dashboard-gerencial">
-      {/* Header */}
-      <Box className="dashboard-header">
-        <Box className="dashboard-title-section">
-          <Typography className="dashboard-title">Dashboard Gerencial</Typography>
-          <Typography className="dashboard-subtitle">
-            Visão geral do desempenho do seu negócio
+      <Box className="overview-header">
+        <Box>
+          <Typography className="overview-title">Visão Geral</Typography>
+          <Typography className="overview-subtitle">
+            O que está acontecendo agora e onde você precisa agir
           </Typography>
         </Box>
-        
-        <Box className="dashboard-actions">
-          <Tooltip title="Atualizar dados">
-            <IconButton onClick={handleRefresh} className="action-button">
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Exportar relatório">
-            <IconButton onClick={handleExport} className="action-button">
-              <DownloadIcon />
-            </IconButton>
-          </Tooltip>
+        <Button startIcon={<RefreshIcon />} onClick={refetch} className="overview-refresh-btn">
+          Atualizar
+        </Button>
+      </Box>
+
+      {alerts.length > 0 && (
+        <Card className="overview-alerts" elevation={0}>
+          <CardContent>
+            <Box className="overview-alerts-head">
+              <Typography className="overview-panel-title">Atenção necessária — {alerts.length}</Typography>
+            </Box>
+            <ul className="overview-alert-list">
+              {visibleAlerts.map((alert, index) => (
+                <li key={`${alert.code}-${index}`}>
+                  <button
+                    type="button"
+                    className={`overview-alert overview-alert--${alert.severity}`}
+                    onClick={() => handleAlert(alert)}
+                  >
+                    {alert.message}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {alerts.length > 4 && (
+              <button type="button" className="overview-link-btn" onClick={() => setShowAllAlerts((open) => !open)}>
+                {showAllAlerts ? 'Ver menos' : 'Ver todos os alertas'}
+              </button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Box className="overview-metrics">
+        <MetricCard
+          title="Faturamento"
+          value={formatCurrency(overview.revenue?.value)}
+          changePercent={overview.revenue?.changePercent}
+          previous={overview.revenue?.previousValue}
+          period={period}
+        />
+        <MetricCard
+          title="Pedidos"
+          value={String(overview.orders?.value ?? 0)}
+          changePercent={overview.orders?.changePercent}
+          previous={overview.orders?.previousValue}
+          period={period}
+        />
+        <MetricCard
+          title="Ticket Médio"
+          value={formatCurrency(overview.averageTicket?.value)}
+          changePercent={overview.averageTicket?.changePercent}
+          previous={overview.averageTicket?.previousValue}
+          period={period}
+        />
+      </Box>
+
+      <Box className="overview-mini-kpis">
+        <button type="button" className="overview-mini-kpi" onClick={() => go('Atendimento')}>
+          <span>Mesas ocupadas</span>
+          <strong>{operation.tablesOccupied || 0} / {operation.tablesTotal || 0}</strong>
+        </button>
+        <button type="button" className="overview-mini-kpi" onClick={() => go('Atendimento')}>
+          <span>Comandas abertas</span>
+          <strong>{operation.openComandas || 0}</strong>
+        </button>
+        <button type="button" className="overview-mini-kpi" onClick={() => go('Cozinha')}>
+          <span>Pedidos na cozinha</span>
+          <strong>{operation.kitchenOrders || 0}</strong>
+        </button>
+        <button type="button" className="overview-mini-kpi">
+          <span>Tempo médio de preparo</span>
+          <strong>{operation.avgPrepMinutes != null ? `${operation.avgPrepMinutes} min` : '—'}</strong>
+        </button>
+        <button type="button" className="overview-mini-kpi" onClick={() => go('Cozinha', { kitchenFilter: 'atrasados' })}>
+          <span>Pedidos atrasados</span>
+          <strong>{operation.lateOrders || 0}</strong>
+        </button>
+        <button type="button" className="overview-mini-kpi" onClick={() => go('Inventário', { stockFilter: 'critical' })}>
+          <span>Estoque crítico</span>
+          <strong>{operation.criticalStockCount || 0} itens</strong>
+        </button>
+      </Box>
+
+      <Box>
+        <Typography className="overview-section-label">Operação agora</Typography>
+        <Box className="overview-now">
+          <button type="button" className={`overview-now-card is-${operationTone('tables', operation)}`} onClick={() => go('Atendimento')}>
+            <span className="overview-now-dot" />
+            <strong>Mesas</strong>
+            <p>{operation.tablesOccupied || 0} ocupadas / {operation.tablesAvailable || 0} disponíveis</p>
+          </button>
+          <button type="button" className={`overview-now-card is-${operationTone('kitchen', operation)}`} onClick={() => go('Cozinha', Number(operation.lateOrders) > 0 ? { kitchenFilter: 'atrasados' } : undefined)}>
+            <span className="overview-now-dot" />
+            <strong>Cozinha</strong>
+            <p>{kitchen.inPreparation || 0} pedidos em preparo</p>
+            <p>{kitchen.late || 0} atrasados{kitchen.onTimePercent != null ? ` · ${kitchen.onTimePercent}% no prazo` : ''}</p>
+          </button>
+          <button type="button" className={`overview-now-card is-${operationTone('service', operation)}`} onClick={() => go('Atendimento')}>
+            <span className="overview-now-dot" />
+            <strong>Atendimento</strong>
+            <p>{operation.openComandas || 0} comandas abertas</p>
+          </button>
+          <button type="button" className={`overview-now-card is-${operationTone('stock', operation)}`} onClick={() => go('Inventário', { stockFilter: 'critical' })}>
+            <span className="overview-now-dot" />
+            <strong>Estoque</strong>
+            <p>{operation.criticalStockCount || 0} produtos em nível crítico</p>
+          </button>
         </Box>
       </Box>
 
-      {/* Métricas Principais */}
-      <Grid container spacing={3} className="metrics-grid">
-        {metricsConfig.map((metric, index) => (
-          <Grid item xs={12} sm={6} lg={3} key={index}>
-            <MetricCard {...metric} />
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Gráficos e Análises */}
-      <Grid container spacing={3} className="charts-grid">
-        {/* Gráfico de Faturamento */}
-        <Grid item xs={12} lg={8}>
-          <Card className="chart-card">
-            <CardContent className="chart-card-content">
-              <Box className="chart-header">
-                <Typography className="chart-title">Faturamento por Período</Typography>
-                <Box className="chart-periods">
-                  <Chip label="Hoje" className="period-chip period-chip--active" />
-                  <Chip label="Semana" className="period-chip" />
-                  <Chip label="Mês" className="period-chip" />
-                </Box>
+      <Box className="overview-charts">
+        <Card className="overview-panel overview-panel--wide" elevation={0}>
+          <CardContent>
+            <Box className="overview-panel-head">
+              <Box>
+                <Typography className="overview-panel-title">Faturamento</Typography>
+                <Typography className="overview-panel-hint">
+                  {formatCurrency(overview.revenue?.value)} no período · anterior {formatCurrency(overview.revenue?.previousValue)}
+                  {overview.revenue?.changePercent != null ? ` · ${formatChange(overview.revenue.changePercent)}` : ''}
+                </Typography>
               </Box>
-              <SimpleChart title="Faturamento por Período" type="bar" />
-            </CardContent>
-          </Card>
-        </Grid>
+              <Box className="overview-period-chips">
+                {PERIODS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`overview-chip ${period === item.id ? 'is-active' : ''}`}
+                    onClick={() => setPeriod(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </Box>
+            </Box>
+            <Box className="overview-chart-wrap overview-chart-wrap--line">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueSeries} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={16} />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    width={72}
+                    tickFormatter={(value) =>
+                      Number(value).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        maximumFractionDigits: Number(value) >= 100 ? 0 : 2,
+                      })
+                    }
+                  />
+                  <Tooltip content={<DualCurrencyTooltip />} />
+                  <Line type="monotone" dataKey="previous" name="Anterior" stroke="var(--color-text-muted)" strokeWidth={2} strokeDasharray="6 4" dot={false} />
+                  <Line type="monotone" dataKey="current" name="Atual" stroke="var(--color-success)" strokeWidth={3} dot={{ r: 3, fill: 'var(--color-success)', strokeWidth: 0 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
 
-        {/* Pedidos Recentes */}
-        <Grid item xs={12} lg={4}>
-          <Card className="chart-card">
-            <CardContent className="chart-card-content">
-              <Typography className="chart-title">Pedidos Recentes</Typography>
-              <Box className="recent-orders">
-                {dashboardData.recentOrders.map((order, index) => (
-                  <Box key={index} className="order-item">
-                    <Box className="order-info">
-                      <Typography className="order-id">{order.id}</Typography>
-                      <Typography className="order-customer">{order.customer}</Typography>
+        <Card className="overview-panel" elevation={0}>
+          <CardContent>
+            <Typography className="overview-panel-title">Vendas por horário</Typography>
+            <Box className="overview-chart-wrap">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} interval={1} />
+                  <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
+                  <Tooltip content={<CountTooltip />} />
+                  <Bar dataKey="value" fill="var(--color-primary)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box className="overview-bottom">
+        <Card className="overview-panel overview-panel--wide" elevation={0}>
+          <CardContent>
+            <Typography className="overview-panel-title">Pedidos Recentes</Typography>
+            {(overview.recentOrders || []).length === 0 ? (
+              <Typography className="overview-empty">Nenhum pedido registrado ainda.</Typography>
+            ) : (
+              <div className="overview-orders-table">
+                <div className="overview-orders-head">
+                  <span>ID</span>
+                  <span>Cliente / Mesa</span>
+                  <span>Valor</span>
+                  <span>Status</span>
+                  <span>Hora</span>
+                </div>
+                {overview.recentOrders.map((order) => (
+                  <div key={order.id} className="overview-orders-row">
+                    <span className="overview-order-id">#{order.id}</span>
+                    <span>{order.source || '—'}</span>
+                    <span className="overview-order-amount">{Number(order.amount) > 0 ? formatCurrency(order.amount) : '—'}</span>
+                    <span>
+                      <span className={`overview-status overview-status--${STATUS_CLASS[order.status] || 'awaiting'}`}>
+                        {order.statusLabel || order.status}
+                      </span>
+                    </span>
+                    <span className="overview-order-time">{formatClock(order.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="overview-panel" elevation={0}>
+          <CardContent>
+            <Box className="overview-panel-head">
+              <Typography className="overview-panel-title">Produtos</Typography>
+            </Box>
+            <Box className="overview-period-chips">
+              {PRODUCT_SORTS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`overview-chip ${productSort === item.id ? 'is-active' : ''}`}
+                  onClick={() => setProductSort(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </Box>
+            {rankedProducts.length === 0 ? (
+              <Typography className="overview-empty">Ainda não há itens vendidos neste período.</Typography>
+            ) : (
+              <div className="overview-product-table">
+                <div className="overview-product-head">
+                  <span>Produto</span>
+                  <span>Qtd.</span>
+                  <span>Faturamento</span>
+                </div>
+                {rankedProducts.map((product) => (
+                  <div key={`${product.name}-${product.category}`} className="overview-product-row">
+                    <Box>
+                      <Typography className="overview-top-name">{product.name}</Typography>
+                      <Typography className="overview-top-category">{product.category}</Typography>
                     </Box>
-                    <Box className="order-details">
-                      <Typography className="order-amount">{order.amount}</Typography>
-                      <Chip 
-                        label={order.status} 
-                        className={`status-chip status-chip--${order.status.toLowerCase()}`}
-                        size="small"
-                      />
+                    <span>{product.quantity}</span>
+                    <span>{formatCurrency(product.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box className="overview-bottom">
+        <Card className="overview-panel" elevation={0}>
+          <CardContent>
+            <Typography className="overview-panel-title">Formas de pagamento</Typography>
+            {(overview.paymentMethods || []).length === 0 ? (
+              <Typography className="overview-empty">Nenhum pagamento fechado no período.</Typography>
+            ) : (
+              <ul className="overview-pay-list">
+                {overview.paymentMethods.map((method) => (
+                  <li key={method.method} className="overview-pay-item">
+                    <Box className="overview-pay-copy">
+                      <span>{method.label}</span>
+                      <strong>{formatCurrency(method.value)}</strong>
                     </Box>
-                    <Typography className="order-time">{order.time}</Typography>
-                  </Box>
+                    <div className="overview-pay-bar">
+                      <span style={{ width: `${Math.max(4, method.percent)}%` }} />
+                    </div>
+                    <span className="overview-pay-pct">{method.percent}%</span>
+                  </li>
                 ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Produtos Mais Vendidos e Equipe */}
-      <Grid container spacing={3} className="bottom-grid">
-        {/* Produtos Mais Vendidos */}
-        <Grid item xs={12} lg={6}>
-          <Card className="chart-card">
-            <CardContent className="chart-card-content">
-              <Typography className="chart-title">Produtos Mais Vendidos</Typography>
-              <Box className="top-products">
-                {dashboardData.topProducts.map((product, index) => (
-                  <TopProductCard key={index} {...product} />
+        <Card className="overview-panel" elevation={0}>
+          <CardContent>
+            <Box className="overview-panel-head">
+              <Typography className="overview-panel-title">Desempenho da equipe</Typography>
+              <button type="button" className="overview-link-btn" onClick={() => go('Colaboradores')}>
+                Ver equipe
+              </button>
+            </Box>
+            {(overview.team || []).length === 0 ? (
+              <Typography className="overview-empty">Ainda não há vendas atribuídas a colaboradores neste período.</Typography>
+            ) : (
+              <div className="overview-product-table">
+                <div className="overview-product-head">
+                  <span>Colaborador</span>
+                  <span>Pedidos</span>
+                  <span>Vendas</span>
+                </div>
+                {overview.team.map((member) => (
+                  <div key={member.name} className="overview-product-row">
+                    <span>{member.name}</span>
+                    <span>{member.orders}</span>
+                    <span>{formatCurrency(member.sales)}</span>
+                  </div>
                 ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Desempenho da Equipe */}
-        <Grid item xs={12} lg={6}>
-          <Card className="chart-card">
-            <CardContent className="chart-card-content">
-              <Typography className="chart-title">Desempenho da Equipe</Typography>
-              <Box className="team-performance">
-                {dashboardData.employees.map((employee, index) => (
-                  <EmployeeCard key={index} {...employee} />
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
     </div>
   );
 }

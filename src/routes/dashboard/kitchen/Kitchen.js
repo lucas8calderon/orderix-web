@@ -306,13 +306,19 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
     );
 };
 
-export function Kitchen() {
+export function Kitchen({ initialFilter }) {
     const [orders, setOrders] = useState([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
-    const [filterType, setFilterType] = useState('todos');
+    const [filterType, setFilterType] = useState(initialFilter || 'todos');
+
+    useEffect(() => {
+        if (initialFilter) {
+            setFilterType(initialFilter);
+        }
+    }, [initialFilter]);
 
     const columns = [
         { key: 'novo', title: 'Novo' },
@@ -334,11 +340,18 @@ export function Kitchen() {
 
     const getOrdersByStatus = (status) => {
         let filteredOrders = orders;
-        
-        if (filterType !== 'todos') {
+
+        if (filterType === 'atrasados') {
+            const limit = Date.now() - 20 * 60 * 1000;
+            filteredOrders = orders.filter((order) => (
+                (order.status === 'novo' || order.status === 'em_producao')
+                && order.createdAt
+                && order.createdAt.getTime() <= limit
+            ));
+        } else if (filterType !== 'todos') {
             filteredOrders = orders.filter(order => order.orderType === filterType);
         }
-        
+
         return filteredOrders.filter(order => order.status === status);
     };
 
@@ -526,8 +539,8 @@ export function Kitchen() {
                     <ToggleButton value="mesa" aria-label="mesas">
                         Mesas
                     </ToggleButton>
-                    <ToggleButton value="TESTE" aria-label="TESTE">
-                        TESTE
+                    <ToggleButton value="atrasados" aria-label="atrasados">
+                        Atrasados
                     </ToggleButton>
                     <ToggleButton value="balcao" aria-label="balcão">
                         Balcão

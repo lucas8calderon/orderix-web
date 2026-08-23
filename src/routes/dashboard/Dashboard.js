@@ -90,22 +90,33 @@ const DesktopDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 
 export default function Dashboard() {
     const user = getCurrentUser();
     const visibleItems = getVisibleDashboardItems(user, dashboardItems);
+    const navigate = useNavigate();
+    const isMobile = useMediaQuery('(max-width:900px)');
     const [selectedScreenIndex, setSelectedScreenIndex] = React.useState(0);
+    const [navIntent, setNavIntent] = React.useState(null);
+    const [desktopOpen, setDesktopOpen] = React.useState(true);
+    const [mobileOpen, setMobileOpen] = React.useState(false);
+
+    const goToScreen = (title, intent) => {
+        const index = visibleItems.findIndex((item) => item.title === title);
+        if (index < 0) return;
+        setNavIntent(intent || null);
+        setSelectedScreenIndex(index);
+        if (isMobile) {
+            setMobileOpen(false);
+        }
+    };
+
     const screenByTitle = {
-        Dashboard: <DashboardGerencial />,
+        Dashboard: <DashboardGerencial onNavigate={goToScreen} />,
         Colaboradores: <Employees />,
         Catálogo: <Menu />,
-        Inventário: <InventoryPanel />,
+        Inventário: <InventoryPanel stockFilter={navIntent?.stockFilter} />,
         Atendimento: <Atendimento />,
-        Cozinha: <Kitchen />,
+        Cozinha: <Kitchen initialFilter={navIntent?.kitchenFilter} />,
         Configurações: <Settings />,
     };
     const screens = visibleItems.map((item) => screenByTitle[item.title]);
-    const navigate = useNavigate();
-    const isMobile = useMediaQuery('(max-width:900px)');
-
-    const [desktopOpen, setDesktopOpen] = React.useState(true);
-    const [mobileOpen, setMobileOpen] = React.useState(false);
 
     const toggleDrawer = () => {
         if (isMobile) {
@@ -116,6 +127,7 @@ export default function Dashboard() {
     };
 
     const handleSelectScreen = (index) => {
+        setNavIntent(null);
         setSelectedScreenIndex(index);
         if (isMobile) {
             setMobileOpen(false);
