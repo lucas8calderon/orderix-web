@@ -7,7 +7,6 @@ import FeaturesSection from './components/FeaturesSection';
 import TargetAudienceSection from './components/TargetAudienceSection';
 import FeaturesListSection from './components/FeaturesListSection';
 import PlansSection from './components/PlansSection';
-import ClientsSection from './components/ClientsSection';
 import Footer from './components/Footer';
 import FloatWhatsAppButton from './components/FloatWhatsAppButton';
 import './styles/Home.css';
@@ -36,7 +35,6 @@ const Home = () => {
       <TargetAudienceSection />
       <FeaturesListSection />
       <PlansSection />
-      <ClientsSection onLoginClick={handleLoginClick} />
       <Footer />
       <FloatWhatsAppButton />
     </div>

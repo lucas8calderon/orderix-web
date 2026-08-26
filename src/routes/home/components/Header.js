@@ -43,7 +43,6 @@ const Header = ({ onLoginClick }) => {
           <button onClick={() => scrollToSection('home')}>Home</button>
           <button onClick={() => scrollToSection('products')}>Produtos</button>
           <button onClick={() => scrollToSection('plans')}>Planos</button>
-          <button onClick={() => scrollToSection('clients')}>Clientes</button>
           <button onClick={() => scrollToSection('support')}>Suporte</button>
           <button
             className="nav-login-mobile"

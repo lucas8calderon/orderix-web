@@ -73,33 +73,78 @@
   gap: 1.5rem;
 }
 
-.form-group {
+.login-form .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-group label {
+.login-form .form-group label {
   font-weight: 500;
   color: var(--dark-gray);
   font-size: 0.95rem;
 }
 
-.form-group input {
+.login-modal .login-form .form-group input {
   padding: 0.9rem 1.2rem;
-  border: 2px solid var(--color-border);
+  border: 2px solid #94A3B8;
   border-radius: 12px;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, outline-color 0.2s ease;
   font-family: 'Inter', sans-serif;
-  background: var(--color-input-bg);
+  background: var(--color-surface-muted);
   color: var(--color-text-primary);
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+.login-modal .login-form .form-group input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.login-modal .login-form .form-group input:hover {
+  border-color: var(--color-primary);
+}
+
+.login-modal .login-form .form-group input:focus,
+.login-modal .login-form .form-group input:focus-visible {
+  outline: 2px solid var(--color-primary-dark);
+  outline-offset: 2px;
+  background: var(--color-surface);
+  border-color: var(--color-primary-dark);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.28);
+}
+
+.login-modal .login-form .form-group input:-webkit-autofill,
+.login-modal .login-form .form-group input:-webkit-autofill:hover {
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  border-color: #94A3B8;
+  box-shadow: 0 0 0 1000px var(--color-surface-muted) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.login-modal .login-form .form-group input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-text-primary);
+  outline: 2px solid var(--color-primary-dark);
+  outline-offset: 2px;
+  border-color: var(--color-primary-dark);
+  box-shadow:
+    0 0 0 1000px var(--color-surface) inset,
+    0 0 0 4px rgba(124, 58, 237, 0.28);
+}
+
+html[data-theme="dark"] .login-modal .login-form .form-group input,
+html[data-theme="dark"] .login-modal .login-form .form-group input:-webkit-autofill,
+html[data-theme="dark"] .login-modal .login-form .form-group input:-webkit-autofill:hover {
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .login-modal .login-form .form-group input:focus,
+html[data-theme="dark"] .login-modal .login-form .form-group input:focus-visible,
+html[data-theme="dark"] .login-modal .login-form .form-group input:-webkit-autofill:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.35);
 }
 
 .error-message {

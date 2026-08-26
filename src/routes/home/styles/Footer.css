@@ -1,7 +1,8 @@
 .footer {
-  background: var(--dark-gray);
-  color: white;
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
   padding: 60px 2rem 30px;
+  border-top: 1px solid var(--color-border);
 }
 
 .footer-container {
@@ -15,7 +16,7 @@
   gap: 3rem;
   margin-bottom: 3rem;
   padding-bottom: 3rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .footer-section {
@@ -27,6 +28,7 @@
 .footer-title {
   font-size: 1.8rem;
   font-weight: 700;
+  color: var(--color-primary);
   background: var(--gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -35,7 +37,7 @@
 }
 
 .footer-description {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-primary);
   line-height: 1.6;
   font-size: 0.95rem;
   margin-bottom: 1rem;
@@ -49,12 +51,13 @@
 .social-link {
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-text-primary);
   transition: all 0.3s ease;
 }
 
@@ -65,12 +68,15 @@
 
 .social-link:hover {
   background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--color-on-primary);
   transform: translateY(-3px);
 }
 
 .footer-section-title {
   font-size: 1.1rem;
   font-weight: 600;
+  color: var(--color-text-primary);
   margin-bottom: 0.5rem;
 }
 
@@ -82,7 +88,7 @@
 }
 
 .footer-links a {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-primary);
   text-decoration: none;
   font-size: 0.95rem;
   transition: all 0.3s ease;
@@ -90,7 +96,7 @@
 }
 
 .footer-links a:hover {
-  color: white;
+  color: var(--color-primary);
   transform: translateX(5px);
 }
 
@@ -103,12 +109,19 @@
 
 .footer-copyright,
 .footer-made {
-  color: rgba(255, 255, 255, 0.6);
+  color: #475569;
   font-size: 0.9rem;
 }
 
 .footer-made {
   font-style: italic;
+}
+
+html[data-theme="dark"] .footer-description,
+html[data-theme="dark"] .footer-links a,
+html[data-theme="dark"] .footer-copyright,
+html[data-theme="dark"] .footer-made {
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 968px) {

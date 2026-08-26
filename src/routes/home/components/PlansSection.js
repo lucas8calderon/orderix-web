@@ -1,13 +1,60 @@
 import React from 'react';
 import '../styles/PlansSection.css';
 
+function upgradePlanFeatures(features, replacements, extras = []) {
+  return [...features.map((feature) => replacements[feature] || feature), ...extras];
+}
+
 const PlansSection = () => {
-  const scrollToClients = () => {
-    const clientsSection = document.getElementById('clients');
-    if (clientsSection) {
-      clientsSection.scrollIntoView({ behavior: 'smooth' });
-    }
+  const openWhatsApp = () => {
+    const message = encodeURIComponent('Olá! Gostaria de assinar o sistema Orderix.');
+    window.open(`https://wa.me/5511977844172?text=${message}`, '_blank');
   };
+
+  const basicFeatures = [
+    'Aplicativo Garçom',
+    'Frente de caixa, comandas e pagamentos integrados',
+    'Até 10 mesas',
+    'Até 10 comandas',
+    'Até 5 colaboradores',
+    'Dashboard financeiro',
+    'Histórico de vendas',
+    'Suporte por WhatsApp 24/7',
+  ];
+
+  const professionalFeatures = upgradePlanFeatures(
+    basicFeatures,
+    { 'Até 5 colaboradores': 'Até 20 colaboradores' },
+    [
+      'PDV frente de caixa',
+      'Atendimento autônomo com tablet na mesa',
+      'Relatórios e dashboard',
+      'KDS e central de pedidos',
+      'Produtos mais vendidos',
+      'Controle de estoque',
+      'Desempenho dos funcionários',
+    ]
+  );
+
+  const premiumFeatures = upgradePlanFeatures(
+    professionalFeatures,
+    {
+      'Até 10 mesas': 'Mesas ilimitadas',
+      'Até 10 comandas': 'Comandas ilimitadas',
+      'Até 20 colaboradores': 'Colaboradores ilimitados',
+      'Relatórios e dashboard': 'Relatórios avançados',
+      'Suporte por WhatsApp 24/7': 'Suporte 24/7',
+    },
+    [
+      'Cardápio digital',
+      'Visão Multiempresa',
+      'Programas de fidelidade',
+      'Integração com ERP',
+      'Emissão fiscal',
+      'Customização on demand',
+      'Onboarding personalizado',
+    ]
+  );
 
   const plans = [
     {
@@ -15,13 +62,7 @@ const PlansSection = () => {
       price: '49,99',
       period: 'mês',
       description: 'Ideal para pequenos estabelecimentos',
-      features: [
-        'Até 5 mesas',
-        'Módulo do garçom',
-        'Gestão de pedidos',
-        'Relatórios básicos',
-        'Suporte por e-mail'
-      ],
+      features: basicFeatures,
       highlighted: false
     },
     {
@@ -30,15 +71,7 @@ const PlansSection = () => {
       period: 'mês',
       badge: 'Recomendado',
       description: 'Para restaurantes em crescimento',
-      features: [
-        'Até 20 mesas',
-        'Módulo do garçom',
-        'Mesas e comandas',
-        'Balcão e autoatendimento',
-        'Relatórios completos',
-        'Integração com pagamentos',
-        'Suporte prioritário'
-      ],
+      features: professionalFeatures,
       highlighted: true
     },
     {
@@ -46,16 +79,7 @@ const PlansSection = () => {
       price: '199,99',
       period: 'mês',
       description: 'Solução completa sem limites',
-      features: [
-        'Mesas ilimitadas',
-        'Todos os módulos',
-        'Multi-estabelecimento',
-        'API completa',
-        'Relatórios avançados',
-        'Integração completa',
-        'Suporte 24/7',
-        'Gerente de conta dedicado'
-      ],
+      features: premiumFeatures,
       highlighted: false
     }
   ];
@@ -96,7 +120,7 @@ const PlansSection = () => {
               </ul>
               <button 
                 className={`btn-plan ${plan.highlighted ? 'primary' : ''}`}
-                onClick={scrollToClients}
+                onClick={openWhatsApp}
               >
                 Assinar agora
               </button>
