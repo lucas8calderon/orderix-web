@@ -41,13 +41,13 @@
   right: 24px !important;
   z-index: 1000 !important;
   background-color: var(--color-primary) !important;
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3) !important;
 }
 
 .floating-refresh-btn:hover {
-  background-color: #6a2599 !important;
+  background-color: var(--color-primary-dark) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 25px rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 6px 25px rgba(37, 99, 235, 0.4) !important;
 }
 
 .floating-refresh-btn:disabled {
@@ -84,22 +84,13 @@
   background: #a0a0a0;
 }
 
-/* Modal de Detalhes */
-.order-detail-modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.order-detail-modal .MuiCard-root {
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  animation: slideInUp 0.3s ease-out;
-  background-color: var(--color-surface) !important;
+.kitchen-order-dialog.MuiPaper-root,
+.kitchen-order-dialog {
+  background-color: var(--color-surface-elevated) !important;
   color: var(--color-text-primary) !important;
   background-image: none !important;
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 /* Card animations */
@@ -156,13 +147,13 @@
 
 .drop-zone {
   border: 2px dashed var(--color-primary);
-  background-color: rgba(139, 92, 246, 0.05);
+  background-color: rgba(37, 99, 235, 0.05);
   border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 .drop-zone.drag-over {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: rgba(37, 99, 235, 0.1);
   border-color: var(--color-primary);
 }
 
@@ -204,7 +195,7 @@
 
 .kitchen-container .MuiButton-root:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 /* Custom scrollbar for the entire page */
@@ -275,7 +266,7 @@
 /* Estilos para drop zones */
 .drop-zone {
   border: 2px dashed var(--color-primary);
-  background-color: rgba(139, 92, 246, 0.05);
+  background-color: rgba(37, 99, 235, 0.05);
   border-radius: 12px;
   transition: all 0.3s ease;
   position: relative;
@@ -295,7 +286,7 @@
 }
 
 .drop-zone.drag-over {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: rgba(37, 99, 235, 0.1);
   border-color: var(--color-primary);
   transform: scale(1.02);
 }
@@ -329,11 +320,7 @@
     margin-bottom: 16px;
   }
   
-  .order-detail-modal {
-    padding: 10px;
-  }
-  
-  .order-detail-modal .MuiCard-root {
+  .kitchen-order-dialog.MuiPaper-root {
     width: 100%;
     max-width: none;
   }

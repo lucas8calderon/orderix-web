@@ -9,32 +9,32 @@ export function createAppTheme(mode = 'light') {
     palette: {
       mode,
       primary: {
-        main: isDark ? '#A78BFA' : '#8B5CF6',
-        light: isDark ? '#C4B5FD' : '#A78BFA',
-        dark: isDark ? '#8B5CF6' : '#7C3AED',
-        contrastText: isDark ? '#1E1B4B' : '#FFFFFF',
+        main: '#2563EB',
+        light: isDark ? '#60A5FA' : '#3B82F6',
+        dark: '#1D4ED8',
+        contrastText: '#FFFFFF',
       },
       secondary: {
-        main: isDark ? '#C4B5FD' : '#0F172A',
-        contrastText: isDark ? '#0F172A' : '#FFFFFF',
+        main: isDark ? '#93C5FD' : '#0B1220',
+        contrastText: isDark ? '#0B1220' : '#FFFFFF',
       },
       background: {
-        default: isDark ? '#0F172A' : '#F8FAFC',
-        paper: isDark ? '#1E293B' : '#FFFFFF',
+        default: isDark ? '#0B1220' : '#FAF8FF',
+        paper: isDark ? '#121A2B' : '#FFFFFF',
       },
       text: {
         primary: isDark ? '#F8FAFC' : '#0F172A',
-        secondary: isDark ? '#94A3B8' : '#64748B',
-        disabled: isDark ? '#64748B' : '#94A3B8',
+        secondary: isDark ? '#94A3B8' : '#5B6475',
+        disabled: isDark ? '#64748B' : '#8B93A7',
       },
-      divider: isDark ? '#334155' : '#E2E8F0',
+      divider: isDark ? '#2A3548' : '#D9D9E5',
       success: { main: '#10B981' },
       warning: { main: '#F59E0B' },
       error: { main: isDark ? '#F87171' : '#B91C1C' },
-      info: { main: isDark ? '#60A5FA' : '#3B82F6' },
+      info: { main: isDark ? '#60A5FA' : '#2563EB' },
       action: {
-        hover: isDark ? 'rgba(167, 139, 250, 0.12)' : 'rgba(139, 92, 246, 0.08)',
-        selected: isDark ? 'rgba(167, 139, 250, 0.16)' : 'rgba(139, 92, 246, 0.12)',
+        hover: isDark ? 'rgba(37, 99, 235, 0.16)' : 'rgba(37, 99, 235, 0.08)',
+        selected: isDark ? 'rgba(37, 99, 235, 0.22)' : 'rgba(37, 99, 235, 0.12)',
         disabled: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.26)',
         disabledBackground: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.12)',
       },
@@ -57,7 +57,7 @@ export function createAppTheme(mode = 'light') {
       },
     },
     shape: {
-      borderRadius: 8,
+      borderRadius: 4,
     },
     components: {
       MuiCssBaseline: {
@@ -72,7 +72,7 @@ export function createAppTheme(mode = 'light') {
       MuiButton: {
         styleOverrides: {
           root: {
-            borderRadius: 8,
+            borderRadius: 4,
             textTransform: 'none',
             fontWeight: 600,
             boxShadow: 'none',
@@ -81,7 +81,7 @@ export function createAppTheme(mode = 'light') {
             },
           },
           containedPrimary: {
-            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.18)',
+            boxShadow: '0 1px 2px rgba(37, 99, 235, 0.18)',
           },
         },
       },
@@ -91,7 +91,7 @@ export function createAppTheme(mode = 'light') {
             backgroundImage: 'none',
             backgroundColor: 'var(--color-surface)',
             color: 'var(--color-text-primary)',
-            borderRadius: 12,
+            borderRadius: 8,
           },
         },
       },
@@ -101,7 +101,7 @@ export function createAppTheme(mode = 'light') {
             backgroundColor: 'var(--color-surface)',
             color: 'var(--color-text-primary)',
             backgroundImage: 'none',
-            borderRadius: 12,
+            borderRadius: 8,
             border: '1px solid var(--color-border)',
             boxShadow: 'var(--color-shadow)',
           },
@@ -132,7 +132,8 @@ export function createAppTheme(mode = 'light') {
             backgroundColor: 'var(--color-surface-elevated)',
             color: 'var(--color-text-primary)',
             backgroundImage: 'none',
-            borderRadius: 12,
+            borderRadius: 8,
+            opacity: 1,
           },
         },
       },
@@ -173,8 +174,8 @@ export function createAppTheme(mode = 'light') {
       MuiTooltip: {
         styleOverrides: {
           tooltip: {
-            backgroundColor: isDark ? '#1E293B' : '#0F172A',
-            color: isDark ? '#F8FAFC' : '#FFFFFF',
+            backgroundColor: isDark ? '#152033' : '#0B1220',
+            color: '#F8FAFC',
             fontFamily,
           },
         },
@@ -204,8 +205,7 @@ export function createAppTheme(mode = 'light') {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            backgroundColor: 'var(--color-input-bg)',
-            borderRadius: 8,
+            borderRadius: 4,
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--color-border)',
             },
@@ -337,6 +337,14 @@ export function createAppTheme(mode = 'light') {
               outline: '2px solid var(--color-primary)',
               outlineOffset: 2,
             },
+          },
+        },
+      },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'var(--color-overlay)',
+            backdropFilter: 'none',
           },
         },
       },

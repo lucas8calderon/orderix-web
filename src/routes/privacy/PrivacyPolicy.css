@@ -97,9 +97,9 @@
   background: var(--color-surface);
   padding: 2rem;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.08);
   margin-bottom: 3rem;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.1);
 }
 
 .privacy-intro p {
@@ -114,15 +114,15 @@
   background: var(--color-surface);
   padding: 2.5rem;
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.08);
   margin-bottom: 2rem;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.1);
   transition: all 0.3s ease;
 }
 
 .privacy-section:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.12);
 }
 
 .section-title {
@@ -183,7 +183,7 @@
   background: linear-gradient(135deg, #F5F5F7 0%, #FFFFFF 100%);
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.1);
   margin-top: 1rem;
 }
 

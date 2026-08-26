@@ -16,7 +16,7 @@ const TargetCard = styled(Card)(({ theme }) => ({
   position: 'relative',
   background: 'rgba(255, 255, 255, 0.8)',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(139, 92, 246, 0.1)',
+  border: '1px solid rgba(37, 99, 235, 0.1)',
   borderRadius: '20px',
   overflow: 'hidden',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -31,12 +31,12 @@ const TargetCard = styled(Card)(({ theme }) => ({
   
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 8px 25px rgba(139, 92, 246, 0.12)',
-    border: '1px solid rgba(139, 92, 246, 0.2)',
+    boxShadow: '0 8px 25px rgba(37, 99, 235, 0.12)',
+    border: '1px solid rgba(37, 99, 235, 0.2)',
     
     '& .icon-container': {
       transform: 'scale(1.05) rotate(2deg)',
-      boxShadow: '0 6px 20px rgba(139, 92, 246, 0.25)',
+      boxShadow: '0 6px 20px rgba(37, 99, 235, 0.25)',
     },
     
     '& .icon-glow': {
@@ -74,7 +74,7 @@ const IconContainer = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   marginBottom: theme.spacing(3),
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)',
+  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.2)',
   color: '#FFFFFF',
   
   '& .icon-glow': {
@@ -82,7 +82,7 @@ const IconContainer = styled(Box)(({ theme }) => ({
     width: '100%',
     height: '100%',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(37, 99, 235, 0.6) 0%, transparent 70%)',
     opacity: 0,
     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     transform: 'scale(0.8)',

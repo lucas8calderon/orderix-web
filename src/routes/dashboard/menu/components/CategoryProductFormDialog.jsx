@@ -174,7 +174,7 @@ export function CategoryProductFormDialog({ open, onClose, onSaveCategory, onSav
                     color: 'var(--color-primary)',
                     '&:hover': {
                       borderColor: 'var(--color-primary-dark)',
-                      backgroundColor: 'rgba(139, 92, 246, 0.04)',
+                      backgroundColor: 'rgba(37, 99, 235, 0.04)',
                     }
                   }}
                 >

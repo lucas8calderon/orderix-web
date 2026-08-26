@@ -71,7 +71,7 @@
 
 .subcategory-carousel-card.selected {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.18) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18) !important;
 }
 
 .subcategory-carousel-card.inactive {

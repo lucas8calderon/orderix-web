@@ -23,7 +23,7 @@ const Transition = forwardRef((props, ref) => (
 ));
 
 const PRIMARY_COLOR = "var(--color-primary)";
-const DISABLED_PRIMARY = "rgba(139, 92, 246, 0.38)";
+const DISABLED_PRIMARY = "rgba(37, 99, 235, 0.38)";
 
 export function EmployeeFormDialog({
   open,

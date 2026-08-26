@@ -14,7 +14,7 @@ html[data-theme="dark"] .header {
 }
 
 .header.scrolled {
-  box-shadow: 0 2px 20px rgba(139, 92, 246, 0.12);
+  box-shadow: 0 2px 20px rgba(37, 99, 235, 0.12);
 }
 
 .header-container {
@@ -97,7 +97,7 @@ html[data-theme="dark"] .header {
   border: 2px solid var(--primary-color);
   color: var(--primary-color);
   padding: 0.6rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 4px;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -108,7 +108,7 @@ html[data-theme="dark"] .header {
   background: var(--primary-color);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .btn-primary {
@@ -116,7 +116,7 @@ html[data-theme="dark"] .header {
   border: none;
   color: white;
   padding: 0.6rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 4px;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -125,7 +125,7 @@ html[data-theme="dark"] .header {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .nav-login-mobile {

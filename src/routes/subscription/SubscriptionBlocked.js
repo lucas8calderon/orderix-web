@@ -19,7 +19,7 @@ export default function SubscriptionBlocked() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #020617 100%)',
+        background: 'linear-gradient(160deg, #0B1220 0%, #1E3A8A 55%, #060B14 100%)',
         px: 2,
         position: 'relative',
       }}

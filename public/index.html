@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="theme-color" content="#2563EB" />
     <meta
       name="description"
       content="Orderix: sistema web para gestão de restaurantes, mesas, comandas e atendimento."
     />
     <style>
-      html, body { background-color: #F8FAFC; color: #0F172A; font-family: Inter, sans-serif; }
-      html[data-theme="dark"], html[data-theme="dark"] body { background-color: #0F172A; color: #F8FAFC; }
+      html, body { background-color: #FAF8FF; color: #0F172A; font-family: Inter, sans-serif; }
+      html[data-theme="dark"], html[data-theme="dark"] body { background-color: #0B1220; color: #F8FAFC; }
     </style>
     <script>
       (function () {
@@ -23,7 +23,7 @@
           document.documentElement.setAttribute('data-theme', theme);
           document.documentElement.style.colorScheme = theme;
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', theme === 'dark' ? '#0F172A' : '#8B5CF6');
+          if (meta) meta.setAttribute('content', theme === 'dark' ? '#0B1220' : '#2563EB');
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'light');
         }

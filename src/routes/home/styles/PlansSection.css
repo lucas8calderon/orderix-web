@@ -42,7 +42,7 @@
 
 .plan-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
   border-color: var(--primary-color);
 }
 
@@ -80,7 +80,7 @@
 .plan-header {
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.1);
+  border-bottom: 2px solid rgba(37, 99, 235, 0.1);
 }
 
 .plan-card.highlighted .plan-header {
@@ -168,7 +168,7 @@
   border: 2px solid var(--primary-color);
   background: transparent;
   color: var(--primary-color);
-  border-radius: 12px;
+  border-radius: 4px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;

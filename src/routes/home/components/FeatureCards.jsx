@@ -16,7 +16,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(139, 92, 246, 0.1)',
+  border: '1px solid rgba(37, 99, 235, 0.1)',
   borderRadius: '20px',
   overflow: 'hidden',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -24,12 +24,12 @@ const StyledCard = styled(Card)(({ theme }) => ({
   
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 8px 25px rgba(139, 92, 246, 0.12)',
-    border: '1px solid rgba(139, 92, 246, 0.2)',
+    boxShadow: '0 8px 25px rgba(37, 99, 235, 0.12)',
+    border: '1px solid rgba(37, 99, 235, 0.2)',
     
     '& .icon-container': {
       transform: 'scale(1.05) rotate(2deg)',
-      boxShadow: '0 6px 20px rgba(139, 92, 246, 0.25)',
+      boxShadow: '0 6px 20px rgba(37, 99, 235, 0.25)',
     },
     
     
@@ -64,7 +64,7 @@ const IconContainer = styled(Box)(({ theme }) => ({
   background: 'var(--gradient)',
   borderRadius: '50%',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+  boxShadow: '0 4px 20px rgba(37, 99, 235, 0.2)',
   
 }));
 

@@ -67,7 +67,7 @@
   color: white;
   border: none;
   padding: 1rem 2rem;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
@@ -76,7 +76,7 @@
 
 .btn-hero-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
 }
 
 .btn-hero-secondary {
@@ -84,7 +84,7 @@
   color: var(--primary-color);
   border: 2px solid var(--primary-color);
   padding: 1rem 2rem;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
@@ -149,7 +149,7 @@
   min-height: 450px;
   border-radius: 20px;
   background: transparent;
-  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 20px 60px rgba(37, 99, 235, 0.3);
   animation: float 6s ease-in-out infinite;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);

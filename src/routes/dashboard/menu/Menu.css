@@ -76,7 +76,7 @@
 
 .category-manage-card.selected {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.18);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
 }
 
 .category-manage-card.inactive {

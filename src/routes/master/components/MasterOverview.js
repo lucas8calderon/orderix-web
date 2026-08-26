@@ -43,8 +43,8 @@ import {
 } from '../../../services/accessControl';
 import { buildMonthlyRevenueSeries } from '../data/mockRevenueHistory';
 
-const PRIMARY = '#8B5CF6';
-const PRIMARY_SOFT = 'rgba(139, 92, 246, 0.10)';
+const PRIMARY = '#2563EB';
+const PRIMARY_SOFT = 'rgba(37, 99, 235, 0.10)';
 
 const STATUS_CHART_COLORS = {
   ACTIVE: '#10B981',

@@ -13,9 +13,10 @@ import {
     Divider,
     Tooltip,
     Badge,
-    Modal,
-    Fade,
-    Backdrop,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
     Snackbar,
     Alert,
     LinearProgress,
@@ -39,6 +40,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
 import { getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
 import { resolveMandatorySelections } from '../atendimento/utils/accountTotals';
+import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 
 const UI_TO_KITCHEN = {
     novo: 'NEW',
@@ -313,6 +315,16 @@ export function Kitchen({ initialFilter }) {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [filterType, setFilterType] = useState(initialFilter || 'todos');
+    const orderDialogProps = useDialogResponsiveProps({
+        paperSx: {
+            backgroundColor: 'var(--color-surface-elevated)',
+            color: 'var(--color-text-primary)',
+            backgroundImage: 'none',
+            border: '1px solid var(--color-border)',
+            opacity: 1,
+            maxWidth: 600,
+        },
+    });
 
     useEffect(() => {
         if (initialFilter) {
@@ -481,7 +493,7 @@ export function Kitchen({ initialFilter }) {
                         alignSelf: 'flex-start',
                         '&:hover': {
                             borderColor: '#6a2599',
-                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.08)',
                         },
                     }}
                 >
@@ -528,7 +540,7 @@ export function Kitchen({ initialFilter }) {
                                 }
                             },
                             '&:hover': {
-                                backgroundColor: 'rgba(139, 92, 246, 0.1)'
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)'
                             }
                         }
                     }}
@@ -568,11 +580,11 @@ export function Kitchen({ initialFilter }) {
                     px: 3,
                     py: 1.5,
                     backgroundColor: 'var(--color-primary)',
-                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
+                    boxShadow: '0 4px 20px rgba(37, 99, 235, 0.3)',
                     '&:hover': {
                         backgroundColor: '#6a2599',
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 6px 25px rgba(139, 92, 246, 0.4)'
+                        boxShadow: '0 6px 25px rgba(37, 99, 235, 0.4)'
                     },
                     '&:disabled': {
                         backgroundColor: '#a0a0a0',
@@ -633,147 +645,153 @@ export function Kitchen({ initialFilter }) {
                 </Grid>
             </DragDropContext>
 
-            {/* Modal de Detalhes do Pedido */}
-            <Modal
+            <Dialog
                 open={!!selectedOrder}
                 onClose={handleCloseModal}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
+                maxWidth="sm"
+                aria-labelledby="kitchen-order-dialog-title"
+                {...orderDialogProps}
                 BackdropProps={{
-                    timeout: 500,
+                    sx: {
+                        backgroundColor: 'var(--color-overlay)',
+                        backdropFilter: 'none',
+                    },
+                }}
+                PaperProps={{
+                    ...orderDialogProps.PaperProps,
+                    className: 'kitchen-order-dialog',
+                    elevation: 0,
                 }}
             >
-                <Fade in={!!selectedOrder}>
-                    <Box className="order-detail-modal">
-                        {selectedOrder && (
-                            <Card
+                {selectedOrder && (
+                    <>
+                        <DialogTitle
+                            id="kitchen-order-dialog-title"
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 1,
+                                color: 'var(--color-primary)',
+                                fontWeight: 700,
+                                pr: 1.5,
+                            }}
+                        >
+                            {selectedOrder.orderNumber}
+                            <IconButton
+                                onClick={handleCloseModal}
+                                aria-label="fechar detalhes do pedido"
+                                sx={{ color: 'var(--color-text-secondary)' }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        Cliente
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary">
+                                        {selectedOrder.customerName}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        Mesa
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                                        Mesa {selectedOrder.tableNumber}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        Garçom
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary">
+                                        {selectedOrder.waiter}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        Tipo
+                                    </Typography>
+                                    <Chip
+                                        label={selectedOrder.orderType === 'mesa' ? 'Mesa' :
+                                               selectedOrder.orderType === 'balcao' ? 'Balcão' : 'Comanda'}
+                                        size="small"
+                                        sx={{
+                                            backgroundColor: 'var(--color-primary)',
+                                            color: 'white',
+                                            fontWeight: 'bold'
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        Tempo
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary">
+                                        {getTimeAgo(selectedOrder.createdAt)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+
+                            <Box mt={3}>
+                                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                    Itens do Pedido
+                                </Typography>
+                                <KitchenItemLines items={selectedOrder.items} notes="" />
+                            </Box>
+
+                            {selectedOrder.notes ? (
+                                <Box mt={3} className="kitchen-notes-box">
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        Observação do pedido
+                                    </Typography>
+                                    <Typography className="kitchen-item-obs" variant="body1">
+                                        {selectedOrder.notes}
+                                    </Typography>
+                                </Box>
+                            ) : null}
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+                            <Button
+                                variant="outlined"
+                                onClick={handleCloseModal}
                                 sx={{
-                                    maxWidth: 600,
-                                    width: '100%',
-                                    maxHeight: '90vh',
-                                    overflow: 'auto',
-                                    backgroundColor: 'var(--color-surface)',
-                                    color: 'var(--color-text-primary)',
-                                    backgroundImage: 'none',
+                                    borderColor: 'var(--color-primary)',
+                                    color: 'var(--color-primary)',
+                                    '&:hover': {
+                                        borderColor: 'var(--color-primary-dark)',
+                                        backgroundColor: 'var(--color-primary-soft)'
+                                    }
                                 }}
                             >
-                                <CardContent>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                        <Typography variant="h5" fontWeight="bold" sx={{ color: 'var(--color-primary)' }}>
-                                            {selectedOrder.orderNumber}
-                                        </Typography>
-                                        <IconButton onClick={handleCloseModal}>
-                                            <CloseIcon />
-                                        </IconButton>
-                                    </Box>
-
-                                    <Divider sx={{ mb: 2 }} />
-
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Cliente
-                                            </Typography>
-                                            <Typography variant="body1" color="text.secondary">
-                                                {selectedOrder.customerName}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Mesa
-                                            </Typography>
-                                            <Typography variant="body1" sx={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
-                                                Mesa {selectedOrder.tableNumber}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Garçom
-                                            </Typography>
-                                            <Typography variant="body1" color="text.secondary">
-                                                {selectedOrder.waiter}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Tipo
-                                            </Typography>
-                                            <Chip
-                                                label={selectedOrder.orderType === 'mesa' ? 'Mesa' : 
-                                                       selectedOrder.orderType === 'balcao' ? 'Balcão' : 'Comanda'}
-                                                size="small"
-                                                sx={{
-                                                    backgroundColor: 'var(--color-primary)',
-                                                    color: 'white',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Tempo
-                                            </Typography>
-                                            <Typography variant="body1" color="text.secondary">
-                                                {getTimeAgo(selectedOrder.createdAt)}
-                                            </Typography>
-                                        </Grid>
-                                    </Grid>
-
-                                    <Box mt={3}>
-                                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                            Itens do Pedido
-                                        </Typography>
-                                        <KitchenItemLines items={selectedOrder.items} notes="" />
-                                    </Box>
-
-                                    {selectedOrder.notes ? (
-                                        <Box mt={3} className="kitchen-notes-box">
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                Observação do pedido
-                                            </Typography>
-                                            <Typography className="kitchen-item-obs" variant="body1">
-                                                {selectedOrder.notes}
-                                            </Typography>
-                                        </Box>
-                                    ) : null}
-
-                                    <Box mt={3} display="flex" justifyContent="flex-end" gap={2} flexWrap="wrap">
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleCloseModal}
-                                            sx={{
-                                                borderColor: 'var(--color-primary)',
-                                                color: 'var(--color-primary)',
-                                                '&:hover': {
-                                                    borderColor: '#6a2599',
-                                                    backgroundColor: 'rgba(139, 92, 246, 0.04)'
-                                                }
-                                            }}
-                                        >
-                                            Fechar
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            onClick={() => {
-                                                handleStatusChange(selectedOrder.id);
-                                                handleCloseModal();
-                                            }}
-                                            sx={{
-                                                backgroundColor: 'var(--color-primary)',
-                                                '&:hover': {
-                                                    backgroundColor: '#6a2599'
-                                                }
-                                            }}
-                                        >
-                                            Mover para Próxima Etapa
-                                        </Button>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </Box>
-                </Fade>
-            </Modal>
+                                Fechar
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={() => {
+                                    handleStatusChange(selectedOrder.id);
+                                    handleCloseModal();
+                                }}
+                                sx={{
+                                    backgroundColor: 'var(--color-primary)',
+                                    color: 'var(--color-on-primary)',
+                                    boxShadow: 'none',
+                                    '&:hover': {
+                                        backgroundColor: 'var(--color-primary-dark)',
+                                        boxShadow: 'none',
+                                    }
+                                }}
+                            >
+                                Mover para Próxima Etapa
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
 
             {/* Toast de Confirmação */}
             <Snackbar

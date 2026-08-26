@@ -87,7 +87,7 @@ const InventoryPanel = ({ stockFilter }) => {
       { name: 'Vegetais', count: 38, value: 8900, color: '#4caf50' },
       { name: 'Bebidas', count: 32, value: 12000, color: '#2196f3' },
       { name: 'Temperos', count: 25, value: 3200, color: '#ff9800' },
-      { name: 'Outros', count: 16, value: 3000, color: '#8B5CF6' }
+      { name: 'Outros', count: 16, value: 3000, color: '#2563EB' }
     ],
     lowStockProducts: [
       { id: 1, name: 'Tomate', current: 5, min: 10, unit: 'kg', category: 'Vegetais', lastUpdate: '2h atrás', price: 8.50, supplier: 'Hortifruti ABC' },
@@ -570,7 +570,7 @@ const InventoryPanel = ({ stockFilter }) => {
                         name === 'usage' ? 'Uso' : 'Custo'
                       ]}
                     />
-                    <Bar yAxisId="left" dataKey="usage" fill="#8B5CF6" name="usage" />
+                    <Bar yAxisId="left" dataKey="usage" fill="#2563EB" name="usage" />
                     <Bar yAxisId="right" dataKey="cost" fill="#ff9800" name="cost" />
                   </RechartsBarChart>
                 </ResponsiveContainer>

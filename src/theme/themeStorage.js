@@ -41,6 +41,6 @@ export function applyThemeToDocument(mode) {
   root.style.colorScheme = mode;
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute('content', mode === 'dark' ? '#0F172A' : '#8B5CF6');
+    meta.setAttribute('content', mode === 'dark' ? '#0B1220' : '#2563EB');
   }
 }
