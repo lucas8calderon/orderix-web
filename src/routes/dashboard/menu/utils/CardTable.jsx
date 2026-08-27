@@ -70,7 +70,7 @@ export function CardTable({ table, onShowQRCode, canManage = true }) {
         </Box>
 
         <Chip
-          label={table.isAvailable ? "Disponível" : "Indisponível"}
+          label={table.isAvailable ? "Disponível" : "Em uso"}
           sx={{
             fontSize: 10,
             height: 22,
