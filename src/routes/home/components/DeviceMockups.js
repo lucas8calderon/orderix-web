@@ -8,7 +8,7 @@ export function DashboardMockup({ className = '' }) {
       <div className="dash-mock">
         <div className="dash-mock__top">
           <div className="dash-mock__brand">
-            <WeperMark size={18} showWordmark={false} />
+            <WeperMark size={28} showWordmark={false} />
             <span>Dashboard</span>
           </div>
           <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Hoje</span>
@@ -56,6 +56,7 @@ export function KdsMockup({ className = '' }) {
     { key: 'preparo', label: 'Em preparo', cards: ['Mesa 07 · Combo', 'Mesa 12 · Pizza'] },
     { key: 'pronto', label: 'Pronto', cards: ['Mesa 05 · Porção'] },
     { key: 'entregue', label: 'Entregue', cards: ['Mesa 02 · Sucos'] },
+    { key: 'finalizado', label: 'Finalizado', cards: ['Balcão · Café'] },
   ];
 
   return (

@@ -43,6 +43,8 @@ const STATUS_CLASS = {
   IN_PREPARATION: 'in-progress',
   READY: 'ready',
   DELIVERED: 'delivered',
+  FINALIZED: 'delivered',
+  CLOSED: 'delivered',
 };
 
 function formatChange(changePercent) {

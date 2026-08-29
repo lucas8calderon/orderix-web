@@ -18,7 +18,7 @@ const Footer = () => {
       <div className="footer-container">
         <div className="footer-content">
           <div className="footer-brand">
-            <WeperMark size={28} />
+            <WeperMark size={44} />
             <p className="footer-description">
               Soluções inteligentes para estabelecimentos que querem crescer com
               eficiência e controle da operação.

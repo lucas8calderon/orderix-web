@@ -5,72 +5,26 @@ import { Navigate } from 'react-router-dom';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 import { getPostLoginPath } from '../../services/accessControl';
 import { getCurrentUser, isAuthenticated } from '../../services/session';
+import weperLogo from '../../assets/images/weper-logo.png';
 import * as LoginConstants from './loginConstants';
 import LoginForm from './LoginForm';
 import LoginAside from './LoginAside';
 import './Login.css';
 
-/** Marca visual alinhada à referência (ícone hexagonal + wordmark). */
-function WeperMark({ size = 40 }) {
-  return (
-    <Box
-      component="svg"
-      viewBox="0 0 48 48"
-      role="img"
-      aria-label="Weper"
-      sx={{ width: size, height: size, flexShrink: 0 }}
-    >
-      <path
-        d="M24 2.5L42 13v22L24 45.5 6 35V13L24 2.5z"
-        fill="none"
-        stroke="var(--color-primary)"
-        strokeWidth="2.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M16 28c0-5.2 3.4-8.5 8-8.5s8 3.3 8 8.5"
-        fill="none"
-        stroke="var(--color-primary)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M18.5 20.5c1.2-2.8 3.2-4.2 5.5-4.2s4.3 1.4 5.5 4.2"
-        fill="none"
-        stroke="var(--color-primary)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <circle cx="24" cy="14.5" r="1.6" fill="var(--color-primary)" />
-    </Box>
-  );
-}
-
 function LoginBrand() {
   return (
     <Box sx={{ mb: { xs: 3, sm: 3.5 } }}>
       <Box
+        component="img"
+        src={weperLogo}
+        alt="Weper"
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.25,
+          display: 'block',
+          width: { xs: 148, sm: 168 },
+          height: 'auto',
           mb: 1.5,
         }}
-      >
-        <WeperMark size={44} />
-        <Typography
-          component="span"
-          sx={{
-            fontWeight: 800,
-            fontSize: { xs: '1.75rem', sm: '2rem' },
-            color: 'var(--color-primary)',
-            letterSpacing: '-0.03em',
-            lineHeight: 1,
-          }}
-        >
-          Weper
-        </Typography>
-      </Box>
+      />
       <Typography
         variant="body1"
         sx={{

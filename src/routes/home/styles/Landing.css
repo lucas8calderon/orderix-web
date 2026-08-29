@@ -175,16 +175,14 @@
 .weper-mark {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  color: var(--color-primary);
+  line-height: 0;
 }
 
-.weper-mark__word {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--color-primary);
-  line-height: 1;
+.weper-mark__logo {
+  display: block;
+  width: auto;
+  height: var(--weper-mark-size, 40px);
+  object-fit: contain;
 }
 
 /* Device mockups */
@@ -346,7 +344,7 @@ html[data-theme='dark'] .dash-mock {
 /* KDS mock */
 .kds-mock {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.55rem;
   padding: 0.85rem;
   background: #f1f5f9;
@@ -379,6 +377,7 @@ html[data-theme='dark'] .kds-mock {
 .kds-col--preparo .kds-col__head { background: #ea580c; }
 .kds-col--pronto .kds-col__head { background: #16a34a; }
 .kds-col--entregue .kds-col__head { background: #64748b; }
+.kds-col--finalizado .kds-col__head { background: #0f766e; }
 
 .kds-card {
   margin: 0.45rem;

@@ -25,6 +25,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { getCurrentUser, logout } from '../../services/authService';
 import { getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
+import weperLogo from '../../assets/images/weper-logo.png';
 import { WaiterHome } from './WaiterHome';
 
 function Copyright(props) {
@@ -152,17 +153,24 @@ export default function Dashboard() {
                     minHeight: 72,
                 }}
             >
-                <Box sx={{ minWidth: 0, display: desktopOpen || isMobile ? 'block' : 'none' }}>
-                    <Typography
+                <Box
+                    sx={{
+                        minWidth: 0,
+                        display: desktopOpen || isMobile ? 'flex' : 'none',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                    }}
+                >
+                    <Box
+                        component="img"
+                        src={weperLogo}
+                        alt="Weper"
                         sx={{
-                            fontWeight: 700,
-                            fontSize: '1.25rem',
-                            color: 'var(--color-sidebar-brand)',
-                            lineHeight: 1.2,
+                            display: 'block',
+                            width: 112,
+                            height: 'auto',
                         }}
-                    >
-                        Weper
-                    </Typography>
+                    />
                     <Typography
                         sx={{
                             fontSize: 12,

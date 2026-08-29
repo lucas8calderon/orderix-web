@@ -46,7 +46,7 @@ const Header = ({ onLoginClick, onStartClick }) => {
             goTo('home');
           }}
         >
-          <WeperMark size={30} />
+          <WeperMark size={42} />
         </a>
 
         <button

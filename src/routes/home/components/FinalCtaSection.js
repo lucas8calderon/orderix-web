@@ -34,7 +34,7 @@ const FinalCtaSection = ({ onStartClick }) => {
         </div>
         <div className="final-cta__visual" aria-hidden="true">
           <div style={{ color: '#fff' }}>
-            <WeperMark size={48} showWordmark={false} />
+            <WeperMark size={96} showWordmark={false} />
             <p>Toda a sua operação. Um único sistema.</p>
           </div>
         </div>

@@ -24,6 +24,8 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    FormControlLabel,
+    Switch,
     ToggleButton,
     ToggleButtonGroup
 } from '@mui/material';
@@ -54,7 +56,36 @@ const KITCHEN_TO_UI = {
     IN_PREPARATION: 'em_producao',
     READY: 'feito',
     DELIVERED: 'entregue',
+    FINALIZED: 'entregue',
 };
+
+const STATUS_LABELS = {
+    novo: 'Novo',
+    em_producao: 'Em Produção',
+    feito: 'Feito',
+    entregue: 'Entregue',
+    finalizado: 'Finalizado',
+};
+
+const KITCHEN_COLUMNS = [
+    { key: 'novo', title: STATUS_LABELS.novo },
+    { key: 'em_producao', title: STATUS_LABELS.em_producao },
+    { key: 'feito', title: STATUS_LABELS.feito },
+    { key: 'entregue', title: STATUS_LABELS.entregue },
+    { key: 'finalizado', title: STATUS_LABELS.finalizado },
+];
+
+const SHOW_FINALIZED_KEY = 'kitchen.showFinalizedColumn';
+
+function readShowFinalizedPref() {
+    try {
+        return window.localStorage.getItem(SHOW_FINALIZED_KEY) === 'true';
+    } catch (error) {
+        return false;
+    }
+}
+
+const STATUS_FLOW = ['novo', 'em_producao', 'feito', 'entregue'];
 
 function mapKitchenOrder(order) {
     const products = order.products || [];
@@ -87,13 +118,21 @@ function mapKitchenOrder(order) {
         orderNumber: `#${order.id}`,
         customerName: order.customerName || 'Cliente',
         items,
-        status: KITCHEN_TO_UI[order.kitchenStatus] || 'novo',
+        status: resolveUiStatus(order),
         createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
         tableNumber: order.tableNumber || order.comandaNumber || '—',
         waiter: order.waiterName || '—',
         notes: (order.observation || '').trim(),
         orderType,
+        orderStatus: order.status || 'ACTIVE',
     };
+}
+
+function resolveUiStatus(order) {
+    if (order.status === 'CLOSED') {
+        return 'finalizado';
+    }
+    return KITCHEN_TO_UI[order.kitchenStatus] || 'novo';
 }
 
 function KitchenItemLines({ items, notes, compact = false }) {
@@ -281,8 +320,10 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                                         </IconButton>
                                     </Tooltip>
                                     <Tooltip title="Mover para próxima etapa">
+                                        <span>
                                         <IconButton
                                             size="small"
+                                            disabled={order.status === 'finalizado' || order.status === 'entregue'}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onStatusChange(order.id);
@@ -297,6 +338,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                                         >
                                             <ArrowIcon />
                                         </IconButton>
+                                        </span>
                                     </Tooltip>
                                 </Box>
                             </Box>
@@ -315,6 +357,7 @@ export function Kitchen({ initialFilter }) {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [filterType, setFilterType] = useState(initialFilter || 'todos');
+    const [showFinalized, setShowFinalized] = useState(readShowFinalizedPref);
     const orderDialogProps = useDialogResponsiveProps({
         paperSx: {
             backgroundColor: 'var(--color-surface-elevated)',
@@ -331,13 +374,6 @@ export function Kitchen({ initialFilter }) {
             setFilterType(initialFilter);
         }
     }, [initialFilter]);
-
-    const columns = [
-        { key: 'novo', title: 'Novo' },
-        { key: 'em_producao', title: 'Em Produção' },
-        { key: 'feito', title: 'Feito' },
-        { key: 'entregue', title: 'Entregue' }
-    ];
 
     const getTimeAgo = (date) => {
         const now = new Date();
@@ -367,6 +403,25 @@ export function Kitchen({ initialFilter }) {
         return filteredOrders.filter(order => order.status === status);
     };
 
+    const finalizedCount = getOrdersByStatus('finalizado').length;
+    const showFinalizedColumn = showFinalized && finalizedCount > 0;
+    const columns = KITCHEN_COLUMNS.filter((column) => (
+        column.key !== 'finalizado' || showFinalizedColumn
+    ));
+    const columnGridProps = columns.length <= 4
+        ? { xs: 12, sm: 6, md: 6, lg: 3 }
+        : { xs: 12, sm: 6, md: 4, lg: 2 };
+
+    const handleShowFinalizedChange = (event) => {
+        const checked = event.target.checked;
+        setShowFinalized(checked);
+        try {
+            window.localStorage.setItem(SHOW_FINALIZED_KEY, String(checked));
+        } catch (error) {
+            // ignore storage errors
+        }
+    };
+
     const showToastMessage = (message) => {
         setToastMessage(message);
         setShowToast(true);
@@ -393,8 +448,21 @@ export function Kitchen({ initialFilter }) {
     }, []);
 
     const persistStatus = (orderId, uiStatus) => {
+        if (uiStatus === 'finalizado') {
+            const current = orders.find((order) => order.id === orderId);
+            if (current?.orderStatus !== 'CLOSED') {
+                showToastMessage('Finalizado são pedidos já pagos. Feche a conta no atendimento.');
+            }
+            loadOrders();
+            return;
+        }
         const kitchenStatus = UI_TO_KITCHEN[uiStatus];
         if (!kitchenStatus) return;
+        const current = orders.find((order) => order.id === orderId);
+        if (current?.orderStatus === 'CLOSED') {
+            loadOrders();
+            return;
+        }
         updateKitchenOrderStatus(orderId, kitchenStatus)
             .then(() => loadOrders())
             .catch(() => {
@@ -406,7 +474,7 @@ export function Kitchen({ initialFilter }) {
     const handleStatusChange = (orderId) => {
         const current = orders.find((order) => order.id === orderId);
         if (!current) return;
-        const statusFlow = ['novo', 'em_producao', 'feito', 'entregue'];
+        const statusFlow = STATUS_FLOW;
         const currentIndex = statusFlow.indexOf(current.status);
         const nextStatus = currentIndex < statusFlow.length - 1
             ? statusFlow[currentIndex + 1]
@@ -416,13 +484,7 @@ export function Kitchen({ initialFilter }) {
             order.id === orderId ? { ...order, status: nextStatus } : order
         )));
         persistStatus(orderId, nextStatus);
-        const statusNames = {
-            novo: 'Novo',
-            em_producao: 'Em Produção',
-            feito: 'Feito',
-            entregue: 'Entregue',
-        };
-        showToastMessage(`Pedido ${current.orderNumber} movido para ${statusNames[nextStatus]}`);
+        showToastMessage(`Pedido ${current.orderNumber} movido para ${STATUS_LABELS[nextStatus]}`);
     };
 
     const handleDragEnd = (result) => {
@@ -433,16 +495,17 @@ export function Kitchen({ initialFilter }) {
         }
         const newStatus = destination.droppableId;
         const order = orders.find((item) => item.id.toString() === draggableId);
-        if (order) {
-            const statusNames = {
-                novo: 'Novo',
-                em_producao: 'Em Produção',
-                feito: 'Feito',
-                entregue: 'Entregue',
-            };
-            showToastMessage(`Pedido ${order.orderNumber} movido para ${statusNames[newStatus]}`);
-            persistStatus(order.id, newStatus);
+        if (!order) return;
+        if (newStatus === 'finalizado' && order.orderStatus !== 'CLOSED') {
+            showToastMessage('Finalizado são pedidos já pagos. Feche a conta no atendimento.');
+            return;
         }
+        if (order.orderStatus === 'CLOSED' && newStatus !== 'finalizado') {
+            showToastMessage('Pedido já pago não pode voltar para a cozinha.');
+            return;
+        }
+        showToastMessage(`Pedido ${order.orderNumber} movido para ${STATUS_LABELS[newStatus] || newStatus}`);
+        persistStatus(order.id, newStatus);
         setOrders((prev) => prev.map((item) => (
             item.id.toString() === draggableId ? { ...item, status: newStatus } : item
         )));
@@ -561,6 +624,26 @@ export function Kitchen({ initialFilter }) {
                         Comandas
                     </ToggleButton>
                 </ToggleButtonGroup>
+                <FormControlLabel
+                    sx={{ mt: 1.5, ml: 0.5 }}
+                    control={
+                        <Switch
+                            checked={showFinalized}
+                            onChange={handleShowFinalizedChange}
+                            color="primary"
+                        />
+                    }
+                    label={
+                        finalizedCount > 0
+                            ? `Mostrar finalizados (${finalizedCount})`
+                            : 'Mostrar finalizados'
+                    }
+                />
+                {showFinalized && finalizedCount === 0 ? (
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 0.5 }}>
+                        A coluna fica oculta enquanto não houver pedidos pagos.
+                    </Typography>
+                ) : null}
             </Box>
 
             {/* Floating Refresh Button */}
@@ -600,7 +683,7 @@ export function Kitchen({ initialFilter }) {
             <DragDropContext onDragEnd={handleDragEnd}>
                 <Grid container spacing={3} className="kanban-board">
                     {columns.map((column) => (
-                        <Grid item xs={12} sm={6} md={3} key={column.key}>
+                        <Grid item {...columnGridProps} key={column.key} sx={{ flexGrow: { lg: 1 } }}>
                             <KanbanColumn status={column.key}>
                                 <ColumnHeader status={column.key}>
                                     <Typography variant="h6" fontWeight="bold">
@@ -770,6 +853,7 @@ export function Kitchen({ initialFilter }) {
                             >
                                 Fechar
                             </Button>
+                            {selectedOrder.status !== 'finalizado' && selectedOrder.status !== 'entregue' ? (
                             <Button
                                 variant="contained"
                                 onClick={() => {
@@ -788,6 +872,7 @@ export function Kitchen({ initialFilter }) {
                             >
                                 Mover para Próxima Etapa
                             </Button>
+                            ) : null}
                         </DialogActions>
                     </>
                 )}
