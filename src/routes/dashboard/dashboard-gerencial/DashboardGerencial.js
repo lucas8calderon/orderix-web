@@ -173,7 +173,6 @@ export function DashboardGerencial({ onNavigate }) {
 
   const handleAlert = (alert) => {
     if (alert.action === 'kitchen-late') go('Cozinha', { kitchenFilter: 'atrasados' });
-    if (alert.action === 'inventory-critical') go('Inventário', { stockFilter: 'critical' });
     if (alert.action === 'atendimento') go('Atendimento');
   };
 
@@ -277,7 +276,7 @@ export function DashboardGerencial({ onNavigate }) {
           <span>Pedidos atrasados</span>
           <strong>{operation.lateOrders || 0}</strong>
         </button>
-        <button type="button" className="overview-mini-kpi" onClick={() => go('Inventário', { stockFilter: 'critical' })}>
+        <button type="button" className="overview-mini-kpi">
           <span>Estoque crítico</span>
           <strong>{operation.criticalStockCount || 0} itens</strong>
         </button>
@@ -302,7 +301,7 @@ export function DashboardGerencial({ onNavigate }) {
             <strong>Atendimento</strong>
             <p>{operation.openComandas || 0} comandas abertas</p>
           </button>
-          <button type="button" className={`overview-now-card is-${operationTone('stock', operation)}`} onClick={() => go('Inventário', { stockFilter: 'critical' })}>
+          <button type="button" className={`overview-now-card is-${operationTone('stock', operation)}`}>
             <span className="overview-now-dot" />
             <strong>Estoque</strong>
             <p>{operation.criticalStockCount || 0} produtos em nível crítico</p>

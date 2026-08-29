@@ -1,4 +1,4 @@
-/* ===== ORDERIX THEME TOKENS — Tech Blue (Precision Core) ===== */
+/* ===== WEPER THEME TOKENS — Tech Blue (Precision Core) ===== */
 
 :root {
   --font-family: 'Inter', sans-serif;
@@ -19,17 +19,17 @@
   --color-primary-fixed: #DBEAFE;
   --color-inverse-primary: #93C5FD;
   --color-primary-rgb: 37, 99, 235;
-  --color-accent: #2563EB;
-  --color-accent-hover: #1D4ED8;
+  --color-accent: #60A5FA;
+  --color-accent-hover: #3B82F6;
   --color-on-primary: #FFFFFF;
   --color-brand-home: #2563EB;
   --color-brand-home-soft: #60A5FA;
 
-  --color-bg: #FAF8FF;
+  --color-bg: #F8FAFC;
   --color-surface: #FFFFFF;
   --color-surface-elevated: #FFFFFF;
-  --color-surface-muted: #F3F3FE;
-  --color-header: rgba(250, 248, 255, 0.82);
+  --color-surface-muted: #F1F5F9;
+  --color-header: rgba(248, 250, 252, 0.86);
   --color-header-text: #0F172A;
   --color-sidebar: #0B1220;
   --color-sidebar-text: #94A3B8;
@@ -38,34 +38,34 @@
   --color-sidebar-brand: #93C5FD;
 
   --color-text-primary: #0F172A;
-  --color-text-secondary: #5B6475;
-  --color-text-muted: #8B93A7;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
   --color-text-inverse: #FFFFFF;
 
-  --color-border: #D9D9E5;
-  --color-outline: #5B6475;
+  --color-border: #E2E8F0;
+  --color-outline: #64748B;
   --color-hover: rgba(37, 99, 235, 0.08);
   --color-overlay: rgba(11, 18, 32, 0.4);
   --color-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --color-shadow-hover: 0 4px 12px rgba(37, 99, 235, 0.08);
+  --color-shadow-hover: 0 8px 28px rgba(37, 99, 235, 0.12);
   --color-input-bg: #FFFFFF;
-  --color-table-header: #F3F3FE;
-  --color-table-hover: #F3F3FE;
-  --color-chip-bg: #F3F3FE;
+  --color-table-header: #F1F5F9;
+  --color-table-hover: #F1F5F9;
+  --color-chip-bg: #EFF6FF;
 
-  --color-success: #10B981;
+  --color-success: #16A34A;
   --color-warning: #F59E0B;
   --color-error: #B91C1C;
   --color-info: #2563EB;
 
-  --color-secondary: #F3F3FE;
-  --color-light-purple: #F3F3FE;
-  --color-green: #10B981;
+  --color-secondary: #EFF6FF;
+  --color-light-purple: #EFF6FF;
+  --color-green: #16A34A;
   --color-red: #B91C1C;
   --color-white: var(--color-surface);
   --color-black: var(--color-text-primary);
-  --color-light-gray: #D9D9E5;
-  --color-mid-gray: #5B6475;
+  --color-light-gray: #E2E8F0;
+  --color-mid-gray: #64748B;
   --color-dark-gray: #0F172A;
   --spacing-small: 8px;
   --spacing-medium: 16px;

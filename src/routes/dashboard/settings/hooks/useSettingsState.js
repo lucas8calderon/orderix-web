@@ -91,14 +91,13 @@ export const useSettingsState = () => {
   }, []);
 
   // Função otimizada para salvar configurações
-  const saveSettings = useCallback((section) => {
-    console.log(`Salvando configurações da seção: ${section}`, settings[section]);
-    setToast({ 
-      open: true, 
-      message: `Configurações de ${getSectionTitle(section)} salvas com sucesso!`, 
-      severity: 'success' 
+  const saveSettings = useCallback((_section) => {
+    setToast({
+      open: true,
+      message: 'Configurações ainda não são salvas no servidor. Esta tela está em breve.',
+      severity: 'info',
     });
-  }, [settings]);
+  }, []);
 
   // Labels memoizados para evitar recriação
   const labels = useMemo(() => ({

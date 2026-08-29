@@ -1,6 +1,6 @@
 # FeatureCards Component
 
-Um componente React moderno e elegante para exibir cards de funcionalidades do sistema Orderix.
+Um componente React moderno e elegante para exibir cards de funcionalidades do sistema Weper.
 
 ## 🎨 Características
 
@@ -55,7 +55,7 @@ export default App;
 ## 🎨 Customização
 
 ### Cores
-O componente usa a paleta de cores do Orderix:
+O componente usa a paleta de cores do Weper:
 - **Primária**: #7B3FF2 (roxo)
 - **Secundária**: #B896F9 (lilás)
 - **Texto**: #2D2D2D (cinza escuro)
@@ -141,7 +141,7 @@ npm list @mui/material lucide-react
 
 ## 📄 Licença
 
-Este componente faz parte do projeto Orderix e está sob a mesma licença do projeto principal.
+Este componente faz parte do projeto Weper e está sob a mesma licença do projeto principal.
 
 ## 🤝 Contribuição
 
@@ -154,4 +154,4 @@ Para contribuir com melhorias no componente:
 
 ---
 
-**Desenvolvido com ❤️ para o sistema Orderix**
+**Desenvolvido com ❤️ para o sistema Weper**

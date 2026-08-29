@@ -1,61 +1,50 @@
 import React from 'react';
-import '../styles/HeroSection.css';
+import { Play } from 'lucide-react';
+import { DashboardMockup, PhoneMockup } from './DeviceMockups';
 
-const HeroSection = ({ onTestClick }) => {
+const HeroSection = ({ onStartClick, onDemoClick }) => {
   return (
-    <section className="hero-section" id="home">
-      <div className="hero-container">
-        <div className="hero-content">
-          <h1 className="hero-title">
-            A gestão completa que o seu restaurante precisa
+    <section className="hero-lp" id="home" aria-labelledby="hero-title">
+      <div className="lp-container hero-lp__grid">
+        <div className="hero-lp__content">
+          <span className="lp-eyebrow">Plataforma para a sua operação</span>
+          <h1 id="hero-title" className="hero-lp__title">
+            Toda a sua operação.
+            <span className="hero-lp__title-accent">Um único sistema.</span>
           </h1>
-          <p className="hero-subtitle">
-            Controle mesas, comandas, balcão e autoatendimento com o sistema Orderix
+          <p className="hero-lp__desc">
+            A Weper conecta atendimento, pedidos, cozinha e gestão
+            para simplificar a operação do seu estabelecimento.
           </p>
-          <div className="hero-buttons">
-            <button className="btn-hero-primary" onClick={onTestClick}>
-              Testar gratuitamente
+          <ul className="lp-check-list" aria-label="Como começar">
+            <li>
+              <span className="lp-check" aria-hidden="true">✓</span>
+              Comece pelo WhatsApp
+            </li>
+            <li>
+              <span className="lp-check" aria-hidden="true">✓</span>
+              Assinatura ativada pela equipe
+            </li>
+            <li>
+              <span className="lp-check" aria-hidden="true">✓</span>
+              Suporte para colocar no ar
+            </li>
+          </ul>
+          <div className="hero-lp__actions">
+            <button type="button" className="lp-btn lp-btn--primary" onClick={onStartClick}>
+              Começar agora
+              <span aria-hidden="true">→</span>
             </button>
-            <button className="btn-hero-secondary" onClick={onTestClick}>
-              Planos a partir de R$49,99/mês
+            <button type="button" className="lp-btn lp-btn--outline" onClick={onDemoClick}>
+              <Play size={16} aria-hidden="true" />
+              Falar no WhatsApp
             </button>
-          </div>
-          <div className="hero-features">
-            <div className="feature-badge">
-              <span className="badge-icon">✓</span>
-              <span>Sem cartão de crédito</span>
-            </div>
-            <div className="feature-badge">
-              <span className="badge-icon">✓</span>
-              <span>14 dias grátis</span>
-            </div>
-            <div className="feature-badge">
-              <span className="badge-icon">✓</span>
-              <span>Suporte incluído</span>
-            </div>
           </div>
         </div>
-        <div className="hero-image">
-          <div className="hero-mockup">
-            <img 
-              src={require('../../../assets/images/mesa.png')} 
-              alt="Orderix App Interface - Mesa"
-              className="app-image"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }}
-            />
-            <div className="app-fallback" style={{ display: 'none' }}>
-              <div className="fallback-content">
-                <div className="app-icon">
-                  <div className="plate-icon">🍽️</div>
-                </div>
-                <div className="fallback-title">Orderix App</div>
-                <div className="fallback-subtitle">Sistema de Gestão</div>
-              </div>
-            </div>
-          </div>
+
+        <div className="hero-lp__stage" aria-label="Prévia do produto Weper">
+          <DashboardMockup className="hero-lp__dash" />
+          <PhoneMockup className="hero-lp__phone" lazy={false} />
         </div>
       </div>
     </section>

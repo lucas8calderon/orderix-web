@@ -1,40 +1,58 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
-import LoginModal from './components/LoginModal';
 import HeroSection from './components/HeroSection';
-import AboutSection from './components/AboutSection';
-import FeaturesSection from './components/FeaturesSection';
-import TargetAudienceSection from './components/TargetAudienceSection';
-import FeaturesListSection from './components/FeaturesListSection';
+import SegmentsStrip from './components/SegmentsStrip';
+import EcosystemSection, { ProductSpotlightSections } from './components/EcosystemSection';
+import BenefitsSection from './components/BenefitsSection';
+import ProductsSection from './components/ProductsSection';
+import ResourcesSection from './components/ResourcesSection';
+import OperationFlowSection from './components/OperationFlowSection';
+import HowItWorksSection from './components/HowItWorksSection';
 import PlansSection from './components/PlansSection';
+import FaqSection from './components/FaqSection';
+import AboutSection from './components/AboutSection';
+import FinalCtaSection from './components/FinalCtaSection';
 import Footer from './components/Footer';
 import FloatWhatsAppButton from './components/FloatWhatsAppButton';
+import { PATHS } from '../../services/accessControl';
+import { openWhatsApp } from './landingAssets';
 import './styles/Home.css';
+import './styles/Landing.css';
 
 const Home = () => {
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLoginClick = () => {
-    setLoginModalOpen(true);
+    navigate(PATHS.LOGIN);
   };
 
-  const handleTestClick = () => {
-    const plansSection = document.getElementById('plans');
-    if (plansSection) {
-      plansSection.scrollIntoView({ behavior: 'smooth' });
-    }
+  const handleStartClick = () => {
+    openWhatsApp('Olá! Quero começar a usar a Weper no meu estabelecimento.');
+  };
+
+  const handleDemoClick = () => {
+    openWhatsApp('Olá! Gostaria de falar com a Weper sobre o sistema.');
   };
 
   return (
     <div className="home">
-      <Header onLoginClick={handleLoginClick} />
-      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
-      <HeroSection onTestClick={handleTestClick} />
-      <AboutSection />
-      <FeaturesSection />
-      <TargetAudienceSection />
-      <FeaturesListSection />
-      <PlansSection />
+      <Header onLoginClick={handleLoginClick} onStartClick={handleStartClick} />
+      <main>
+        <HeroSection onStartClick={handleStartClick} onDemoClick={handleDemoClick} />
+        <SegmentsStrip />
+        <EcosystemSection />
+        <ProductSpotlightSections />
+        <BenefitsSection />
+        <ProductsSection />
+        <ResourcesSection />
+        <OperationFlowSection />
+        <HowItWorksSection />
+        <PlansSection />
+        <FaqSection />
+        <AboutSection />
+        <FinalCtaSection onStartClick={handleStartClick} />
+      </main>
       <Footer />
       <FloatWhatsAppButton />
     </div>

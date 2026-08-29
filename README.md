@@ -1,6 +1,6 @@
-﻿# Orderix Web
+﻿# Weper Web
 
-Frontend web do Orderix para landing page, autenticação e painel administrativo de gestão de restaurantes.
+Frontend web do Weper para landing page, autenticação e painel administrativo de gestão de restaurantes.
 
 ## Stack
 

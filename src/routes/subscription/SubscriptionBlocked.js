@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../services/authService';
+import { PATHS } from '../../services/accessControl';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 
 export default function SubscriptionBlocked() {
@@ -9,7 +10,7 @@ export default function SubscriptionBlocked() {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate(PATHS.LOGIN);
   };
 
   return (

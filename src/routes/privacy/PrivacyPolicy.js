@@ -37,7 +37,7 @@ const PrivacyPolicy = () => {
         <div className="privacy-container">
           <div className="privacy-intro">
             <p>
-              A Orderix Solutions valoriza a privacidade e segurança dos dados de nossos usuários. 
+              A Weper Solutions valoriza a privacidade e segurança dos dados de nossos usuários. 
               Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e protegemos 
               suas informações pessoais quando você utiliza nossos serviços.
             </p>
@@ -53,7 +53,6 @@ const PrivacyPolicy = () => {
               <ul>
                 <li>Dados de cadastro (nome, email, telefone)</li>
                 <li>Informações do estabelecimento (nome, endereço, CNPJ)</li>
-                <li>Dados de pagamento (processados de forma segura)</li>
                 <li>Comunicações com nosso suporte</li>
               </ul>
 
@@ -75,7 +74,7 @@ const PrivacyPolicy = () => {
             <div className="section-content">
               <ul>
                 <li>Fornecer e melhorar nossos serviços</li>
-                <li>Processar transações e pagamentos</li>
+                <li>Registrar formas de pagamento informadas no fechamento do pedido</li>
                 <li>Enviar comunicações importantes sobre o serviço</li>
                 <li>Oferecer suporte técnico e atendimento</li>
                 <li>Desenvolver novos recursos e funcionalidades</li>
@@ -118,10 +117,9 @@ const PrivacyPolicy = () => {
               </p>
               <ul>
                 <li>Com seu consentimento explícito</li>
-                <li>Para processadores de pagamento autorizados</li>
                 <li>Para provedores de serviços essenciais (com acordos de confidencialidade)</li>
                 <li>Para cumprir obrigações legais ou responder a processos judiciais</li>
-                <li>Para proteger direitos, propriedade ou segurança da Orderix e usuários</li>
+                <li>Para proteger direitos, propriedade ou segurança da Weper e usuários</li>
               </ul>
             </div>
           </section>
@@ -199,9 +197,7 @@ const PrivacyPolicy = () => {
                 seus direitos, entre em contato conosco:
               </p>
               <div className="contact-info">
-                <p><strong>Email:</strong> privacidade@orderix.com.br</p>
-                <p><strong>Telefone:</strong> (11) 99999-9999</p>
-                <p><strong>Endereço:</strong> São Paulo, SP - Brasil</p>
+                <p>Fale com a Weper pelo WhatsApp disponível na página inicial. Não usamos um telefone ou e-mail jurídico fictício nesta versão.</p>
               </div>
             </div>
           </section>
@@ -210,7 +206,7 @@ const PrivacyPolicy = () => {
 
       <footer className="privacy-footer">
         <div className="privacy-container">
-          <p>© 2025 Orderix Solutions - Todos os direitos reservados</p>
+          <p>© 2026 Weper Solutions - Todos os direitos reservados</p>
         </div>
       </footer>
     </div>

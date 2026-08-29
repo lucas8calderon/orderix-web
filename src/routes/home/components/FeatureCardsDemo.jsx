@@ -53,7 +53,7 @@ const FeatureCardsDemo = () => {
               margin: '0 auto 3rem'
             }}
           >
-            Cards modernos e responsivos para funcionalidades do sistema Orderix
+            Cards modernos e responsivos para funcionalidades do sistema Weper
           </Typography>
           
           <FeatureCards />

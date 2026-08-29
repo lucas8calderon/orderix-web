@@ -1,67 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import '../styles/Header.css';
+import React, { useEffect, useState } from 'react';
 import { ThemeToggleButton } from '../../../commons/components/ThemeToggleButton';
+import { scrollToId } from '../landingAssets';
+import { WeperMark } from './WeperMark';
+import '../styles/Header.css';
 
-const Header = ({ onLoginClick }) => {
+const NAV_LINKS = [
+  { id: 'produto', label: 'Produto' },
+  { id: 'solucoes', label: 'Soluções' },
+  { id: 'recursos', label: 'Recursos' },
+  { id: 'plans', label: 'Planos' },
+  { id: 'empresa', label: 'Empresa' },
+];
+
+const Header = ({ onLoginClick, onStartClick }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 24);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  const goTo = (sectionId) => {
+    scrollToId(sectionId);
     setMobileMenuOpen(false);
   };
 
   return (
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-container">
-        <div className="logo">
-          <span className="logo-text">Orderix</span>
-        </div>
-
-        <button 
-          className="mobile-menu-button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        <a
+          href="#home"
+          className="logo"
+          onClick={(e) => {
+            e.preventDefault();
+            goTo('home');
+          }}
         >
-          <span></span>
-          <span></span>
-          <span></span>
+          <WeperMark size={30} />
+        </a>
+
+        <button
+          type="button"
+          className={`mobile-menu-button ${mobileMenuOpen ? 'is-open' : ''}`}
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="landing-nav"
+          aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+        >
+          <span />
+          <span />
+          <span />
         </button>
 
-        <nav className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
-          <button onClick={() => scrollToSection('home')}>Home</button>
-          <button onClick={() => scrollToSection('products')}>Produtos</button>
-          <button onClick={() => scrollToSection('plans')}>Planos</button>
-          <button onClick={() => scrollToSection('support')}>Suporte</button>
+        <nav id="landing-nav" className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} aria-label="Principal">
+          {NAV_LINKS.map((link) => (
+            <button key={link.id} type="button" onClick={() => goTo(link.id)}>
+              {link.label}
+            </button>
+          ))}
           <button
+            type="button"
             className="nav-login-mobile"
             onClick={() => {
               setMobileMenuOpen(false);
               onLoginClick();
             }}
           >
-            Entrar no painel
+            Entrar
+          </button>
+          <button
+            type="button"
+            className="nav-cta-mobile"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onStartClick();
+            }}
+          >
+            Começar agora
           </button>
         </nav>
 
         <div className="header-actions">
           <ThemeToggleButton className="home-theme-toggle" />
-          <button className="btn-login" onClick={onLoginClick}>
-            Entrar no painel
+          <button type="button" className="btn-login" onClick={onLoginClick}>
+            Entrar
           </button>
-          <button className="btn-primary" onClick={() => scrollToSection('plans')}>
-            Testar agora
+          <button type="button" className="btn-primary" onClick={onStartClick}>
+            Começar agora
           </button>
         </div>
       </div>

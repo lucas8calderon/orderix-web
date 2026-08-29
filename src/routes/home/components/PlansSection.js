@@ -1,104 +1,86 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { openWhatsApp } from '../landingAssets';
 import '../styles/PlansSection.css';
 
-function upgradePlanFeatures(features, replacements, extras = []) {
-  return [...features.map((feature) => replacements[feature] || feature), ...extras];
-}
+/** Preços iguais a SubscriptionPlan no backend (49,90 / 79,90 / 119,90). */
+const PLANS = [
+  {
+    name: 'Básico',
+    price: '49,90',
+    description: 'Operação do salão, caixa, cozinha e painel',
+    highlights: [
+      'App Garçom',
+      'Frente de caixa e comandas',
+      'Cozinha (KDS)',
+      'Painel administrativo',
+      'Catálogo e colaboradores',
+      'Suporte por WhatsApp',
+    ],
+    highlighted: false,
+  },
+  {
+    name: 'Profissional',
+    price: '79,90',
+    badge: 'Mais escolhido',
+    description: 'Mesma operação, com valor intermediário',
+    highlights: [
+      'App Garçom',
+      'Frente de caixa e comandas',
+      'Cozinha (KDS)',
+      'Painel administrativo',
+      'Catálogo e colaboradores',
+      'Suporte por WhatsApp',
+    ],
+    highlighted: true,
+  },
+  {
+    name: 'Premium',
+    price: '119,90',
+    description: 'Mesma operação, com valor do plano superior',
+    highlights: [
+      'App Garçom',
+      'Frente de caixa e comandas',
+      'Cozinha (KDS)',
+      'Painel administrativo',
+      'Catálogo e colaboradores',
+      'Suporte por WhatsApp',
+    ],
+    highlighted: false,
+  },
+];
+
+const COMPARISON = [
+  { feature: 'Aplicativo Garçom', basic: true, pro: true, premium: true },
+  { feature: 'Frente de caixa / comandas', basic: true, pro: true, premium: true },
+  { feature: 'Cozinha (KDS)', basic: true, pro: true, premium: true },
+  { feature: 'Painel administrativo', basic: true, pro: true, premium: true },
+  { feature: 'Catálogo e colaboradores', basic: true, pro: true, premium: true },
+  { feature: 'Suporte por WhatsApp', basic: true, pro: true, premium: true },
+];
 
 const PlansSection = () => {
-  const openWhatsApp = () => {
-    const message = encodeURIComponent('Olá! Gostaria de assinar o sistema Orderix.');
-    window.open(`https://wa.me/5511977844172?text=${message}`, '_blank');
+  const [showComparison, setShowComparison] = useState(false);
+
+  const handleSubscribe = (planName) => {
+    openWhatsApp(`Olá! Gostaria de assinar o plano ${planName} da Weper.`);
   };
 
-  const basicFeatures = [
-    'Aplicativo Garçom',
-    'Frente de caixa, comandas e pagamentos integrados',
-    'Até 10 mesas',
-    'Até 10 comandas',
-    'Até 5 colaboradores',
-    'Dashboard financeiro',
-    'Histórico de vendas',
-    'Suporte por WhatsApp 24/7',
-  ];
-
-  const professionalFeatures = upgradePlanFeatures(
-    basicFeatures,
-    { 'Até 5 colaboradores': 'Até 20 colaboradores' },
-    [
-      'PDV frente de caixa',
-      'Atendimento autônomo com tablet na mesa',
-      'Relatórios e dashboard',
-      'KDS e central de pedidos',
-      'Produtos mais vendidos',
-      'Controle de estoque',
-      'Desempenho dos funcionários',
-    ]
-  );
-
-  const premiumFeatures = upgradePlanFeatures(
-    professionalFeatures,
-    {
-      'Até 10 mesas': 'Mesas ilimitadas',
-      'Até 10 comandas': 'Comandas ilimitadas',
-      'Até 20 colaboradores': 'Colaboradores ilimitados',
-      'Relatórios e dashboard': 'Relatórios avançados',
-      'Suporte por WhatsApp 24/7': 'Suporte 24/7',
-    },
-    [
-      'Cardápio digital',
-      'Visão Multiempresa',
-      'Programas de fidelidade',
-      'Integração com ERP',
-      'Emissão fiscal',
-      'Customização on demand',
-      'Onboarding personalizado',
-    ]
-  );
-
-  const plans = [
-    {
-      name: 'Básico',
-      price: '49,99',
-      period: 'mês',
-      description: 'Ideal para pequenos estabelecimentos',
-      features: basicFeatures,
-      highlighted: false
-    },
-    {
-      name: 'Profissional',
-      price: '99,99',
-      period: 'mês',
-      badge: 'Recomendado',
-      description: 'Para restaurantes em crescimento',
-      features: professionalFeatures,
-      highlighted: true
-    },
-    {
-      name: 'Premium',
-      price: '199,99',
-      period: 'mês',
-      description: 'Solução completa sem limites',
-      features: premiumFeatures,
-      highlighted: false
-    }
-  ];
-
   return (
-    <section className="plans-section" id="plans">
+    <section className="plans-section" id="plans" aria-labelledby="plans-title">
       <div className="plans-container">
-        <div className="section-header">
-          <h2 className="section-title">Planos e Preços</h2>
-          <p className="section-subtitle">
-            Escolha o plano ideal para o seu negócio
-          </p>
+        <div className="plans-header">
+          <h2 id="plans-title" className="plans-title">
+            Planos que cabem no seu negócio
+          </h2>
+          <p className="plans-subtitle">Assinatura mensal ativada pela equipe Weper, sem checkout automático</p>
+          <p className="plans-trial">Fale no WhatsApp para começar</p>
         </div>
+
         <div className="plans-grid">
-          {plans.map((plan, index) => (
-            <div 
-              key={index} 
+          {PLANS.map((plan) => (
+            <article
+              key={plan.name}
               className={`plan-card ${plan.highlighted ? 'highlighted' : ''}`}
-              style={{ animationDelay: `${index * 0.15}s` }}
             >
               {plan.badge && <div className="plan-badge">{plan.badge}</div>}
               <div className="plan-header">
@@ -106,30 +88,65 @@ const PlansSection = () => {
                 <div className="plan-price">
                   <span className="currency">R$</span>
                   <span className="amount">{plan.price}</span>
-                  <span className="period">/{plan.period}</span>
+                  <span className="period">/mês</span>
                 </div>
                 <p className="plan-description">{plan.description}</p>
               </div>
               <ul className="plan-features">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex}>
-                    <span className="check-icon">✓</span>
+                {plan.highlights.map((feature) => (
+                  <li key={feature}>
+                    <span className="check-icon" aria-hidden="true">✓</span>
                     {feature}
                   </li>
                 ))}
               </ul>
-              <button 
+              <button
+                type="button"
                 className={`btn-plan ${plan.highlighted ? 'primary' : ''}`}
-                onClick={openWhatsApp}
+                onClick={() => handleSubscribe(plan.name)}
               >
-                Assinar agora
+                Falar no WhatsApp
               </button>
-            </div>
+            </article>
           ))}
         </div>
-        <p className="plans-note">
-          Todos os planos incluem suporte técnico e atualizações constantes
-        </p>
+
+        <div className="plans-compare">
+          <button
+            type="button"
+            className="plans-compare-btn"
+            onClick={() => setShowComparison((v) => !v)}
+            aria-expanded={showComparison}
+            aria-controls="plans-comparison"
+          >
+            {showComparison ? 'Ocultar comparação' : 'Ver o que está incluído'}
+          </button>
+
+          {showComparison && (
+            <div id="plans-comparison" className="plans-comparison" role="region" aria-label="Comparação de planos">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Recurso</th>
+                    <th scope="col">Básico</th>
+                    <th scope="col">Profissional</th>
+                    <th scope="col">Premium</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON.map((row) => (
+                    <tr key={row.feature}>
+                      <th scope="row">{row.feature}</th>
+                      <td>{row.basic ? '✓' : '—'}</td>
+                      <td>{row.pro ? '✓' : '—'}</td>
+                      <td>{row.premium ? '✓' : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

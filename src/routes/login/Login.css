@@ -1,0 +1,31 @@
+.login-page {
+  -webkit-font-smoothing: antialiased;
+}
+
+.login-shell {
+  isolation: isolate;
+}
+
+.login-aside {
+  min-height: 560px;
+}
+
+@media (max-width: 899.95px) {
+  .login-aside {
+    display: none !important;
+  }
+
+  .login-panel {
+    border-radius: 20px !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .login-aside {
+    flex-basis: 52%;
+  }
+
+  .login-panel {
+    flex-basis: 48%;
+  }
+}

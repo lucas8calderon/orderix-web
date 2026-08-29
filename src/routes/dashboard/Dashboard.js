@@ -21,19 +21,18 @@ import { Menu } from './menu/Menu';
 import { Atendimento } from './atendimento/Atendimento';
 import { Kitchen } from './kitchen/Kitchen';
 import { Employees } from './employees/Employees';
-import { Settings } from './settings/Settings';
-import InventoryPanel from './inventory/Inventory';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { getCurrentUser, logout } from '../../services/authService';
-import { getVisibleDashboardItems } from '../../services/accessControl';
+import { getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
+import { WaiterHome } from './WaiterHome';
 
 function Copyright(props) {
     return (
         <Typography variant="body2" color="text.secondary" align="center" {...props}>
             {'Copyright © '}
             <Link color="inherit" href="https://mui.com/">
-                Orderix Solutions
+                Weper Solutions
             </Link>{' '}
             {new Date().getFullYear()}
             {'.'}
@@ -91,32 +90,31 @@ export default function Dashboard() {
     const user = getCurrentUser();
     const visibleItems = getVisibleDashboardItems(user, dashboardItems);
     const navigate = useNavigate();
+    const { section } = useParams();
     const isMobile = useMediaQuery('(max-width:900px)');
-    const [selectedScreenIndex, setSelectedScreenIndex] = React.useState(0);
     const [navIntent, setNavIntent] = React.useState(null);
     const [desktopOpen, setDesktopOpen] = React.useState(true);
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
     const goToScreen = (title, intent) => {
-        const index = visibleItems.findIndex((item) => item.title === title);
-        if (index < 0) return;
+        const item = visibleItems.find((entry) => entry.title === title);
+        if (!item) return;
         setNavIntent(intent || null);
-        setSelectedScreenIndex(index);
+        navigate(item.path);
         if (isMobile) {
             setMobileOpen(false);
         }
     };
 
-    const screenByTitle = {
-        Dashboard: <DashboardGerencial onNavigate={goToScreen} />,
-        Colaboradores: <Employees />,
-        Catálogo: <Menu />,
-        Inventário: <InventoryPanel stockFilter={navIntent?.stockFilter} />,
-        Atendimento: <Atendimento />,
-        Cozinha: <Kitchen initialFilter={navIntent?.kitchenFilter} />,
-        Configurações: <Settings />,
+    const screenBySlug = {
+        dashboard: <DashboardGerencial onNavigate={goToScreen} />,
+        colaboradores: <Employees />,
+        produtos: <Menu />,
+        atendimento: <Atendimento />,
+        cozinha: <Kitchen initialFilter={navIntent?.kitchenFilter} />,
+        garcom: <WaiterHome user={user} />,
     };
-    const screens = visibleItems.map((item) => screenByTitle[item.title]);
+    const selectedItem = visibleItems.find((item) => item.slug === section);
 
     const toggleDrawer = () => {
         if (isMobile) {
@@ -126,9 +124,9 @@ export default function Dashboard() {
         setDesktopOpen((prev) => !prev);
     };
 
-    const handleSelectScreen = (index) => {
+    const handleSelectScreen = (item) => {
         setNavIntent(null);
-        setSelectedScreenIndex(index);
+        navigate(item.path);
         if (isMobile) {
             setMobileOpen(false);
         }
@@ -136,8 +134,12 @@ export default function Dashboard() {
 
     const handleLogout = () => {
         logout();
-        navigate('/');
+        navigate(PATHS.LOGIN);
     };
+
+    if (!section || !selectedItem) {
+        return <Navigate to={getPostLoginPath(user)} replace />;
+    }
 
     const drawerContent = (
         <>
@@ -159,7 +161,7 @@ export default function Dashboard() {
                             lineHeight: 1.2,
                         }}
                     >
-                        Orderix
+                        Weper
                     </Typography>
                     <Typography
                         sx={{
@@ -179,21 +181,21 @@ export default function Dashboard() {
             </Toolbar>
             <Divider sx={{ borderColor: 'rgba(190, 198, 224, 0.16)' }} />
             <List component="nav" sx={{ px: 0.5, py: 1 }}>
-                {visibleItems.map((item, index) => (
+                {visibleItems.map((item) => (
                     <ListItemButton
-                        onClick={() => handleSelectScreen(index)}
+                        onClick={() => handleSelectScreen(item)}
                         key={item.title}
-                        selected={selectedScreenIndex === index}
+                        selected={item.slug === section}
                         sx={{
                             borderRadius: 0,
                             mb: 0.25,
-                            color: selectedScreenIndex === index
+                            color: item.slug === section
                                 ? 'var(--color-sidebar-brand)'
                                 : 'var(--color-sidebar-text)',
-                            borderLeft: selectedScreenIndex === index
+                            borderLeft: item.slug === section
                                 ? '4px solid var(--color-sidebar-brand)'
                                 : '4px solid transparent',
-                            pl: selectedScreenIndex === index ? 1.25 : 2,
+                            pl: item.slug === section ? 1.25 : 2,
                             '&.Mui-selected': {
                                 backgroundColor: 'var(--color-sidebar-selected)',
                                 color: 'var(--color-sidebar-brand)',
@@ -220,7 +222,7 @@ export default function Dashboard() {
                             primary={item.title}
                             primaryTypographyProps={{
                                 noWrap: true,
-                                fontWeight: selectedScreenIndex === index ? 700 : 400,
+                                fontWeight: item.slug === section ? 700 : 400,
                                 color: 'inherit',
                             }}
                         />
@@ -268,7 +270,7 @@ export default function Dashboard() {
                             fontSize: { xs: '1rem', sm: '1.25rem' },
                         }}
                     >
-                        {user?.storeName || 'Orderix'}
+                        {user?.storeName || 'Weper'}
                     </Typography>
                     <ThemeToggleButton className="header-theme-toggle" size={isMobile ? 'small' : 'medium'} />
                     <Typography
@@ -332,7 +334,7 @@ export default function Dashboard() {
                     }}
                 >
                     <Box sx={{ minWidth: 0, width: '100%' }}>
-                        {screens[selectedScreenIndex]}
+                        {screenBySlug[selectedItem.slug]}
                     </Box>
                     <Copyright sx={{ pt: 4 }} />
                 </Container>

@@ -27,20 +27,25 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 import { logout } from '../../services/authService';
 import {
+  PATHS,
   PLAN_LABELS,
   PLANS,
   SUBSCRIPTION_STATUS_LABELS,
   formatCurrency,
   formatDate,
+  getPostLoginPath,
 } from '../../services/accessControl';
 import { useMasterStores } from './hook/useMasterStores';
 import { createStore, updateStore } from './service/storesService';
 import { MasterOverview, statusColor } from './components/MasterOverview';
-import { useIsMobile, useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
+import { MasterPlans } from './components/MasterPlans';
+import { MasterSubscriptions } from './components/MasterSubscriptions';
+import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
+import { getCurrentUser } from '../../services/session';
 
 const emptyForm = {
   name: '',
@@ -235,18 +240,33 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
   );
 }
 
+const ADMIN_SECTIONS = {
+  dashboard: PATHS.ADMIN_DASHBOARD,
+  restaurantes: PATHS.ADMIN_RESTAURANTES,
+  planos: PATHS.ADMIN_PLANOS,
+  assinaturas: PATHS.ADMIN_ASSINATURAS,
+};
+
 export default function MasterDashboard() {
   const navigate = useNavigate();
+  const { section } = useParams();
+  const user = getCurrentUser();
   const { stores, summary, loading, error, refetch } = useMasterStores();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
-  const [screen, setScreen] = useState('dashboard');
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate(PATHS.LOGIN);
+  };
+
+  const goToSection = (slug) => {
+    const path = ADMIN_SECTIONS[slug];
+    if (path) {
+      navigate(path);
+    }
   };
 
   const openCreate = () => {
@@ -297,7 +317,7 @@ export default function MasterDashboard() {
       }
       setDialogOpen(false);
       await refetch();
-      setScreen('stores');
+      navigate(PATHS.ADMIN_RESTAURANTES);
     } catch (err) {
       const message = err?.response?.data?.message || 'Não foi possível salvar a loja.';
       setToast({ open: true, message, severity: 'error' });
@@ -305,6 +325,10 @@ export default function MasterDashboard() {
       setSaving(false);
     }
   };
+
+  if (!section || !ADMIN_SECTIONS[section]) {
+    return <Navigate to={getPostLoginPath(user)} replace />;
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'var(--color-bg)' }}>
@@ -324,7 +348,7 @@ export default function MasterDashboard() {
       >
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-sidebar-brand)' }}>
-            Orderix Master
+            Weper Master
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.85 }}>
             Gestão administrativa da plataforma
@@ -334,11 +358,11 @@ export default function MasterDashboard() {
           <ThemeToggleButton className="header-theme-toggle" />
           <Button
             color="inherit"
-            onClick={() => setScreen('dashboard')}
+            onClick={() => goToSection('dashboard')}
             sx={{
               textTransform: 'none',
-              fontWeight: screen === 'dashboard' ? 700 : 400,
-              borderBottom: screen === 'dashboard' ? '2px solid #fff' : '2px solid transparent',
+              fontWeight: section === 'dashboard' ? 700 : 400,
+              borderBottom: section === 'dashboard' ? '2px solid #fff' : '2px solid transparent',
               borderRadius: 0,
             }}
           >
@@ -346,15 +370,39 @@ export default function MasterDashboard() {
           </Button>
           <Button
             color="inherit"
-            onClick={() => setScreen('stores')}
+            onClick={() => goToSection('restaurantes')}
             sx={{
               textTransform: 'none',
-              fontWeight: screen === 'stores' ? 700 : 400,
-              borderBottom: screen === 'stores' ? '2px solid #fff' : '2px solid transparent',
+              fontWeight: section === 'restaurantes' ? 700 : 400,
+              borderBottom: section === 'restaurantes' ? '2px solid #fff' : '2px solid transparent',
               borderRadius: 0,
             }}
           >
-            Lojas
+            Restaurantes
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => goToSection('planos')}
+            sx={{
+              textTransform: 'none',
+              fontWeight: section === 'planos' ? 700 : 400,
+              borderBottom: section === 'planos' ? '2px solid #fff' : '2px solid transparent',
+              borderRadius: 0,
+            }}
+          >
+            Planos
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => goToSection('assinaturas')}
+            sx={{
+              textTransform: 'none',
+              fontWeight: section === 'assinaturas' ? 700 : 400,
+              borderBottom: section === 'assinaturas' ? '2px solid #fff' : '2px solid transparent',
+              borderRadius: 0,
+            }}
+          >
+            Assinaturas
           </Button>
           <Button color="inherit" onClick={handleLogout} sx={{ textTransform: 'none' }}>
             Sair
@@ -375,15 +423,23 @@ export default function MasterDashboard() {
           </Alert>
         )}
 
-        {!loading && !error && screen === 'dashboard' && (
+        {!loading && !error && section === 'dashboard' && (
           <MasterOverview
             summary={summary}
             stores={stores}
-            onViewAllStores={() => setScreen('stores')}
+            onViewAllStores={() => goToSection('restaurantes')}
           />
         )}
 
-        {!loading && !error && screen === 'stores' && (
+        {!loading && !error && section === 'planos' && (
+          <MasterPlans stores={stores} />
+        )}
+
+        {!loading && !error && section === 'assinaturas' && (
+          <MasterSubscriptions stores={stores} />
+        )}
+
+        {!loading && !error && section === 'restaurantes' && (
           <>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
@@ -393,7 +449,7 @@ export default function MasterDashboard() {
               sx={{ mb: 2 }}
             >
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Lojas
+                Restaurantes
               </Typography>
               <Button
                 variant="contained"

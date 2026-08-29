@@ -1,6 +1,6 @@
-# Sistema de Mockups do Orderix App
+# Sistema de Mockups do Weper App
 
-Sistema completo de exibição de mockups responsivos e interativos para o site do Orderix.
+Sistema completo de exibição de mockups responsivos e interativos para o site do Weper.
 
 ## 🎨 Componentes Criados
 
@@ -11,7 +11,7 @@ Sistema completo de exibição de mockups responsivos e interativos para o site 
 - Responsivo para diferentes tamanhos de tela
 
 ### 2. **AppUsageSection.jsx**
-- Seção "Como o Orderix Funciona"
+- Seção "Como o Weper Funciona"
 - Cards lado a lado: Garçom e Cliente
 - Mockups integrados com descrições
 - Lista de funcionalidades para cada módulo
@@ -179,8 +179,8 @@ const mockupData = [
 
 ## 📄 Licença
 
-Este sistema faz parte do projeto Orderix e está sob a mesma licença do projeto principal.
+Este sistema faz parte do projeto Weper e está sob a mesma licença do projeto principal.
 
 ---
 
-**Desenvolvido com ❤️ para o Orderix App**
+**Desenvolvido com ❤️ para o Weper App**

@@ -68,7 +68,7 @@ const PhoneMockupTest = () => {
                           <div className="placeholder-dot"></div>
                         </div>
                         <div className="placeholder-body">
-                          <div className="placeholder-title">Orderix App</div>
+                          <div className="placeholder-title">Weper App</div>
                           <div className="placeholder-subtitle">Sistema de Gestão</div>
                           <div className="placeholder-features">
                             <div className="placeholder-feature">📱 Módulo do Garçom</div>
@@ -91,7 +91,7 @@ const PhoneMockupTest = () => {
                       <div className="app-content">
                         <img 
                           src="/images/mockups/1.png" 
-                          alt="Orderix App Interface"
+                          alt="Weper App Interface"
                           className="app-screenshot"
                           onError={(e) => {
                             e.target.style.display = 'none';
@@ -101,7 +101,7 @@ const PhoneMockupTest = () => {
                         <div className="app-fallback" style={{ display: 'none' }}>
                           <div className="fallback-content">
                             <div className="fallback-icon">🍽️</div>
-                            <div className="fallback-title">Orderix App</div>
+                            <div className="fallback-title">Weper App</div>
                             <div className="fallback-subtitle">Sistema de Gestão</div>
                           </div>
                         </div>

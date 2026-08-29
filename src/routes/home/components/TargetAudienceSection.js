@@ -168,7 +168,7 @@ const TargetAudienceSection = () => {
               letterSpacing: '-0.02em'
             }}
           >
-            Para quem o sistema Orderix é indicado?
+            Para quem o sistema Weper é indicado?
           </Typography>
           <Typography
             variant="h6"

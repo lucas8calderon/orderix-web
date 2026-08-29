@@ -1,47 +1,53 @@
 import * as React from 'react';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import TableRestaurantOutlinedIcon from '@mui/icons-material/TableRestaurantOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import SoupKitchenOutlinedIcon from '@mui/icons-material/SoupKitchenOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import RoomServiceOutlinedIcon from '@mui/icons-material/RoomServiceOutlined';
+import { PATHS, ROLES } from '../../services/accessControl';
 
 export const dashboardItems = [
   {
     title: 'Dashboard',
+    slug: 'dashboard',
+    path: PATHS.APP_DASHBOARD,
     icon: <DashboardOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN'],
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN],
   },
   {
     title: 'Atendimento',
+    slug: 'atendimento',
+    path: PATHS.APP_ATENDIMENTO,
     icon: <TableRestaurantOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN', 'CASHIER', 'WAITER'],
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN, ROLES.CASHIER],
   },
   {
     title: 'Cozinha',
+    slug: 'cozinha',
+    path: PATHS.APP_COZINHA,
     icon: <SoupKitchenOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN', 'KITCHEN'],
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN, ROLES.KITCHEN],
   },
   {
     title: 'Catálogo',
+    slug: 'produtos',
+    path: PATHS.APP_PRODUTOS,
     icon: <MenuBookOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN'],
-  },
-  {
-    title: 'Inventário',
-    icon: <Inventory2OutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN'],
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN],
   },
   {
     title: 'Colaboradores',
+    slug: 'colaboradores',
+    path: PATHS.APP_COLABORADORES,
     icon: <BadgeOutlinedIcon />,
-    roles: ['ADMIN', 'STORE_ADMIN'],
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN],
   },
   {
-    title: 'Configurações',
-    icon: <SettingsOutlinedIcon />,
-    adminOnly: true,
-    roles: ['ADMIN', 'STORE_ADMIN'],
+    title: 'Garçom',
+    slug: 'garcom',
+    path: PATHS.APP_GARCOM,
+    icon: <RoomServiceOutlinedIcon />,
+    roles: [ROLES.WAITER],
   },
 ];

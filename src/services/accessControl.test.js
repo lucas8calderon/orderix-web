@@ -1,0 +1,114 @@
+import {
+  PATHS,
+  ROLES,
+  canAccessRoute,
+  getDefaultRouteByRole,
+  getPostLoginPath,
+  getRestaurantId,
+  hasPermission,
+  hasStoreContext,
+  isPlatformAdmin,
+  isStoreAdmin,
+} from './accessControl';
+
+function user(overrides) {
+  return {
+    id: 1,
+    name: 'Teste',
+    role: ROLES.ADMIN,
+    storeId: 10,
+    storeName: 'Loja Teste',
+    subscriptionActive: true,
+    subscriptionStatus: 'ACTIVE',
+    ...overrides,
+  };
+}
+
+describe('getRestaurantId', () => {
+  it('retorna storeId (restaurantId conceitual)', () => {
+    expect(getRestaurantId(user({ storeId: 42 }))).toBe(42);
+  });
+
+  it('não lê query string — só a sessão', () => {
+    expect(getRestaurantId(user({ storeId: 7 }))).toBe(7);
+  });
+});
+
+describe('getPostLoginPath / getDefaultRouteByRole', () => {
+  it('MASTER e SUPER_ADMIN vão para o admin', () => {
+    expect(getPostLoginPath(user({ role: ROLES.MASTER, storeId: null }))).toBe(PATHS.ADMIN_DASHBOARD);
+    expect(getDefaultRouteByRole(user({ role: ROLES.SUPER_ADMIN, storeId: null }))).toBe(PATHS.ADMIN_DASHBOARD);
+  });
+
+  it('ADMIN e STORE_ADMIN vão para o dashboard da loja', () => {
+    expect(getPostLoginPath(user({ role: ROLES.ADMIN }))).toBe(PATHS.APP_DASHBOARD);
+    expect(getPostLoginPath(user({ role: ROLES.STORE_ADMIN }))).toBe(PATHS.APP_DASHBOARD);
+  });
+
+  it('operadores vão para a tela da função', () => {
+    expect(getPostLoginPath(user({ role: ROLES.CASHIER }))).toBe(PATHS.APP_ATENDIMENTO);
+    expect(getPostLoginPath(user({ role: ROLES.KITCHEN }))).toBe(PATHS.APP_COZINHA);
+    expect(getPostLoginPath(user({ role: ROLES.WAITER }))).toBe(PATHS.APP_GARCOM);
+  });
+
+  it('assinatura inativa bloqueia a loja', () => {
+    expect(getPostLoginPath(user({ subscriptionActive: false, subscriptionStatus: 'BLOCKED' })))
+      .toBe(PATHS.SUBSCRIPTION_BLOCKED);
+  });
+});
+
+describe('canAccessRoute', () => {
+  it('CASHIER acessa atendimento e é recusado em produtos', () => {
+    const cashier = user({ role: ROLES.CASHIER });
+    expect(canAccessRoute(cashier, PATHS.APP_ATENDIMENTO)).toBe(true);
+    expect(canAccessRoute(cashier, PATHS.APP_PRODUTOS)).toBe(false);
+    expect(canAccessRoute(cashier, PATHS.APP_DASHBOARD)).toBe(false);
+  });
+
+  it('KITCHEN acessa cozinha e é recusado no dashboard', () => {
+    const kitchen = user({ role: ROLES.KITCHEN });
+    expect(canAccessRoute(kitchen, PATHS.APP_COZINHA)).toBe(true);
+    expect(canAccessRoute(kitchen, PATHS.APP_DASHBOARD)).toBe(false);
+  });
+
+  it('WAITER acessa só a área do garçom', () => {
+    const waiter = user({ role: ROLES.WAITER });
+    expect(canAccessRoute(waiter, PATHS.APP_GARCOM)).toBe(true);
+    expect(canAccessRoute(waiter, PATHS.APP_ATENDIMENTO)).toBe(false);
+  });
+
+  it('MASTER não entra em /app e entra em /admin', () => {
+    const master = user({ role: ROLES.MASTER, storeId: null });
+    expect(canAccessRoute(master, PATHS.APP_DASHBOARD)).toBe(false);
+    expect(canAccessRoute(master, PATHS.ADMIN_DASHBOARD)).toBe(true);
+    expect(canAccessRoute(master, PATHS.ADMIN_RESTAURANTES)).toBe(true);
+  });
+
+  it('ADMIN não entra em /admin', () => {
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_DASHBOARD)).toBe(false);
+  });
+
+  it('rotas incompletas /app e /admin não são acessíveis (redirect para o default)', () => {
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.APP)).toBe(false);
+    expect(canAccessRoute(user({ role: ROLES.MASTER, storeId: null }), PATHS.ADMIN)).toBe(false);
+  });
+
+  it('loja sem storeId não acessa rotas de restaurante', () => {
+    const orphan = user({ storeId: null });
+    expect(hasStoreContext(orphan)).toBe(false);
+    expect(canAccessRoute(orphan, PATHS.APP_DASHBOARD)).toBe(false);
+  });
+});
+
+describe('roles auxiliares', () => {
+  it('trata ADMIN e STORE_ADMIN como admin da loja', () => {
+    expect(isStoreAdmin(user({ role: ROLES.ADMIN }))).toBe(true);
+    expect(isStoreAdmin(user({ role: ROLES.STORE_ADMIN }))).toBe(true);
+    expect(isPlatformAdmin(user({ role: ROLES.SUPER_ADMIN, storeId: null }))).toBe(true);
+  });
+
+  it('hasPermission é um stub por role', () => {
+    expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.floor')).toBe(true);
+    expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.catalog')).toBe(false);
+  });
+});
