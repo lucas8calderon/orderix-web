@@ -1,17 +1,20 @@
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
   z-index: 1000;
-  background: var(--color-header);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background-color: var(--color-bg);
+  background-color: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: saturate(1.15) blur(16px);
+  -webkit-backdrop-filter: saturate(1.15) blur(16px);
   border-bottom: 1px solid transparent;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
 }
 
 .header.scrolled {
+  background-color: var(--color-bg);
   border-bottom-color: var(--color-border);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
@@ -187,7 +190,7 @@ html[data-theme='dark'] .header.scrolled {
 
   .nav-menu {
     position: fixed;
-    top: 64px;
+    top: var(--landing-header-height, 72px);
     left: 0;
     right: 0;
     background: var(--color-surface);
@@ -200,7 +203,7 @@ html[data-theme='dark'] .header.scrolled {
     opacity: 0;
     pointer-events: none;
     transition: transform 0.25s ease, opacity 0.25s ease;
-    max-height: calc(100vh - 64px);
+    max-height: calc(100vh - var(--landing-header-height, 72px));
     overflow-y: auto;
     z-index: 1001;
   }

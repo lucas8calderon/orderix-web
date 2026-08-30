@@ -61,7 +61,7 @@ const ResourcesSection = () => {
           <span className="lp-eyebrow">Recursos</span>
           <h2 id="recursos-title" className="lp-title">Ferramentas para o dia a dia</h2>
           <p className="lp-subtitle">
-            Recursos operacionais e de gestão para manter o estabelecimento sob controle.
+            Recursos operacionais e de gestão para manter o negócio sob controle.
           </p>
         </div>
         <div className="lp-grid-4">

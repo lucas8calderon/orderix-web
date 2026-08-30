@@ -20,8 +20,7 @@ const Footer = () => {
           <div className="footer-brand">
             <WeperMark size={44} />
             <p className="footer-description">
-              Soluções inteligentes para estabelecimentos que querem crescer com
-              eficiência e controle da operação.
+              Gestão inteligente para negócios que atendem, vendem e querem crescer.
             </p>
             <div className="social-links">
               {/* TODO(rebrand): Instagram ainda aponta para perfil legado até existir Weper. */}
@@ -67,46 +66,21 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-section-title">Produto</h4>
             <ul className="footer-links">
-              <li><a href="#produto" onClick={goSection('produto')}>Funcionalidades</a></li>
-              <li><a href="#app-garcom" onClick={goSection('app-garcom')}>App do Garçom</a></li>
-              <li><a href="#kds" onClick={goSection('kds')}>Sistema KDS</a></li>
-              <li><a href="#autoatendimento" onClick={goSection('autoatendimento')}>Autoatendimento</a></li>
-              <li><a href="#painel" onClick={goSection('painel')}>Painel Admin</a></li>
+              <li><a href="#atendimento" onClick={goSection('atendimento')}>Atendimento</a></li>
+              <li><a href="#painel" onClick={goSection('painel')}>Desktop / PDV</a></li>
+              <li><a href="#funcionalidades" onClick={goSection('funcionalidades')}>Funcionalidades</a></li>
             </ul>
           </div>
 
           <div className="footer-section">
-            <h4 className="footer-section-title">Soluções</h4>
+            <h4 className="footer-section-title">Negócio</h4>
             <ul className="footer-links">
-              <li><a href="#solucoes" onClick={goSection('solucoes')}>Restaurantes</a></li>
-              <li><a href="#solucoes" onClick={goSection('solucoes')}>Bares</a></li>
-              <li><a href="#solucoes" onClick={goSection('solucoes')}>Cafeterias</a></li>
-              <li><a href="#solucoes" onClick={goSection('solucoes')}>Lanchonetes</a></li>
-              <li><a href="#solucoes" onClick={goSection('solucoes')}>Outros segmentos</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-section">
-            <h4 className="footer-section-title">Recursos</h4>
-            <ul className="footer-links">
-              <li><a href="#recursos" onClick={goSection('recursos')}>Ferramentas</a></li>
-              <li><a href="#plans" onClick={goSection('plans')}>Planos e preços</a></li>
-              <li><a href="#faq" onClick={goSection('faq')}>Central de dúvidas</a></li>
+              <li><a href="#solucoes" onClick={goSection('solucoes')}>Segmentos</a></li>
+              <li><a href="#plans" onClick={goSection('plans')}>Planos</a></li>
+              <li><a href="#faq" onClick={goSection('faq')}>FAQ</a></li>
               <li>
                 <button type="button" className="footer-link-btn" onClick={() => openWhatsApp('Olá! Quero uma demonstração da Weper.')}>
                   Demonstração
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div className="footer-section">
-            <h4 className="footer-section-title">Empresa</h4>
-            <ul className="footer-links">
-              <li><a href="#empresa" onClick={goSection('empresa')}>Sobre nós</a></li>
-              <li>
-                <button type="button" className="footer-link-btn" onClick={() => openWhatsApp('Olá! Gostaria de falar com a Weper.')}>
-                  Contato
                 </button>
               </li>
             </ul>

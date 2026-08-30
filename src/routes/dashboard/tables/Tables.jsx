@@ -40,6 +40,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
   const {
     successSavingTable,
     errorSavingTable,
+    errorMessage,
     postTable,
     newTableLoading,
     setSuccessSavingTable,
@@ -47,7 +48,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
   const {
     loadingToDelete,
     errorToDelete,
-    errorMessage,
+    errorMessage: deleteErrorMessage,
     successToDelete,
     deleteTableById,
     resetDeleteState,
@@ -125,10 +126,13 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
   }, [error]);
   
   useEffect(() => {
-    if (error) {
-      setOnAddTableResult(handleError);
+    if (errorSavingTable) {
+      setOnAddTableResult({
+        ...handleError,
+        message: errorMessage || 'Já existe uma mesa com este número',
+      });
     }
-  }, [errorSavingTable]);
+  }, [errorSavingTable, errorMessage]);
 
   useEffect(() => {
     if (successSavingTable) {
@@ -151,7 +155,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
           open={errorToDelete}
           onClose={resetDeleteState}
           itemName={selectedTable?.number != null ? `Mesa ${selectedTable.number}` : 'a mesa'}
-          detail={errorMessage}
+          detail={deleteErrorMessage}
         />
       )}
 

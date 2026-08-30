@@ -1,50 +1,46 @@
 import React from 'react';
 import { Play } from 'lucide-react';
-import { DashboardMockup, PhoneMockup } from './DeviceMockups';
+import { LandingImage } from './DeviceMockups';
+import { scrollToId } from '../landingAssets';
 
-const HeroSection = ({ onStartClick, onDemoClick }) => {
+const HeroSection = ({ onStartClick }) => {
   return (
     <section className="hero-lp" id="home" aria-labelledby="hero-title">
       <div className="lp-container hero-lp__grid">
         <div className="hero-lp__content">
-          <span className="lp-eyebrow">Plataforma para a sua operação</span>
+          <span className="lp-eyebrow">Gestão inteligente</span>
           <h1 id="hero-title" className="hero-lp__title">
-            Toda a sua operação.
-            <span className="hero-lp__title-accent">Um único sistema.</span>
+            Do pedido ao resultado,
+            <span className="hero-lp__title-accent">tudo em um só lugar.</span>
           </h1>
           <p className="hero-lp__desc">
-            A Weper conecta atendimento, pedidos, cozinha e gestão
-            para simplificar a operação do seu estabelecimento.
+            Gestão inteligente para negócios que atendem, vendem e querem crescer.
+            Atendimento, pedidos e indicadores conectados no celular, no tablet
+            ou no computador.
           </p>
-          <ul className="lp-check-list" aria-label="Como começar">
-            <li>
-              <span className="lp-check" aria-hidden="true">✓</span>
-              Comece pelo WhatsApp
-            </li>
-            <li>
-              <span className="lp-check" aria-hidden="true">✓</span>
-              Assinatura ativada pela equipe
-            </li>
-            <li>
-              <span className="lp-check" aria-hidden="true">✓</span>
-              Suporte para colocar no ar
-            </li>
-          </ul>
           <div className="hero-lp__actions">
             <button type="button" className="lp-btn lp-btn--primary" onClick={onStartClick}>
-              Começar agora
+              Conhecer o Weper
               <span aria-hidden="true">→</span>
             </button>
-            <button type="button" className="lp-btn lp-btn--outline" onClick={onDemoClick}>
+            <button
+              type="button"
+              className="lp-btn lp-btn--outline"
+              onClick={() => scrollToId('funcionalidades')}
+            >
               <Play size={16} aria-hidden="true" />
-              Falar no WhatsApp
+              Ver como funciona
             </button>
           </div>
         </div>
 
-        <div className="hero-lp__stage" aria-label="Prévia do produto Weper">
-          <DashboardMockup className="hero-lp__dash" />
-          <PhoneMockup className="hero-lp__phone" lazy={false} />
+        <div className="hero-lp__stage" aria-label="Weper em mobile, tablet e desktop">
+          <LandingImage
+            imageKey="ecosystem"
+            className="hero-lp__visual"
+            priority
+            lazy={false}
+          />
         </div>
       </div>
     </section>

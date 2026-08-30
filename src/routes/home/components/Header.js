@@ -5,11 +5,10 @@ import { WeperMark } from './WeperMark';
 import '../styles/Header.css';
 
 const NAV_LINKS = [
-  { id: 'produto', label: 'Produto' },
-  { id: 'solucoes', label: 'Soluções' },
-  { id: 'recursos', label: 'Recursos' },
+  { id: 'atendimento', label: 'Produto' },
+  { id: 'funcionalidades', label: 'Funcionalidades' },
   { id: 'plans', label: 'Planos' },
-  { id: 'empresa', label: 'Empresa' },
+  { id: 'faq', label: 'FAQ' },
 ];
 
 const Header = ({ onLoginClick, onStartClick }) => {
@@ -86,7 +85,7 @@ const Header = ({ onLoginClick, onStartClick }) => {
               onStartClick();
             }}
           >
-            Começar agora
+            Conhecer o Weper
           </button>
         </nav>
 
@@ -96,7 +95,7 @@ const Header = ({ onLoginClick, onStartClick }) => {
             Entrar
           </button>
           <button type="button" className="btn-primary" onClick={onStartClick}>
-            Começar agora
+            Conhecer o Weper
           </button>
         </div>
       </div>

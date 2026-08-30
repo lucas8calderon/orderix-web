@@ -1,30 +1,28 @@
 /**
- * Assets da landing Weper.
- * Imagens atuais: Chefia (temporárias). Trocar pelos paths futuros quando disponíveis.
+ * Assets da landing Weper (composições oficiais).
  */
-import waiterImg from '../../assets/images/1.png';
-import selfServiceImg from '../../assets/images/mesa.png';
+import ecosystemDevices from '../../assets/images/landing/ecosystem-devices.webp';
+import desktopPdv from '../../assets/images/landing/desktop-pdv.webp';
+import lifestyleWaiter from '../../assets/images/landing/lifestyle-waiter.webp';
 
 export const LANDING_IMAGES = {
-  dashboard: {
-    src: null,
-    futurePath: '/images/weper-dashboard.webp',
-    alt: 'Painel administrativo Weper',
+  ecosystem: {
+    src: ecosystemDevices,
+    alt: 'Weper no mobile, tablet landscape e desktop',
+    width: 1600,
+    height: 1066,
   },
-  waiter: {
-    src: waiterImg,
-    futurePath: '/images/weper-waiter.webp',
-    alt: 'App Garçom Weper',
+  desktop: {
+    src: desktopPdv,
+    alt: 'Estação desktop Weper com monitor, teclado, mouse e impressora térmica',
+    width: 1600,
+    height: 1066,
   },
-  kds: {
-    src: null,
-    futurePath: '/images/weper-kds.webp',
-    alt: 'Sistema KDS Weper',
-  },
-  selfService: {
-    src: selfServiceImg,
-    futurePath: '/images/weper-self-service.webp',
-    alt: 'Autoatendimento Weper',
+  lifestyle: {
+    src: lifestyleWaiter,
+    alt: 'Garçom com polo Weper atendendo família à mesa, com celular e resumo do turno',
+    width: 1400,
+    height: 1120,
   },
 };
 

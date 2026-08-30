@@ -3,16 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import SegmentsStrip from './components/SegmentsStrip';
-import EcosystemSection, { ProductSpotlightSections } from './components/EcosystemSection';
-import BenefitsSection from './components/BenefitsSection';
+import { ProductSpotlightSections } from './components/EcosystemSection';
 import ProductsSection from './components/ProductsSection';
-import ResourcesSection from './components/ResourcesSection';
-import OperationFlowSection from './components/OperationFlowSection';
-import HowItWorksSection from './components/HowItWorksSection';
+import BenefitsSection from './components/BenefitsSection';
 import PlansSection from './components/PlansSection';
 import FaqSection from './components/FaqSection';
-import AboutSection from './components/AboutSection';
-import FinalCtaSection from './components/FinalCtaSection';
 import Footer from './components/Footer';
 import FloatWhatsAppButton from './components/FloatWhatsAppButton';
 import { PATHS } from '../../services/accessControl';
@@ -28,30 +23,20 @@ const Home = () => {
   };
 
   const handleStartClick = () => {
-    openWhatsApp('Olá! Quero começar a usar a Weper no meu estabelecimento.');
-  };
-
-  const handleDemoClick = () => {
-    openWhatsApp('Olá! Gostaria de falar com a Weper sobre o sistema.');
+    openWhatsApp('Olá! Quero conhecer o Weper para o meu negócio.');
   };
 
   return (
     <div className="home">
       <Header onLoginClick={handleLoginClick} onStartClick={handleStartClick} />
       <main>
-        <HeroSection onStartClick={handleStartClick} onDemoClick={handleDemoClick} />
+        <HeroSection onStartClick={handleStartClick} />
         <SegmentsStrip />
-        <EcosystemSection />
         <ProductSpotlightSections />
-        <BenefitsSection />
         <ProductsSection />
-        <ResourcesSection />
-        <OperationFlowSection />
-        <HowItWorksSection />
+        <BenefitsSection />
         <PlansSection />
         <FaqSection />
-        <AboutSection />
-        <FinalCtaSection onStartClick={handleStartClick} />
       </main>
       <Footer />
       <FloatWhatsAppButton />

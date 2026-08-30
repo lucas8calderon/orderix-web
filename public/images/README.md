@@ -1,11 +1,12 @@
 # Imagens da landing Weper
 
-Paths previstos (substituir os assets temporários Chefia):
+Composições em uso (WebP):
 
-- `weper-dashboard.webp` — painel administrativo
-- `weper-waiter.webp` — app garçom
-- `weper-kds.webp` — cozinha / KDS
-- `weper-self-service.webp` — autoatendimento
+- `ecosystem-devices.webp` — hero (banner completo) + crops no ecossistema
+- `lifestyle-waiter.webp` — uso real / atendimento
+- `desktop-pdv.webp` — desktop / PDV
+- `flow-complete.webp` — fluxo completo (4 phones + título + legendas + benefícios)
 
-Enquanto esses arquivos não existirem, a landing usa mockups CSS e
-`src/assets/images/1.png` + `mesa.png` (assets Chefia temporários).
+Arquivos espelhados em `src/assets/images/landing/` (importados pelo bundler).
+
+Reservados (não usados na hierarquia atual): `mobile-multi-phones.webp`, `restaurant-pitch.webp`, `flow-four-phones.webp`.

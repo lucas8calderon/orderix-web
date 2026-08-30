@@ -15,11 +15,13 @@ const FloatWhatsAppButton = () => {
         className="wa-float__btn"
         onClick={handleClick}
         aria-label="Fale conosco no WhatsApp"
+        title="Fale conosco"
       >
-        <span className="wa-float__pulse" aria-hidden="true" />
-        <MessageCircle size={26} aria-hidden="true" />
+        <MessageCircle size={20} aria-hidden="true" />
       </button>
-      <span className="wa-float__label">Fale conosco</span>
+      <span className="wa-float__label" aria-hidden="true">
+        Fale conosco
+      </span>
     </div>
   );
 };

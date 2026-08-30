@@ -2,26 +2,26 @@ import React from 'react';
 
 const STEPS = [
   {
-    title: 'Fale no WhatsApp',
-    description: 'Combinamos o acesso do estabelecimento. Não há trial automático no site.',
+    title: 'Conheça o Weper',
+    description: 'Fale no WhatsApp e entenda como a plataforma se encaixa na sua operação.',
   },
   {
     title: 'Monte a operação',
-    description: 'Cadastre cardápio, mesas e colaboradores com o suporte da equipe.',
+    description: 'Cadastre cardápio, mesas, produtos e equipe com o suporte da Weper.',
   },
   {
-    title: 'Opere no dia a dia',
-    description: 'Receba pedidos, acompanhe a cozinha, feche vendas e acompanhe os resultados.',
+    title: 'Opere e acompanhe',
+    description: 'Atenda, feche vendas e acompanhe resultados do pedido ao indicador.',
   },
 ];
 
 const HowItWorksSection = () => {
   return (
-    <section className="lp-section lp-section--surface" aria-labelledby="como-title">
+    <section className="lp-section lp-section--surface" id="comecar" aria-labelledby="como-title">
       <div className="lp-container">
         <div className="lp-section-head">
-          <h2 id="como-title" className="lp-title">Como funciona</h2>
-          <p className="lp-subtitle">Três passos para colocar a Weper em operação.</p>
+          <h2 id="como-title" className="lp-title">Como começar</h2>
+          <p className="lp-subtitle">Três passos para colocar a Weper em operação no seu negócio.</p>
         </div>
         <div className="how-steps">
           {STEPS.map((step, index) => (
