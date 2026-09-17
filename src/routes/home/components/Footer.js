@@ -23,9 +23,8 @@ const Footer = () => {
               Gestão inteligente para negócios que atendem, vendem e querem crescer.
             </p>
             <div className="social-links">
-              {/* TODO(rebrand): Instagram ainda aponta para perfil legado até existir Weper. */}
               <a
-                href="https://www.instagram.com/orderix_solutions_oficial/"
+                href="https://www.instagram.com/weper.com.br/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="social-link"
