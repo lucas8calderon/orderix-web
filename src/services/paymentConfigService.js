@@ -21,6 +21,7 @@ export const CHARGE_TIMING_OPTIONS = [
 export const PAYMENT_PROVIDER_OPTIONS = [
   { id: 'MANUAL', label: 'Manual' },
   { id: 'INFINITEPAY', label: 'InfinitePay' },
+  { id: 'GETNET', label: 'Getnet' },
 ];
 
 const PAYMENT_CONFIG_URL = `${API_BASE_URL}/stores/me/payment-config`;
