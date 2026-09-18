@@ -1,4 +1,4 @@
-# 📱 Mockup Minimalista do Orderix App
+# 📱 Mockup Minimalista do Weper App
 
 ## ✅ Design Minimalista Implementado!
 
@@ -7,16 +7,16 @@ Criei um design minimalista e elegante para o mockup do celular, já que não co
 ## 🎯 Design Minimalista:
 
 ### **Características do Design**
-- ✅ **Logo simples**: Ícone de prato (🍽️) + texto "Orderix"
+- ✅ **Logo simples**: Ícone de prato (🍽️) + texto "Weper"
 - ✅ **Elementos sutis**: Pontos animados e linhas de carregamento
 - ✅ **Tipografia limpa**: "Sistema de Gestão" + "Para Restaurantes"
 - ✅ **Animações suaves**: Pulse nos pontos e shimmer nas linhas
-- ✅ **Gradiente roxo**: Mesma paleta do Orderix
+- ✅ **Gradiente roxo**: Mesma paleta do Weper
 
 ### **Estrutura Visual**
 ```
 ┌─────────────────────────┐
-│  🍽️  Orderix             │
+│  🍽️  Weper             │
 │                         │
 │    •  •  •              │
 │                         │
@@ -34,7 +34,7 @@ Criei um design minimalista e elegante para o mockup do celular, já que não co
 
 ### **Header Minimalista**
 - ✅ **Logo**: Ícone de prato em container glassmorphism
-- ✅ **Título**: "Orderix" em branco com sombra
+- ✅ **Título**: "Weper" em branco com sombra
 - ✅ **Layout**: Flexbox centralizado
 - ✅ **Efeitos**: Backdrop blur e bordas sutis
 
@@ -105,7 +105,7 @@ Criei um design minimalista e elegante para o mockup do celular, já que não co
 ### **Visual**
 - ✅ **Limpo**: Sem elementos desnecessários
 - ✅ **Elegante**: Design sofisticado e moderno
-- ✅ **Focado**: Destaca a marca Orderix
+- ✅ **Focado**: Destaca a marca Weper
 - ✅ **Profissional**: Aparência corporativa
 
 ### **Técnico**
@@ -160,4 +160,4 @@ Criei um design minimalista e elegante para o mockup do celular, já que não co
 
 ---
 
-**Mockup Minimalista do Orderix App - Pronto para uso! 🎉**
+**Mockup Minimalista do Weper App - Pronto para uso! 🎉**

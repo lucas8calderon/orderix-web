@@ -23,7 +23,7 @@ export const SUPPORT_TITLE = 'Precisa de ajuda?';
 export const SUPPORT_SUBTITLE = 'Fale com nosso suporte';
 
 /** Chave localStorage só para e-mail (nunca senha). */
-export const REMEMBER_EMAIL_KEY = 'orderix.login.rememberEmail';
+export const REMEMBER_EMAIL_KEY = 'weper.login.rememberEmail';
 
 /**
  * OAuth Google ainda não está integrado.

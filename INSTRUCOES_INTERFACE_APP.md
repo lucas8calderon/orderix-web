@@ -1,14 +1,14 @@
-# 📱 Interface Real do Orderix App no Mockup
+# 📱 Interface Real do Weper App no Mockup
 
 ## ✅ Interface Implementada com Sucesso!
 
-Agora o mockup do celular mostra exatamente a interface real do Orderix App, simulando a tela que você viu na imagem.
+Agora o mockup do celular mostra exatamente a interface real do Weper App, simulando a tela que você viu na imagem.
 
 ## 🎯 Interface Implementada:
 
 ### **Design Exato da Imagem**
-- ✅ **Background roxo**: Gradiente do Orderix (#7B3FF2 → #B896F9)
-- ✅ **Título**: "Orderix App" em branco
+- ✅ **Background roxo**: Gradiente do Weper (#7B3FF2 → #B896F9)
+- ✅ **Título**: "Weper App" em branco
 - ✅ **Subtítulo**: "Sistema de Gestão" em cinza claro
 - ✅ **3 Botões**: Com ícones e textos exatos
 - ✅ **Notch**: Simulação do notch do celular
@@ -32,7 +32,7 @@ Agora o mockup do celular mostra exatamente a interface real do Orderix App, sim
 ## 🎨 Características Visuais:
 
 ### **Design Moderno**
-- ✅ **Gradiente roxo**: Mesma paleta do Orderix
+- ✅ **Gradiente roxo**: Mesma paleta do Weper
 - ✅ **Glassmorphism**: Botões com backdrop blur
 - ✅ **Sombras suaves**: Profundidade visual
 - ✅ **Bordas arredondadas**: Design moderno
@@ -50,7 +50,7 @@ Agora o mockup do celular mostra exatamente a interface real do Orderix App, sim
 ```jsx
 <div className="app-interface">
   <div className="app-header">
-    <div className="app-title">Orderix App</div>
+    <div className="app-title">Weper App</div>
     <div className="app-subtitle">Sistema de Gestão</div>
   </div>
   <div className="app-content">
@@ -103,7 +103,7 @@ Agora o mockup do celular mostra exatamente a interface real do Orderix App, sim
 ### **1. Acesse o Site**
 - Vá para `http://localhost:3000`
 - Veja o mockup do celular no Hero Section
-- A interface do Orderix App deve estar visível
+- A interface do Weper App deve estar visível
 
 ### **2. Teste Interatividade**
 - Passe o mouse sobre os botões
@@ -123,7 +123,7 @@ Agora o mockup do celular mostra exatamente a interface real do Orderix App, sim
 ## 🎯 Diferenças do Placeholder:
 
 ### **Interface Real (Padrão)**
-- ✅ **Background gradiente**: Roxo do Orderix
+- ✅ **Background gradiente**: Roxo do Weper
 - ✅ **Botões interativos**: Com hover effects
 - ✅ **Design moderno**: Glassmorphism
 - ✅ **Ícones específicos**: 📱🪑💳
@@ -138,7 +138,7 @@ Agora o mockup do celular mostra exatamente a interface real do Orderix App, sim
 
 - ✅ **Realista**: Simula a interface real do app
 - ✅ **Interativa**: Botões com hover effects
-- ✅ **Consistente**: Mesma paleta do Orderix
+- ✅ **Consistente**: Mesma paleta do Weper
 - ✅ **Responsiva**: Adapta-se a todas as telas
 - ✅ **Profissional**: Design moderno e elegante
 
@@ -159,4 +159,4 @@ Agora o mockup do celular mostra exatamente a interface real do Orderix App, sim
 
 ---
 
-**Interface Real do Orderix App - Pronto para uso! 🎉**
+**Interface Real do Weper App - Pronto para uso! 🎉**

@@ -1,5 +1,5 @@
-const TOKEN_KEY = 'orderix.token';
-const USER_KEY = 'orderix.user';
+const TOKEN_KEY = 'weper.token';
+const USER_KEY = 'weper.user';
 
 export function saveSession(token, user) {
   localStorage.setItem(TOKEN_KEY, token);

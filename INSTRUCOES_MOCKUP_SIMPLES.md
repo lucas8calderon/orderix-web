@@ -1,4 +1,4 @@
-# 📱 Mockup Simples do Orderix App
+# 📱 Mockup Simples do Weper App
 
 ## ✅ Layout Revertido com Sucesso!
 
@@ -64,7 +64,7 @@ src/routes/home/
   <div className="mockup-phone">
     <div className="phone-frame">
       <div className="phone-screen">
-        <img src="/images/mockups/1.png" alt="Orderix App" />
+        <img src="/images/mockups/1.png" alt="Weper App" />
       </div>
     </div>
   </div>
@@ -129,4 +129,4 @@ src/routes/home/
 
 ---
 
-**Mockup Simples do Orderix App - Pronto para uso! 🎉**
+**Mockup Simples do Weper App - Pronto para uso! 🎉**

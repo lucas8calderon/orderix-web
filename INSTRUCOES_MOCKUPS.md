@@ -1,8 +1,8 @@
-# 📱 Instruções para Adicionar Mockups ao Orderix App
+# 📱 Instruções para Adicionar Mockups ao Weper App
 
 ## 🎯 Sistema de Mockups Implementado
 
-Criei um sistema completo de mockups responsivos e interativos para o site do Orderix. O sistema está pronto e funcionando, mas você precisa adicionar as imagens reais.
+Criei um sistema completo de mockups responsivos e interativos para o site do Weper. O sistema está pronto e funcionando, mas você precisa adicionar as imagens reais.
 
 ## 📁 Estrutura Criada
 
@@ -25,10 +25,10 @@ public/images/mockups/       # Pasta para as imagens
 ### **Passo 1: Copiar as Imagens**
 ```bash
 # Copie as imagens da pasta original para o projeto
-copy "C:\Users\Lucas\OneDrive\Área de Trabalho\ORDERIX\mock up\1.png" "public\images\mockups\1.png"
-copy "C:\Users\Lucas\OneDrive\Área de Trabalho\ORDERIX\mock up\2-garcom.png" "public\images\mockups\2-garcom.png"
-copy "C:\Users\Lucas\OneDrive\Área de Trabalho\ORDERIX\mock up\mesa.png" "public\images\mockups\mesa.png"
-copy "C:\Users\Lucas\OneDrive\Área de Trabalho\ORDERIX\mock up\table.png" "public\images\mockups\table.png"
+copy "C:\Users\Lucas\OneDrive\Área de Trabalho\WEPER\mock up\1.png" "public\images\mockups\1.png"
+copy "C:\Users\Lucas\OneDrive\Área de Trabalho\WEPER\mock up\2-garcom.png" "public\images\mockups\2-garcom.png"
+copy "C:\Users\Lucas\OneDrive\Área de Trabalho\WEPER\mock up\mesa.png" "public\images\mockups\mesa.png"
+copy "C:\Users\Lucas\OneDrive\Área de Trabalho\WEPER\mock up\table.png" "public\images\mockups\table.png"
 ```
 
 ### **Passo 2: Verificar os Arquivos**
@@ -181,4 +181,4 @@ Se as imagens não carregarem, o sistema usa placeholders automáticos:
 
 ---
 
-**Sistema de Mockups do Orderix App - Pronto para uso! 🎉**
+**Sistema de Mockups do Weper App - Pronto para uso! 🎉**

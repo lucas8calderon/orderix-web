@@ -1,4 +1,4 @@
-export const THEME_STORAGE_KEY = 'orderix-theme';
+export const THEME_STORAGE_KEY = 'weper-theme';
 
 export function getStoredTheme() {
   try {

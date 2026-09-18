@@ -14,13 +14,13 @@ Agora o mockup do celular tem um sistema inteligente que mostra um placeholder b
 ### **2. Placeholder Inteligente**
 - ✅ **Ativa automaticamente** se a imagem não carregar
 - ✅ **Design realista** com gradiente roxo
-- ✅ **Conteúdo informativo** sobre o Orderix App
+- ✅ **Conteúdo informativo** sobre o Weper App
 - ✅ **Animações suaves** e efeitos visuais
 
 ## 🎨 Características do Placeholder:
 
 ### **Design Realista**
-- ✅ **Gradiente roxo**: Mesma paleta do Orderix
+- ✅ **Gradiente roxo**: Mesma paleta do Weper
 - ✅ **Header com dots**: Simula interface de app
 - ✅ **Conteúdo centralizado**: Título e funcionalidades
 - ✅ **Cards de features**: Módulos do sistema
@@ -31,7 +31,7 @@ Agora o mockup do celular tem um sistema inteligente que mostra um placeholder b
 ┌─────────────────────────┐
 │  •  •  •                │
 │                         │
-│      Orderix App         │
+│      Weper App         │
 │    Sistema de Gestão    │
 │                         │
 │  📱 Módulo do Garçom    │
@@ -136,4 +136,4 @@ Agora o mockup do celular tem um sistema inteligente que mostra um placeholder b
 
 ---
 
-**Mockup Inteligente do Orderix App - Pronto para uso! 🎉**
+**Mockup Inteligente do Weper App - Pronto para uso! 🎉**

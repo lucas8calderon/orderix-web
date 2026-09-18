@@ -9,7 +9,7 @@ Substituí a imagem do mockup do celular pela nova imagem que você forneceu, qu
 ### **Características da Imagem**
 - ✅ **Cena de restaurante**: Ambiente moderno e acolhedor
 - ✅ **Dispositivos móveis**: Múltiplos celulares mostrando o app
-- ✅ **Interface do Orderix**: Telas com header roxo e funcionalidades
+- ✅ **Interface do Weper**: Telas com header roxo e funcionalidades
 - ✅ **Qualidade alta**: Imagem otimizada para web
 - ✅ **Formato responsivo**: Adapta-se ao formato do celular
 
@@ -52,7 +52,7 @@ src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ix
 - ✅ **Garçonete**: Parte superior da imagem
 - ✅ **Celulares**: Dispositivos com o app
 - ✅ **Ambiente**: Mesa e decoração
-- ✅ **Interface**: Telas do Orderix App
+- ✅ **Interface**: Telas do Weper App
 
 ## 🚀 Como Testar:
 
@@ -83,7 +83,7 @@ src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ix
 - ✅ **Contexto real**: Ambiente de restaurante
 - ✅ **Uso prático**: Garçonete usando o sistema
 - ✅ **Múltiplos dispositivos**: Mostra versatilidade
-- ✅ **Interface visível**: Telas do Orderix App
+- ✅ **Interface visível**: Telas do Weper App
 
 ## 🎯 Próximos Passos:
 
