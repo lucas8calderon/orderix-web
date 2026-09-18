@@ -4,6 +4,20 @@ import {
   toPaymentUi,
   updateStorePaymentConfig,
 } from '../../../../services/paymentConfigService';
+import {
+  getPublicMenuSettings,
+  updatePublicMenuSettings,
+} from '../../../../services/publicMenuService';
+
+function toPublicMenuUi(data = {}) {
+  return {
+    publicMenuEnabled: Boolean(data.enabled),
+    publicMenuShowUnavailable: Boolean(data.showUnavailable),
+    slug: data.slug || '',
+    storeName: data.storeName || '',
+    catalogVersion: data.catalogVersion ?? 0,
+  };
+}
 
 // Mock apenas para blocos ainda não migrados (fiscal, delivery, horários).
 let mockSettings = {
@@ -47,9 +61,25 @@ export const settingsStorage = {
     return toPaymentUi(response.data || {});
   },
 
+  async getPublicMenuConfig() {
+    const response = await getPublicMenuSettings();
+    return toPublicMenuUi(response.data || {});
+  },
+
+  async updatePublicMenuConfig(publicMenuUi) {
+    const response = await updatePublicMenuSettings({
+      enabled: Boolean(publicMenuUi?.publicMenuEnabled),
+      showUnavailable: Boolean(publicMenuUi?.publicMenuShowUnavailable),
+    });
+    return toPublicMenuUi(response.data || {});
+  },
+
   async getSettings() {
-    const payment = await this.getPaymentConfig();
-    return { ...mockSettings, ...payment };
+    const [payment, publicMenu] = await Promise.all([
+      this.getPaymentConfig(),
+      this.getPublicMenuConfig(),
+    ]);
+    return { ...mockSettings, ...payment, ...publicMenu };
   },
 
   async updateSettings(newSettings) {

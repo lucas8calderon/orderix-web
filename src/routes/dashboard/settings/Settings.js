@@ -31,6 +31,7 @@ import {
   PAYMENT_PROVIDER_OPTIONS,
 } from '../../../services/paymentConfigService';
 import { useSettingsState, useSliderStyles, useSwitchStyles } from './hooks/useSettingsState';
+import { DigitalMenuCard } from './components/DigitalMenuCard';
 import './Settings.css';
 
 const LazySlider = lazy(() => Promise.resolve({ default: Slider }));
@@ -357,6 +358,14 @@ export function Settings() {
           onSettingChange={updateSetting}
           onSave={saveSettings}
           getPaymentMethodLabel={getPaymentMethodLabel}
+          switchStyles={switchStyles}
+          saving={saving}
+        />
+
+        <DigitalMenuCard
+          settings={settings}
+          onSettingChange={updateSetting}
+          onSave={saveSettings}
           switchStyles={switchStyles}
           saving={saving}
         />

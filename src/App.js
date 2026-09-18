@@ -21,6 +21,7 @@ import './services/apiConfig';
 const Dashboard = lazy(() => import('./routes/dashboard/Dashboard'));
 const MasterDashboard = lazy(() => import('./routes/master/MasterDashboard'));
 const SubscriptionBlocked = lazy(() => import('./routes/subscription/SubscriptionBlocked'));
+const PublicMenu = lazy(() => import('./routes/public-menu/PublicMenu'));
 
 function RouteFallback() {
   return (
@@ -87,6 +88,14 @@ function App() {
           <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={PATHS.PRIVACY} element={<PrivacyPolicy />} />
           <Route path={PATHS.TERMS} element={<TermsOfUse />} />
+          <Route
+            path={PATHS.PUBLIC_MENU_SLUG}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <PublicMenu />
+              </Suspense>
+            )}
+          />
 
           <Route path={PATHS.LEGACY_DASHBOARD} element={<Navigate to={PATHS.APP} replace />} />
           <Route path={PATHS.LEGACY_MASTER} element={<Navigate to={PATHS.ADMIN} replace />} />

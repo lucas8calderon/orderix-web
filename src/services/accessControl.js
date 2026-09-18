@@ -61,6 +61,8 @@ export const PATHS = {
   ADMIN_ASSINATURAS: '/admin/assinaturas',
   LEGACY_DASHBOARD: '/dashboard',
   LEGACY_MASTER: '/master/dashboard',
+  PUBLIC_MENU: '/cardapio',
+  PUBLIC_MENU_SLUG: '/cardapio/:slug',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -229,7 +231,11 @@ export function normalizePath(path) {
 }
 
 export function isPublicPath(path) {
-  return PUBLIC_PATHS.includes(normalizePath(path));
+  const normalized = normalizePath(path);
+  if (PUBLIC_PATHS.includes(normalized)) {
+    return true;
+  }
+  return normalized === PATHS.PUBLIC_MENU || normalized.startsWith(`${PATHS.PUBLIC_MENU}/`);
 }
 
 export function hasPermission(user, permission) {

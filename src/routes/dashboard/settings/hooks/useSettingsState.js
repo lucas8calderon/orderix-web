@@ -62,6 +62,14 @@ const DEFAULT_PAYMENT = {
   infinitePayDocument: '',
 };
 
+const DEFAULT_PUBLIC_MENU = {
+  publicMenuEnabled: false,
+  publicMenuShowUnavailable: false,
+  slug: '',
+  storeName: '',
+  catalogVersion: 0,
+};
+
 function apiErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;
 }
@@ -69,6 +77,7 @@ function apiErrorMessage(error, fallback) {
 export const useSettingsState = () => {
   const [settings, setSettings] = useState({
     ...DEFAULT_PAYMENT,
+    ...DEFAULT_PUBLIC_MENU,
     permissions: MOCK_PERMISSIONS,
     companyInfo: MOCK_COMPANY,
   });
@@ -78,16 +87,19 @@ export const useSettingsState = () => {
 
   useEffect(() => {
     let cancelled = false;
-    settingsStorage.getPaymentConfig()
-      .then((payment) => {
+    Promise.all([
+      settingsStorage.getPaymentConfig(),
+      settingsStorage.getPublicMenuConfig(),
+    ])
+      .then(([payment, publicMenu]) => {
         if (cancelled) return;
-        setSettings((prev) => ({ ...prev, ...payment }));
+        setSettings((prev) => ({ ...prev, ...payment, ...publicMenu }));
       })
       .catch((error) => {
         if (cancelled) return;
         setToast({
           open: true,
-          message: apiErrorMessage(error, 'Não foi possível carregar a cobrança da loja.'),
+          message: apiErrorMessage(error, 'Não foi possível carregar as configurações da loja.'),
           severity: 'error',
         });
       })
@@ -141,6 +153,20 @@ export const useSettingsState = () => {
 
     setSaving(true);
     try {
+      if (section === 'publicMenu') {
+        const publicMenu = await settingsStorage.updatePublicMenuConfig({
+          publicMenuEnabled: settings.publicMenuEnabled,
+          publicMenuShowUnavailable: settings.publicMenuShowUnavailable,
+        });
+        setSettings((prev) => ({ ...prev, ...publicMenu }));
+        setToast({
+          open: true,
+          message: 'Cardápio digital salvo.',
+          severity: 'success',
+        });
+        return true;
+      }
+
       const payment = await settingsStorage.updatePaymentConfig({
         timing: settings.timing,
         waiterPaymentEnabled: settings.waiterPaymentEnabled,
@@ -160,7 +186,12 @@ export const useSettingsState = () => {
     } catch (error) {
       setToast({
         open: true,
-        message: apiErrorMessage(error, 'Não foi possível salvar a cobrança da loja.'),
+        message: apiErrorMessage(
+          error,
+          section === 'publicMenu'
+            ? 'Não foi possível salvar o cardápio digital.'
+            : 'Não foi possível salvar a cobrança da loja.'
+        ),
         severity: 'error',
       });
       return false;
@@ -173,6 +204,7 @@ export const useSettingsState = () => {
     sectionTitles: {
       serviceFee: 'Taxa de Serviço',
       paymentMethods: 'Métodos de Pagamento',
+      publicMenu: 'Cardápio digital',
       permissions: 'Perfis e Permissões',
       companyInfo: 'Dados Fiscais e Empresa',
     },

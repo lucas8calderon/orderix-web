@@ -8,6 +8,7 @@ import {
   hasPermission,
   hasStoreContext,
   isPlatformAdmin,
+  isPublicPath,
   isStoreAdmin,
 } from './accessControl';
 
@@ -54,6 +55,14 @@ describe('getPostLoginPath / getDefaultRouteByRole', () => {
   it('assinatura inativa bloqueia a loja', () => {
     expect(getPostLoginPath(user({ subscriptionActive: false, subscriptionStatus: 'BLOCKED' })))
       .toBe(PATHS.SUBSCRIPTION_BLOCKED);
+  });
+});
+
+describe('isPublicPath', () => {
+  it('trata /cardapio/:slug como rota pública', () => {
+    expect(isPublicPath('/cardapio/mcdonalds')).toBe(true);
+    expect(isPublicPath('/cardapio')).toBe(true);
+    expect(isPublicPath('/app/dashboard')).toBe(false);
   });
 });
 
