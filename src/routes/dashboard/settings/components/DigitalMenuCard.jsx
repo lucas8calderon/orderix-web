@@ -24,6 +24,7 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
   settings,
   onSettingChange,
   onSave,
+  onToast,
   switchStyles,
   saving,
 }) {
@@ -40,8 +41,10 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
     try {
       await navigator.clipboard.writeText(publicUrl);
       setCopyHint('Link copiado');
+      onToast?.('Link do cardápio copiado.', 'success');
     } catch {
       setCopyHint('Não foi possível copiar');
+      onToast?.('Não foi possível copiar o link do cardápio.', 'error');
     }
     setTimeout(() => setCopyHint(''), 2000);
   };
@@ -60,8 +63,12 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
       link.download = `cardapio-${settings.slug || 'loja'}.png`;
       link.href = dataUrl;
       link.click();
+      onToast?.('QR Code baixado com sucesso.', 'success');
     } catch (error) {
-      console.error('Erro ao gerar QR Code:', error);
+      onToast?.(
+        error?.message || 'Não foi possível gerar o QR Code.',
+        'error'
+      );
     } finally {
       setDownloading(false);
     }

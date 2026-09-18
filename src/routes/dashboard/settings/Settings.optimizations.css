@@ -3,8 +3,9 @@
 /* === LAZY LOADING E OTIMIZAÇÕES === */
 
 /* Otimizar repaints e reflows */
+/* Sem `paint`: evita clipar Snackbar/Alert com position:fixed dentro do container. */
 .settings-container {
-  contain: layout style paint;
+  contain: layout style;
 }
 
 .settings-card {

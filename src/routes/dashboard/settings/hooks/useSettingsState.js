@@ -85,6 +85,10 @@ export const useSettingsState = () => {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
+  const showToast = useCallback((message, severity = 'success') => {
+    setToast({ open: true, message, severity });
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -97,11 +101,10 @@ export const useSettingsState = () => {
       })
       .catch((error) => {
         if (cancelled) return;
-        setToast({
-          open: true,
-          message: apiErrorMessage(error, 'Não foi possível carregar as configurações da loja.'),
-          severity: 'error',
-        });
+        showToast(
+          apiErrorMessage(error, 'Não foi possível carregar as configurações da loja.'),
+          'error'
+        );
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -109,7 +112,7 @@ export const useSettingsState = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showToast]);
 
   const updateSetting = useCallback((section, key, value) => {
     setSettings((prev) => {
@@ -143,11 +146,10 @@ export const useSettingsState = () => {
 
   const saveSettings = useCallback(async (section) => {
     if (section === 'permissions' || section === 'companyInfo') {
-      setToast({
-        open: true,
-        message: 'Configurações ainda não são salvas no servidor. Esta tela está em breve.',
-        severity: 'info',
-      });
+      showToast(
+        'Configurações ainda não são salvas no servidor. Esta tela está em breve.',
+        'info'
+      );
       return false;
     }
 
@@ -159,11 +161,7 @@ export const useSettingsState = () => {
           publicMenuShowUnavailable: settings.publicMenuShowUnavailable,
         });
         setSettings((prev) => ({ ...prev, ...publicMenu }));
-        setToast({
-          open: true,
-          message: 'Cardápio digital salvo.',
-          severity: 'success',
-        });
+        showToast('Cardápio digital salvo com sucesso.');
         return true;
       }
 
@@ -177,28 +175,25 @@ export const useSettingsState = () => {
         infinitePayDocument: settings.infinitePayDocument,
       });
       setSettings((prev) => ({ ...prev, ...payment }));
-      setToast({
-        open: true,
-        message: 'Cobrança da loja salva.',
-        severity: 'success',
-      });
+      showToast(
+        section === 'serviceFee'
+          ? 'Taxa de serviço salva com sucesso.'
+          : 'Cobrança da loja salva com sucesso.'
+      );
       return true;
     } catch (error) {
-      setToast({
-        open: true,
-        message: apiErrorMessage(
-          error,
-          section === 'publicMenu'
-            ? 'Não foi possível salvar o cardápio digital.'
-            : 'Não foi possível salvar a cobrança da loja.'
-        ),
-        severity: 'error',
-      });
+      const fallback =
+        section === 'publicMenu'
+          ? 'Não foi possível salvar o cardápio digital.'
+          : section === 'serviceFee'
+            ? 'Não foi possível salvar a taxa de serviço.'
+            : 'Não foi possível salvar a cobrança da loja.';
+      showToast(apiErrorMessage(error, fallback), 'error');
       return false;
     } finally {
       setSaving(false);
     }
-  }, [settings]);
+  }, [settings, showToast]);
 
   const labels = useMemo(() => ({
     sectionTitles: {
@@ -236,6 +231,7 @@ export const useSettingsState = () => {
     saving,
     toast,
     setToast,
+    showToast,
     updateSetting,
     updatePermission,
     saveSettings,

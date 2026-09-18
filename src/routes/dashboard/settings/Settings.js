@@ -15,6 +15,7 @@ import {
   Divider,
   CircularProgress,
   MenuItem,
+  Portal,
   Snackbar,
 } from '@mui/material';
 import {
@@ -203,7 +204,7 @@ const PermissionsCard = React.memo(({ settings, onPermissionChange, onSave, getP
   </Card>
 ));
 
-const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
+const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave, onToast }) => (
   <Card className="settings-card">
     <CardContent>
       <Box className="card-header">
@@ -264,7 +265,17 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
             className="upload-button"
           >
             Upload Logotipo
-            <input type="file" hidden onChange={(e) => console.log('Upload logo:', e.target.files[0])} />
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              onChange={() => {
+                onToast?.(
+                  'Upload de logotipo ainda não está disponível no servidor.',
+                  'info'
+                );
+              }}
+            />
           </Button>
         </Box>
       </Box>
@@ -279,6 +290,7 @@ export function Settings() {
     saving,
     toast,
     setToast,
+    showToast,
     updateSetting,
     updatePermission,
     saveSettings,
@@ -290,10 +302,31 @@ export function Settings() {
   const sliderStyles = useSliderStyles();
   const switchStyles = useSwitchStyles();
 
+  const toastSnackbar = (
+    <Portal>
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          severity={toast.severity || 'info'}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
+    </Portal>
+  );
+
   if (loading) {
     return (
       <div className="settings-container">
         <LoadingSpinner />
+        {toastSnackbar}
       </div>
     );
   }
@@ -366,6 +399,7 @@ export function Settings() {
           settings={settings}
           onSettingChange={updateSetting}
           onSave={saveSettings}
+          onToast={showToast}
           switchStyles={switchStyles}
           saving={saving}
         />
@@ -383,23 +417,11 @@ export function Settings() {
           settings={settings}
           onSettingChange={updateSetting}
           onSave={saveSettings}
+          onToast={showToast}
         />
       </div>
 
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={4000}
-        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
-          severity={toast.severity || 'info'}
-          variant="filled"
-        >
-          {toast.message}
-        </Alert>
-      </Snackbar>
+      {toastSnackbar}
     </div>
   );
 }
