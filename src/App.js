@@ -1,13 +1,13 @@
 import './App.css';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import Home from './routes/home/Home';
 import Login from './routes/login/Login';
 import ForgotPassword from './routes/login/ForgotPassword';
 import PrivacyPolicy from './routes/privacy/PrivacyPolicy';
 import TermsOfUse from './routes/privacy/TermsOfUse';
-import Dashboard from './routes/dashboard/Dashboard';
-import MasterDashboard from './routes/master/MasterDashboard';
-import SubscriptionBlocked from './routes/subscription/SubscriptionBlocked';
 import { CategoryProvider } from './routes/dashboard/menu/category/providers/CategoryContext.js';
 import { ProductProvider } from './routes/dashboard/menu/product/providers/ProductContext.js';
 import { TablesProvider } from './routes/dashboard/tables/provider/TablesContext.js';
@@ -18,6 +18,25 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppThemeProvider } from './theme/ThemeContext';
 import './services/apiConfig';
 
+const Dashboard = lazy(() => import('./routes/dashboard/Dashboard'));
+const MasterDashboard = lazy(() => import('./routes/master/MasterDashboard'));
+const SubscriptionBlocked = lazy(() => import('./routes/subscription/SubscriptionBlocked'));
+
+function RouteFallback() {
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <CircularProgress sx={{ color: 'var(--color-primary)' }} />
+    </Box>
+  );
+}
+
 function StoreLayout() {
   return (
     <ProtectedRoute>
@@ -26,7 +45,9 @@ function StoreLayout() {
           <TablesProvider>
             <ComandasProvider>
               <EmployeesProvider>
-                <Outlet />
+                <Suspense fallback={<RouteFallback />}>
+                  <Outlet />
+                </Suspense>
               </EmployeesProvider>
             </ComandasProvider>
           </TablesProvider>
@@ -39,7 +60,9 @@ function StoreLayout() {
 function AdminLayout() {
   return (
     <ProtectedRoute>
-      <Outlet />
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
     </ProtectedRoute>
   );
 }
@@ -47,7 +70,9 @@ function AdminLayout() {
 function BlockedLayout() {
   return (
     <ProtectedRoute>
-      <Outlet />
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
     </ProtectedRoute>
   );
 }

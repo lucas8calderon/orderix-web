@@ -173,7 +173,7 @@
 
 .overview-mini-kpis {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -248,6 +248,14 @@
 
 .overview-now-card.is-danger .overview-now-dot {
   background: var(--color-error);
+}
+
+.overview-now-card.is-muted .overview-now-dot {
+  background: var(--color-text-muted);
+}
+
+.overview-now-card.is-static {
+  cursor: default;
 }
 
 .overview-panel-head {

@@ -14,6 +14,7 @@ export const emptyOverview = {
     kitchenOrders: 0,
     lateOrders: 0,
     avgPrepMinutes: null,
+    // Product.quantity is not live stock; backend keeps this at 0 for API compatibility.
     criticalStockCount: 0,
   },
   kitchen: {

@@ -72,7 +72,6 @@ function formatClock(dateTime) {
 
 function operationTone(kind, operation) {
   if (kind === 'kitchen') return Number(operation.lateOrders) > 0 ? 'danger' : Number(operation.kitchenOrders) > 0 ? 'warn' : 'ok';
-  if (kind === 'stock') return Number(operation.criticalStockCount) > 0 ? 'danger' : 'ok';
   if (kind === 'tables') {
     if (!operation.tablesTotal) return 'ok';
     const ratio = operation.tablesOccupied / operation.tablesTotal;
@@ -136,7 +135,9 @@ export function DashboardGerencial({ onNavigate }) {
   const { overview, loading, error, refetch } = useDashboardOverview(period);
   const operation = overview.operation || {};
   const kitchen = overview.kitchen || {};
-  const alerts = overview.alerts || [];
+  // Decision C: Product.quantity is catalog/portion data, not warehouse stock.
+  // Hide LOW_STOCK even if an older backend still emits it; do not treat 1–8 as inventory.
+  const alerts = (overview.alerts || []).filter((alert) => alert.code !== 'LOW_STOCK');
 
   const revenueSeries = useMemo(
     () => (overview.revenueSeries || []).map((point) => ({
@@ -278,10 +279,6 @@ export function DashboardGerencial({ onNavigate }) {
           <span>Pedidos atrasados</span>
           <strong>{operation.lateOrders || 0}</strong>
         </button>
-        <button type="button" className="overview-mini-kpi">
-          <span>Estoque crítico</span>
-          <strong>{operation.criticalStockCount || 0} itens</strong>
-        </button>
       </Box>
 
       <Box>
@@ -303,11 +300,11 @@ export function DashboardGerencial({ onNavigate }) {
             <strong>Atendimento</strong>
             <p>{operation.openComandas || 0} comandas abertas</p>
           </button>
-          <button type="button" className={`overview-now-card is-${operationTone('stock', operation)}`}>
+          <div className="overview-now-card is-static is-muted">
             <span className="overview-now-dot" />
             <strong>Estoque</strong>
-            <p>{operation.criticalStockCount || 0} produtos em nível crítico</p>
-          </button>
+            <p>Estoque: sem movimentação</p>
+          </div>
         </Box>
       </Box>
 
