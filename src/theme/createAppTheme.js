@@ -19,7 +19,7 @@ export function createAppTheme(mode = 'light') {
         contrastText: isDark ? '#0B1220' : '#FFFFFF',
       },
       background: {
-        default: isDark ? '#0B1220' : '#FAF8FF',
+        default: isDark ? '#0B1220' : '#F8FAFC',
         paper: isDark ? '#121A2B' : '#FFFFFF',
       },
       text: {

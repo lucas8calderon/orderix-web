@@ -31,6 +31,7 @@ export function AppThemeProvider({ children }) {
 
   useEffect(() => {
     applyThemeToDocument(mode);
+    persistTheme(mode);
   }, [mode]);
 
   const setTheme = useCallback((nextMode) => {

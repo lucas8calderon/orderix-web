@@ -12,19 +12,8 @@ export function getStoredTheme() {
   return null;
 }
 
-export function getSystemTheme() {
-  try {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-  } catch (_) {
-    /* ignore */
-  }
-  return 'light';
-}
-
 export function getPreferredTheme() {
-  return getStoredTheme() || getSystemTheme();
+  return getStoredTheme() || 'light';
 }
 
 export function persistTheme(mode) {

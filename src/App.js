@@ -5,7 +5,6 @@ import Login from './routes/login/Login';
 import ForgotPassword from './routes/login/ForgotPassword';
 import PrivacyPolicy from './routes/privacy/PrivacyPolicy';
 import TermsOfUse from './routes/privacy/TermsOfUse';
-import { initializeFirebase } from './services/firebase.js';
 import Dashboard from './routes/dashboard/Dashboard';
 import MasterDashboard from './routes/master/MasterDashboard';
 import SubscriptionBlocked from './routes/subscription/SubscriptionBlocked';
@@ -54,8 +53,6 @@ function BlockedLayout() {
 }
 
 function App() {
-  initializeFirebase();
-
   return (
     <AppThemeProvider>
       <Router>

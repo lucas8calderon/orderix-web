@@ -10,22 +10,21 @@
       content="Weper: gestão inteligente para negócios que atendem, vendem e querem crescer. Do pedido ao resultado, no mobile, tablet e desktop."
     />
     <style>
-      html, body { background-color: #F8FAFC; color: #0F172A; font-family: Inter, sans-serif; }
-      html[data-theme="dark"], html[data-theme="dark"] body { background-color: #0B1220; color: #F8FAFC; }
+      html, body { background-color: #F8FAFC; color: #0F172A; color-scheme: light; font-family: Inter, sans-serif; }
+      html[data-theme="dark"], html[data-theme="dark"] body { background-color: #0B1220; color: #F8FAFC; color-scheme: dark; }
     </style>
     <script>
       (function () {
         try {
           var stored = localStorage.getItem('orderix-theme');
-          var theme = stored === 'light' || stored === 'dark'
-            ? stored
-            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          var theme = (stored === 'light' || stored === 'dark') ? stored : 'light';
           document.documentElement.setAttribute('data-theme', theme);
           document.documentElement.style.colorScheme = theme;
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute('content', theme === 'dark' ? '#0B1220' : '#2563EB');
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.style.colorScheme = 'light';
         }
       })();
     </script>
