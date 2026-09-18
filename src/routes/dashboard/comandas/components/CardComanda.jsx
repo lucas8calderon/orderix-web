@@ -1,11 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Card, CardContent, Typography, Box, Chip, Tooltip } from '@mui/material';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, QrCode } from 'lucide-react';
 import Button from '../../menu/components/ui/Button';
 import { ComandasContext } from '../provider/ComandasContext';
+import { ComandaQRCodeDialog } from './ComandaQRCodeDialog';
 
 export function CardComanda({ comanda, canManage = true }) {
   const { setOpenDeleteDialogComanda, setSelectedComanda } = useContext(ComandasContext);
+  const [qrOpen, setQrOpen] = useState(false);
 
   return (
     <Card
@@ -88,6 +90,12 @@ export function CardComanda({ comanda, canManage = true }) {
           }}
           onClick={(event) => event.stopPropagation()}
         >
+          <Button size="sm" variant="default" onClick={() => setQrOpen(true)}>
+            <Tooltip title="QR autoatendimento">
+              <QrCode className="h-4 w-4" size={46} />
+            </Tooltip>
+          </Button>
+
           <Button size="sm" variant="default">
             <Tooltip title="Editar">
               <Edit className="h-4 w-4" size={46} />
@@ -109,6 +117,7 @@ export function CardComanda({ comanda, canManage = true }) {
         </Box>
         )}
       </CardContent>
+      <ComandaQRCodeDialog open={qrOpen} onClose={() => setQrOpen(false)} comanda={comanda} />
     </Card>
   );
 }
