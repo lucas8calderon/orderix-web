@@ -5,6 +5,7 @@ import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import SoupKitchenOutlinedIcon from '@mui/icons-material/SoupKitchenOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import RoomServiceOutlinedIcon from '@mui/icons-material/RoomServiceOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { PATHS, ROLES } from '../../services/accessControl';
 
 export const dashboardItems = [
@@ -49,5 +50,12 @@ export const dashboardItems = [
     path: PATHS.APP_GARCOM,
     icon: <RoomServiceOutlinedIcon />,
     roles: [ROLES.WAITER],
+  },
+  {
+    title: 'Configurações',
+    slug: 'configuracoes',
+    path: PATHS.APP_CONFIGURACOES,
+    icon: <SettingsOutlinedIcon />,
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN],
   },
 ];

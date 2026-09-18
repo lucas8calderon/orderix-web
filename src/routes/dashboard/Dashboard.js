@@ -27,6 +27,7 @@ import { getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../service
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
 import weperLogo from '../../assets/images/weper-logo.png';
 import { WaiterHome } from './WaiterHome';
+import { Settings } from './settings/Settings';
 
 function Copyright(props) {
     return (
@@ -114,6 +115,7 @@ export default function Dashboard() {
         atendimento: <Atendimento />,
         cozinha: <Kitchen initialFilter={navIntent?.kitchenFilter} />,
         garcom: <WaiterHome user={user} />,
+        configuracoes: <Settings />,
     };
     const selectedItem = visibleItems.find((item) => item.slug === section);
 

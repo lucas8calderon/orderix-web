@@ -441,6 +441,8 @@ export function Kitchen({ initialFilter }) {
             });
     };
 
+    // Poll 12s: ~5 GET /kitchen/orders por loja/min por aba aberta.
+    // Baseline (sem WS): p95 = intervalo + RTT. Manter poll; WS só se a carga crescer.
     useEffect(() => {
         loadOrders();
         const timer = setInterval(loadOrders, 12000);

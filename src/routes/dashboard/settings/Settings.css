@@ -185,6 +185,13 @@
   padding: var(--settings-spacing-xs) 0;
 }
 
+.payment-provider-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--settings-spacing-md);
+  margin-bottom: var(--settings-spacing-lg);
+}
+
 /* === PERMISSIONS === */
 .permissions-section {
   display: flex;

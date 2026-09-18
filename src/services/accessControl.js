@@ -66,7 +66,7 @@ export const PATHS = {
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
 const PLATFORM_ROLES = [ROLES.MASTER, ROLES.SUPER_ADMIN];
 
-/** Inventário e configurações mockadas ficam fora do menu; paths permanecem para não quebrar accessControl. */
+/** Inventário mockado fica fora do menu; configurações de cobrança entram pelo path APP_CONFIGURACOES. */
 const STORE_ADMIN_APP_ROUTES = [
   PATHS.APP_DASHBOARD,
   PATHS.APP_ATENDIMENTO,

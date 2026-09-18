@@ -84,8 +84,9 @@ describe('canAccessRoute', () => {
     expect(canAccessRoute(master, PATHS.ADMIN_RESTAURANTES)).toBe(true);
   });
 
-  it('ADMIN não entra em /admin', () => {
-    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_DASHBOARD)).toBe(false);
+  it('ADMIN acessa configurações da loja', () => {
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.APP_CONFIGURACOES)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.CASHIER }), PATHS.APP_CONFIGURACOES)).toBe(false);
   });
 
   it('rotas incompletas /app e /admin não são acessíveis (redirect para o default)', () => {

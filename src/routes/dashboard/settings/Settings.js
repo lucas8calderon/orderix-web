@@ -1,9 +1,10 @@
 import React, { lazy, Suspense } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
+import {
+  Alert,
+  Box,
+  Typography,
+  Card,
+  CardContent,
   TextField,
   Button,
   Switch,
@@ -12,7 +13,9 @@ import {
   Tooltip,
   Chip,
   Divider,
-  CircularProgress
+  CircularProgress,
+  MenuItem,
+  Snackbar,
 } from '@mui/material';
 import {
   Settings as SettingsIcon,
@@ -20,50 +23,127 @@ import {
   People as PeopleIcon,
   Business as BusinessIcon,
   Save as SaveIcon,
-  Upload as UploadIcon
+  Upload as UploadIcon,
 } from '@mui/icons-material';
+import {
+  CHARGE_TIMING_OPTIONS,
+  PAYMENT_METHOD_ORDER,
+  PAYMENT_PROVIDER_OPTIONS,
+} from '../../../services/paymentConfigService';
 import { useSettingsState, useSliderStyles, useSwitchStyles } from './hooks/useSettingsState';
 import './Settings.css';
 
-// Lazy loading para componentes pesados
 const LazySlider = lazy(() => Promise.resolve({ default: Slider }));
 
-// Componente de loading
 const LoadingSpinner = () => (
   <Box display="flex" justifyContent="center" alignItems="center" p={2}>
     <CircularProgress size={24} />
   </Box>
 );
 
-// Componente otimizado para Payment Methods
-const PaymentMethodsCard = React.memo(({ settings, onSettingChange, onSave, getPaymentMethodLabel, switchStyles }) => (
+const PaymentMethodsCard = React.memo(({
+  settings,
+  onSettingChange,
+  onSave,
+  getPaymentMethodLabel,
+  switchStyles,
+  saving,
+}) => (
   <Card className="settings-card">
     <CardContent>
       <Box className="card-header">
         <Box className="card-title-section">
           <CreditCardIcon className="card-icon" />
-          <Typography className="card-title">Métodos de Pagamento</Typography>
+          <Typography className="card-title">Cobrança da loja</Typography>
         </Box>
         <Button
           className="save-button"
           startIcon={<SaveIcon />}
           onClick={() => onSave('paymentMethods')}
+          disabled={saving}
         >
-          Salvar
+          {saving ? 'Salvando...' : 'Salvar'}
         </Button>
       </Box>
-      
+
+      <Box className="setting-item">
+        <TextField
+          select
+          label="Momento da cobrança"
+          value={settings.timing}
+          onChange={(e) => onSettingChange('timing', null, e.target.value)}
+          className="setting-input"
+          fullWidth
+        >
+          {CHARGE_TIMING_OPTIONS.map((option) => (
+            <MenuItem key={option.id} value={option.id}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
+
+      <Box className="setting-item">
+        <FormControlLabel
+          control={
+            <Switch
+              checked={Boolean(settings.waiterPaymentEnabled)}
+              onChange={(e) => onSettingChange('waiterPaymentEnabled', null, e.target.checked)}
+              sx={switchStyles}
+            />
+          }
+          label="Garçom pode cobrar"
+        />
+      </Box>
+
+      <Box className="setting-item">
+        <TextField
+          select
+          label="Adquirente padrão"
+          value={settings.defaultProvider}
+          onChange={(e) => onSettingChange('defaultProvider', null, e.target.value)}
+          className="setting-input"
+          fullWidth
+        >
+          {PAYMENT_PROVIDER_OPTIONS.map((option) => (
+            <MenuItem key={option.id} value={option.id}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
+
+      {settings.defaultProvider === 'INFINITEPAY' && (
+        <Box className="payment-provider-fields">
+          <TextField
+            label="Handle InfinitePay"
+            value={settings.infinitePayHandle}
+            onChange={(e) => onSettingChange('infinitePayHandle', null, e.target.value)}
+            className="setting-input"
+            fullWidth
+          />
+          <TextField
+            label="CNPJ InfinitePay"
+            value={settings.infinitePayDocument}
+            onChange={(e) => onSettingChange('infinitePayDocument', null, e.target.value)}
+            className="setting-input"
+            fullWidth
+          />
+        </Box>
+      )}
+
+      <Typography className="setting-label">Meios aceitos</Typography>
       <Box className="payment-methods">
-        {Object.entries(settings.paymentMethods).map(([method, enabled]) => (
+        {PAYMENT_METHOD_ORDER.map((method) => (
           <Box key={method} className="payment-method-item">
             <FormControlLabel
-                  control={
-                    <Switch
-                      checked={enabled}
-                      onChange={(e) => onSettingChange('paymentMethods', method, e.target.checked)}
-                      sx={switchStyles}
-                    />
-                  }
+              control={
+                <Switch
+                  checked={Boolean(settings.paymentMethods?.[method])}
+                  onChange={(e) => onSettingChange('paymentMethods', method, e.target.checked)}
+                  sx={switchStyles}
+                />
+              }
               label={getPaymentMethodLabel(method)}
             />
           </Box>
@@ -73,7 +153,6 @@ const PaymentMethodsCard = React.memo(({ settings, onSettingChange, onSave, getP
   </Card>
 ));
 
-// Componente otimizado para Permissions
 const PermissionsCard = React.memo(({ settings, onPermissionChange, onSave, getProfileLabel, getPermissionLabel, switchStyles }) => (
   <Card className="settings-card">
     <CardContent>
@@ -90,14 +169,14 @@ const PermissionsCard = React.memo(({ settings, onPermissionChange, onSave, getP
           Salvar Permissões
         </Button>
       </Box>
-      
+
       <Box className="permissions-section">
         {Object.entries(settings.permissions).map(([profile, permissions]) => (
           <Box key={profile} className="profile-section">
             <Typography className="profile-title">
               {getProfileLabel(profile)}
             </Typography>
-            
+
             <Box className="permissions-grid">
               {Object.entries(permissions).map(([permission, enabled]) => (
                 <FormControlLabel
@@ -114,7 +193,7 @@ const PermissionsCard = React.memo(({ settings, onPermissionChange, onSave, getP
                 />
               ))}
             </Box>
-            
+
             {profile !== 'caixa' && <Divider className="profile-divider" />}
           </Box>
         ))}
@@ -123,7 +202,6 @@ const PermissionsCard = React.memo(({ settings, onPermissionChange, onSave, getP
   </Card>
 ));
 
-// Componente otimizado para Company Info
 const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
   <Card className="settings-card">
     <CardContent>
@@ -140,7 +218,7 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
           Salvar Alterações
         </Button>
       </Box>
-      
+
       <Box className="company-fields">
         <TextField
           label="Nome da empresa"
@@ -149,7 +227,7 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
           className="setting-input"
           fullWidth
         />
-        
+
         <TextField
           label="CNPJ"
           value={settings.companyInfo.cnpj}
@@ -157,7 +235,7 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
           className="setting-input"
           fullWidth
         />
-        
+
         <TextField
           label="Endereço"
           value={settings.companyInfo.address}
@@ -167,7 +245,7 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
           multiline
           rows={2}
         />
-        
+
         <TextField
           label="Telefone"
           value={settings.companyInfo.phone}
@@ -175,7 +253,7 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
           className="setting-input"
           fullWidth
         />
-        
+
         <Box className="upload-section">
           <Typography className="setting-label">Logotipo da empresa</Typography>
           <Button
@@ -196,23 +274,31 @@ const CompanyInfoCard = React.memo(({ settings, onSettingChange, onSave }) => (
 export function Settings() {
   const {
     settings,
+    loading,
+    saving,
     toast,
     setToast,
     updateSetting,
     updatePermission,
     saveSettings,
-    getSectionTitle,
     getPaymentMethodLabel,
     getProfileLabel,
-    getPermissionLabel
+    getPermissionLabel,
   } = useSettingsState();
 
   const sliderStyles = useSliderStyles();
   const switchStyles = useSwitchStyles();
 
+  if (loading) {
     return (
+      <div className="settings-container">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
     <div className="settings-container">
-      {/* Header */}
       <Box className="settings-header">
         <Typography className="settings-title">Configurações do Negócio</Typography>
         <Typography className="settings-subtitle">
@@ -220,10 +306,7 @@ export function Settings() {
         </Typography>
       </Box>
 
-      {/* Settings Sections */}
       <div className="settings-grid">
-        
-        {/* Taxa de Serviço */}
         <Card className="settings-card">
           <CardContent>
             <Box className="card-header">
@@ -235,11 +318,12 @@ export function Settings() {
                 className="save-button"
                 startIcon={<SaveIcon />}
                 onClick={() => saveSettings('serviceFee')}
+                disabled={saving}
               >
-                Salvar
+                {saving ? 'Salvando...' : 'Salvar'}
               </Button>
             </Box>
-            
+
             <Box className="setting-item">
               <Typography className="setting-label">Percentual da taxa de serviço</Typography>
               <Box className="slider-container">
@@ -253,7 +337,7 @@ export function Settings() {
                     marks={[
                       { value: 0, label: '0%' },
                       { value: 10, label: '10%' },
-                      { value: 20, label: '20%' }
+                      { value: 20, label: '20%' },
                     ]}
                     className="custom-slider"
                     sx={sliderStyles}
@@ -268,16 +352,15 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        {/* Métodos de Pagamento */}
         <PaymentMethodsCard
           settings={settings}
           onSettingChange={updateSetting}
           onSave={saveSettings}
           getPaymentMethodLabel={getPaymentMethodLabel}
           switchStyles={switchStyles}
+          saving={saving}
         />
 
-        {/* Perfis e Permissões */}
         <PermissionsCard
           settings={settings}
           onPermissionChange={updatePermission}
@@ -287,14 +370,27 @@ export function Settings() {
           switchStyles={switchStyles}
         />
 
-        {/* Dados Fiscais e Empresa */}
         <CompanyInfoCard
           settings={settings}
           onSettingChange={updateSetting}
           onSave={saveSettings}
         />
-
       </div>
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          severity={toast.severity || 'info'}
+          variant="filled"
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

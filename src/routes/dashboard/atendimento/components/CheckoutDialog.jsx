@@ -25,6 +25,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { formatCurrency } from '../../../../services/accessControl';
 import {
+  capturePayment,
+  createPaymentIntent,
+  getStorePaymentConfig,
+  paymentMethodsFromConfig,
+} from '../../../../services/paymentConfigService';
+import {
   closeComandaAccount,
   closeTableAccount,
   getComandaAccount,
@@ -37,10 +43,10 @@ import {
   resolveMandatorySelections,
 } from '../utils/accountTotals';
 
-const PAYMENT_METHODS = [
-  { id: 'PIX', label: 'Pix' },
-  { id: 'DEBIT', label: 'Débito' },
-  { id: 'CREDIT', label: 'Crédito' },
+const FALLBACK_PAYMENT_METHODS = [
+  { id: 'PIX', label: 'PIX' },
+  { id: 'DEBIT', label: 'Cartão de Débito' },
+  { id: 'CREDIT', label: 'Cartão de Crédito' },
   { id: 'CASH', label: 'Dinheiro' },
   { id: 'VOUCHER', label: 'Vale' },
 ];
@@ -52,6 +58,17 @@ function apiErrorMessage(error, fallback) {
 function isEmptyAccountError(error) {
   const status = error?.response?.status;
   return status === 404;
+}
+
+function newUuid() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = char === 'x' ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
 }
 
 const Transition = forwardRef((props, ref) => (
@@ -75,9 +92,12 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
   const [empty, setEmpty] = useState(false);
   const [error, setError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('PIX');
+  const [paymentMethods, setPaymentMethods] = useState(FALLBACK_PAYMENT_METHODS);
+  const [serviceFeeRate, setServiceFeeRate] = useState(0.1);
   const [applyServiceTax, setApplyServiceTax] = useState(false);
   const [discount, setDiscount] = useState('0');
   const [toast, setToast] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
 
   const kindLabel = target?.kind === 'comanda' ? 'Comanda' : 'Mesa';
   const title = target ? `${kindLabel} ${target.number ?? ''}` : '';
@@ -92,9 +112,9 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     setAccount(null);
     setEmpty(false);
     setError('');
-    setPaymentMethod('PIX');
     setApplyServiceTax(false);
     setDiscount('0');
+    setPaymentStatus('');
 
     const request =
       target.kind === 'comanda'
@@ -132,9 +152,42 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     };
   }, [open, target]);
 
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    getStorePaymentConfig()
+      .then((response) => {
+        if (cancelled) return;
+        const dto = response.data || {};
+        const methods = paymentMethodsFromConfig(dto);
+        const nextMethods = methods.length ? methods : FALLBACK_PAYMENT_METHODS;
+        setPaymentMethods(nextMethods);
+        setPaymentMethod((current) => (
+          nextMethods.some((method) => method.id === current)
+            ? current
+            : nextMethods[0].id
+        ));
+        const rate = Number(dto.serviceFeePercent);
+        setServiceFeeRate(Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0.1);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPaymentMethods(FALLBACK_PAYMENT_METHODS);
+        setServiceFeeRate(0.1);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   const subtotal = useMemo(() => accountSubtotal(account), [account]);
   const discountValue = Math.max(0, Number(discount) || 0);
-  const serviceTax = applyServiceTax ? subtotal * 0.1 : 0;
+  const serviceFeePercentLabel = Math.round(serviceFeeRate * 100);
+  const serviceTax = applyServiceTax ? subtotal * serviceFeeRate : 0;
   const total = Math.max(0, subtotal + serviceTax - discountValue);
   const itemCount = useMemo(() => countAccountItems(account), [account]);
   const canClose = !loading && !empty && !error && itemCount > 0 && Boolean(paymentMethod);
@@ -143,23 +196,54 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     if (!canClose || !target?.id) return;
     setClosing(true);
     setError('');
+    setPaymentStatus('PROCESSING');
     const payload = {
       paymentMethod,
       applyServiceTax,
       discount: discountValue,
     };
-    const request =
-      target.kind === 'comanda'
-        ? closeComandaAccount(target.id, payload)
-        : closeTableAccount(target.id, payload);
+    const groupOrderId = account?.groupOrderId;
+    const orderId = groupOrderId ? undefined : account?.orders?.[0]?.id;
+    const clientPaymentId = newUuid();
+    const intentKey = newUuid();
+    const closeKey = newUuid();
 
-    request
+    const intentBody = {
+      clientPaymentId,
+      amount: Number(total.toFixed(2)),
+      paymentMethod,
+      provider: 'MANUAL',
+    };
+    if (groupOrderId) {
+      intentBody.groupOrderId = groupOrderId;
+    } else if (orderId) {
+      intentBody.orderId = orderId;
+    }
+
+    createPaymentIntent(intentBody, intentKey)
+      .then((response) => {
+        const intent = response.data || {};
+        if (String(intent.status || '').toUpperCase() === 'APPROVED') {
+          return intent;
+        }
+        return capturePayment(intent.id).then((captured) => captured.data || intent);
+      })
+      .then((approved) => {
+        if (String(approved?.status || '').toUpperCase() !== 'APPROVED') {
+          throw new Error('Pagamento não aprovado. A mesa não foi liberada.');
+        }
+        setPaymentStatus('APPROVED');
+        return target.kind === 'comanda'
+          ? closeComandaAccount(target.id, payload, closeKey)
+          : closeTableAccount(target.id, payload, closeKey);
+      })
       .then(() => {
         setToast('Conta fechada com sucesso!');
         onPaid?.();
       })
       .catch((err) => {
-        setError(apiErrorMessage(err, 'Erro ao fechar a conta.'));
+        setPaymentStatus('');
+        setError(apiErrorMessage(err, err?.message || 'Erro ao registrar o pagamento. A mesa não foi liberada.'));
       })
       .finally(() => setClosing(false));
   };
@@ -315,7 +399,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                       onChange={(event) => setApplyServiceTax(event.target.checked)}
                     />
                   }
-                  label="Taxa de serviço (10%)"
+                  label={`Taxa de serviço (${serviceFeePercentLabel}%)`}
                 />
                 {applyServiceTax && (
                   <Box display="flex" justifyContent="space-between">
@@ -342,6 +426,12 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                 </Box>
               </Box>
 
+              {paymentStatus === 'PROCESSING' && (
+                <Alert severity="info" sx={{ mb: 2 }} icon={<CircularProgress size={18} />}>
+                  Registrando pagamento (PROCESSING)…
+                </Alert>
+              )}
+
               <Box mt={3}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Forma de pagamento
@@ -352,7 +442,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                   onChange={(_, value) => value && setPaymentMethod(value)}
                   className="checkout-payments"
                 >
-                  {PAYMENT_METHODS.map((method) => (
+                  {paymentMethods.map((method) => (
                     <ToggleButton key={method.id} value={method.id}>
                       {method.label}
                     </ToggleButton>
@@ -387,7 +477,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                 '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
               }}
             >
-              {closing ? 'Fechando...' : 'Confirmar pagamento e liberar'}
+              {closing ? (paymentStatus === 'PROCESSING' ? 'Registrando pagamento...' : 'Fechando...') : 'Confirmar pagamento e liberar'}
             </Button>
           )}
         </DialogActions>

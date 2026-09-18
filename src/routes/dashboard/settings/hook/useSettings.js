@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { settingsStorage } from '../utils/settingsStorage';
 
-// Use MOCK_STORAGE = true para modo protótipo, false para backend real
-const USE_MOCK_STORAGE = true;
-
 export function useSettings() {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
@@ -12,17 +9,8 @@ export function useSettings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      
-      if (USE_MOCK_STORAGE) {
-        // Modo protótipo - usar mock storage
-        const data = await settingsStorage.getSettings();
-        setSettings(data);
-      } else {
-        // Modo produção - usar backend real
-        // const response = await getSettings();
-        // setSettings(response.data);
-      }
-      
+      const data = await settingsStorage.getSettings();
+      setSettings(data);
       setError(null);
     } catch (err) {
       setError(err);
@@ -35,17 +23,8 @@ export function useSettings() {
   const updateSettings = async (newSettings) => {
     try {
       setLoading(true);
-      
-      if (USE_MOCK_STORAGE) {
-        // Modo protótipo - usar mock storage
-        const updatedSettings = await settingsStorage.updateSettings(newSettings);
-        setSettings(updatedSettings);
-      } else {
-        // Modo produção - usar backend real
-        // const response = await updateSettings(newSettings);
-        // setSettings(response.data);
-      }
-      
+      const updatedSettings = await settingsStorage.updateSettings(newSettings);
+      setSettings(updatedSettings);
       setError(null);
       return true;
     } catch (err) {
@@ -59,16 +38,8 @@ export function useSettings() {
 
   const updateSetting = async (key, value) => {
     try {
-      if (USE_MOCK_STORAGE) {
-        // Modo protótipo - usar mock storage
-        const updatedSettings = await settingsStorage.updateSetting(key, value);
-        setSettings(updatedSettings);
-      } else {
-        // Modo produção - usar backend real
-        // const response = await updateSetting(key, value);
-        // setSettings(response.data);
-      }
-      
+      const updatedSettings = await settingsStorage.updateSetting(key, value);
+      setSettings((prev) => ({ ...prev, ...updatedSettings }));
       setError(null);
       return true;
     } catch (err) {
@@ -81,17 +52,8 @@ export function useSettings() {
   const restoreDefaults = async () => {
     try {
       setLoading(true);
-      
-      if (USE_MOCK_STORAGE) {
-        // Modo protótipo - usar mock storage
-        const defaultSettings = await settingsStorage.restoreDefaults();
-        setSettings(defaultSettings);
-      } else {
-        // Modo produção - usar backend real
-        // const response = await restoreDefaults();
-        // setSettings(response.data);
-      }
-      
+      const defaultSettings = await settingsStorage.restoreDefaults();
+      setSettings(defaultSettings);
       setError(null);
       return true;
     } catch (err) {
@@ -107,13 +69,13 @@ export function useSettings() {
     fetchSettings();
   }, []);
 
-  return { 
-    settings, 
-    loading, 
-    error, 
-    fetchSettings, 
-    updateSettings, 
-    updateSetting, 
-    restoreDefaults 
+  return {
+    settings,
+    loading,
+    error,
+    fetchSettings,
+    updateSettings,
+    updateSetting,
+    restoreDefaults,
   };
 }
