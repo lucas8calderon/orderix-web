@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Button,
   Switch,
   FormControlLabel,
@@ -11,14 +9,14 @@ import {
   InputAdornment,
 } from '@mui/material';
 import {
-  DeliveryDining as DeliveryIcon,
-  Save as SaveIcon,
+  DeliveryDiningOutlined as DeliveryIcon,
   ContentCopy as CopyIcon,
   DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { buildDeliveryUrl } from '../../../../services/deliveryService';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
 import { fileToCompressedDataUrl } from '../../menu/utils/compressImage';
+import { SettingsSectionCard } from './SettingsSectionCard';
 
 const LOGO_UPLOAD = { maxWidth: 512, maxHeight: 512, quality: 0.82, maxFileBytes: 8 * 1024 * 1024 };
 const COVER_UPLOAD = { maxWidth: 1400, maxHeight: 525, quality: 0.72, maxFileBytes: 8 * 1024 * 1024 };
@@ -123,6 +121,17 @@ function BrandingImageField({
   );
 }
 
+function DeliveryGroup({ title, children }) {
+  return (
+    <Box className="delivery-group">
+      <Typography className="delivery-group__title" component="h3">
+        {title}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
 export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
   settings,
   onSettingChange,
@@ -156,40 +165,33 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
   };
 
   return (
-    <Card className="settings-card">
-      <CardContent>
-        <Box className="card-header">
-          <Box className="card-title-section">
-            <DeliveryIcon className="card-icon" />
-            <Typography className="card-title">Delivery</Typography>
-          </Box>
-          <Button
-            className="save-button"
-            startIcon={<SaveIcon />}
-            onClick={() => onSave('delivery')}
-            disabled={saving}
-          >
-            {saving ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Clientes pedem pelo link público, pagam na entrega e o pedido entra na cozinha.
-        </Typography>
-
+    <SettingsSectionCard
+      icon={DeliveryIcon}
+      title="Delivery"
+      description="Clientes pedem pelo link público, pagam na entrega e o pedido entra na cozinha."
+      actionLabel={saving ? 'Salvando...' : 'Salvar'}
+      onAction={() => onSave('delivery')}
+      actionDisabled={saving}
+    >
+      <DeliveryGroup title="Status">
         <Box className="setting-item">
           <FormControlLabel
-            control={
+            control={(
               <Switch
                 checked={Boolean(settings?.deliveryEnabled)}
                 onChange={(e) => onSettingChange('deliveryEnabled', null, e.target.checked)}
                 sx={switchStyles}
               />
-            }
+            )}
             label="Delivery habilitado"
           />
+          <Typography variant="caption" color="text.secondary" display="block">
+            Desative para pausar o canal sem alterar o horário da loja.
+          </Typography>
         </Box>
+      </DeliveryGroup>
 
+      <DeliveryGroup title="Link">
         <Box className="setting-item">
           <TextField
             label="Link público"
@@ -208,7 +210,9 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
             Copiar link do Delivery
           </Button>
         </Box>
+      </DeliveryGroup>
 
+      <DeliveryGroup title="Operação">
         <Box className="setting-item">
           <TextField
             label="Endereço da loja (retirada)"
@@ -222,7 +226,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
           />
         </Box>
 
-        <Box className="setting-item" sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
+        <Box className="delivery-ops-grid">
           <TextField
             label="Taxa de entrega"
             placeholder="0,00"
@@ -262,10 +266,9 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
             fullWidth
           />
         </Box>
+      </DeliveryGroup>
 
-        <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-          Visual do cardápio
-        </Typography>
+      <DeliveryGroup title="Visual">
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Logo e banner aparecem no link público do Delivery. Use imagens de até 8 MB (mesmo limite do catálogo).
         </Typography>
@@ -293,7 +296,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
           previewWidth={96}
           inputId="delivery-logo-upload"
         />
-      </CardContent>
-    </Card>
+      </DeliveryGroup>
+    </SettingsSectionCard>
   );
 });

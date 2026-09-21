@@ -124,7 +124,7 @@ function App() {
 
           <Route path={PATHS.APP} element={<StoreLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path=":section" element={<Dashboard />} />
+            <Route path=":section/*" element={<Dashboard />} />
           </Route>
 
           <Route path={PATHS.ADMIN} element={<AdminLayout />}>

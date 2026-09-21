@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Button,
   Switch,
   FormControlLabel,
@@ -12,13 +10,13 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  QrCode2 as QrCodeIcon,
-  Save as SaveIcon,
+  QrCode2Outlined as QrCodeIcon,
   ContentCopy as CopyIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { buildPublicMenuUrl } from '../../../../services/publicMenuService';
+import { SettingsSectionCard } from './SettingsSectionCard';
 
 export const DigitalMenuCard = React.memo(function DigitalMenuCard({
   settings,
@@ -75,103 +73,93 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
   };
 
   return (
-    <Card className="settings-card">
-      <CardContent>
-        <Box className="card-header">
-          <Box className="card-title-section">
-            <QrCodeIcon className="card-icon" />
-            <Typography className="card-title">Cardápio digital (QR)</Typography>
-          </Box>
-          <Button
-            className="save-button"
-            startIcon={<SaveIcon />}
-            onClick={() => onSave('publicMenu')}
-            disabled={saving}
-          >
-            {saving ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Clientes acessam o catálogo pelo link ou QR. Fora do horário, o cardápio continua visível com a tag Fechado e sem envio de pedido.
-        </Typography>
-
-        <Box className="setting-item">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={Boolean(settings?.publicMenuEnabled)}
-                onChange={(e) => onSettingChange('publicMenuEnabled', null, e.target.checked)}
-                sx={switchStyles}
-              />
-            }
-            label="Publicar cardápio digital"
-          />
-        </Box>
-
-        <Box className="setting-item">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={Boolean(settings?.publicMenuShowUnavailable)}
-                onChange={(e) => onSettingChange('publicMenuShowUnavailable', null, e.target.checked)}
-                sx={switchStyles}
-              />
-            }
-            label="Mostrar produtos indisponíveis"
-          />
-        </Box>
-
-        <Box className="setting-item">
-          <TextField
-            label="Link público"
-            value={publicUrl}
-            fullWidth
-            InputProps={{
-              readOnly: true,
-              endAdornment: (
-                <Tooltip title={copyHint || 'Copiar link'}>
-                  <IconButton onClick={handleCopy} edge="end" aria-label="Copiar link" disabled={!publicUrl}>
-                    <CopyIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              ),
-            }}
-          />
-          {!settings?.slug && (
-            <Typography variant="caption" color="text.secondary">
-              Carregue as configurações para obter o slug da loja.
-            </Typography>
+    <SettingsSectionCard
+      icon={QrCodeIcon}
+      title="Cardápio digital (QR)"
+      description="Clientes acessam o catálogo pelo link ou QR. Fora do horário, o cardápio continua visível com a tag Fechado."
+      actionLabel={saving ? 'Salvando...' : 'Salvar'}
+      onAction={() => onSave('publicMenu')}
+      actionDisabled={saving}
+    >
+      <Box className="setting-item">
+        <FormControlLabel
+          control={(
+            <Switch
+              checked={Boolean(settings?.publicMenuEnabled)}
+              onChange={(e) => onSettingChange('publicMenuEnabled', null, e.target.checked)}
+              sx={switchStyles}
+            />
           )}
-        </Box>
+          label="Publicar cardápio digital"
+        />
+      </Box>
 
-        {publicUrl && (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-              mt: 2,
-              p: 2,
-              border: '1px solid rgba(0,0,0,0.08)',
-              borderRadius: 2,
-              bgcolor: '#fff',
-            }}
-          >
-            <QRCodeSVG value={publicUrl} size={180} level="M" includeMargin />
+      <Box className="setting-item">
+        <FormControlLabel
+          control={(
+            <Switch
+              checked={Boolean(settings?.publicMenuShowUnavailable)}
+              onChange={(e) => onSettingChange('publicMenuShowUnavailable', null, e.target.checked)}
+              sx={switchStyles}
+            />
+          )}
+          label="Mostrar produtos indisponíveis"
+        />
+      </Box>
+
+      <Box className="setting-item">
+        <TextField
+          label="Link público"
+          value={publicUrl}
+          fullWidth
+          InputProps={{
+            readOnly: true,
+            endAdornment: (
+              <Tooltip title={copyHint || 'Copiar link'}>
+                <IconButton onClick={handleCopy} edge="end" aria-label="Copiar link" disabled={!publicUrl}>
+                  <CopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ),
+          }}
+        />
+        {!settings?.slug && (
+          <Typography variant="caption" color="text.secondary">
+            Carregue as configurações para obter o slug da loja.
+          </Typography>
+        )}
+        <Button
+          variant="outlined"
+          startIcon={<CopyIcon />}
+          onClick={handleCopy}
+          disabled={!publicUrl}
+          sx={{ mt: 1 }}
+        >
+          Copiar link do cardápio
+        </Button>
+      </Box>
+
+      {publicUrl ? (
+        <Box className="digital-menu-qr">
+          <Box className="digital-menu-qr__code">
+            <QRCodeSVG value={publicUrl} size={140} level="M" includeMargin />
+          </Box>
+          <Box className="digital-menu-qr__meta">
+            <Typography variant="body2" color="text.secondary">
+              Imprima ou compartilhe o QR Code nas mesas e no balcão. O link usa o slug da loja.
+            </Typography>
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={handleDownload}
               disabled={downloading}
-              sx={{ minHeight: 44 }}
+              sx={{ mt: 1.5, minHeight: 44 }}
             >
               {downloading ? 'Baixando...' : 'Baixar QR Code'}
             </Button>
           </Box>
-        )}
-      </CardContent>
-    </Card>
+        </Box>
+      ) : null}
+    </SettingsSectionCard>
   );
 });

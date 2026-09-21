@@ -2,8 +2,6 @@ import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Button,
   Switch,
   FormControlLabel,
@@ -12,8 +10,7 @@ import {
   IconButton,
 } from '@mui/material';
 import {
-  Schedule as ScheduleIcon,
-  Save as SaveIcon,
+  ScheduleOutlined as ScheduleIcon,
   Add as AddIcon,
   DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
@@ -25,6 +22,7 @@ import {
   normalizeTime,
   WEEKDAY_OPTIONS,
 } from '../../../../services/storeHoursService';
+import { SettingsSectionCard } from './SettingsSectionCard';
 
 function cloneSchedule(schedule) {
   return normalizeSchedule(schedule?.length ? schedule : createDefaultSchedule()).map((day) => ({
@@ -101,141 +99,98 @@ export const HoursCard = React.memo(function HoursCard({
   };
 
   return (
-    <Card className="settings-card">
-      <CardContent>
-        <Box className="card-header">
-          <Box className="card-title-section">
-            <ScheduleIcon className="card-icon" />
-            <Typography className="card-title">Horários de funcionamento</Typography>
-          </Box>
-          <Button
-            className="save-button"
-            startIcon={<SaveIcon />}
-            onClick={() => onSave('hours')}
-            disabled={saving}
-          >
-            {saving ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </Box>
+    <SettingsSectionCard
+      icon={ScheduleIcon}
+      title="Horários de funcionamento"
+      description="Defina intervalos por dia. Clientes veem o cardápio mesmo fechado, mas não conseguem enviar pedido."
+      actionLabel={saving ? 'Salvando...' : 'Salvar'}
+      onAction={() => onSave('hours')}
+      actionDisabled={saving}
+    >
+      <Box sx={{ mb: 2 }}>
+        <Chip
+          label={previewOpen ? 'Aberto agora' : 'Fechado no momento'}
+          color={previewOpen ? 'success' : 'default'}
+          size="small"
+          className="status-chip"
+        />
+      </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Defina intervalos por dia. Clientes veem o cardápio mesmo fechado, mas não conseguem enviar pedido.
-        </Typography>
-
-        <Box sx={{ mb: 2 }}>
-          <Chip
-            label={previewOpen ? 'Aberto agora' : 'Fechado no momento'}
-            color={previewOpen ? 'success' : 'default'}
-            size="small"
-          />
-        </Box>
-
-        <Box sx={{ display: 'grid', gap: 2 }}>
-          {WEEKDAY_OPTIONS.map((option) => {
-            const day = schedule.find((item) => item.weekday === option.id) || {
-              weekday: option.id,
-              enabled: false,
-              intervals: [],
-            };
-            return (
-              <Box
-                key={option.id}
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  p: 1.5,
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={Boolean(day.enabled)}
-                        onChange={(e) => setDayEnabled(option.id, e.target.checked)}
-                        sx={switchStyles}
-                      />
-                    }
-                    label={option.label}
-                  />
-                  <Typography variant="caption" color="text.secondary">
-                    {formatDayHours(day)}
-                  </Typography>
-                </Box>
-
-                {day.enabled ? (
-                  <Box sx={{ mt: 1.5, display: 'grid', gap: 1 }}>
-                    {day.intervals.map((interval, index) => (
-                      <Box
-                        key={`${option.id}-${index}`}
-                        sx={{
-                          display: 'grid',
-                          gap: 1,
-                          gridTemplateColumns: { xs: '1fr 1fr auto', sm: '1fr 1fr auto' },
-                          alignItems: 'center',
-                        }}
-                      >
-                        <TextField
-                          label="Abre"
-                          type="time"
-                          size="small"
-                          value={interval.open || '08:00'}
-                          onChange={(e) => setIntervalField(option.id, index, 'open', e.target.value)}
-                          InputLabelProps={{ shrink: true }}
-                          inputProps={{ step: 60 }}
-                          fullWidth
-                        />
-                        <TextField
-                          label="Fecha"
-                          type="time"
-                          size="small"
-                          value={interval.close || '22:00'}
-                          onChange={(e) => setIntervalField(option.id, index, 'close', e.target.value)}
-                          InputLabelProps={{ shrink: true }}
-                          inputProps={{ step: 60 }}
-                          fullWidth
-                        />
-                        <IconButton
-                          aria-label={`Remover intervalo de ${option.label}`}
-                          onClick={() => removeInterval(option.id, index)}
-                          size="small"
-                          disabled={day.intervals.length <= 1}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                    <Button
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={() => addInterval(option.id)}
-                      sx={{ justifyContent: 'flex-start', width: 'fit-content' }}
-                    >
-                      Adicionar intervalo
-                    </Button>
-                  </Box>
-                ) : null}
+      <Box className="hours-day-list">
+        {WEEKDAY_OPTIONS.map((option) => {
+          const day = schedule.find((item) => item.weekday === option.id) || {
+            weekday: option.id,
+            enabled: false,
+            intervals: [],
+          };
+          return (
+            <Box key={option.id} className={`hours-day-row${!day.enabled ? ' is-disabled' : ''}`}>
+              <Box className="hours-day-row__head">
+                <FormControlLabel
+                  control={(
+                    <Switch
+                      checked={Boolean(day.enabled)}
+                      onChange={(e) => setDayEnabled(option.id, e.target.checked)}
+                      sx={switchStyles}
+                    />
+                  )}
+                  label={option.label}
+                  className="hours-day-row__toggle"
+                />
+                <Typography variant="caption" color="text.secondary" className="hours-day-row__summary">
+                  {formatDayHours(day)}
+                </Typography>
               </Box>
-            );
-          })}
-        </Box>
 
-        <Box className="setting-item" sx={{ mt: 2 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={Boolean(settings?.deliveryEnabled)}
-                onChange={(e) => onSettingChange('deliveryEnabled', null, e.target.checked)}
-                sx={switchStyles}
-              />
-            }
-            label="Atender por delivery"
-          />
-        </Box>
-        <Typography variant="caption" color="text.secondary">
-          Desative para pausar o canal de delivery sem alterar o horário da loja.
-        </Typography>
-      </CardContent>
-    </Card>
+              {day.enabled ? (
+                <Box className="hours-day-row__intervals">
+                  {day.intervals.map((interval, index) => (
+                    <Box key={`${option.id}-${index}`} className="hours-interval">
+                      <TextField
+                        label="Abre"
+                        type="time"
+                        size="small"
+                        value={interval.open || '08:00'}
+                        onChange={(e) => setIntervalField(option.id, index, 'open', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 60 }}
+                      />
+                      <Typography component="span" className="hours-interval__sep" aria-hidden>
+                        —
+                      </Typography>
+                      <TextField
+                        label="Fecha"
+                        type="time"
+                        size="small"
+                        value={interval.close || '22:00'}
+                        onChange={(e) => setIntervalField(option.id, index, 'close', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 60 }}
+                      />
+                      <IconButton
+                        aria-label={`Remover intervalo de ${option.label}`}
+                        onClick={() => removeInterval(option.id, index)}
+                        size="small"
+                        disabled={day.intervals.length <= 1}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  <Button
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() => addInterval(option.id)}
+                    className="hours-add-interval"
+                  >
+                    Adicionar intervalo
+                  </Button>
+                </Box>
+              ) : null}
+            </Box>
+          );
+        })}
+      </Box>
+    </SettingsSectionCard>
   );
 });

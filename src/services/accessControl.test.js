@@ -104,6 +104,12 @@ describe('canAccessRoute', () => {
     expect(canAccessRoute(user({ role: ROLES.CASHIER }), PATHS.APP_CONFIGURACOES)).toBe(false);
   });
 
+  it('ADMIN acessa sub-rotas de configurações', () => {
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), `${PATHS.APP_CONFIGURACOES}/geral`)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), `${PATHS.APP_CONFIGURACOES}/delivery`)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.CASHIER }), `${PATHS.APP_CONFIGURACOES}/geral`)).toBe(false);
+  });
+
   it('rotas incompletas /app e /admin não são acessíveis (redirect para o default)', () => {
     expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.APP)).toBe(false);
     expect(canAccessRoute(user({ role: ROLES.MASTER, storeId: null }), PATHS.ADMIN)).toBe(false);

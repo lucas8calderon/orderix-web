@@ -361,7 +361,7 @@ export const useSliderStyles = () => useMemo(() => ({
     backgroundColor: 'var(--color-primary)',
   },
   '& .MuiSlider-markLabel': {
-    color: '#374151',
+    color: 'var(--color-text-secondary)',
   },
   '& .MuiSlider-markLabelActive': {
     color: 'var(--color-primary)',

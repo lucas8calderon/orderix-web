@@ -278,7 +278,10 @@ export function canAccessRoute(user, path) {
   if (!config) {
     return false;
   }
-  return config.routes.includes(normalized);
+  // Permite sub-rotas (ex.: /app/configuracoes/geral) sob um path permitido.
+  return config.routes.some(
+    (route) => normalized === route || normalized.startsWith(`${route}/`)
+  );
 }
 
 export function getPostLoginPath(user) {
