@@ -1,12 +1,21 @@
 import React from 'react';
 import {
   Check,
+  ClipboardList,
   Cloud,
+  CookingPot,
   Crown,
   Headphones,
+  LayoutDashboard,
   Lock,
+  Monitor,
+  Printer,
+  QrCode,
+  RefreshCw,
   Rocket,
   Shield,
+  ShieldCheck,
+  Smartphone,
   Sparkles,
   Store,
   TrendingUp,
@@ -14,26 +23,57 @@ import {
 import { openWhatsApp } from '../landingAssets';
 import '../styles/PlansSection.css';
 
+const SHARED_FEATURES = [
+  { id: 'gestao', title: 'Gestão centralizada', Icon: LayoutDashboard },
+  { id: 'pdv', title: 'PDV', Icon: Monitor },
+  { id: 'garcom', title: 'App Garçom', Icon: Smartphone },
+  { id: 'mesas', title: 'Mesas e Comandas', Icon: ClipboardList },
+  { id: 'cardapio', title: 'Cardápio Digital', Icon: QrCode },
+  { id: 'cozinha', title: 'Integração com cozinha', Icon: CookingPot },
+  { id: 'impressao', title: 'Impressão', Icon: Printer },
+  { id: 'updates', title: 'Atualizações da plataforma', Icon: RefreshCw },
+  { id: 'security', title: 'Segurança e sincronização', Icon: ShieldCheck },
+];
+
 /** Preços alinhados a SubscriptionPlan no backend (49,90 / 79,90 / 119,90). */
 const PLANS = [
   {
     id: 'basico',
     name: 'Básico',
     price: '49,90',
-    tagline: 'Ideal para quem está começando.',
-    description: 'Operação completa para ponto pequeno.',
+    tagline: 'Para quem está começando.',
+    description: 'Para pequenas operações que querem começar com tudo organizado.',
+    cta: 'Começar com o Básico',
     highlighted: false,
     Icon: Store,
-    features: [
-      'Até 3 colaboradores',
-      'Até 2 dispositivos',
-      'Até 20 mesas',
-      'Até 20 comandas',
-      '1 tela KDS',
-      '1 impressora',
-      'Relatórios do dia e do turno',
-      'Suporte WhatsApp em horário comercial',
-      'Ativação simples',
+    groups: [
+      {
+        id: 'recursos',
+        title: 'Recursos',
+        items: [
+          '1 tela KDS / Cozinha',
+          'Controle de estoque básico',
+          'Dashboard básico',
+          'Relatórios operacionais',
+        ],
+      },
+      {
+        id: 'capacidade',
+        title: 'Capacidade',
+        items: [
+          'Até 3 colaboradores',
+          'Até 2 dispositivos',
+          'Até 15 mesas',
+          'Até 20 comandas simultâneas',
+          '1 impressora',
+          'Histórico de até 30 dias',
+        ],
+      },
+      {
+        id: 'suporte',
+        title: 'Suporte',
+        items: ['Suporte em horário comercial'],
+      },
     ],
   },
   {
@@ -41,40 +81,87 @@ const PLANS = [
     name: 'Profissional',
     price: '79,90',
     badge: 'Recomendado',
-    tagline: 'Mais capacidade e suporte prioritário.',
-    description: 'Escala do dia a dia, com mais capacidade e suporte com prioridade.',
+    tagline: 'O plano principal da operação.',
+    description: 'Uma operação completa para quem quer vender, atender e gerenciar em um só lugar.',
+    cta: 'Assinar Profissional',
     highlighted: true,
     Icon: TrendingUp,
-    features: [
-      'Até 10 colaboradores',
-      'Até 6 dispositivos',
-      'Até 50 mesas',
-      'Até 50 comandas',
-      'Até 3 telas KDS',
-      'Várias impressoras',
-      'Dashboard e histórico operacional',
-      'Suporte com prioridade',
-      'Ativação assistida e treinamento curto',
+    groups: [
+      {
+        id: 'recursos',
+        title: 'Recursos',
+        items: [
+          'Delivery próprio',
+          'Controle de estoque completo',
+          'Até 3 telas KDS / Cozinha',
+          '1 dispositivo de Autoatendimento',
+          'Dashboard gerencial completo',
+          'Relatórios completos',
+        ],
+      },
+      {
+        id: 'capacidade',
+        title: 'Capacidade',
+        items: [
+          'Até 10 colaboradores',
+          'Até 6 dispositivos',
+          'Até 50 mesas',
+          'Até 100 comandas simultâneas',
+          'Até 3 impressoras',
+          'Histórico de até 12 meses',
+        ],
+      },
+      {
+        id: 'suporte',
+        title: 'Suporte',
+        items: ['Suporte prioritário', 'Ativação assistida'],
+      },
     ],
   },
   {
     id: 'premium',
     name: 'Premium',
     price: '119,90',
-    tagline: 'Para operações maiores e mais exigentes.',
-    description: 'Teto alto e atendimento próximo para operações maiores.',
+    tagline: 'Mais escala e liberdade.',
+    description: 'Mais capacidade e liberdade para operações de alto volume.',
+    cta: 'Assinar Premium',
     highlighted: false,
     Icon: Crown,
-    features: [
-      'Colaboradores sem limite prático',
-      'Dispositivos ilimitados',
-      'Mesas ilimitadas',
-      'Comandas ilimitadas',
-      'KDS multiárea ilimitado',
-      'Impressoras ilimitadas',
-      'Acesso completo ao painel gerencial',
-      'Suporte prioritário e onboarding dedicado',
-      'Ajuda na configuração inicial (cardápio, mesas e impressoras)',
+    groups: [
+      {
+        id: 'recursos',
+        title: 'Recursos',
+        items: [
+          'Delivery próprio',
+          'Controle de estoque completo',
+          'KDS multiárea',
+          'Autoatendimento',
+          'Dashboard gerencial completo',
+          'Relatórios avançados',
+          'Histórico completo',
+        ],
+      },
+      {
+        id: 'capacidade',
+        title: 'Capacidade',
+        items: [
+          'Colaboradores ilimitados*',
+          'Dispositivos ilimitados*',
+          'Mesas ilimitadas*',
+          'Comandas ilimitadas*',
+          'Telas KDS ilimitadas*',
+          'Impressoras ilimitadas*',
+        ],
+      },
+      {
+        id: 'suporte',
+        title: 'Suporte',
+        items: [
+          'Suporte prioritário',
+          'Onboarding personalizado',
+          'Ajuda na configuração inicial',
+        ],
+      },
     ],
   },
 ];
@@ -124,8 +211,22 @@ const PlansSection = () => {
             Escolha o <span className="plans-title__accent">plano certo</span> para a sua operação
           </h2>
           <p className="plans-subtitle">
-            Soluções flexíveis para restaurantes, bares e todos os tipos de negócios.
+            A base Weper está em todos os planos. O que muda é a capacidade e o quanto da operação você quer no mesmo lugar.
           </p>
+        </div>
+
+        <div className="plans-shared">
+          <h3 className="plans-shared__title">Todos os planos já contam com a base Weper.</h3>
+          <ul className="plans-shared__grid">
+            {SHARED_FEATURES.map(({ id, title, Icon }) => (
+              <li key={id} className="plans-shared__item">
+                <span className="plans-shared__icon" aria-hidden="true">
+                  <Icon size={16} strokeWidth={1.85} />
+                </span>
+                <span>{title}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="plans-grid">
@@ -162,28 +263,37 @@ const PlansSection = () => {
 
                 <p className="plan-description">{plan.description}</p>
 
-                <ul className="plan-features">
-                  {plan.features.map((feature) => (
-                    <li key={feature}>
-                      <span className="plan-check" aria-hidden="true">
-                        <Check size={12} strokeWidth={2.75} />
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                {plan.groups.map((group) => (
+                  <div key={group.id} className="plan-group">
+                    <h4 className="plan-group__title">{group.title}</h4>
+                    <ul className="plan-features">
+                      {group.items.map((feature) => (
+                        <li key={feature}>
+                          <span className="plan-check" aria-hidden="true">
+                            <Check size={12} strokeWidth={2.75} />
+                          </span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
 
                 <button
                   type="button"
                   className={`btn-plan ${plan.highlighted ? 'btn-plan--primary' : 'btn-plan--outline'}`}
                   onClick={() => handleSubscribe(plan.name)}
                 >
-                  Assinar {plan.name}
+                  {plan.cta}
                 </button>
               </article>
             );
           })}
         </div>
+
+        <p className="plans-footnote">
+          *Sujeito à política de uso justo e limites técnicos da plataforma.
+        </p>
 
         <div className="plans-trust" role="list">
           {TRUST_ITEMS.map(({ id, title, description, Icon }) => (

@@ -41,12 +41,12 @@ const FAQS = [
   },
   {
     q: 'O que está incluído nos planos?',
-    a: 'Todos os planos incluem a operação Weper: app de atendimento, frente de caixa e comandas, cozinha (KDS), painel administrativo, catálogo, colaboradores, 1 loja e suporte por WhatsApp. O que muda entre Básico, Profissional e Premium é a capacidade (colaboradores, dispositivos, mesas, comandas, telas KDS e impressoras) e o nível de suporte.',
+    a: 'Todos os planos já incluem a base Weper: gestão centralizada, PDV, app de atendimento, mesas e comandas, cardápio digital, integração com a cozinha, impressão, atualizações e segurança dos dados. O que muda entre Básico, Profissional e Premium são as funcionalidades avançadas (estoque, dashboard, relatórios, KDS, delivery e autoatendimento) e a capacidade operacional (colaboradores, dispositivos, mesas, comandas, impressoras e histórico).',
     Icon: ListChecks,
   },
   {
     q: 'Qual a diferença entre os planos?',
-    a: 'Básico (R$ 49,90) cabe em ponto pequeno: até 3 colaboradores, 2 dispositivos, 20 mesas, 20 comandas, 1 KDS e 1 impressora, com relatórios do dia e do turno. Profissional (R$ 79,90) escala o dia a dia: até 10 colaboradores, 6 dispositivos, 50 mesas, 50 comandas, 3 telas KDS, várias impressoras, dashboard com histórico e suporte com prioridade. Premium (R$ 119,90) oferece teto alto, mesas e comandas ilimitadas, painel gerencial completo, suporte prioritário e ajuda na configuração inicial.',
+    a: 'Básico (R$ 49,90) é para operações pequenas: estoque e dashboard básicos, 1 tela KDS, até 3 colaboradores, 2 dispositivos, 15 mesas, 20 comandas simultâneas, 1 impressora e histórico de 30 dias, com suporte em horário comercial. Profissional (R$ 79,90) é a operação completa: delivery próprio, estoque completo, até 3 telas KDS, 1 dispositivo de autoatendimento, dashboard gerencial, até 10 colaboradores, 6 dispositivos, 50 mesas, 100 comandas simultâneas, 3 impressoras e histórico de 12 meses, com suporte prioritário e ativação assistida. Premium (R$ 119,90) amplia capacidade e liberdade: KDS multiárea, autoatendimento, colaboradores, dispositivos, mesas, comandas, telas KDS e impressoras ilimitados*, histórico completo, suporte prioritário e onboarding personalizado. *Sujeito à política de uso justo e limites técnicos da plataforma.',
     Icon: Scale,
   },
   {
