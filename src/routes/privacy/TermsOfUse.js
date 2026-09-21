@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
-import { openWhatsApp } from '../home/landingAssets';
+import { openWhatsApp, WHATSAPP_DISPLAY } from '../home/landingAssets';
 import { PATHS } from '../../services/accessControl';
 import '../home/styles/Footer.css';
 import './PrivacyPolicy.css';
@@ -79,7 +79,7 @@ const TermsOfUse = () => {
           <section className="privacy-section">
             <h2 className="section-title">4. Contato</h2>
             <div className="section-content">
-              <p>Dúvidas sobre estes termos: fale com a Weper no WhatsApp.</p>
+              <p>Dúvidas sobre estes termos: fale com a Weper no WhatsApp {WHATSAPP_DISPLAY}.</p>
               <button
                 type="button"
                 className="back-button"

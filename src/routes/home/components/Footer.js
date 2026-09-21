@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WeperMark } from './WeperMark';
-import { openWhatsApp, scrollToId } from '../landingAssets';
+import { openWhatsApp, scrollToId, WHATSAPP_DISPLAY } from '../landingAssets';
 import { PATHS } from '../../../services/accessControl';
 import '../styles/Footer.css';
 
@@ -37,22 +37,20 @@ const Footer = () => {
                 </svg>
               </a>
               <a
-                href="https://www.linkedin.com/"
+                href="https://www.facebook.com/profile.php?id=61594853091544"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="social-link"
-                aria-label="LinkedIn"
+                aria-label="Facebook"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                  <rect x="2" y="9" width="4" height="12" />
-                  <circle cx="4" cy="4" r="2" />
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                 </svg>
               </a>
               <button
                 type="button"
                 className="social-link"
-                aria-label="WhatsApp"
+                aria-label={`WhatsApp ${WHATSAPP_DISPLAY}`}
                 onClick={() => openWhatsApp('Olá! Gostaria de falar com a Weper.')}
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -60,6 +58,13 @@ const Footer = () => {
                 </svg>
               </button>
             </div>
+            <button
+              type="button"
+              className="footer-contact"
+              onClick={() => openWhatsApp('Olá! Gostaria de falar com a Weper.')}
+            >
+              WhatsApp {WHATSAPP_DISPLAY}
+            </button>
           </div>
 
           <div className="footer-section">

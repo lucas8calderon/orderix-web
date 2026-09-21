@@ -4,6 +4,7 @@ import { ArrowLeft, Shield, Eye, Lock, Database, UserCheck, FileText, AlertTrian
 import '../home/styles/Footer.css';
 import './PrivacyPolicy.css';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
+import { openWhatsApp, WHATSAPP_DISPLAY } from '../home/landingAssets';
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
@@ -197,7 +198,14 @@ const PrivacyPolicy = () => {
                 seus direitos, entre em contato conosco:
               </p>
               <div className="contact-info">
-                <p>Fale com a Weper pelo WhatsApp disponível na página inicial. Não usamos um telefone ou e-mail jurídico fictício nesta versão.</p>
+                <p>WhatsApp: {WHATSAPP_DISPLAY}</p>
+                <button
+                  type="button"
+                  className="back-button"
+                  onClick={() => openWhatsApp('Olá! Gostaria de falar sobre a política de privacidade da Weper.')}
+                >
+                  Falar no WhatsApp
+                </button>
               </div>
             </div>
           </section>

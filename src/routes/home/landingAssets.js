@@ -26,7 +26,8 @@ export const LANDING_IMAGES = {
   },
 };
 
-export const WHATSAPP_NUMBER = '5511977844172';
+export const WHATSAPP_NUMBER = '5511924570853';
+export const WHATSAPP_DISPLAY = '+55 11 92457-0853';
 
 export function openWhatsApp(message) {
   const text = encodeURIComponent(message);

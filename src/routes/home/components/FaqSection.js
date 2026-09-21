@@ -15,13 +15,13 @@ import {
   Smartphone,
   Store,
 } from 'lucide-react';
-import { openWhatsApp } from '../landingAssets';
+import { openWhatsApp, WHATSAPP_DISPLAY } from '../landingAssets';
 import '../styles/FaqSection.css';
 
 const FAQS = [
   {
     q: 'Como começo a usar a Weper?',
-    a: 'Pelo WhatsApp desta página. A equipe ativa o acesso do estabelecimento. Não há cadastro automático nem trial de 14 dias no site.',
+    a: `Pelo WhatsApp ${WHATSAPP_DISPLAY}. A equipe ativa o acesso do estabelecimento. Não há cadastro automático nem trial de 14 dias no site.`,
     Icon: HelpCircle,
   },
   {
@@ -51,7 +51,7 @@ const FAQS = [
   },
   {
     q: 'Como falo com o suporte?',
-    a: 'Pelo WhatsApp disponível na página. No Básico o atendimento é em horário comercial. No Profissional e no Premium o suporte tem prioridade; o Premium inclui onboarding dedicado.',
+    a: `Pelo WhatsApp ${WHATSAPP_DISPLAY}. No Básico o atendimento é em horário comercial. No Profissional e no Premium o suporte tem prioridade; o Premium inclui onboarding dedicado.`,
     Icon: Headphones,
   },
   {
@@ -61,7 +61,7 @@ const FAQS = [
   },
   {
     q: 'Posso mudar de plano depois?',
-    a: 'Sim. Você pode evoluir do Básico para Profissional ou Premium. Fale com o suporte no WhatsApp para ajustar a assinatura.',
+    a: `Sim. Você pode evoluir do Básico para Profissional ou Premium. Fale com o suporte no WhatsApp ${WHATSAPP_DISPLAY} para ajustar a assinatura.`,
     Icon: RefreshCw,
   },
 ];
