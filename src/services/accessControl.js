@@ -306,12 +306,34 @@ export function formatCurrency(value) {
   return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+/**
+ * Normaliza datas vindas da API (ISO, yyyy-MM-dd, yyyyMMdd ou array Jackson [y,m,d])
+ * para `yyyy-MM-dd` (valor de `<input type="date">`).
+ */
+export function toDateInputValue(value) {
+  if (value == null || value === '') return '';
+  if (Array.isArray(value) && value.length >= 3) {
+    const [y, m, d] = value;
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  if (/^\d{8}$/.test(raw)) return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
+  const parsed = new Date(raw.includes('T') ? raw : `${raw}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const d = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Exibe data em dd/MM/yyyy (pt-BR). */
 export function formatDate(value) {
-  if (!value) return '—';
-  const date = typeof value === 'string' && value.includes('T')
-    ? new Date(value)
-    : new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
+  if (value == null || value === '') return '—';
+  const iso = toDateInputValue(value);
+  if (!iso) return typeof value === 'string' ? value : '—';
+  const date = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleDateString('pt-BR');
 }
 

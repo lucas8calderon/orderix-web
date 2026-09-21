@@ -38,6 +38,7 @@ import {
   formatCurrency,
   formatDate,
   getPostLoginPath,
+  toDateInputValue,
 } from '../../services/accessControl';
 import { useMasterStores } from './hook/useMasterStores';
 import { createStore, updateStore } from './service/storesService';
@@ -78,8 +79,8 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
         plan: initialValues.plan || 'BASIC',
         price: initialValues.price ?? PLANS[initialValues.plan || 'BASIC']?.price ?? 49.9,
         subscriptionStatus: initialValues.subscriptionStatus || 'ACTIVE',
-        startDate: initialValues.startDate || '',
-        expiresAt: initialValues.expiresAt || '',
+        startDate: toDateInputValue(initialValues.startDate),
+        expiresAt: toDateInputValue(initialValues.expiresAt),
       });
     } else {
       const today = new Date();
@@ -87,8 +88,8 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       setForm({
         ...emptyForm,
-        startDate: today.toISOString().slice(0, 10),
-        expiresAt: nextMonth.toISOString().slice(0, 10),
+        startDate: toDateInputValue(today),
+        expiresAt: toDateInputValue(nextMonth),
       });
     }
   }, [open, initialValues]);

@@ -2,6 +2,7 @@ import {
   PATHS,
   ROLES,
   canAccessRoute,
+  formatDate,
   getDefaultRouteByRole,
   getPostLoginPath,
   getRestaurantId,
@@ -10,6 +11,7 @@ import {
   isPlatformAdmin,
   isPublicPath,
   isStoreAdmin,
+  toDateInputValue,
 } from './accessControl';
 
 function user(overrides) {
@@ -132,5 +134,20 @@ describe('roles auxiliares', () => {
   it('hasPermission é um stub por role', () => {
     expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.floor')).toBe(true);
     expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.catalog')).toBe(false);
+  });
+});
+
+describe('formatDate / toDateInputValue', () => {
+  it('formata ISO, yyyyMMdd e array Jackson como dd/MM/yyyy', () => {
+    expect(formatDate('2026-10-21')).toBe('21/10/2026');
+    expect(formatDate('20261021')).toBe('21/10/2026');
+    expect(formatDate([2026, 10, 21])).toBe('21/10/2026');
+    expect(formatDate(null)).toBe('—');
+  });
+
+  it('normaliza para input type=date (yyyy-MM-dd)', () => {
+    expect(toDateInputValue('20261021')).toBe('2026-10-21');
+    expect(toDateInputValue([2026, 10, 21])).toBe('2026-10-21');
+    expect(toDateInputValue('2026-10-21T00:00:00')).toBe('2026-10-21');
   });
 });
