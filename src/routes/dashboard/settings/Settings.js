@@ -33,6 +33,8 @@ import {
 } from '../../../services/paymentConfigService';
 import { useSettingsState, useSliderStyles, useSwitchStyles } from './hooks/useSettingsState';
 import { DigitalMenuCard } from './components/DigitalMenuCard';
+import { HoursCard } from './components/HoursCard';
+import { DeliverySettingsCard } from './components/DeliverySettingsCard';
 import './Settings.css';
 
 const LazySlider = lazy(() => Promise.resolve({ default: Slider }));
@@ -396,6 +398,23 @@ export function Settings() {
         />
 
         <DigitalMenuCard
+          settings={settings}
+          onSettingChange={updateSetting}
+          onSave={saveSettings}
+          onToast={showToast}
+          switchStyles={switchStyles}
+          saving={saving}
+        />
+
+        <HoursCard
+          settings={settings}
+          onSettingChange={updateSetting}
+          onSave={saveSettings}
+          switchStyles={switchStyles}
+          saving={saving}
+        />
+
+        <DeliverySettingsCard
           settings={settings}
           onSettingChange={updateSetting}
           onSave={saveSettings}

@@ -24,7 +24,8 @@ axios.interceptors.response.use(
         const path = window.location.pathname;
         const stayOnPage = [PATHS.LOGIN, PATHS.HOME, PATHS.PRIVACY, PATHS.FORGOT_PASSWORD, PATHS.TERMS];
         const isPublicMenu = path === PATHS.PUBLIC_MENU || path.startsWith(`${PATHS.PUBLIC_MENU}/`);
-        if (!stayOnPage.includes(path) && !isPublicMenu) {
+        const isPublicDelivery = path === PATHS.PUBLIC_DELIVERY || path.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
+        if (!stayOnPage.includes(path) && !isPublicMenu && !isPublicDelivery) {
           window.location.assign(PATHS.LOGIN);
         }
       }
@@ -47,7 +48,8 @@ axios.interceptors.response.use(
       if (typeof window !== 'undefined' && window.location.pathname !== PATHS.SUBSCRIPTION_BLOCKED) {
         const path = window.location.pathname;
         const onPublicMenu = path === PATHS.PUBLIC_MENU || path.startsWith(`${PATHS.PUBLIC_MENU}/`);
-        if (!onPublicMenu) {
+        const onPublicDelivery = path === PATHS.PUBLIC_DELIVERY || path.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
+        if (!onPublicMenu && !onPublicDelivery) {
           window.location.assign(PATHS.SUBSCRIPTION_BLOCKED);
         }
       }

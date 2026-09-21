@@ -64,6 +64,12 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/cardapio')).toBe(true);
     expect(isPublicPath('/app/dashboard')).toBe(false);
   });
+
+  it('trata /delivery/:slug e acompanhamento como rotas públicas', () => {
+    expect(isPublicPath('/delivery/padaria')).toBe(true);
+    expect(isPublicPath('/delivery/pedido/abc')).toBe(true);
+    expect(isPublicPath('/delivery')).toBe(true);
+  });
 });
 
 describe('canAccessRoute', () => {

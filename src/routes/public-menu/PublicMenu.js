@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { getPublicMenuBySlug } from '../../services/publicMenuService';
 import { API_BASE_URL } from '../../services/apiConfig';
+import { formatDayHours, scheduleForDisplay } from '../../services/storeHoursService';
 import { defaultMenuImage, DEFAULT_MENU_IMAGE_PATH } from '../dashboard/menu/utils/defaultMenuImage';
 import './PublicMenu.css';
 
@@ -94,6 +95,9 @@ export default function PublicMenu() {
     return selected ? [selected] : menu.categories;
   }, [menu, activeCategoryId]);
 
+  const isOpen = Boolean(menu?.open);
+  const scheduleRows = scheduleForDisplay(menu?.schedule);
+
   if (loading) {
     return (
       <Box className="public-menu-state">
@@ -119,12 +123,46 @@ export default function PublicMenu() {
     <Box className="public-menu-page">
       <header className="public-menu-header">
         <Container maxWidth="sm">
-          <Typography component="h1" className="public-menu-store-name">
-            {menu.storeName}
-          </Typography>
+          <Box className="public-menu-store-row">
+            <Typography component="h1" className="public-menu-store-name">
+              {menu.storeName}
+            </Typography>
+            <Chip
+              label={isOpen ? 'Aberto' : 'Fechado'}
+              size="small"
+              className={`public-menu-status-chip ${isOpen ? 'is-open' : 'is-closed'}`}
+            />
+          </Box>
           <Typography className="public-menu-subtitle">Cardápio digital</Typography>
         </Container>
       </header>
+
+      {!isOpen ? (
+        <Container maxWidth="sm">
+          <Box className="public-menu-closed-banner" role="status">
+            <Typography className="public-menu-closed-title">
+              O estabelecimento está fechado no momento
+            </Typography>
+            <Typography className="public-menu-closed-copy">
+              Você pode ver o cardápio, mas não é possível enviar pedido.
+            </Typography>
+            {scheduleRows.length > 0 ? (
+              <Box className="public-menu-hours-list" aria-label="Horários de funcionamento">
+                {scheduleRows.map((day) => (
+                  <Box key={day.id} className="public-menu-hours-row">
+                    <Typography component="span" className="public-menu-hours-day">
+                      {day.label}
+                    </Typography>
+                    <Typography component="span" className="public-menu-hours-value">
+                      {formatDayHours(day)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            ) : null}
+          </Box>
+        </Container>
+      ) : null}
 
       {menu.categories?.length > 0 && (
         <Box className="public-menu-chips" role="navigation" aria-label="Categorias">

@@ -41,22 +41,22 @@ import { styled } from '@mui/material/styles';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
 import { getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
-import { resolveMandatorySelections } from '../atendimento/utils/accountTotals';
+import { mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
+import {
+    SALES_CHANNEL_FILTERS,
+} from '../../../services/salesChannel';
+
+const KITCHEN_FILTERS = [
+    ...SALES_CHANNEL_FILTERS,
+    { id: 'atrasados', label: 'Atrasados' },
+];
 
 const UI_TO_KITCHEN = {
     novo: 'NEW',
     em_producao: 'IN_PREPARATION',
     feito: 'READY',
     entregue: 'DELIVERED',
-};
-
-const KITCHEN_TO_UI = {
-    NEW: 'novo',
-    IN_PREPARATION: 'em_producao',
-    READY: 'feito',
-    DELIVERED: 'entregue',
-    FINALIZED: 'entregue',
 };
 
 const STATUS_LABELS = {
@@ -86,54 +86,6 @@ function readShowFinalizedPref() {
 }
 
 const STATUS_FLOW = ['novo', 'em_producao', 'feito', 'entregue'];
-
-function mapKitchenOrder(order) {
-    const products = order.products || [];
-    const items = products.map((product) => {
-        const quantity = Number(product.quantity) > 0 ? Number(product.quantity) : 1;
-        const extras = (product.extras || [])
-            .map((extra) => {
-                const extraQty = Number(extra.quantity) > 1 ? ` x${extra.quantity}` : '';
-                return extra.name ? `${extra.name}${extraQty}` : '';
-            })
-            .filter(Boolean);
-        const selections = resolveMandatorySelections(product).map(
-            (selection) => `${selection.groupName}: ${selection.itemName}`
-        );
-        return {
-            label: `${quantity}x ${product.name}`,
-            observation: (product.observation || '').trim(),
-            extras,
-            selections,
-        };
-    });
-    let orderType = 'balcao';
-    if (order.comandaId) {
-        orderType = 'comanda';
-    } else if (order.fromTable || (order.tableId && order.tableId !== 999)) {
-        orderType = 'mesa';
-    }
-    return {
-        id: order.id,
-        orderNumber: `#${order.id}`,
-        customerName: order.customerName || 'Cliente',
-        items,
-        status: resolveUiStatus(order),
-        createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
-        tableNumber: order.tableNumber || order.comandaNumber || '—',
-        waiter: order.waiterName || '—',
-        notes: (order.observation || '').trim(),
-        orderType,
-        orderStatus: order.status || 'ACTIVE',
-    };
-}
-
-function resolveUiStatus(order) {
-    if (order.status === 'CLOSED') {
-        return 'finalizado';
-    }
-    return KITCHEN_TO_UI[order.kitchenStatus] || 'novo';
-}
 
 function KitchenItemLines({ items, notes, compact = false }) {
     const textVariant = compact ? 'body2' : 'body1';
@@ -270,7 +222,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
                                     {order.customerName}
                                 </Typography>
                                 <Chip
-                                    label={order.orderType === 'mesa' ? 'Mesa' : order.orderType === 'balcao' ? 'Balcão' : 'Comanda'}
+                                    label={orderTypeLabel(order.orderType)}
                                     size="small"
                                     sx={{
                                         ml: 1,
@@ -610,21 +562,11 @@ export function Kitchen({ initialFilter }) {
                         }
                     }}
                 >
-                    <ToggleButton value="todos" aria-label="todos">
-                        Todos
-                    </ToggleButton>
-                    <ToggleButton value="mesa" aria-label="mesas">
-                        Mesas
-                    </ToggleButton>
-                    <ToggleButton value="atrasados" aria-label="atrasados">
-                        Atrasados
-                    </ToggleButton>
-                    <ToggleButton value="balcao" aria-label="balcão">
-                        Balcão
-                    </ToggleButton>
-                    <ToggleButton value="comanda" aria-label="comandas">
-                        Comandas
-                    </ToggleButton>
+                    {KITCHEN_FILTERS.map((filter) => (
+                        <ToggleButton key={filter.id} value={filter.id} aria-label={filter.label}>
+                            {filter.label}
+                        </ToggleButton>
+                    ))}
                 </ToggleButtonGroup>
                 <FormControlLabel
                     sx={{ mt: 1.5, ml: 0.5 }}
@@ -802,8 +744,7 @@ export function Kitchen({ initialFilter }) {
                                         Tipo
                                     </Typography>
                                     <Chip
-                                        label={selectedOrder.orderType === 'mesa' ? 'Mesa' :
-                                               selectedOrder.orderType === 'balcao' ? 'Balcão' : 'Comanda'}
+                                        label={orderTypeLabel(selectedOrder.orderType)}
                                         size="small"
                                         sx={{
                                             backgroundColor: 'var(--color-primary)',

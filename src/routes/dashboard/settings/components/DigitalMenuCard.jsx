@@ -93,7 +93,7 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Clientes acessam o catálogo pelo link ou QR. Não inclui pedidos neste MVP.
+          Clientes acessam o catálogo pelo link ou QR. Fora do horário, o cardápio continua visível com a tag Fechado e sem envio de pedido.
         </Typography>
 
         <Box className="setting-item">

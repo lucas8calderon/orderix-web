@@ -63,6 +63,9 @@ export const PATHS = {
   LEGACY_MASTER: '/master/dashboard',
   PUBLIC_MENU: '/cardapio',
   PUBLIC_MENU_SLUG: '/cardapio/:slug',
+  PUBLIC_DELIVERY: '/delivery',
+  PUBLIC_DELIVERY_SLUG: '/delivery/:slug',
+  PUBLIC_DELIVERY_ORDER: '/delivery/pedido/:publicToken',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -235,7 +238,10 @@ export function isPublicPath(path) {
   if (PUBLIC_PATHS.includes(normalized)) {
     return true;
   }
-  return normalized === PATHS.PUBLIC_MENU || normalized.startsWith(`${PATHS.PUBLIC_MENU}/`);
+  return normalized === PATHS.PUBLIC_MENU
+    || normalized.startsWith(`${PATHS.PUBLIC_MENU}/`)
+    || normalized === PATHS.PUBLIC_DELIVERY
+    || normalized.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
 }
 
 export function hasPermission(user, permission) {

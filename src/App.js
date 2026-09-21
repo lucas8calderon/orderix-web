@@ -22,6 +22,8 @@ const Dashboard = lazy(() => import('./routes/dashboard/Dashboard'));
 const MasterDashboard = lazy(() => import('./routes/master/MasterDashboard'));
 const SubscriptionBlocked = lazy(() => import('./routes/subscription/SubscriptionBlocked'));
 const PublicMenu = lazy(() => import('./routes/public-menu/PublicMenu'));
+const PublicDelivery = lazy(() => import('./routes/public-delivery/PublicDelivery'));
+const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTracking'));
 
 function RouteFallback() {
   return (
@@ -93,6 +95,22 @@ function App() {
             element={(
               <Suspense fallback={<RouteFallback />}>
                 <PublicMenu />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.PUBLIC_DELIVERY_ORDER}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <DeliveryTracking />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.PUBLIC_DELIVERY_SLUG}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <PublicDelivery />
               </Suspense>
             )}
           />

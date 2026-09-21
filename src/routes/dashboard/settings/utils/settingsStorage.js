@@ -8,6 +8,18 @@ import {
   getPublicMenuSettings,
   updatePublicMenuSettings,
 } from '../../../../services/publicMenuService';
+import {
+  getStoreHours,
+  toHoursPayload,
+  toHoursUi,
+  updateStoreHours,
+} from '../../../../services/storeHoursService';
+import {
+  getDeliverySettings,
+  toDeliverySettingsPayload,
+  toDeliverySettingsUi,
+  updateDeliverySettings,
+} from '../../../../services/deliveryService';
 
 function toPublicMenuUi(data = {}) {
   return {
@@ -19,15 +31,11 @@ function toPublicMenuUi(data = {}) {
   };
 }
 
-// Mock apenas para blocos ainda não migrados (fiscal, delivery, horários).
+// Mock apenas para blocos ainda não migrados (fiscal).
 let mockSettings = {
   deliveryFee: 5.00,
   deliveryByDistance: false,
   deliveryPerKm: 2.50,
-  openingTime: '08:00',
-  closingTime: '22:00',
-  closedOnSunday: false,
-  customHours: false,
   showUnavailableProducts: false,
   averagePrepTime: 25,
   allowFutureOrders: true,
@@ -61,6 +69,16 @@ export const settingsStorage = {
     return toPaymentUi(response.data || {});
   },
 
+  async getHoursConfig() {
+    const response = await getStoreHours();
+    return toHoursUi(response.data || {});
+  },
+
+  async updateHoursConfig(hoursUi) {
+    const response = await updateStoreHours(toHoursPayload(hoursUi));
+    return toHoursUi(response.data || {});
+  },
+
   async getPublicMenuConfig() {
     const response = await getPublicMenuSettings();
     return toPublicMenuUi(response.data || {});
@@ -74,12 +92,24 @@ export const settingsStorage = {
     return toPublicMenuUi(response.data || {});
   },
 
+  async getDeliveryConfig() {
+    const response = await getDeliverySettings();
+    return toDeliverySettingsUi(response.data || {});
+  },
+
+  async updateDeliveryConfig(deliveryUi) {
+    const response = await updateDeliverySettings(toDeliverySettingsPayload(deliveryUi));
+    return toDeliverySettingsUi(response.data || {});
+  },
+
   async getSettings() {
-    const [payment, publicMenu] = await Promise.all([
+    const [payment, publicMenu, hours, delivery] = await Promise.all([
       this.getPaymentConfig(),
       this.getPublicMenuConfig(),
+      this.getHoursConfig(),
+      this.getDeliveryConfig(),
     ]);
-    return { ...mockSettings, ...payment, ...publicMenu };
+    return { ...mockSettings, ...payment, ...publicMenu, ...hours, ...delivery };
   },
 
   async updateSettings(newSettings) {

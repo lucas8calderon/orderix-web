@@ -26,11 +26,82 @@
   padding: 28px 0 16px;
 }
 
+.public-menu-store-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .public-menu-store-name {
   font-size: clamp(1.75rem, 5vw, 2.25rem) !important;
   font-weight: 800 !important;
   letter-spacing: -0.02em;
   line-height: 1.15 !important;
+}
+
+.public-menu-status-chip {
+  flex-shrink: 0;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.public-menu-status-chip.is-open {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.public-menu-status-chip.is-closed {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.public-menu-closed-banner {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.public-menu-closed-title {
+  font-weight: 700 !important;
+  color: #9a3412 !important;
+  font-size: 0.95rem !important;
+}
+
+.public-menu-closed-copy,
+.public-menu-closed-hours {
+  color: #9a3412 !important;
+  font-size: 0.875rem !important;
+  margin-top: 4px !important;
+}
+
+.public-menu-hours-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.public-menu-hours-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+}
+
+.public-menu-hours-day {
+  color: #9a3412 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  flex-shrink: 0;
+}
+
+.public-menu-hours-value {
+  color: #9a3412 !important;
+  font-size: 0.875rem !important;
+  text-align: right;
 }
 
 .public-menu-subtitle {

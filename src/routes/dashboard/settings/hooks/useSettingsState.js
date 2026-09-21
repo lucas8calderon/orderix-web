@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PAYMENT_METHOD_LABELS } from '../../../../services/paymentConfigService';
 import { settingsStorage } from '../utils/settingsStorage';
 
@@ -70,20 +70,61 @@ const DEFAULT_PUBLIC_MENU = {
   catalogVersion: 0,
 };
 
+const DEFAULT_HOURS = {
+  schedule: [
+    { weekday: 1, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    { weekday: 2, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    { weekday: 3, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    { weekday: 4, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    { weekday: 5, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    { weekday: 6, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    { weekday: 7, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+  ],
+  deliveryEnabled: false,
+};
+
+const DEFAULT_DELIVERY = {
+  deliveryFee: 0,
+  deliveryEstimatedMinutes: '',
+  deliveryMinOrder: 0,
+  storeAddress: '',
+  deliveryPublicPath: '',
+  deliveryLogoUrl: '',
+  deliveryCoverUrl: '',
+};
+
 function apiErrorMessage(error, fallback) {
-  return error?.response?.data?.message || error?.message || fallback;
+  const apiMessage = error?.response?.data?.message;
+  if (typeof apiMessage === 'string' && apiMessage.trim()) {
+    return apiMessage;
+  }
+  const status = error?.response?.status;
+  if (status === 413) {
+    return 'As imagens são grandes demais para enviar. Use arquivos menores ou reinicie o backend atualizado.';
+  }
+  if (error?.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '')) {
+    return 'Tempo esgotado ao salvar. Tente imagens menores.';
+  }
+  if (status === 401 || status === 403) {
+    return error?.message || fallback;
+  }
+  return error?.message || fallback;
 }
 
 export const useSettingsState = () => {
   const [settings, setSettings] = useState({
     ...DEFAULT_PAYMENT,
     ...DEFAULT_PUBLIC_MENU,
+    ...DEFAULT_HOURS,
+    ...DEFAULT_DELIVERY,
     permissions: MOCK_PERMISSIONS,
     companyInfo: MOCK_COMPANY,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   const showToast = useCallback((message, severity = 'success') => {
     setToast({ open: true, message, severity });
@@ -94,10 +135,12 @@ export const useSettingsState = () => {
     Promise.all([
       settingsStorage.getPaymentConfig(),
       settingsStorage.getPublicMenuConfig(),
+      settingsStorage.getHoursConfig(),
+      settingsStorage.getDeliveryConfig(),
     ])
-      .then(([payment, publicMenu]) => {
+      .then(([payment, publicMenu, hours, delivery]) => {
         if (cancelled) return;
-        setSettings((prev) => ({ ...prev, ...payment, ...publicMenu }));
+        setSettings((prev) => ({ ...prev, ...payment, ...publicMenu, ...hours, ...delivery }));
       })
       .catch((error) => {
         if (cancelled) return;
@@ -153,26 +196,64 @@ export const useSettingsState = () => {
       return false;
     }
 
+    const current = settingsRef.current;
     setSaving(true);
     try {
       if (section === 'publicMenu') {
         const publicMenu = await settingsStorage.updatePublicMenuConfig({
-          publicMenuEnabled: settings.publicMenuEnabled,
-          publicMenuShowUnavailable: settings.publicMenuShowUnavailable,
+          publicMenuEnabled: current.publicMenuEnabled,
+          publicMenuShowUnavailable: current.publicMenuShowUnavailable,
         });
         setSettings((prev) => ({ ...prev, ...publicMenu }));
         showToast('Cardápio digital salvo com sucesso.');
         return true;
       }
 
+      if (section === 'hours') {
+        const hours = await settingsStorage.updateHoursConfig({
+          schedule: current.schedule,
+          deliveryEnabled: current.deliveryEnabled,
+        });
+        setSettings((prev) => ({ ...prev, ...hours }));
+        showToast('Horários de funcionamento salvos com sucesso.');
+        return true;
+      }
+
+      if (section === 'delivery') {
+        const deliveryPayload = {
+          deliveryEnabled: current.deliveryEnabled,
+          deliveryFee: current.deliveryFee,
+          deliveryMinOrder: current.deliveryMinOrder,
+          deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
+          storeAddress: current.storeAddress,
+          deliveryLogoUrl: current.deliveryLogoUrl,
+          deliveryCoverUrl: current.deliveryCoverUrl,
+        };
+        const delivery = await settingsStorage.updateDeliveryConfig(deliveryPayload);
+        const sentLogo = Boolean((deliveryPayload.deliveryLogoUrl || '').trim());
+        const sentCover = Boolean((deliveryPayload.deliveryCoverUrl || '').trim());
+        const gotLogo = Boolean((delivery.deliveryLogoUrl || '').trim());
+        const gotCover = Boolean((delivery.deliveryCoverUrl || '').trim());
+        if ((sentLogo && !gotLogo) || (sentCover && !gotCover)) {
+          showToast(
+            'O servidor não gravou logo/banner. Reinicie o backend (migration V13/V14) e tente de novo com imagens menores.',
+            'error'
+          );
+          return false;
+        }
+        setSettings((prev) => ({ ...prev, ...delivery }));
+        showToast('Delivery salvo com sucesso.');
+        return true;
+      }
+
       const payment = await settingsStorage.updatePaymentConfig({
-        timing: settings.timing,
-        waiterPaymentEnabled: settings.waiterPaymentEnabled,
-        paymentMethods: settings.paymentMethods,
-        defaultProvider: settings.defaultProvider,
-        serviceFee: settings.serviceFee,
-        infinitePayHandle: settings.infinitePayHandle,
-        infinitePayDocument: settings.infinitePayDocument,
+        timing: current.timing,
+        waiterPaymentEnabled: current.waiterPaymentEnabled,
+        paymentMethods: current.paymentMethods,
+        defaultProvider: current.defaultProvider,
+        serviceFee: current.serviceFee,
+        infinitePayHandle: current.infinitePayHandle,
+        infinitePayDocument: current.infinitePayDocument,
       });
       setSettings((prev) => ({ ...prev, ...payment }));
       showToast(
@@ -185,6 +266,10 @@ export const useSettingsState = () => {
       const fallback =
         section === 'publicMenu'
           ? 'Não foi possível salvar o cardápio digital.'
+          : section === 'hours'
+            ? 'Não foi possível salvar os horários de funcionamento.'
+          : section === 'delivery'
+            ? 'Não foi possível salvar o Delivery.'
           : section === 'serviceFee'
             ? 'Não foi possível salvar a taxa de serviço.'
             : 'Não foi possível salvar a cobrança da loja.';
@@ -193,13 +278,15 @@ export const useSettingsState = () => {
     } finally {
       setSaving(false);
     }
-  }, [settings, showToast]);
+  }, [showToast]);
 
   const labels = useMemo(() => ({
     sectionTitles: {
       serviceFee: 'Taxa de Serviço',
       paymentMethods: 'Métodos de Pagamento',
       publicMenu: 'Cardápio digital',
+      hours: 'Horários de funcionamento',
+      delivery: 'Delivery',
       permissions: 'Perfis e Permissões',
       companyInfo: 'Dados Fiscais e Empresa',
     },
