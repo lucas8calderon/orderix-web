@@ -1419,3 +1419,79 @@
     max-width: none;
   }
 }
+
+.delivery-account-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  margin: 8px 0 12px;
+}
+
+.delivery-account-hello {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.delivery-account-link,
+.delivery-account-cta {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.delivery-account-cta {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+}
+
+.delivery-orders-head {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 20px;
+}
+
+.delivery-orders-head h1 {
+  margin: 0;
+}
+
+.delivery-orders-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.delivery-order-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+}
+
+.delivery-order-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.delivery-order-card span,
+.delivery-order-card em {
+  font-size: 0.82rem;
+  font-style: normal;
+  color: #64748b;
+}
+

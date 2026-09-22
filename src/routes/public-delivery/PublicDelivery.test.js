@@ -14,6 +14,12 @@ jest.mock('../../services/deliveryService', () => ({
   createDeliveryOrder: jest.fn(),
 }));
 
+jest.mock('../../services/deliveryCustomerService', () => ({
+  listDeliveryCustomerAddresses: jest.fn().mockResolvedValue({ data: [] }),
+  loginDeliveryCustomer: jest.fn(),
+  registerDeliveryCustomer: jest.fn(),
+}));
+
 function renderDelivery() {
   return render(
     <MemoryRouter initialEntries={['/delivery/padaria']}>
@@ -77,6 +83,7 @@ describe('PublicDelivery', () => {
     renderDelivery();
 
     expect(await screen.findByTestId('delivery-open-badge')).toHaveTextContent('Fechado');
+    expect(screen.getByRole('button', { name: /entrar ou criar conta/i })).toBeInTheDocument();
     expect(screen.getByText(/não é possível enviar pedido/i)).toBeInTheDocument();
     expect(screen.getByText('Pão francês')).toBeInTheDocument();
     expect(screen.getByText('Indisponível')).toBeInTheDocument();

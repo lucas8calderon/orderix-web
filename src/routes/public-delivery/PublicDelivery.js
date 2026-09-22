@@ -25,6 +25,8 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { formatCurrency } from '../../services/accessControl';
 import { formatDayHours, scheduleForDisplay } from '../../services/storeHoursService';
 import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
+import { listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
+import { readDeliveryCustomerSession } from '../../services/deliveryCustomerSession';
 import { formatCurrencyInput, parseCurrencyInput } from '../../utils/currencyInput';
 import { formatPhoneInput, isValidBrazilianPhone, phoneDigits } from '../../utils/phoneInput';
 import {
@@ -46,6 +48,8 @@ import DeliveryMenuSearch from './components/DeliveryMenuSearch';
 import DeliveryMenuSkeleton from './components/DeliveryMenuSkeleton';
 import DeliveryProductCard from './components/DeliveryProductCard';
 import DeliveryStoreHeader from './components/DeliveryStoreHeader';
+import DeliveryAccountBar from './components/DeliveryAccountBar';
+import DeliveryAuthDialog from './components/DeliveryAuthDialog';
 import { resolveDeliveryImage } from './utils/resolveDeliveryImage';
 import './PublicDelivery.css';
 
@@ -71,6 +75,8 @@ const emptyCheckout = {
   paymentMethod: 'PIX',
   needsChange: false,
   changeFor: '',
+  addressId: '',
+  saveAddress: true,
 };
 
 export default function PublicDelivery() {
@@ -94,6 +100,19 @@ export default function PublicDelivery() {
   const [checkoutError, setCheckoutError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '' });
+  const [customer, setCustomer] = useState(() => readDeliveryCustomerSession());
+  const [addresses, setAddresses] = useState([]);
+  const [authOpen, setAuthOpen] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setCustomer(readDeliveryCustomerSession());
+    window.addEventListener('weper-delivery-customer-changed', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('weper-delivery-customer-changed', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +144,45 @@ export default function PublicDelivery() {
   useEffect(() => {
     setLastOrder(readLastOrder(slug));
   }, [slug]);
+
+  useEffect(() => {
+    if (!customer) {
+      setAddresses([]);
+      return undefined;
+    }
+    let cancelled = false;
+    listDeliveryCustomerAddresses()
+      .then((response) => {
+        if (!cancelled) setAddresses(response.data || []);
+      })
+      .catch(() => {
+        if (!cancelled) setAddresses([]);
+      });
+    return () => { cancelled = true; };
+  }, [customer]);
+
+  useEffect(() => {
+    if (!checkoutOpen || !customer) return;
+    setCheckout((prev) => {
+      const next = { ...prev };
+      if (!next.customerName) next.customerName = customer.name || '';
+      if (!next.customerPhone) next.customerPhone = formatPhoneInput(customer.phone || '');
+      const preferred = addresses.find((item) => item.isDefault) || addresses[0];
+      if (preferred && !next.addressId && next.fulfillment === 'DELIVERY') {
+        next.addressId = String(preferred.id);
+        next.postalCode = preferred.postalCode || '';
+        next.street = preferred.street || '';
+        next.number = preferred.number || '';
+        next.complement = preferred.complement || '';
+        next.neighborhood = preferred.neighborhood || '';
+        next.city = preferred.city || '';
+        next.state = preferred.state || '';
+        next.reference = preferred.reference || '';
+        next.saveAddress = false;
+      }
+      return next;
+    });
+  }, [checkoutOpen, customer, addresses]);
 
   const filteredCategories = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -245,6 +303,8 @@ export default function PublicDelivery() {
         city: checkout.city,
         state: checkout.state,
         reference: checkout.reference,
+        addressId: checkout.addressId ? Number(checkout.addressId) : null,
+        saveAddress: Boolean(customer) && checkout.fulfillment === 'DELIVERY' && !checkout.addressId && checkout.saveAddress,
         items: cart.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -306,15 +366,26 @@ export default function PublicDelivery() {
       <DeliveryStoreHeader catalog={catalog} />
 
       <div className="delivery-shell">
-        {lastOrder?.token ? (
-          <Box className="delivery-last-order-banner" role="navigation" aria-label="Último pedido">
-            <button
-              type="button"
-              className="delivery-last-order-cta"
-              onClick={() => navigate(`/delivery/pedido/${lastOrder.token}`)}
-            >
-              Ver meu último pedido
-            </button>
+        <DeliveryAccountBar slug={slug} />
+        {lastOrder?.token || customer ? (
+          <Box className="delivery-last-order-banner" role="navigation" aria-label="Pedidos">
+            {customer ? (
+              <button
+                type="button"
+                className="delivery-last-order-cta"
+                onClick={() => navigate(`/delivery/${encodeURIComponent(slug)}/conta/pedidos`)}
+              >
+                Ver meus pedidos
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="delivery-last-order-cta"
+                onClick={() => navigate(`/delivery/pedido/${lastOrder.token}`)}
+              >
+                Ver meu último pedido
+              </button>
+            )}
           </Box>
         ) : null}
 
@@ -531,6 +602,19 @@ export default function PublicDelivery() {
         <DialogTitle>Checkout</DialogTitle>
         <DialogContent>
           {checkoutError ? <Alert severity="error" sx={{ mb: 2 }}>{checkoutError}</Alert> : null}
+          {!customer ? (
+            <Alert
+              severity="info"
+              sx={{ mb: 2 }}
+              action={(
+                <Button color="inherit" size="small" onClick={() => setAuthOpen(true)}>
+                  Entrar
+                </Button>
+              )}
+            >
+              Crie uma conta para salvar o endereço e acompanhar pedidos anteriores.
+            </Alert>
+          ) : null}
           <FormControl sx={{ mb: 2 }}>
             <Typography variant="subtitle2">Tipo do pedido</Typography>
             <RadioGroup
@@ -557,7 +641,42 @@ export default function PublicDelivery() {
           />
           {checkout.fulfillment === 'DELIVERY' ? (
             <>
-              <TextField fullWidth label="CEP" sx={{ mb: 1.5 }} value={checkout.postalCode} onChange={(e) => setCheckout((prev) => ({ ...prev, postalCode: e.target.value }))} />
+              {addresses.length > 0 ? (
+                <FormControl sx={{ mb: 1.5 }}>
+                  <Typography variant="subtitle2">Endereço salvo</Typography>
+                  <RadioGroup
+                    value={checkout.addressId || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const selectedAddress = addresses.find((item) => String(item.id) === value);
+                      setCheckout((prev) => ({
+                        ...prev,
+                        addressId: value,
+                        saveAddress: !value,
+                        postalCode: selectedAddress?.postalCode || '',
+                        street: selectedAddress?.street || '',
+                        number: selectedAddress?.number || '',
+                        complement: selectedAddress?.complement || '',
+                        neighborhood: selectedAddress?.neighborhood || '',
+                        city: selectedAddress?.city || '',
+                        state: selectedAddress?.state || '',
+                        reference: selectedAddress?.reference || '',
+                      }));
+                    }}
+                  >
+                    {addresses.map((address) => (
+                      <FormControlLabel
+                        key={address.id}
+                        value={String(address.id)}
+                        control={<Radio />}
+                        label={`${address.street}, ${address.number} — ${address.neighborhood}`}
+                      />
+                    ))}
+                    <FormControlLabel value="" control={<Radio />} label="Usar outro endereço" />
+                  </RadioGroup>
+                </FormControl>
+              ) : null}
+              <TextField fullWidth label="CEP" sx={{ mb: 1.5 }} value={checkout.postalCode} onChange={(e) => setCheckout((prev) => ({ ...prev, postalCode: e.target.value, addressId: '' }))} />
               <TextField fullWidth label="Rua" sx={{ mb: 1.5 }} value={checkout.street} onChange={(e) => setCheckout((prev) => ({ ...prev, street: e.target.value }))} />
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.5 }}>
                 <TextField label="Número" value={checkout.number} onChange={(e) => setCheckout((prev) => ({ ...prev, number: e.target.value }))} />
@@ -568,7 +687,19 @@ export default function PublicDelivery() {
                 <TextField label="Cidade" value={checkout.city} onChange={(e) => setCheckout((prev) => ({ ...prev, city: e.target.value }))} />
                 <TextField label="UF" value={checkout.state} onChange={(e) => setCheckout((prev) => ({ ...prev, state: e.target.value }))} />
               </Box>
-              <TextField fullWidth label="Referência" sx={{ mb: 1.5 }} value={checkout.reference} onChange={(e) => setCheckout((prev) => ({ ...prev, reference: e.target.value }))} />
+              <TextField fullWidth label="Referência" sx={{ mb: 1.5 }} value={checkout.reference} onChange={(e) => setCheckout((prev) => ({ ...prev, reference: e.target.value, addressId: '' }))} />
+              {customer && !checkout.addressId ? (
+                <FormControlLabel
+                  control={(
+                    <Radio
+                      checked={Boolean(checkout.saveAddress)}
+                      onClick={() => setCheckout((prev) => ({ ...prev, saveAddress: !prev.saveAddress }))}
+                    />
+                  )}
+                  label="Salvar este endereço na minha conta"
+                  sx={{ mb: 1.5 }}
+                />
+              ) : null}
             </>
           ) : null}
           <Typography variant="subtitle2">Pagamento na entrega</Typography>
@@ -621,6 +752,11 @@ export default function PublicDelivery() {
           </Button>
         </DialogActions>
       </Dialog>
+      <DeliveryAuthDialog
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthenticated={(next) => setCustomer(next)}
+      />
     </Box>
   );
 }

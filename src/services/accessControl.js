@@ -66,6 +66,7 @@ export const PATHS = {
   PUBLIC_MENU_SLUG: '/cardapio/:slug',
   PUBLIC_DELIVERY: '/delivery',
   PUBLIC_DELIVERY_SLUG: '/delivery/:slug',
+  PUBLIC_DELIVERY_ORDERS: '/delivery/:slug/conta/pedidos',
   PUBLIC_DELIVERY_ORDER: '/delivery/pedido/:publicToken',
   DEMO: '/demo',
   DEMO_SLUG: '/demo/:slug',

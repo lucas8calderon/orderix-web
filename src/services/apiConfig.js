@@ -1,13 +1,28 @@
 import axios from 'axios';
 import { getToken, clearSession, getCurrentUser, saveSession } from './session';
 import { PATHS } from './accessControl';
+import { clearDeliveryCustomerSession, getDeliveryCustomerToken } from './deliveryCustomerSession';
 
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.timeout = 15000;
 
+function isPublicDeliveryApi(config) {
+  const url = `${config?.baseURL || ''}${config?.url || ''}`;
+  return url.includes('/api/public/delivery');
+}
+
 axios.interceptors.request.use((config) => {
+  if (isPublicDeliveryApi(config)) {
+    const customerToken = getDeliveryCustomerToken();
+    if (customerToken) {
+      config.headers.Authorization = `Bearer ${customerToken}`;
+    } else if (config.headers?.Authorization) {
+      delete config.headers.Authorization;
+    }
+    return config;
+  }
   const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -19,6 +34,10 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
+      if (isPublicDeliveryApi(error.config || {})) {
+        clearDeliveryCustomerSession();
+        return Promise.reject(error);
+      }
       clearSession();
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;

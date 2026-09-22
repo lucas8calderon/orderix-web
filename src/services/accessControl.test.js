@@ -70,6 +70,7 @@ describe('isPublicPath', () => {
   it('trata /delivery/:slug e acompanhamento como rotas públicas', () => {
     expect(isPublicPath('/delivery/padaria')).toBe(true);
     expect(isPublicPath('/delivery/pedido/abc')).toBe(true);
+    expect(isPublicPath('/delivery/padaria/conta/pedidos')).toBe(true);
     expect(isPublicPath('/delivery')).toBe(true);
   });
 
