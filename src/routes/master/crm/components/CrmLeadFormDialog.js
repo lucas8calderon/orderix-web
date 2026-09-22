@@ -184,7 +184,13 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
             <TextField fullWidth label="E-mail" value={form.email} onChange={handleChange('email')} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Instagram" value={form.instagram} onChange={handleChange('instagram')} />
+            <TextField
+              fullWidth
+              label="Instagram"
+              value={form.instagram}
+              onChange={handleChange('instagram')}
+              helperText="Ex.: @cabanaburger ou instagram.com/cabanaburger"
+            />
           </Grid>
           <Grid item xs={12}>
             <TextField fullWidth label="Site" value={form.website} onChange={handleChange('website')} />

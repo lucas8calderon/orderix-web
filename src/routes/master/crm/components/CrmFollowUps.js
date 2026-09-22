@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Paper, Stack, Typography } from '@mui/material';
 import { followUpDelayLabel } from '../crmConstants';
 import { openWhatsApp } from '../whatsappTemplate';
+import { CrmInstagramButton } from './CrmInstagramButton';
 
 function FollowUpList({ title, leads, emptyLabel }) {
   return (
@@ -31,14 +32,17 @@ function FollowUpList({ title, leads, emptyLabel }) {
                 {followUpDelayLabel(lead) || 'Retorno: Hoje'}
               </Typography>
             </div>
-            <Button
-              size="small"
-              disabled={!lead.phone}
-              onClick={() => openWhatsApp(lead.whatsAppUrl || lead.phone)}
-              sx={{ textTransform: 'none', minHeight: 36 }}
-            >
-              WhatsApp
-            </Button>
+            <Stack direction="row" spacing={0.5} flexShrink={0}>
+              <Button
+                size="small"
+                disabled={!lead.phone}
+                onClick={() => openWhatsApp(lead.whatsAppUrl || lead.phone)}
+                sx={{ textTransform: 'none', minHeight: 36 }}
+              >
+                WhatsApp
+              </Button>
+              <CrmInstagramButton variant="compact" instagram={lead.instagram} />
+            </Stack>
           </Stack>
         ))}
       </Stack>

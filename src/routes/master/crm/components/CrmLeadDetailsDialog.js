@@ -20,15 +20,29 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { useIsMobile } from '../../../../commons/hooks/useResponsive';
 import { businessTypeLabel, CRM_STATUSES, formatDateTime, locationLabel, phoneContactLabel, sourceLabel } from '../crmConstants';
+import { buildInstagramUrl } from '../instagram';
 import { openWhatsApp } from '../whatsappTemplate';
 import { CrmActivityTimeline } from './CrmActivityTimeline';
+import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
 
-function Field({ label, value }) {
+function Field({ label, value, href }) {
   return (
     <Box>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
-      <Typography sx={{ wordBreak: 'break-word' }}>{value || '—'}</Typography>
+      {href && value ? (
+        <Typography
+          component="a"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ display: 'block', wordBreak: 'break-word', color: 'var(--color-primary)' }}
+        >
+          {value}
+        </Typography>
+      ) : (
+        <Typography sx={{ wordBreak: 'break-word' }}>{value || '—'}</Typography>
+      )}
     </Box>
   );
 }
@@ -80,6 +94,7 @@ export function CrmLeadDetailsDialog({
         >
           Abrir no WhatsApp
         </Button>
+        <CrmInstagramButton instagram={lead.instagram} />
         <Button variant="outlined" onClick={onRegisterContact} sx={{ textTransform: 'none' }}>
           Registrar contato
         </Button>
@@ -90,7 +105,7 @@ export function CrmLeadDetailsDialog({
           <Field label="Responsável" value={lead.contactName} />
           <Field label={phoneContactLabel(lead)} value={lead.phone} />
           <Field label="E-mail" value={lead.email} />
-          <Field label="Instagram" value={lead.instagram} />
+          <Field label="Instagram" value={lead.instagram} href={buildInstagramUrl(lead.instagram)} />
           <Field label="Site" value={lead.website} />
         </Stack>
       </Section>

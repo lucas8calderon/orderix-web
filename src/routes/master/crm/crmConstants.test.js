@@ -1,4 +1,5 @@
 import { adjacentStatus, followUpDelayLabel, followUpState, phoneContactLabel } from './crmConstants';
+import { buildInstagramUrl, instagramHandle } from './instagram';
 import { buildWhatsAppUrl, whatsAppDigits } from './whatsappTemplate';
 
 describe('crm follow-up indicators', () => {
@@ -34,6 +35,21 @@ describe('phoneContactLabel', () => {
     expect(phoneContactLabel({})).toBe('Telefone não disponível');
     expect(phoneContactLabel({ phone: '5512999998888' })).toBe('Telefone disponível');
     expect(phoneContactLabel({ phone: '5512999998888', phoneWhatsAppConfirmed: true })).toBe('WhatsApp confirmado');
+  });
+});
+
+describe('instagram', () => {
+  it('monta o perfil a partir de @, usuário ou URL', () => {
+    expect(instagramHandle('@cabanaburger')).toBe('cabanaburger');
+    expect(buildInstagramUrl('cabanaburger')).toBe('https://www.instagram.com/cabanaburger/');
+    expect(buildInstagramUrl('https://www.instagram.com/cabana.burger/')).toBe('https://www.instagram.com/cabana.burger/');
+    expect(buildInstagramUrl('instagram.com/weper.com.br')).toBe('https://www.instagram.com/weper.com.br/');
+  });
+
+  it('não abre contato sem perfil válido', () => {
+    expect(buildInstagramUrl('')).toBeNull();
+    expect(buildInstagramUrl('https://site.com/foo')).toBeNull();
+    expect(buildInstagramUrl('não é instagram')).toBeNull();
   });
 });
 

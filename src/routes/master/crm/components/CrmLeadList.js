@@ -26,6 +26,7 @@ import {
 import { openWhatsApp } from '../whatsappTemplate';
 import { CrmEmptyState } from './CrmEmptyState';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
+import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
 
 export function CrmLeadList({
@@ -121,6 +122,7 @@ export function CrmLeadList({
                         </IconButton>
                       </span>
                     </Tooltip>
+                    <CrmInstagramButton variant="icon" instagram={lead.instagram} />
                     <Tooltip title="Detalhes">
                       <IconButton size="small" aria-label="Detalhes" onClick={() => onOpen(lead)}>
                         <InfoOutlinedIcon fontSize="small" />

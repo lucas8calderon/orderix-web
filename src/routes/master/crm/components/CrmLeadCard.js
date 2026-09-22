@@ -8,6 +8,7 @@ import { Draggable } from 'react-beautiful-dnd';
 import { businessTypeLabel, locationLabel } from '../crmConstants';
 import { openWhatsApp } from '../whatsappTemplate';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
+import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
 
 export function CrmLeadCard({
@@ -102,6 +103,7 @@ export function CrmLeadCard({
                   </IconButton>
                 </span>
               </Tooltip>
+              <CrmInstagramButton variant="icon" instagram={lead.instagram} />
               <Tooltip title="Detalhes">
                 <IconButton size="small" aria-label="Detalhes" onClick={() => onOpen(lead)}>
                   <InfoOutlinedIcon fontSize="small" />

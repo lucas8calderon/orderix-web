@@ -78,6 +78,7 @@ describe('CrmProspectingDialog', () => {
             businessName: 'Minions Burger',
             phone: '5512988880001',
             whatsAppUrl: 'https://wa.me/5512988880001?text=Oi',
+            instagram: '@minionsburger',
           },
         }],
       },
@@ -107,6 +108,7 @@ describe('CrmProspectingDialog', () => {
     await waitFor(() => expect(onImported).toHaveBeenCalled());
     expect(await screen.findByText('Pronto para contato')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Abrir no WhatsApp' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Abrir no Instagram' })).toBeInTheDocument();
   });
 
   it('mostra empty state sem disparar outra busca', async () => {
