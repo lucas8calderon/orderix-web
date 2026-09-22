@@ -1,16 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Sparkles,
   ArrowRight,
   Check,
   Shield,
   Zap,
   TrendingUp,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
-import { openWhatsApp } from '../landingAssets';
-import { WEPER_FEATURES } from '../../../config/weperFeatures';
+import { openWhatsApp, scrollToId } from '../landingAssets';
 import {
   PRICING_TIERS,
   calculateMonthlyPrice,
@@ -19,136 +15,114 @@ import {
   getMinimumPrice,
   getMaximumPrice,
   getMaxRevenueBeforeCap,
+  getTierByRevenue,
 } from '../../../config/pricingTiers';
 import '../styles/NewPlansSection.css';
 
-const FAQ_ITEMS = [
-  {
-    id: 'plan-choice',
-    question: 'Preciso escolher um plano?',
-    answer: 'Não. A Weper possui uma assinatura completa. O valor da mensalidade acompanha o volume mensal processado pela plataforma.',
-  },
-  {
-    id: 'all-features',
-    question: 'Tenho acesso a todas as funcionalidades pagando R$ 39,90?',
-    answer: 'Sim. O estabelecimento tem acesso às funcionalidades disponibilizadas pela Weper independentemente da faixa de faturamento.',
-  },
-  {
-    id: 'increase-sales',
-    question: 'O que acontece se minhas vendas aumentarem?',
-    answer: 'A mensalidade se ajusta automaticamente à faixa correspondente.',
-  },
-  {
-    id: 'max-price',
-    question: 'Existe mensalidade máxima?',
-    answer: `Sim. No modelo atual, acima de ${formatPrice(getMaxRevenueBeforeCap())} processados no mês, a mensalidade permanece em ${formatPrice(getMaximumPrice())}.`,
-  },
-  {
-    id: 'change-plan',
-    question: 'Vou precisar trocar de plano?',
-    answer: 'Não. A plataforma continua a mesma. Apenas o valor da mensalidade acompanha o crescimento da operação.',
-  },
-  {
-    id: 'calculation',
-    question: 'Como o volume mensal é calculado?',
-    answer: 'Consideramos as vendas elegíveis registradas/processadas através da Weper.',
-  },
+const SIMULATOR_MAX = 20000;
+const SIMULATOR_TICKS = [
+  { value: 0, label: 'R$ 0' },
+  { value: 5000, label: 'R$ 5k' },
+  { value: 10000, label: 'R$ 10k' },
+  { value: 15000, label: 'R$ 15k' },
+  { value: 20000, label: 'R$ 20k+' },
 ];
 
-function FaqItem({ question, answer, isOpen, onToggle }) {
-  return (
-    <div className="faq-item">
-      <button
-        type="button"
-        className="faq-question"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-      >
-        <span>{question}</span>
-        {isOpen ? (
-          <ChevronUp size={20} aria-hidden="true" />
-        ) : (
-          <ChevronDown size={20} aria-hidden="true" />
-        )}
-      </button>
-      {isOpen && (
-        <div className="faq-answer">
-          <p>{answer}</p>
-        </div>
-      )}
-    </div>
-  );
+function formatVolumeCompact(value) {
+  const number = Number(value) || 0;
+  return number.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+}
+
+function getTierHeadline(tier) {
+  if (tier.isMaxTier) {
+    return `Acima de ${formatVolumeCompact(PRICING_TIERS[PRICING_TIERS.length - 2].maxRevenue)}`;
+  }
+  return `Até ${formatVolumeCompact(tier.maxRevenue)}`;
 }
 
 function PricingSimulator() {
-  const [revenue, setRevenue] = useState(3500);
-  
+  const [revenue, setRevenue] = useState(PRICING_TIERS[0].maxRevenue);
+
   const monthlyPrice = useMemo(
     () => calculateMonthlyPrice(revenue),
     [revenue]
   );
 
+  const tier = useMemo(
+    () => getTierByRevenue(revenue),
+    [revenue]
+  );
+
+  const sliderProgress = `${(revenue / SIMULATOR_MAX) * 100}%`;
+  const volumeLabel = revenue >= SIMULATOR_MAX
+    ? `${formatVolumeCompact(SIMULATOR_MAX)}+`
+    : formatVolumeCompact(revenue);
+
   const handleSliderChange = (e) => {
     setRevenue(Number(e.target.value));
   };
 
-  const handleInputChange = (e) => {
-    const raw = e.target.value.replace(/\D/g, '');
-    setRevenue(Number(raw) || 0);
-  };
-
-  const formattedRevenue = useMemo(
-    () => formatPrice(revenue),
-    [revenue]
-  );
-
   return (
     <div className="pricing-simulator">
       <div className="simulator-content">
-        <h3 className="simulator-title">Quanto sua operação movimenta por mês?</h3>
-        
-        <div className="simulator-controls">
-          <label htmlFor="revenue-input" className="simulator-label">
-            Volume mensal
-          </label>
-          <input
-            id="revenue-input"
-            type="text"
-            className="simulator-input"
-            value={formattedRevenue}
-            onChange={handleInputChange}
-            aria-label="Volume mensal processado"
-          />
-          
+        <p className="simulator-plan-tag">
+          <span className="simulator-plan-dot" aria-hidden="true" />
+          Assinatura única
+        </p>
+
+        <div className="simulator-select">
+          <p className="simulator-select-label">Selecione seu volume mensal atual:</p>
+          <div className="simulator-volume-pill" aria-live="polite">
+            {volumeLabel}
+          </div>
           <input
             type="range"
             min="0"
-            max="15000"
+            max={SIMULATOR_MAX}
             step="100"
             value={revenue}
             onChange={handleSliderChange}
             className="simulator-slider"
+            style={{ '--slider-progress': sliderProgress }}
             aria-label="Ajustar volume mensal"
+            aria-valuetext={volumeLabel}
           />
-          
           <div className="slider-labels">
-            <span>R$ 0</span>
-            <span>R$ 15.000</span>
+            {SIMULATOR_TICKS.map((tick) => (
+              <span key={tick.value}>{tick.label}</span>
+            ))}
           </div>
         </div>
 
         <div className="simulator-result">
-          <p className="result-label">Sua mensalidade seria</p>
           <div className="result-price">
             <span className="result-currency">R$</span>
             <span className="result-amount">{formatPriceNumber(monthlyPrice)}</span>
             <span className="result-period">/mês</span>
           </div>
-          <p className="result-caption">
-            <Check size={16} aria-hidden="true" />
-            Todas as funcionalidades da Weper incluídas
+        </div>
+
+        <div className="simulator-tier">
+          <strong>{getTierHeadline(tier)}</strong>
+          <p>
+            {tier.description}. Mensalidade de {formatPrice(tier.monthlyPrice)}.
+            A plataforma completa está incluída.
           </p>
         </div>
+
+        <button
+          type="button"
+          className="simulator-cta"
+          onClick={() => openWhatsApp()}
+        >
+          Falar com a Weper
+          <ArrowRight size={18} aria-hidden="true" />
+        </button>
       </div>
     </div>
   );
@@ -158,24 +132,24 @@ function HowItWorks() {
   const steps = [
     {
       number: '1',
-      title: 'Comece com tudo',
-      description: 'Desde o primeiro dia, sua empresa tem acesso às funcionalidades da Weper.',
+      title: 'Comece com a plataforma',
+      description: 'Desde o primeiro dia, o estabelecimento usa a Weper completa.',
     },
     {
       number: '2',
       title: 'Venda normalmente',
-      description: 'Use a Weper para registrar e administrar sua operação.',
+      description: 'Registre e administre a operação no dia a dia.',
     },
     {
       number: '3',
-      title: 'Pague conforme crescer',
-      description: 'A mensalidade acompanha o volume de vendas processadas pela plataforma.',
+      title: 'Pague conforme o volume',
+      description: 'A mensalidade acompanha as vendas processadas pela plataforma.',
     },
   ];
 
   return (
     <div className="how-it-works">
-      <h3 className="how-it-works__title">Como funciona</h3>
+      <h3 className="how-it-works__title">Como a mensalidade funciona</h3>
       <div className="steps-grid">
         {steps.map((step) => (
           <div key={step.number} className="step-card">
@@ -186,39 +160,8 @@ function HowItWorks() {
         ))}
       </div>
       <p className="how-it-works__note">
-        Cresceu? Sua Weper continua a mesma. Você não precisa trocar de plano ou liberar novos módulos.
+        Cresceu? A Weper continua a mesma. Você não troca de plano nem libera módulos.
       </p>
-    </div>
-  );
-}
-
-function AllFeaturesIncluded() {
-  return (
-    <div className="all-features">
-      <div className="all-features__header">
-        <Sparkles size={24} className="all-features__icon" aria-hidden="true" />
-        <h3 className="all-features__title">Todas as funcionalidades incluídas</h3>
-        <p className="all-features__subtitle">
-          Não apresentamos recursos como adicionais pagos. Todo o ecossistema Weper faz parte da plataforma.
-        </p>
-      </div>
-      
-      <div className="features-grid">
-        {WEPER_FEATURES.map((feature) => {
-          const Icon = feature.Icon;
-          return (
-            <div key={feature.id} className="feature-card">
-              <div className="feature-icon">
-                <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <div className="feature-content">
-                <h4 className="feature-title">{feature.title}</h4>
-                <p className="feature-description">{feature.description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -229,10 +172,10 @@ function PricingTable() {
       <div className="pricing-table__header">
         <h3 className="pricing-table__title">Quanto você movimenta → Quanto você paga</h3>
         <p className="pricing-table__subtitle">
-          Uma única assinatura. O valor da mensalidade acompanha o seu crescimento.
+          Uma assinatura. O valor acompanha o crescimento da operação.
         </p>
       </div>
-      
+
       <div className="tiers-list">
         {PRICING_TIERS.map((tier) => (
           <div
@@ -254,155 +197,37 @@ function PricingTable() {
       <div className="pricing-table__cap">
         <Shield size={20} aria-hidden="true" />
         <div>
-          <strong>E esse é o máximo.</strong>
-          <p>Mesmo crescendo, sua mensalidade não ultrapassa {formatPrice(getMaximumPrice())}/mês no modelo atual.</p>
+          <strong>Esse é o máximo.</strong>
+          <p>
+            Acima de {formatPrice(getMaxRevenueBeforeCap())} no mês, a mensalidade
+            permanece em {formatPrice(getMaximumPrice())} no modelo atual.
+          </p>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function DifferentialSection() {
-  return (
-    <div className="differential-section">
-      <div className="differential-content">
-        <h3 className="differential-title">
-          Não escolha funcionalidades. <span className="differential-accent">Escolha crescer.</span>
-        </h3>
-        <p className="differential-text">
-          Todos os clientes podem utilizar o ecossistema completo da Weper. O que muda é somente o volume mensal processado.
-        </p>
-      </div>
-
-      <div className="differential-columns">
-        <div className="differential-column differential-column--no">
-          <h4 className="differential-column-title">✗ Não queremos isso</h4>
-          <ul className="differential-list">
-            <li>Estoque apenas no plano Premium</li>
-            <li>App Garçom apenas no plano Pro</li>
-            <li>Delivery vendido separadamente</li>
-            <li>KDS como adicional</li>
-          </ul>
-        </div>
-
-        <div className="differential-column differential-column--yes">
-          <h4 className="differential-column-title">✓ Queremos isso</h4>
-          <ul className="differential-list">
-            <li><Check size={16} aria-hidden="true" /> App Garçom</li>
-            <li><Check size={16} aria-hidden="true" /> Cardápio Digital</li>
-            <li><Check size={16} aria-hidden="true" /> Delivery Próprio</li>
-            <li><Check size={16} aria-hidden="true" /> PDV</li>
-            <li><Check size={16} aria-hidden="true" /> KDS</li>
-            <li><Check size={16} aria-hidden="true" /> Estoque</li>
-            <li><Check size={16} aria-hidden="true" /> Autoatendimento</li>
-            <li><Check size={16} aria-hidden="true" /> Dashboard</li>
-            <li><Check size={16} aria-hidden="true" /> Relatórios</li>
-            <li className="differential-all-included">Tudo incluído.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FaqSection() {
-  const [openId, setOpenId] = useState(null);
-
-  const handleToggle = (id) => {
-    setOpenId(openId === id ? null : id);
-  };
-
-  return (
-    <div className="faq-section">
-      <h3 className="faq-title">Perguntas frequentes</h3>
-      <div className="faq-list">
-        {FAQ_ITEMS.map((item) => (
-          <FaqItem
-            key={item.id}
-            question={item.question}
-            answer={item.answer}
-            isOpen={openId === item.id}
-            onToggle={() => handleToggle(item.id)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CtaFinal() {
-  const handleStartClick = () => {
-    openWhatsApp('Olá! Quero começar a usar a Weper no meu negócio.');
-  };
-
-  const handleContactClick = () => {
-    openWhatsApp('Olá! Gostaria de falar sobre a Weper.');
-  };
-
-  return (
-    <div className="cta-final">
-      <div className="cta-final__content">
-        <h3 className="cta-final__title">
-          Comece pequeno. <span className="cta-final__accent">Cresça sem limites.</span>
-        </h3>
-        <p className="cta-final__text">
-          Tenha a Weper completa desde o primeiro dia e pague uma mensalidade que acompanha o tamanho da sua operação.
-        </p>
-        <p className="cta-final__price">
-          A partir de {formatPrice(getMinimumPrice())}/mês
-        </p>
-      </div>
-      
-      <div className="cta-final__actions">
-        <button
-          type="button"
-          className="btn-cta btn-cta--primary"
-          onClick={handleStartClick}
-        >
-          Começar agora
-          <ArrowRight size={18} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="btn-cta btn-cta--secondary"
-          onClick={handleContactClick}
-        >
-          Falar com a Weper
-        </button>
       </div>
     </div>
   );
 }
 
 const NewPlansSection = () => {
-  const handleStartClick = () => {
-    openWhatsApp('Olá! Quero começar a usar a Weper no meu negócio.');
-  };
-
-  const handleLearnMoreClick = () => {
-    const productsSection = document.querySelector('#products');
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <section className="new-plans-section" id="plans" aria-labelledby="new-plans-title">
       <div className="new-plans-section__glow" aria-hidden="true" />
-      
+
       <div className="new-plans-container">
         <div className="new-plans-hero">
           <div className="new-plans-eyebrow">
-            <Sparkles size={14} aria-hidden="true" />
             Planos Weper
           </div>
-          
+
           <h2 id="new-plans-title" className="new-plans-title">
-            Uma Weper. <span className="new-plans-title__accent">Todas as funcionalidades.</span>
+            Uma assinatura.
+            {' '}
+            <span className="new-plans-title__accent">O preço acompanha o volume.</span>
           </h2>
-          
+
           <p className="new-plans-subtitle">
-            Sua mensalidade acompanha o tamanho da sua operação. Comece pequeno, tenha acesso à plataforma completa e cresça sem trocar de plano.
+            A plataforma completa está incluída. A mensalidade muda só com o
+            movimento do estabelecimento — sem prender recurso a um plano.
           </p>
 
           <div className="new-plans-hero-highlight">
@@ -410,50 +235,34 @@ const NewPlansSection = () => {
             <span>A partir de {formatPrice(getMinimumPrice())}/mês</span>
           </div>
 
+          <p className="new-plans-hero-caption">
+            <Check size={16} aria-hidden="true" />
+            Sem checklist de módulos por faixa
+          </p>
+
           <div className="new-plans-hero-actions">
             <button
               type="button"
-              className="btn-hero btn-hero--primary"
-              onClick={handleStartClick}
-            >
-              Começar agora
-              <ArrowRight size={18} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
               className="btn-hero btn-hero--secondary"
-              onClick={handleLearnMoreClick}
+              onClick={() => scrollToId('demo')}
             >
-              Conhecer a Weper
+              Ver demonstração
             </button>
           </div>
-
-          <p className="new-plans-hero-caption">
-            <Check size={16} aria-hidden="true" />
-            Todas as funcionalidades incluídas
-          </p>
         </div>
 
         <PricingSimulator />
-        
+
         <HowItWorks />
-        
-        <AllFeaturesIncluded />
-        
+
         <PricingTable />
-        
-        <DifferentialSection />
-        
-        <FaqSection />
-        
-        <CtaFinal />
 
         <div className="new-plans-trust">
           <div className="trust-item">
             <Zap size={20} strokeWidth={1.75} aria-hidden="true" />
             <div>
-              <strong>Ativação rápida</strong>
-              <span>Comece em minutos</span>
+              <strong>Ativação pela equipe</strong>
+              <span>Sem cadastro automático no site</span>
             </div>
           </div>
           <div className="trust-item">

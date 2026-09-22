@@ -29,7 +29,10 @@ export const LANDING_IMAGES = {
 export const WHATSAPP_NUMBER = '5511924570853';
 export const WHATSAPP_DISPLAY = '+55 11 92457-0853';
 
-export function openWhatsApp(message) {
+export const CONTACT_WHATSAPP_MESSAGE =
+  'Olá! Gostaria de falar com a Weper sobre o meu estabelecimento.';
+
+export function openWhatsApp(message = CONTACT_WHATSAPP_MESSAGE) {
   const text = encodeURIComponent(message);
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank', 'noopener,noreferrer');
 }

@@ -5,54 +5,58 @@ import {
   Headphones,
   HelpCircle,
   Laptop,
-  ListChecks,
-  Mail,
   MessageCircle,
   MessageCircleQuestion,
-  RefreshCw,
-  Scale,
-  ShieldCheck,
   Smartphone,
   Store,
+  TrendingUp,
+  Scale,
+  Wallet,
 } from 'lucide-react';
-import { openWhatsApp, WHATSAPP_DISPLAY } from '../landingAssets';
+import { openWhatsApp } from '../landingAssets';
+import {
+  formatPrice,
+  getMaximumPrice,
+  getMaxRevenueBeforeCap,
+  getMinimumPrice,
+} from '../../../config/pricingTiers';
 import '../styles/FaqSection.css';
 
 const FAQS = [
   {
     q: 'Como começo a usar a Weper?',
-    a: `Pelo WhatsApp ${WHATSAPP_DISPLAY}. A equipe ativa o acesso do estabelecimento. Não há cadastro automático nem trial de 14 dias no site.`,
+    a: 'Pelo WhatsApp. A equipe ativa o acesso do estabelecimento. Não há cadastro automático nem trial no site.',
     Icon: HelpCircle,
   },
   {
+    q: 'Preciso escolher um plano?',
+    a: 'Não. Existe uma assinatura única. O valor da mensalidade acompanha o volume mensal processado pela plataforma. Você não troca de plano para liberar recursos.',
+    Icon: Wallet,
+  },
+  {
+    q: 'A menor faixa já inclui a plataforma completa?',
+    a: `Sim. A partir de ${formatPrice(getMinimumPrice())}/mês o estabelecimento usa a Weper completa. O que muda entre as faixas é só o volume de vendas, não um catálogo de módulos.`,
+    Icon: TrendingUp,
+  },
+  {
+    q: 'O que acontece se as vendas aumentarem?',
+    a: `A mensalidade sobe para a faixa correspondente. No modelo atual, acima de ${formatPrice(getMaxRevenueBeforeCap())} processados no mês, o valor permanece em ${formatPrice(getMaximumPrice())}.`,
+    Icon: Scale,
+  },
+  {
     q: 'Preciso cadastrar cartão de crédito?',
-    a: 'Não. Não há checkout online neste momento. A assinatura é combinada e ativada manualmente pela equipe Weper.',
+    a: 'Não. Não há checkout online neste momento. A assinatura é combinada e ativada pela equipe Weper.',
     Icon: CreditCard,
   },
   {
     q: 'Em quais dispositivos a Weper funciona?',
-    a: 'No celular, no tablet (landscape) e no desktop. A operação acompanha o ritmo do seu negócio em qualquer dispositivo.',
+    a: 'No celular, no tablet (landscape) e no computador. A operação acompanha o ritmo do estabelecimento em qualquer dispositivo.',
     Icon: Smartphone,
   },
   {
     q: 'A Weper serve só para restaurantes?',
-    a: 'Não. A Weper atende restaurantes, bares, lanchonetes, cafeterias, food trucks, mercados, pastelarias e outros tipos de negócio de alimentação e varejo.',
+    a: 'Não. Atende hamburguerias, pizzarias, restaurantes, bares, adegas, cafeterias, food trucks, pequenos comércios e outros estabelecimentos compatíveis.',
     Icon: Store,
-  },
-  {
-    q: 'O que está incluído nos planos?',
-    a: 'Todos os planos já incluem a base Weper: gestão centralizada, PDV, app de atendimento, mesas e comandas, cardápio digital, integração com a cozinha, impressão, atualizações e segurança dos dados. O que muda entre Básico, Profissional e Premium são as funcionalidades avançadas (estoque, dashboard, relatórios, KDS, delivery e autoatendimento) e a capacidade operacional (colaboradores, dispositivos, mesas, comandas, impressoras e histórico).',
-    Icon: ListChecks,
-  },
-  {
-    q: 'Qual a diferença entre os planos?',
-    a: 'Básico (R$ 49,90) é para operações pequenas: estoque e dashboard básicos, 1 tela KDS, até 3 colaboradores, 2 dispositivos, 15 mesas, 20 comandas simultâneas, 1 impressora e histórico de 30 dias, com suporte em horário comercial. Profissional (R$ 79,90) é a operação completa: delivery próprio, estoque completo, até 3 telas KDS, 1 dispositivo de autoatendimento, dashboard gerencial, até 10 colaboradores, 6 dispositivos, 50 mesas, 100 comandas simultâneas, 3 impressoras e histórico de 12 meses, com suporte prioritário e ativação assistida. Premium (R$ 119,90) amplia capacidade e liberdade: KDS multiárea, autoatendimento, colaboradores, dispositivos, mesas, comandas, telas KDS e impressoras ilimitados*, histórico completo, suporte prioritário e onboarding personalizado. *Sujeito à política de uso justo e limites técnicos da plataforma.',
-    Icon: Scale,
-  },
-  {
-    q: 'Como falo com o suporte?',
-    a: `Pelo WhatsApp ${WHATSAPP_DISPLAY}. No Básico o atendimento é em horário comercial. No Profissional e no Premium o suporte tem prioridade; o Premium inclui onboarding dedicado.`,
-    Icon: Headphones,
   },
   {
     q: 'Preciso instalar algum programa no computador?',
@@ -60,9 +64,9 @@ const FAQS = [
     Icon: Laptop,
   },
   {
-    q: 'Posso mudar de plano depois?',
-    a: `Sim. Você pode evoluir do Básico para Profissional ou Premium. Fale com o suporte no WhatsApp ${WHATSAPP_DISPLAY} para ajustar a assinatura.`,
-    Icon: RefreshCw,
+    q: 'Como falo com o suporte?',
+    a: 'Pelo WhatsApp. A mesma conversa inicia o acesso e tira dúvidas sobre a operação.',
+    Icon: Headphones,
   },
 ];
 
@@ -105,43 +109,27 @@ function FaqItem({ item, index, isOpen, onToggle, baseId }) {
 }
 
 function FaqSupportCard() {
-  const handleWhatsApp = () => {
-    openWhatsApp('Olá! Ainda tenho dúvidas sobre a Weper e gostaria de falar no WhatsApp.');
-  };
-
-  const handleMessage = () => {
-    openWhatsApp('Olá! Gostaria de enviar uma mensagem e tirar algumas dúvidas sobre a Weper.');
-  };
-
   return (
     <div className="faq-support">
       <div className="faq-support__copy">
         <span className="faq-support__icon" aria-hidden="true">
-          <ShieldCheck size={22} strokeWidth={2} />
+          <MessageCircle size={22} strokeWidth={2} />
         </span>
         <div>
           <p className="faq-support__title">Ainda tem dúvidas?</p>
           <p className="faq-support__text">
-            Nosso time está pronto para ajudar você a encontrar a melhor solução.
+            Fale com a equipe no WhatsApp. É o mesmo canal para ativar o acesso.
           </p>
         </div>
       </div>
       <div className="faq-support__actions">
         <button
           type="button"
-          className="faq-support__btn faq-support__btn--outline"
-          onClick={handleWhatsApp}
+          className="faq-support__btn faq-support__btn--filled"
+          onClick={() => openWhatsApp()}
         >
           <MessageCircle size={16} aria-hidden="true" />
-          Falar no WhatsApp
-        </button>
-        <button
-          type="button"
-          className="faq-support__btn faq-support__btn--filled"
-          onClick={handleMessage}
-        >
-          <Mail size={16} aria-hidden="true" />
-          Enviar mensagem
+          Falar com a Weper
         </button>
       </div>
     </div>
@@ -166,7 +154,7 @@ const FaqSection = () => {
             Perguntas <span className="faq-title__accent">frequentes</span>
           </h2>
           <p className="faq-subtitle">
-            Respostas rápidas para ajudar você a começar com o Weper.
+            Preço, dispositivos e como começar — sem modelos de plano antigos.
           </p>
         </div>
 

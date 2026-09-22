@@ -5,7 +5,7 @@ import '../styles/WhatsAppButton.css';
 
 const FloatWhatsAppButton = () => {
   const handleClick = () => {
-    openWhatsApp('Olá! Gostaria de tirar algumas dúvidas sobre o sistema Weper.');
+    openWhatsApp();
   };
 
   return (
@@ -14,13 +14,13 @@ const FloatWhatsAppButton = () => {
         type="button"
         className="wa-float__btn"
         onClick={handleClick}
-        aria-label="Fale conosco no WhatsApp"
-        title="Fale conosco"
+        aria-label="Falar com a Weper no WhatsApp"
+        title="Falar com a Weper"
       >
         <MessageCircle size={20} aria-hidden="true" />
       </button>
       <span className="wa-float__label" aria-hidden="true">
-        Fale conosco
+        Falar com a Weper
       </span>
     </div>
   );

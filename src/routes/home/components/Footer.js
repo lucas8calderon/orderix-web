@@ -1,8 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { WeperMark } from './WeperMark';
 import { openWhatsApp, scrollToId, WHATSAPP_DISPLAY } from '../landingAssets';
 import { PATHS } from '../../../services/accessControl';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Footer.css';
 
 const Footer = () => {
@@ -20,7 +20,7 @@ const Footer = () => {
           <div className="footer-brand">
             <WeperMark size={44} />
             <p className="footer-description">
-              Gestão inteligente para negócios que atendem, vendem e querem crescer.
+              Plataforma de gestão e operação para estabelecimentos que atendem e vendem.
             </p>
             <div className="social-links">
               <a
@@ -51,7 +51,7 @@ const Footer = () => {
                 type="button"
                 className="social-link"
                 aria-label={`WhatsApp ${WHATSAPP_DISPLAY}`}
-                onClick={() => openWhatsApp('Olá! Gostaria de falar com a Weper.')}
+                onClick={() => openWhatsApp()}
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
@@ -61,7 +61,7 @@ const Footer = () => {
             <button
               type="button"
               className="footer-contact"
-              onClick={() => openWhatsApp('Olá! Gostaria de falar com a Weper.')}
+              onClick={() => openWhatsApp()}
             >
               WhatsApp {WHATSAPP_DISPLAY}
             </button>
@@ -70,21 +70,20 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-section-title">Produto</h4>
             <ul className="footer-links">
-              <li><a href="#atendimento" onClick={goSection('atendimento')}>Atendimento</a></li>
-              <li><a href="#painel" onClick={goSection('painel')}>Desktop / PDV</a></li>
-              <li><a href="#funcionalidades" onClick={goSection('funcionalidades')}>Funcionalidades</a></li>
+              <li><a href="#solucoes" onClick={goSection('solucoes')}>Soluções</a></li>
+              <li><a href="#demo" onClick={goSection('demo')}>Demonstração</a></li>
+              <li><a href="#plans" onClick={goSection('plans')}>Planos</a></li>
             </ul>
           </div>
 
           <div className="footer-section">
-            <h4 className="footer-section-title">Negócio</h4>
+            <h4 className="footer-section-title">Empresa</h4>
             <ul className="footer-links">
-              <li><a href="#solucoes" onClick={goSection('solucoes')}>Segmentos</a></li>
-              <li><a href="#plans" onClick={goSection('plans')}>Planos</a></li>
+              <li><a href="#segmentos" onClick={goSection('segmentos')}>Segmentos</a></li>
               <li><a href="#faq" onClick={goSection('faq')}>FAQ</a></li>
               <li>
-                <button type="button" className="footer-link-btn" onClick={() => navigate(PATHS.DEMO)}>
-                  Demonstração
+                <button type="button" className="footer-link-btn" onClick={() => openWhatsApp()}>
+                  Falar com a Weper
                 </button>
               </li>
             </ul>

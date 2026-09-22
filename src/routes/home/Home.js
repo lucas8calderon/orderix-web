@@ -2,13 +2,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
-import SegmentsStrip from './components/SegmentsStrip';
-import { ProductSpotlightSections } from './components/EcosystemSection';
+import ProblemSection from './components/ProblemSection';
 import ProductsSection from './components/ProductsSection';
-import BenefitsSection from './components/BenefitsSection';
+import FlowSection from './components/FlowSection';
+import { ProductSpotlightSections } from './components/EcosystemSection';
+import SegmentsStrip from './components/SegmentsStrip';
 import DemoSection from './components/DemoSection';
 import NewPlansSection from './components/NewPlansSection';
 import FaqSection from './components/FaqSection';
+import ConversionSection from './components/ConversionSection';
 import Footer from './components/Footer';
 import FloatWhatsAppButton from './components/FloatWhatsAppButton';
 import { PATHS } from '../../services/accessControl';
@@ -23,22 +25,24 @@ const Home = () => {
     navigate(PATHS.LOGIN);
   };
 
-  const handleStartClick = () => {
-    openWhatsApp('Olá! Quero conhecer o Weper para o meu negócio.');
+  const handleContactClick = () => {
+    openWhatsApp();
   };
 
   return (
     <div className="home">
-      <Header onLoginClick={handleLoginClick} onStartClick={handleStartClick} />
+      <Header onLoginClick={handleLoginClick} onStartClick={handleContactClick} />
       <main>
-        <HeroSection onStartClick={handleStartClick} />
-        <SegmentsStrip />
-        <ProductSpotlightSections />
+        <HeroSection onStartClick={handleContactClick} />
+        <ProblemSection />
         <ProductsSection />
-        <BenefitsSection />
+        <FlowSection />
+        <ProductSpotlightSections />
+        <SegmentsStrip />
         <DemoSection />
         <NewPlansSection />
         <FaqSection />
+        <ConversionSection onContactClick={handleContactClick} />
       </main>
       <Footer />
       <FloatWhatsAppButton />

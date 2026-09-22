@@ -1,5 +1,4 @@
 import React from 'react';
-import { Play } from 'lucide-react';
 import { LandingImage } from './DeviceMockups';
 import { scrollToId } from '../landingAssets';
 
@@ -8,28 +7,27 @@ const HeroSection = ({ onStartClick }) => {
     <section className="hero-lp" id="home" aria-labelledby="hero-title">
       <div className="lp-container hero-lp__grid">
         <div className="hero-lp__content">
-          <span className="lp-eyebrow">Gestão inteligente</span>
+          <span className="lp-eyebrow">Plataforma Weper</span>
           <h1 id="hero-title" className="hero-lp__title">
-            Do pedido ao resultado,
-            <span className="hero-lp__title-accent">tudo em um só lugar.</span>
+            Gestão e operação de estabelecimentos,
+            <span className="hero-lp__title-accent">em um só sistema.</span>
           </h1>
           <p className="hero-lp__desc">
-            Gestão inteligente para negócios que atendem, vendem e querem crescer.
-            Atendimento, pedidos e indicadores conectados no celular, no tablet
-            ou no computador.
+            A Weper conecta atendimento, pedidos, caixa, cozinha e indicadores
+            no celular, no tablet ou no computador — para restaurantes, bares,
+            comércios e outras operações de venda.
           </p>
           <div className="hero-lp__actions">
             <button type="button" className="lp-btn lp-btn--primary" onClick={onStartClick}>
-              Conhecer o Weper
+              Falar com a Weper
               <span aria-hidden="true">→</span>
             </button>
             <button
               type="button"
               className="lp-btn lp-btn--outline"
-              onClick={() => scrollToId('funcionalidades')}
+              onClick={() => scrollToId('plans')}
             >
-              <Play size={16} aria-hidden="true" />
-              Ver como funciona
+              Ver planos
             </button>
           </div>
         </div>
