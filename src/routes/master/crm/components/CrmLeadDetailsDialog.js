@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useIsMobile } from '../../../../commons/hooks/useResponsive';
-import { businessTypeLabel, CRM_STATUSES, formatDateTime, locationLabel, sourceLabel } from '../crmConstants';
+import { businessTypeLabel, CRM_STATUSES, formatDateTime, locationLabel, phoneContactLabel, sourceLabel } from '../crmConstants';
 import { openWhatsApp } from '../whatsappTemplate';
 import { CrmActivityTimeline } from './CrmActivityTimeline';
 import { CrmLeadMenu } from './CrmLeadMenu';
@@ -78,7 +78,7 @@ export function CrmLeadDetailsDialog({
             '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
           }}
         >
-          WhatsApp
+          Abrir no WhatsApp
         </Button>
         <Button variant="outlined" onClick={onRegisterContact} sx={{ textTransform: 'none' }}>
           Registrar contato
@@ -88,7 +88,7 @@ export function CrmLeadDetailsDialog({
       <Section title="Contato">
         <Stack spacing={1.25}>
           <Field label="Responsável" value={lead.contactName} />
-          <Field label="Telefone" value={lead.phone} />
+          <Field label={phoneContactLabel(lead)} value={lead.phone} />
           <Field label="E-mail" value={lead.email} />
           <Field label="Instagram" value={lead.instagram} />
           <Field label="Site" value={lead.website} />

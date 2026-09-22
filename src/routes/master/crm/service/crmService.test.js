@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { changeCrmLeadStatus, getCrmLeads, getCrmLeadsPage, searchCrmProspecting } from './crmService';
+import { changeCrmLeadStatus, getCrmLeads, getCrmLeadsPage, getCrmProspectingUsage, importCrmProspecting, searchCrmProspecting } from './crmService';
 
 jest.mock('axios');
 
@@ -29,14 +29,26 @@ describe('crmService', () => {
     );
   });
 
-  it('consulta o provedor de prospecção sem inventar resultados', () => {
+  it('consulta o provedor de prospecção no backend', () => {
     axios.post.mockResolvedValue({
-      data: { available: false, message: 'Integração de prospecção em preparação.', results: [] },
+      data: { available: true, results: [] },
     });
     searchCrmProspecting({ provider: 'google-places', region: 'São José dos Campos - SP', limit: 20 });
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/crm\/prospecting\/search$/),
       { provider: 'google-places', region: 'São José dos Campos - SP', limit: 20 }
     );
+  });
+
+  it('importa e consulta consumo via backend', () => {
+    axios.post.mockResolvedValue({ data: { imported: 1 } });
+    axios.get.mockResolvedValue({ data: { searchUsed: 1, searchLimit: 500 } });
+    importCrmProspecting({ businessType: 'HAMBURGER', places: [{ externalId: 'ChIJ1', name: 'Minions Burger' }] });
+    getCrmProspectingUsage();
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/crm\/prospecting\/import$/),
+      { businessType: 'HAMBURGER', places: [{ externalId: 'ChIJ1', name: 'Minions Burger' }] }
+    );
+    expect(axios.get).toHaveBeenCalledWith(expect.stringMatching(/\/api\/crm\/prospecting\/usage$/));
   });
 });

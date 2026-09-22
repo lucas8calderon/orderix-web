@@ -22,6 +22,7 @@ import { CrmLeadFormDialog } from './components/CrmLeadFormDialog';
 import { CrmLeadDetailsDialog } from './components/CrmLeadDetailsDialog';
 import { CrmContactDialog } from './components/CrmContactDialog';
 import { CrmProspectingDialog } from './components/CrmProspectingDialog';
+import { getCrmLead } from './service/crmService';
 import './CrmBoard.css';
 
 function statusToast(status) {
@@ -339,6 +340,28 @@ export function CrmBoard() {
       <CrmProspectingDialog
         open={prospectingOpen}
         onClose={() => setProspectingOpen(false)}
+        onImported={async (data) => {
+          try {
+            await crm.refetch();
+          } catch (err) {
+            console.error(err);
+          }
+          if (data?.imported) {
+            showToast(`${data.imported} lead${data.imported === 1 ? '' : 's'} adicionado${data.imported === 1 ? '' : 's'} ao CRM.`);
+          }
+        }}
+        onOpenLead={async (leadId) => {
+          if (!leadId) return;
+          setProspectingOpen(false);
+          try {
+            const local = crm.leads.find((lead) => lead.id === leadId)
+              || crm.listPage.items.find((lead) => lead.id === leadId);
+            const lead = local || (await getCrmLead(leadId)).data;
+            await loadDetails(lead);
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível abrir o lead.', 'error');
+          }
+        }}
       />
 
       <Snackbar

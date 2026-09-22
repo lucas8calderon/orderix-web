@@ -1,4 +1,4 @@
-import { adjacentStatus, followUpDelayLabel, followUpState } from './crmConstants';
+import { adjacentStatus, followUpDelayLabel, followUpState, phoneContactLabel } from './crmConstants';
 import { buildWhatsAppUrl, whatsAppDigits } from './whatsappTemplate';
 
 describe('crm follow-up indicators', () => {
@@ -26,6 +26,14 @@ describe('adjacentStatus', () => {
     expect(adjacentStatus('CONTACTED', -1)).toBe('NEW');
     expect(adjacentStatus('NEW', -1)).toBeNull();
     expect(adjacentStatus('LOST', 1)).toBeNull();
+  });
+});
+
+describe('phoneContactLabel', () => {
+  it('não assume WhatsApp só porque o Google devolveu telefone', () => {
+    expect(phoneContactLabel({})).toBe('Telefone não disponível');
+    expect(phoneContactLabel({ phone: '5512999998888' })).toBe('Telefone disponível');
+    expect(phoneContactLabel({ phone: '5512999998888', phoneWhatsAppConfirmed: true })).toBe('WhatsApp confirmado');
   });
 });
 

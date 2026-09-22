@@ -7,10 +7,12 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   Grid,
   InputLabel,
   MenuItem,
   Select,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -42,6 +44,7 @@ const emptyForm = {
   lastContactAt: '',
   nextContactAt: '',
   notes: '',
+  phoneWhatsAppConfirmed: false,
 };
 
 function leadToForm(lead) {
@@ -63,6 +66,7 @@ function leadToForm(lead) {
     lastContactAt: toDateTimeLocalValue(lead.lastContactAt),
     nextContactAt: toDateTimeLocalValue(lead.nextContactAt),
     notes: lead.notes || '',
+    phoneWhatsAppConfirmed: Boolean(lead.phoneWhatsAppConfirmed),
   };
 }
 
@@ -101,6 +105,7 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
     if (firstContactAt) payload.firstContactAt = firstContactAt;
     if (lastContactAt) payload.lastContactAt = lastContactAt;
     if (nextContactAt) payload.nextContactAt = nextContactAt;
+    payload.phoneWhatsAppConfirmed = Boolean(form.phoneWhatsAppConfirmed);
     onSubmit(payload);
   };
 
@@ -157,11 +162,22 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Telefone / WhatsApp"
+              label="Telefone"
               value={form.phone}
               onChange={handleChange('phone')}
-              required
-              helperText="Informe DDD + número, ex.: 11999998888"
+              required={!isEdit}
+              helperText={isEdit ? 'Telefone do Google não confirma WhatsApp automaticamente.' : 'Informe DDD + número, ex.: 11999998888'}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={(
+                <Switch
+                  checked={Boolean(form.phoneWhatsAppConfirmed)}
+                  onChange={(event) => setForm((prev) => ({ ...prev, phoneWhatsAppConfirmed: event.target.checked }))}
+                />
+              )}
+              label="WhatsApp confirmado"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -248,7 +264,7 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saving || !form.businessName.trim() || !form.phone.trim()}
+          disabled={saving || !form.businessName.trim() || (!isEdit && !form.phone.trim())}
           sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' }, textTransform: 'none' }}
         >
           {saving ? 'Salvando...' : 'Salvar'}

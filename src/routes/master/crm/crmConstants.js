@@ -27,6 +27,7 @@ export const CRM_BUSINESS_TYPES = [
 ];
 
 export const CRM_SOURCES = [
+  { id: 'GOOGLE_PLACES', label: 'Google Places' },
   { id: 'GOOGLE_MAPS', label: 'Google Maps' },
   { id: 'INSTAGRAM', label: 'Instagram' },
   { id: 'REFERRAL', label: 'Indicação' },
@@ -175,6 +176,12 @@ export function fromDateTimeLocalValue(value) {
 export function formatPercent(value) {
   const number = Number(value) || 0;
   return number.toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: 1 });
+}
+
+export function phoneContactLabel(lead) {
+  if (!lead?.phone) return 'Telefone não disponível';
+  if (lead.phoneWhatsAppConfirmed) return 'WhatsApp confirmado';
+  return 'Telefone disponível';
 }
 
 export function locationLabel(lead) {

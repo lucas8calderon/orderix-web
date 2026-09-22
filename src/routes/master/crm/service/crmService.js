@@ -27,6 +27,14 @@ export function searchCrmProspecting(payload) {
   return axios.post(`${CRM_URL}/prospecting/search`, payload || {});
 }
 
+export function importCrmProspecting(payload) {
+  return axios.post(`${CRM_URL}/prospecting/import`, payload || {});
+}
+
+export function getCrmProspectingUsage() {
+  return axios.get(`${CRM_URL}/prospecting/usage`);
+}
+
 export function getCrmLead(id) {
   return axios.get(`${CRM_URL}/leads/${id}`);
 }

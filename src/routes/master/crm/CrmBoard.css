@@ -62,6 +62,38 @@
   box-shadow: inset 4px 0 0 var(--color-warning, #d97706);
 }
 
+.crm-places-usage {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, rgba(148, 163, 184, 0.35));
+  background: var(--color-surface-muted, rgba(148, 163, 184, 0.08));
+}
+
+.crm-places-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, rgba(148, 163, 184, 0.35));
+  background: var(--color-surface, transparent);
+}
+
+.crm-places-card.is-selected {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.crm-places-card.is-existing {
+  opacity: 0.92;
+}
+
+.crm-places-contact {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, rgba(148, 163, 184, 0.35));
+}
+
+.crm-places-card .MuiTypography-body2 {
+  white-space: pre-line;
+}
+
 .crm-action-center {
   height: 100%;
 }
