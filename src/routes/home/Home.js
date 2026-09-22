@@ -7,7 +7,7 @@ import { ProductSpotlightSections } from './components/EcosystemSection';
 import ProductsSection from './components/ProductsSection';
 import BenefitsSection from './components/BenefitsSection';
 import DemoSection from './components/DemoSection';
-import PlansSection from './components/PlansSection';
+import NewPlansSection from './components/NewPlansSection';
 import FaqSection from './components/FaqSection';
 import Footer from './components/Footer';
 import FloatWhatsAppButton from './components/FloatWhatsAppButton';
@@ -37,7 +37,7 @@ const Home = () => {
         <ProductsSection />
         <BenefitsSection />
         <DemoSection />
-        <PlansSection />
+        <NewPlansSection />
         <FaqSection />
       </main>
       <Footer />
