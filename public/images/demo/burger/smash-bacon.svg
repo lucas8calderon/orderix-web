@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Smash bacon">
+  <rect width="800" height="600" fill="#FFEDD5"/>
+  <ellipse cx="400" cy="170" rx="176" ry="56" fill="#F59E0B"/>
+  <rect x="250" y="214" width="300" height="20" rx="8" fill="#F87171"/>
+  <rect x="246" y="244" width="308" height="30" rx="12" fill="#7C2D12"/>
+  <rect x="236" y="284" width="328" height="20" rx="8" fill="#F8FAFC"/>
+  <rect x="258" y="314" width="284" height="16" rx="8" fill="#F97316"/>
+  <ellipse cx="400" cy="380" rx="168" ry="50" fill="#B45309"/>
+</svg>

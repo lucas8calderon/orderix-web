@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" role="img" aria-label="Capa Weper Pizza">
+  <defs>
+    <linearGradient id="pbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7F1D1D"/>
+      <stop offset="1" stop-color="#B91C1C"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="700" fill="url(#pbg)"/>
+  <circle cx="300" cy="160" r="140" fill="#DC2626" opacity="0.28"/>
+  <circle cx="800" cy="360" r="230" fill="#F59E0B"/>
+  <circle cx="800" cy="360" r="176" fill="#FEF3C7"/>
+  <circle cx="730" cy="310" r="22" fill="#DC2626"/>
+  <circle cx="860" cy="340" r="18" fill="#16A34A"/>
+  <circle cx="790" cy="420" r="20" fill="#DC2626"/>
+  <circle cx="880" cy="420" r="14" fill="#B91C1C"/>
+  <circle cx="720" cy="400" r="12" fill="#15803D"/>
+</svg>

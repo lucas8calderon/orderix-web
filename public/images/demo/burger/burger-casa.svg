@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Burger da Casa">
+  <rect width="800" height="600" fill="#FEF3C7"/>
+  <ellipse cx="400" cy="164" rx="180" ry="58" fill="#F59E0B"/>
+  <rect x="232" y="210" width="336" height="20" rx="8" fill="#16A34A"/>
+  <rect x="246" y="240" width="308" height="22" rx="10" fill="#FACC15"/>
+  <rect x="250" y="272" width="300" height="34" rx="14" fill="#7C2D12"/>
+  <ellipse cx="400" cy="368" rx="170" ry="52" fill="#B45309"/>
+</svg>

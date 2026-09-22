@@ -72,6 +72,14 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/delivery/pedido/abc')).toBe(true);
     expect(isPublicPath('/delivery')).toBe(true);
   });
+
+  it('trata /demo e /demo/:slug como rotas públicas', () => {
+    expect(isPublicPath(PATHS.DEMO)).toBe(true);
+    expect(isPublicPath('/demo')).toBe(true);
+    expect(isPublicPath('/demo/weper-burger')).toBe(true);
+    expect(isPublicPath('/demo/weper-pizza')).toBe(true);
+    expect(isPublicPath('/app/dashboard')).toBe(false);
+  });
 });
 
 describe('canAccessRoute', () => {

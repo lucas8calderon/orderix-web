@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Pastel de palmito">
+  <rect width="800" height="600" fill="#F0FDF4"/>
+  <path d="M160 360l240-160 240 160-240 110z" fill="#CA8A04"/>
+  <path d="M200 352l200-128 200 128-200 88z" fill="#FDE68A"/>
+  <ellipse cx="400" cy="338" rx="64" ry="18" fill="#16A34A"/>
+</svg>

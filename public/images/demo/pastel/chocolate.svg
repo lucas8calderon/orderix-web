@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Pastel de chocolate">
+  <rect width="800" height="600" fill="#FDF2F8"/>
+  <path d="M160 360l240-160 240 160-240 110z" fill="#B45309"/>
+  <path d="M200 352l200-128 200 128-200 88z" fill="#7C2D12"/>
+  <ellipse cx="400" cy="338" rx="60" ry="16" fill="#F8FAFC" opacity="0.4"/>
+</svg>

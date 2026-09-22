@@ -24,6 +24,8 @@ const SubscriptionBlocked = lazy(() => import('./routes/subscription/Subscriptio
 const PublicMenu = lazy(() => import('./routes/public-menu/PublicMenu'));
 const PublicDelivery = lazy(() => import('./routes/public-delivery/PublicDelivery'));
 const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTracking'));
+const DemoIndex = lazy(() => import('./routes/demo/DemoIndex'));
+const DemoStorePage = lazy(() => import('./routes/demo/DemoStorePage'));
 
 function RouteFallback() {
   return (
@@ -90,6 +92,22 @@ function App() {
           <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={PATHS.PRIVACY} element={<PrivacyPolicy />} />
           <Route path={PATHS.TERMS} element={<TermsOfUse />} />
+          <Route
+            path={PATHS.DEMO}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <DemoIndex />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.DEMO_SLUG}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <DemoStorePage />
+              </Suspense>
+            )}
+          />
           <Route
             path={PATHS.PUBLIC_MENU_SLUG}
             element={(

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Pastel de banana">
+  <rect width="800" height="600" fill="#FEF9C3"/>
+  <path d="M160 360l240-160 240 160-240 110z" fill="#F59E0B"/>
+  <path d="M200 352l200-128 200 128-200 88z" fill="#FDE047"/>
+  <path d="M340 330c40-20 80-20 120 0" fill="none" stroke="#A16207" stroke-width="8"/>
+</svg>

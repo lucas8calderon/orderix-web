@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Suco">
+  <rect width="800" height="600" fill="#FEF3C7"/>
+  <path d="M330 160h140l24 280H306z" fill="#F59E0B"/>
+  <path d="M344 196h112l16 210H328z" fill="#FBBF24"/>
+  <rect x="352" y="120" width="96" height="44" rx="10" fill="#B45309"/>
+  <circle cx="430" cy="150" r="22" fill="#F97316"/>
+  <circle cx="444" cy="136" r="8" fill="#FDBA74"/>
+</svg>

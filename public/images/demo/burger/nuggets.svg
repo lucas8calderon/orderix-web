@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Nuggets">
+  <rect width="800" height="600" fill="#FEF3C7"/>
+  <ellipse cx="320" cy="280" rx="70" ry="46" fill="#F59E0B"/>
+  <ellipse cx="430" cy="250" rx="64" ry="42" fill="#D97706"/>
+  <ellipse cx="390" cy="340" rx="68" ry="44" fill="#FBBF24"/>
+  <ellipse cx="500" cy="320" rx="58" ry="38" fill="#B45309"/>
+</svg>

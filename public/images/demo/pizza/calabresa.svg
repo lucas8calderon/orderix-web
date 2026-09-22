@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Calabresa">
+  <rect width="800" height="600" fill="#FFF1F2"/>
+  <circle cx="400" cy="300" r="190" fill="#D97706"/>
+  <circle cx="400" cy="300" r="150" fill="#F8FAFC"/>
+  <circle cx="340" cy="250" r="22" fill="#B91C1C"/>
+  <circle cx="450" cy="260" r="20" fill="#DC2626"/>
+  <circle cx="380" cy="350" r="21" fill="#9F1239"/>
+  <circle cx="470" cy="360" r="16" fill="#B91C1C"/>
+</svg>

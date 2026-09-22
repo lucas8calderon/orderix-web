@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Frango com catupiry">
+  <rect width="800" height="600" fill="#FEF3C7"/>
+  <circle cx="400" cy="300" r="190" fill="#F59E0B"/>
+  <circle cx="400" cy="300" r="150" fill="#FFF7ED"/>
+  <ellipse cx="350" cy="270" rx="34" ry="20" fill="#F8FAFC"/>
+  <ellipse cx="450" cy="300" rx="30" ry="18" fill="#FDE68A"/>
+  <ellipse cx="390" cy="360" rx="32" ry="18" fill="#F8FAFC"/>
+</svg>

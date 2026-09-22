@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Margherita">
+  <rect width="800" height="600" fill="#FEF2F2"/>
+  <circle cx="400" cy="300" r="190" fill="#F59E0B"/>
+  <circle cx="400" cy="300" r="150" fill="#F8FAFC"/>
+  <circle cx="340" cy="260" r="18" fill="#16A34A"/>
+  <circle cx="430" cy="250" r="16" fill="#DC2626"/>
+  <circle cx="400" cy="340" r="18" fill="#16A34A"/>
+  <circle cx="470" cy="330" r="14" fill="#DC2626"/>
+</svg>

@@ -83,7 +83,7 @@ const Footer = () => {
               <li><a href="#plans" onClick={goSection('plans')}>Planos</a></li>
               <li><a href="#faq" onClick={goSection('faq')}>FAQ</a></li>
               <li>
-                <button type="button" className="footer-link-btn" onClick={() => openWhatsApp('Olá! Quero uma demonstração da Weper.')}>
+                <button type="button" className="footer-link-btn" onClick={() => navigate(PATHS.DEMO)}>
                   Demonstração
                 </button>
               </li>

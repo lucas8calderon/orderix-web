@@ -66,6 +66,8 @@ export const PATHS = {
   PUBLIC_DELIVERY: '/delivery',
   PUBLIC_DELIVERY_SLUG: '/delivery/:slug',
   PUBLIC_DELIVERY_ORDER: '/delivery/pedido/:publicToken',
+  DEMO: '/demo',
+  DEMO_SLUG: '/demo/:slug',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -160,6 +162,7 @@ export const PUBLIC_PATHS = [
   PATHS.FORGOT_PASSWORD,
   PATHS.PRIVACY,
   PATHS.TERMS,
+  PATHS.DEMO,
 ];
 
 export function isPlatformAdmin(user) {
@@ -241,7 +244,9 @@ export function isPublicPath(path) {
   return normalized === PATHS.PUBLIC_MENU
     || normalized.startsWith(`${PATHS.PUBLIC_MENU}/`)
     || normalized === PATHS.PUBLIC_DELIVERY
-    || normalized.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
+    || normalized.startsWith(`${PATHS.PUBLIC_DELIVERY}/`)
+    || normalized === PATHS.DEMO
+    || normalized.startsWith(`${PATHS.DEMO}/`);
 }
 
 export function hasPermission(user, permission) {

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Água">
+  <rect width="800" height="600" fill="#F0F9FF"/>
+  <rect x="340" y="100" width="120" height="360" rx="24" fill="#7DD3FC"/>
+  <rect x="356" y="132" width="88" height="250" rx="16" fill="#E0F2FE"/>
+  <rect x="372" y="78" width="56" height="30" rx="8" fill="#0369A1"/>
+  <path d="M380 220c20-28 40-10 40 18s-40 40-40 8z" fill="#38BDF8"/>
+</svg>

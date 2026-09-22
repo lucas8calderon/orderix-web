@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Milkshake">
+  <rect width="800" height="600" fill="#FDF2F8"/>
+  <path d="M330 210h140l30 250H300z" fill="#F8FAFC"/>
+  <path d="M340 230h120l22 210H318z" fill="#FBCFE8"/>
+  <ellipse cx="400" cy="210" rx="70" ry="22" fill="#F472B6"/>
+  <circle cx="400" cy="170" r="28" fill="#FB7185"/>
+  <rect x="394" y="110" width="12" height="70" rx="6" fill="#F8FAFC"/>
+</svg>

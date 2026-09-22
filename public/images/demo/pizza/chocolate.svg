@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Pizza de chocolate">
+  <rect width="800" height="600" fill="#FDF2F8"/>
+  <circle cx="400" cy="300" r="190" fill="#B45309"/>
+  <circle cx="400" cy="300" r="150" fill="#7C2D12"/>
+  <circle cx="350" cy="260" r="16" fill="#FB7185"/>
+  <circle cx="440" cy="280" r="14" fill="#F43F5E"/>
+  <circle cx="390" cy="360" r="15" fill="#FB7185"/>
+</svg>

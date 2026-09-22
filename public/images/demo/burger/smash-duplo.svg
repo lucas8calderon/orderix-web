@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Smash duplo">
+  <rect width="800" height="600" fill="#FED7AA"/>
+  <ellipse cx="400" cy="168" rx="176" ry="58" fill="#F59E0B"/>
+  <rect x="236" y="210" width="328" height="24" rx="10" fill="#FACC15"/>
+  <rect x="246" y="242" width="308" height="30" rx="12" fill="#7C2D12"/>
+  <rect x="236" y="280" width="328" height="22" rx="10" fill="#F8FAFC"/>
+  <rect x="246" y="310" width="308" height="30" rx="12" fill="#7C2D12"/>
+  <ellipse cx="400" cy="384" rx="168" ry="50" fill="#B45309"/>
+</svg>

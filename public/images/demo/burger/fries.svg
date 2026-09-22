@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Batata frita">
+  <rect width="800" height="600" fill="#FEF3C7"/>
+  <path d="M280 430h240l-28-250H308z" fill="#DC2626"/>
+  <rect x="318" y="140" width="22" height="200" rx="8" fill="#FBBF24"/>
+  <rect x="350" y="120" width="22" height="220" rx="8" fill="#F59E0B"/>
+  <rect x="382" y="132" width="22" height="208" rx="8" fill="#FCD34D"/>
+  <rect x="414" y="118" width="22" height="222" rx="8" fill="#F59E0B"/>
+  <rect x="446" y="146" width="22" height="194" rx="8" fill="#FBBF24"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Onion rings">
+  <rect width="800" height="600" fill="#FFF7ED"/>
+  <ellipse cx="360" cy="300" rx="110" ry="70" fill="none" stroke="#D97706" stroke-width="28"/>
+  <ellipse cx="460" cy="270" rx="90" ry="58" fill="none" stroke="#F59E0B" stroke-width="24"/>
+  <ellipse cx="420" cy="360" rx="80" ry="50" fill="none" stroke="#B45309" stroke-width="22"/>
+</svg>

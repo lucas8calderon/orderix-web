@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Weper Burger">
+  <rect width="256" height="256" rx="64" fill="#C2410C"/>
+  <ellipse cx="128" cy="92" rx="78" ry="28" fill="#F59E0B"/>
+  <rect x="50" y="118" width="156" height="18" rx="8" fill="#F8FAFC"/>
+  <rect x="56" y="144" width="144" height="16" rx="8" fill="#7C2D12"/>
+  <ellipse cx="128" cy="178" rx="76" ry="24" fill="#B45309"/>
+</svg>

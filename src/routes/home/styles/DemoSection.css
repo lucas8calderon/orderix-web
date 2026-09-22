@@ -1,0 +1,23 @@
+.demo-landing {
+  padding: clamp(3.5rem, 6vw, 5.5rem) 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(37, 99, 235, 0.07), transparent 65%),
+    var(--color-surface);
+  scroll-margin-top: calc(var(--landing-header-height, 72px) + 8px);
+  overflow-x: hidden;
+}
+
+html[data-theme='dark'] .demo-landing {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(37, 99, 235, 0.16), transparent 65%),
+    var(--color-surface);
+}
+
+.demo-landing .demo-store-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-hover);
+}
+
+.demo-landing .demo-store-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}

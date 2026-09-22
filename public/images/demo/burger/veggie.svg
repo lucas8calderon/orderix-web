@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Veggie Burger">
+  <rect width="800" height="600" fill="#F0FDF4"/>
+  <ellipse cx="400" cy="176" rx="170" ry="56" fill="#D97706"/>
+  <rect x="236" y="220" width="328" height="22" rx="10" fill="#22C55E"/>
+  <rect x="250" y="252" width="300" height="36" rx="14" fill="#A16207"/>
+  <ellipse cx="400" cy="350" rx="162" ry="48" fill="#CA8A04"/>
+</svg>

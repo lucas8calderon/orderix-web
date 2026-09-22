@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Caldo de cana">
+  <rect width="800" height="600" fill="#ECFDF5"/>
+  <path d="M330 150h140l24 300H306z" fill="#16A34A"/>
+  <path d="M344 180h112l16 250H328z" fill="#86EFAC"/>
+  <rect x="356" y="120" width="88" height="40" rx="10" fill="#166534"/>
+</svg>

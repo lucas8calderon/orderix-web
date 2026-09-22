@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Refrigerante">
+  <rect width="800" height="600" fill="#DBEAFE"/>
+  <rect x="330" y="90" width="140" height="380" rx="28" fill="#1D4ED8"/>
+  <rect x="348" y="118" width="104" height="220" rx="16" fill="#60A5FA"/>
+  <ellipse cx="400" cy="118" rx="52" ry="16" fill="#93C5FD"/>
+  <rect x="368" y="70" width="64" height="28" rx="8" fill="#1E3A8A"/>
+  <circle cx="400" cy="210" r="28" fill="#FFFFFF" opacity="0.9"/>
+</svg>

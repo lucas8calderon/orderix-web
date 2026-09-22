@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Pastel de queijo">
+  <rect width="800" height="600" fill="#FFFBEB"/>
+  <path d="M160 360l240-160 240 160-240 110z" fill="#F59E0B"/>
+  <path d="M200 352l200-128 200 128-200 88z" fill="#FDE68A"/>
+  <ellipse cx="400" cy="340" rx="74" ry="22" fill="#F8FAFC"/>
+</svg>

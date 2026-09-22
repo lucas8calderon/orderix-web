@@ -6,6 +6,7 @@ import SegmentsStrip from './components/SegmentsStrip';
 import { ProductSpotlightSections } from './components/EcosystemSection';
 import ProductsSection from './components/ProductsSection';
 import BenefitsSection from './components/BenefitsSection';
+import DemoSection from './components/DemoSection';
 import PlansSection from './components/PlansSection';
 import FaqSection from './components/FaqSection';
 import Footer from './components/Footer';
@@ -35,6 +36,7 @@ const Home = () => {
         <ProductSpotlightSections />
         <ProductsSection />
         <BenefitsSection />
+        <DemoSection />
         <PlansSection />
         <FaqSection />
       </main>

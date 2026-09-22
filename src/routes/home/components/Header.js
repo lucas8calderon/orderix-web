@@ -7,6 +7,7 @@ import '../styles/Header.css';
 const NAV_LINKS = [
   { id: 'atendimento', label: 'Produto' },
   { id: 'funcionalidades', label: 'Funcionalidades' },
+  { id: 'demo', label: 'Demonstração' },
   { id: 'plans', label: 'Planos' },
   { id: 'faq', label: 'FAQ' },
 ];
