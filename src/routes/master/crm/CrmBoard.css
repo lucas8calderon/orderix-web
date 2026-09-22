@@ -1,0 +1,85 @@
+.crm-board {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  height: 100%;
+}
+
+.crm-board-header,
+.crm-board-summary,
+.crm-filters {
+  flex-shrink: 0;
+}
+
+.crm-board-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.crm-kanban {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.crm-kanban-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.crm-kanban-droppable {
+  padding: 8px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 80px;
+}
+
+.crm-kanban-droppable.is-over {
+  background: var(--color-primary-soft, rgba(37, 99, 235, 0.08));
+}
+
+.crm-drag-handle:active {
+  cursor: grabbing;
+}
+
+.crm-lead-card.is-overdue {
+  box-shadow: inset 4px 0 0 var(--color-error, #b91c1c);
+}
+
+.crm-lead-card.is-today {
+  box-shadow: inset 4px 0 0 var(--color-warning, #d97706);
+}
+
+.crm-action-center {
+  height: 100%;
+}
+
+@media (max-width: 899px) {
+  .crm-board {
+    height: auto;
+  }
+
+  .crm-board-main {
+    overflow: visible;
+    min-height: 420px;
+  }
+
+  .crm-kanban {
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: 420px;
+    max-height: 70vh;
+  }
+}

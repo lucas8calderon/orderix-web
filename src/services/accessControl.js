@@ -59,6 +59,7 @@ export const PATHS = {
   ADMIN_RESTAURANTES: '/admin/restaurantes',
   ADMIN_PLANOS: '/admin/planos',
   ADMIN_ASSINATURAS: '/admin/assinaturas',
+  ADMIN_CRM: '/admin/crm',
   LEGACY_DASHBOARD: '/dashboard',
   LEGACY_MASTER: '/master/dashboard',
   PUBLIC_MENU: '/cardapio',
@@ -89,6 +90,7 @@ const PLATFORM_ADMIN_ROUTES = [
   PATHS.ADMIN_RESTAURANTES,
   PATHS.ADMIN_PLANOS,
   PATHS.ADMIN_ASSINATURAS,
+  PATHS.ADMIN_CRM,
 ];
 
 /**
@@ -131,8 +133,8 @@ export const ROLE_ROUTES = {
  * a autorização real continua no backend via JWT + SecurityConfig.
  */
 export const ROLE_PERMISSIONS = {
-  [ROLES.MASTER]: ['platform.admin', 'stores.manage', 'plans.manage', 'subscriptions.manage'],
-  [ROLES.SUPER_ADMIN]: ['platform.admin', 'stores.manage', 'plans.manage', 'subscriptions.manage'],
+  [ROLES.MASTER]: ['platform.admin', 'stores.manage', 'plans.manage', 'subscriptions.manage', 'crm.manage'],
+  [ROLES.SUPER_ADMIN]: ['platform.admin', 'stores.manage', 'plans.manage', 'subscriptions.manage', 'crm.manage'],
   [ROLES.ADMIN]: [
     'store.dashboard',
     'store.floor',

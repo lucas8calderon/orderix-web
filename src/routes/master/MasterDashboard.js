@@ -45,6 +45,7 @@ import { createStore, updateStore } from './service/storesService';
 import { MasterOverview, statusColor } from './components/MasterOverview';
 import { MasterPlans } from './components/MasterPlans';
 import { MasterSubscriptions } from './components/MasterSubscriptions';
+import { CrmBoard } from './crm/CrmBoard';
 import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
 import { getCurrentUser } from '../../services/session';
 
@@ -246,6 +247,7 @@ const ADMIN_SECTIONS = {
   restaurantes: PATHS.ADMIN_RESTAURANTES,
   planos: PATHS.ADMIN_PLANOS,
   assinaturas: PATHS.ADMIN_ASSINATURAS,
+  crm: PATHS.ADMIN_CRM,
 };
 
 export default function MasterDashboard() {
@@ -405,13 +407,43 @@ export default function MasterDashboard() {
           >
             Assinaturas
           </Button>
+          <Button
+            color="inherit"
+            onClick={() => goToSection('crm')}
+            sx={{
+              textTransform: 'none',
+              fontWeight: section === 'crm' ? 700 : 400,
+              borderBottom: section === 'crm' ? '2px solid #fff' : '2px solid transparent',
+              borderRadius: 0,
+            }}
+          >
+            CRM
+          </Button>
           <Button color="inherit" onClick={handleLogout} sx={{ textTransform: 'none' }}>
             Sair
           </Button>
         </Stack>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container
+        maxWidth={section === 'crm' ? false : 'lg'}
+        sx={{
+          py: section === 'crm' ? { xs: 2, md: 2 } : 4,
+          px: section === 'crm' ? { xs: 1.5, md: 2 } : undefined,
+          ...(section === 'crm' ? {
+            height: { md: 'calc(100vh - 88px)' },
+            display: { md: 'flex' },
+            flexDirection: { md: 'column' },
+            overflow: { md: 'hidden' },
+          } : {}),
+        }}
+      >
+        {section === 'crm' ? (
+          <Box sx={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <CrmBoard />
+          </Box>
+        ) : (
+          <>
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress sx={{ color: 'var(--color-primary)' }} />
@@ -570,6 +602,8 @@ export default function MasterDashboard() {
                 ))}
               </Stack>
             </Paper>
+          </>
+        )}
           </>
         )}
       </Container>

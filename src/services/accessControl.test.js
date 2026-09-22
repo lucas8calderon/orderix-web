@@ -107,6 +107,8 @@ describe('canAccessRoute', () => {
     expect(canAccessRoute(master, PATHS.APP_DASHBOARD)).toBe(false);
     expect(canAccessRoute(master, PATHS.ADMIN_DASHBOARD)).toBe(true);
     expect(canAccessRoute(master, PATHS.ADMIN_RESTAURANTES)).toBe(true);
+    expect(canAccessRoute(master, PATHS.ADMIN_CRM)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_CRM)).toBe(false);
   });
 
   it('ADMIN acessa configurações da loja', () => {
@@ -142,6 +144,8 @@ describe('roles auxiliares', () => {
   it('hasPermission é um stub por role', () => {
     expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.floor')).toBe(true);
     expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.catalog')).toBe(false);
+    expect(hasPermission(user({ role: ROLES.MASTER, storeId: null }), 'crm.manage')).toBe(true);
+    expect(hasPermission(user({ role: ROLES.ADMIN }), 'crm.manage')).toBe(false);
   });
 });
 
