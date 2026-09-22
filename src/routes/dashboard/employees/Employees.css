@@ -93,6 +93,26 @@
   color: white !important;
 }
 
+.charge-chip-none {
+  background-color: #E5E7EB !important;
+  color: #374151 !important;
+}
+
+.charge-chip-manual {
+  background-color: #6B7280 !important;
+  color: white !important;
+}
+
+.charge-chip-infinitepay {
+  background-color: #00C853 !important;
+  color: white !important;
+}
+
+.charge-chip-getnet {
+  background-color: #1565C0 !important;
+  color: white !important;
+}
+
 .employee-avatar {
   width: 56px;
   height: 56px;

@@ -81,7 +81,7 @@ export function CardEmployee({ employee, onEdit, onDelete }) {
           </Typography>
         ) : null}
 
-        <Box sx={{ mt: 'auto', pt: 2 }}>
+        <Box sx={{ mt: 'auto', pt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           <Chip
             icon={getProfileIcon(employee.profile)}
             label={getProfileLabel(employee.profile)}

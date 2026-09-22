@@ -19,6 +19,26 @@ function profileToRole(profile) {
   return profile;
 }
 
+export const CHARGE_PROVIDER_OPTIONS = [
+  { id: 'NONE', label: 'Não cobra (só lança)' },
+  { id: 'MANUAL', label: 'Manual' },
+  { id: 'INFINITEPAY', label: 'InfinitePay' },
+  { id: 'GETNET', label: 'Getnet' },
+];
+
+export function toChargeProvider(value) {
+  const raw = String(value || '').toUpperCase();
+  if (raw === 'MANUAL' || raw === 'INFINITEPAY' || raw === 'GETNET') {
+    return raw;
+  }
+  return 'NONE';
+}
+
+export function chargeProviderLabel(value) {
+  const option = CHARGE_PROVIDER_OPTIONS.find((item) => item.id === toChargeProvider(value));
+  return option ? option.label : 'Não cobra (só lança)';
+}
+
 export function toUiEmployee(dto) {
   return {
     id: dto.id,
@@ -31,6 +51,8 @@ export function toUiEmployee(dto) {
     storeName: dto.storeName,
     waiterId: dto.waiterId,
     active: dto.active,
+    canCharge: true,
+    chargeProvider: null,
   };
 }
 

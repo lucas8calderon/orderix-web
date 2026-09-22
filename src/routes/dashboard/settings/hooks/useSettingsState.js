@@ -48,6 +48,18 @@ const MOCK_COMPANY = {
 const DEFAULT_PAYMENT = {
   serviceFee: 10,
   timing: 'AFTER_KITCHEN',
+  tableTiming: 'AFTER_KITCHEN',
+  comandaTiming: 'AFTER_KITCHEN',
+  counterTiming: 'AFTER_KITCHEN',
+  tablePaymentMode: 'MANUAL_CONFIRMATION',
+  comandaPaymentMode: 'MANUAL_CONFIRMATION',
+  counterPaymentMode: 'MANUAL_CONFIRMATION',
+  tablePaymentProvider: 'NONE',
+  comandaPaymentProvider: 'NONE',
+  counterPaymentProvider: 'NONE',
+  tableFallbackMode: 'BLOCK',
+  comandaFallbackMode: 'BLOCK',
+  counterFallbackMode: 'BLOCK',
   waiterPaymentEnabled: true,
   paymentMethods: {
     PIX: true,
@@ -57,7 +69,7 @@ const DEFAULT_PAYMENT = {
     VOUCHER: true,
     OTHER: false,
   },
-  defaultProvider: 'MANUAL',
+  defaultProvider: 'NONE',
   infinitePayHandle: '',
   infinitePayDocument: '',
 };
@@ -248,6 +260,18 @@ export const useSettingsState = () => {
 
       const payment = await settingsStorage.updatePaymentConfig({
         timing: current.timing,
+        tableTiming: current.tableTiming,
+        comandaTiming: current.comandaTiming,
+        counterTiming: current.counterTiming,
+        tablePaymentMode: current.tablePaymentMode,
+        comandaPaymentMode: current.comandaPaymentMode,
+        counterPaymentMode: current.counterPaymentMode,
+        tablePaymentProvider: current.tablePaymentProvider,
+        comandaPaymentProvider: current.comandaPaymentProvider,
+        counterPaymentProvider: current.counterPaymentProvider,
+        tableFallbackMode: current.tableFallbackMode,
+        comandaFallbackMode: current.comandaFallbackMode,
+        counterFallbackMode: current.counterFallbackMode,
         waiterPaymentEnabled: current.waiterPaymentEnabled,
         paymentMethods: current.paymentMethods,
         defaultProvider: current.defaultProvider,
@@ -259,7 +283,7 @@ export const useSettingsState = () => {
       showToast(
         section === 'serviceFee'
           ? 'Taxa de serviço salva com sucesso.'
-          : 'Cobrança da loja salva com sucesso.'
+          : 'Pedidos e pagamentos salvos com sucesso.'
       );
       return true;
     } catch (error) {

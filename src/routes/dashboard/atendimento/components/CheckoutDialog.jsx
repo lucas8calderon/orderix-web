@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Divider,
   FormControlLabel,
@@ -25,9 +26,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { formatCurrency } from '../../../../services/accessControl';
 import {
-  capturePayment,
-  createPaymentIntent,
+  channelPaymentMode,
+  confirmExternalPayment,
   getStorePaymentConfig,
+  isSettledPaymentStatus,
   paymentMethodsFromConfig,
 } from '../../../../services/paymentConfigService';
 import {
@@ -75,6 +77,45 @@ const Transition = forwardRef((props, ref) => (
   <Slide direction="up" ref={ref} {...props} />
 ));
 
+const confirmPaperSx = {
+  maxWidth: 480,
+  backgroundColor: 'var(--color-surface)',
+  color: 'var(--color-text-primary)',
+  backgroundImage: 'none',
+  border: '1px solid var(--color-border)',
+  borderRadius: { xs: '16px', sm: '20px' },
+};
+
+export function getCloseAccountConfirmCopy(target, options = {}) {
+  const isComanda = target?.kind === 'comanda';
+  const number = target?.number != null && String(target.number).trim() !== ''
+    ? String(target.number).trim()
+    : '';
+  const subject = number
+    ? `${isComanda ? 'comanda' : 'mesa'} ${number}`
+    : (isComanda ? 'comanda' : 'mesa');
+  const mode = options.paymentMode || 'MANUAL_CONFIRMATION';
+  const totalLabel = options.totalLabel || '';
+
+  if (mode === 'ORDER_ONLY') {
+    return {
+      title: isComanda ? 'Liberar comanda?' : 'Liberar mesa?',
+      description: `O Weper não cobra neste canal. Ao confirmar, a ${subject} será liberada. Esta ação não pode ser desfeita.`,
+    };
+  }
+  if (mode === 'INTEGRATED_PAYMENT') {
+    return {
+      title: isComanda ? 'Fechar comanda?' : 'Fechar mesa?',
+      description: `Só feche se o pagamento já foi aprovado no terminal. A ${subject} será liberada e os dados desta conta serão limpos.`,
+    };
+  }
+
+  return {
+    title: 'Confirma que o pagamento foi realizado?',
+    description: `Confirma que o pagamento de ${totalLabel || 'R$ 0,00'} foi realizado fora do Weper? A ${subject} será liberada. O Weper não processou esta transação.`,
+  };
+}
+
 export function CheckoutDialog({ open, target, onClose, onPaid }) {
   const dialogProps = useDialogResponsiveProps({
     paperSx: {
@@ -98,7 +139,12 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
   const [discount, setDiscount] = useState('0');
   const [toast, setToast] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
-
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('MANUAL_CONFIRMATION');
+  const confirmDialogProps = useDialogResponsiveProps({
+    fullScreenOnMobile: false,
+    paperSx: confirmPaperSx,
+  });
   const kindLabel = target?.kind === 'comanda' ? 'Comanda' : 'Mesa';
   const title = target ? `${kindLabel} ${target.number ?? ''}` : '';
 
@@ -154,6 +200,12 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
 
   useEffect(() => {
     if (!open) {
+      setConfirmOpen(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
       return undefined;
     }
 
@@ -172,6 +224,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
         ));
         const rate = Number(dto.serviceFeePercent);
         setServiceFeeRate(Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0.1);
+        setPaymentMode(channelPaymentMode(dto, target?.kind === 'comanda' ? 'comanda' : 'table'));
       })
       .catch(() => {
         if (cancelled) return;
@@ -182,7 +235,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, target]);
 
   const subtotal = useMemo(() => accountSubtotal(account), [account]);
   const discountValue = Math.max(0, Number(discount) || 0);
@@ -190,15 +243,31 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
   const serviceTax = applyServiceTax ? subtotal * serviceFeeRate : 0;
   const total = Math.max(0, subtotal + serviceTax - discountValue);
   const itemCount = useMemo(() => countAccountItems(account), [account]);
-  const canClose = !loading && !empty && !error && itemCount > 0 && Boolean(paymentMethod);
+  const needsPaymentMethod = paymentMode !== 'ORDER_ONLY';
+  const canClose = !loading && !empty && !error && itemCount > 0 && (!needsPaymentMethod || Boolean(paymentMethod));
+  const confirmCopy = getCloseAccountConfirmCopy(target, {
+    paymentMode,
+    totalLabel: formatCurrency(total),
+  });
+
+  const handleAskConfirm = () => {
+    if (!canClose || !target?.id || closing) return;
+    setConfirmOpen(true);
+  };
+
+  const handleCancelConfirm = () => {
+    if (closing) return;
+    setConfirmOpen(false);
+  };
 
   const handleConfirm = () => {
-    if (!canClose || !target?.id) return;
+    if (!canClose || !target?.id || closing) return;
+    setConfirmOpen(false);
     setClosing(true);
     setError('');
     setPaymentStatus('PROCESSING');
     const payload = {
-      paymentMethod,
+      paymentMethod: paymentMethod || 'OTHER',
       applyServiceTax,
       discount: discountValue,
     };
@@ -208,34 +277,38 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     const intentKey = newUuid();
     const closeKey = newUuid();
 
-    const intentBody = {
-      clientPaymentId,
-      amount: Number(total.toFixed(2)),
-      paymentMethod,
-      provider: 'MANUAL',
-    };
-    if (groupOrderId) {
-      intentBody.groupOrderId = groupOrderId;
-    } else if (orderId) {
-      intentBody.orderId = orderId;
-    }
+    const closeAccount = () => (
+      target.kind === 'comanda'
+        ? closeComandaAccount(target.id, payload, closeKey)
+        : closeTableAccount(target.id, payload, closeKey)
+    );
 
-    createPaymentIntent(intentBody, intentKey)
-      .then((response) => {
-        const intent = response.data || {};
-        if (String(intent.status || '').toUpperCase() === 'APPROVED') {
-          return intent;
-        }
-        return capturePayment(intent.id).then((captured) => captured.data || intent);
-      })
+    const settle = () => {
+      if (paymentMode === 'ORDER_ONLY') {
+        return Promise.resolve({ status: 'NOT_REQUIRED' });
+      }
+      const body = { clientPaymentId, paymentMethod: payload.paymentMethod };
+      if (groupOrderId) body.groupOrderId = groupOrderId;
+      else if (orderId) body.orderId = orderId;
+      if (paymentMode === 'INTEGRATED_PAYMENT') {
+        return Promise.resolve({ status: 'CLOSE_ONLY' });
+      }
+      return confirmExternalPayment(body, intentKey).then((response) => response.data || {});
+    };
+
+    settle()
       .then((approved) => {
-        if (String(approved?.status || '').toUpperCase() !== 'APPROVED') {
-          throw new Error('Pagamento não aprovado. A mesa não foi liberada.');
+        if (paymentMode === 'MANUAL_CONFIRMATION' && !isSettledPaymentStatus(approved?.status)) {
+          throw new Error('Pagamento não confirmado. A mesa não foi liberada.');
         }
-        setPaymentStatus('APPROVED');
-        return target.kind === 'comanda'
-          ? closeComandaAccount(target.id, payload, closeKey)
-          : closeTableAccount(target.id, payload, closeKey);
+        setPaymentStatus(
+          paymentMode === 'ORDER_ONLY'
+            ? 'NOT_REQUIRED'
+            : paymentMode === 'MANUAL_CONFIRMATION'
+              ? 'PAID_EXTERNALLY'
+              : 'APPROVED',
+        );
+        return closeAccount();
       })
       .then(() => {
         setToast('Conta fechada com sucesso!');
@@ -428,10 +501,21 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
 
               {paymentStatus === 'PROCESSING' && (
                 <Alert severity="info" sx={{ mb: 2 }} icon={<CircularProgress size={18} />}>
-                  Registrando pagamento (PROCESSING)…
+                  {paymentMode === 'ORDER_ONLY' ? 'Liberando conta…' : 'Registrando pagamento…'}
+                </Alert>
+              )}
+              {paymentMode === 'MANUAL_CONFIRMATION' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Pagamento confirmado manualmente — o Weper não processa esta transação.
+                </Alert>
+              )}
+              {paymentMode === 'INTEGRATED_PAYMENT' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Cobrar no terminal Android. Só feche aqui se o pagamento já estiver aprovado.
                 </Alert>
               )}
 
+              {paymentMode !== 'ORDER_ONLY' && (
               <Box mt={3}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Forma de pagamento
@@ -449,6 +533,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                   ))}
                 </ToggleButtonGroup>
               </Box>
+              )}
             </>
           )}
         </DialogContent>
@@ -469,7 +554,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
           {!empty && (
             <Button
               variant="contained"
-              onClick={handleConfirm}
+              onClick={handleAskConfirm}
               disabled={!canClose || closing}
               sx={{
                 backgroundColor: 'var(--color-primary)',
@@ -477,9 +562,75 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
                 '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
               }}
             >
-              {closing ? (paymentStatus === 'PROCESSING' ? 'Registrando pagamento...' : 'Fechando...') : 'Confirmar pagamento e liberar'}
+              {closing
+                ? (paymentStatus === 'PROCESSING' ? 'Registrando...' : 'Fechando...')
+                : paymentMode === 'ORDER_ONLY'
+                  ? 'Liberar conta'
+                  : paymentMode === 'MANUAL_CONFIRMATION'
+                    ? 'Confirmar pagamento e liberar'
+                    : 'Fechar conta'}
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        {...confirmDialogProps}
+        className="checkout-confirm-dialog"
+        open={confirmOpen}
+        onClose={closing ? undefined : handleCancelConfirm}
+        aria-labelledby="checkout-confirm-title"
+        aria-describedby="checkout-confirm-description"
+        maxWidth="xs"
+      >
+        <DialogTitle
+          id="checkout-confirm-title"
+          sx={{
+            fontWeight: 700,
+            color: 'var(--color-text-primary)',
+            fontSize: '1.25rem',
+          }}
+        >
+          {confirmCopy.title}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="checkout-confirm-description"
+            sx={{
+              color: 'var(--color-text-secondary)',
+              fontSize: '1rem',
+              lineHeight: 1.5,
+            }}
+          >
+            {confirmCopy.description}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            autoFocus
+            variant="outlined"
+            onClick={handleCancelConfirm}
+            disabled={closing}
+            sx={{
+              borderColor: 'var(--color-primary)',
+              color: 'var(--color-primary)',
+              backgroundColor: 'var(--color-surface)',
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirm}
+            disabled={!canClose || closing}
+            sx={{
+              backgroundColor: 'var(--color-primary)',
+              color: 'var(--color-on-primary)',
+              '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
+            }}
+          >
+            Confirmar
+          </Button>
         </DialogActions>
       </Dialog>
 

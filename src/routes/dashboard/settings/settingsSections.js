@@ -4,7 +4,7 @@ import { PATHS } from '../../../services/accessControl';
 export const SETTINGS_SECTIONS = [
   { id: 'geral', label: 'Geral', shortLabel: 'Geral' },
   { id: 'horarios', label: 'Horários', shortLabel: 'Horários' },
-  { id: 'pagamentos', label: 'Pagamentos', shortLabel: 'Pagamentos' },
+  { id: 'pagamentos', label: 'Pedidos e pagamentos', shortLabel: 'Pagamentos' },
   { id: 'delivery', label: 'Delivery', shortLabel: 'Delivery' },
   { id: 'cardapio-digital', label: 'Cardápio Digital (QR)', shortLabel: 'Cardápio' },
   { id: 'taxas', label: 'Taxas e Regras', shortLabel: 'Taxas' },

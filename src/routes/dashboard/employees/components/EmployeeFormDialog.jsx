@@ -9,10 +9,7 @@ import {
   Typography,
   TextField,
   Grid,
-  FormControl,
-  Select,
   MenuItem,
-  InputLabel,
   Alert,
 } from "@mui/material";
 import { EmployeesContext } from "../provider/EmployeesContext";
@@ -172,20 +169,20 @@ export function EmployeeFormDialog({
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth variant="outlined" required>
-                <InputLabel id="profile-label">Cargo</InputLabel>
-                <Select
-                  labelId="profile-label"
-                  value={profile}
-                  onChange={(e) => setProfile(e.target.value)}
-                  label="Cargo"
-                >
-                  <MenuItem value="STORE_ADMIN">Administrador</MenuItem>
-                  <MenuItem value="GARCOM">Garçom</MenuItem>
-                  <MenuItem value="KITCHEN">Cozinha</MenuItem>
-                  <MenuItem value="CASHIER">Caixa</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                select
+                fullWidth
+                required
+                label="Cargo"
+                value={profile}
+                onChange={(e) => setProfile(e.target.value)}
+                variant="outlined"
+              >
+                <MenuItem value="STORE_ADMIN">Administrador</MenuItem>
+                <MenuItem value="GARCOM">Garçom</MenuItem>
+                <MenuItem value="KITCHEN">Cozinha</MenuItem>
+                <MenuItem value="CASHIER">Caixa</MenuItem>
+              </TextField>
             </Grid>
 
             <Grid item xs={12}>

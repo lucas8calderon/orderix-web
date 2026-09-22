@@ -113,12 +113,15 @@
   background-image: none !important;
 }
 
-.checkout-dialog .MuiDialogTitle-root {
+.checkout-dialog .MuiDialogTitle-root,
+.checkout-confirm-dialog .MuiDialogTitle-root {
   color: var(--color-text-primary);
 }
 
 .checkout-dialog .MuiDialogContent-root,
-.checkout-dialog .MuiDialogActions-root {
+.checkout-dialog .MuiDialogActions-root,
+.checkout-confirm-dialog .MuiDialogContent-root,
+.checkout-confirm-dialog .MuiDialogActions-root {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
 }

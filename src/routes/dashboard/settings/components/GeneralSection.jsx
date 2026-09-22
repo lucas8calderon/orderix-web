@@ -218,8 +218,8 @@ export function GeneralSection({ settings, onNavigate }) {
 
       <SettingsSectionCard
         icon={CreditCardIcon}
-        title="Pagamentos"
-        description="Momento da cobrança, meios aceitos e adquirente."
+        title="Pedidos e pagamentos"
+        description="Modo e momento da cobrança por canal (mesa, comanda e balcão)."
         actionLabel="Abrir"
         actionVariant="link"
         onAction={() => onNavigate('pagamentos')}

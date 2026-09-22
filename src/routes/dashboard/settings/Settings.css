@@ -526,6 +526,27 @@
   margin-bottom: var(--settings-spacing-lg);
 }
 
+.payment-channel-timing {
+  margin-bottom: var(--settings-spacing-lg);
+  padding: 14px 16px;
+  border: 1px solid var(--settings-border);
+  border-radius: 12px;
+}
+
+.payment-channel-timing .setting-hint {
+  color: var(--settings-text-secondary, #5f6b7a);
+  margin: 0 0 var(--settings-spacing-md) 0;
+  line-height: 1.45;
+}
+
+.payment-channel-timing .setting-item {
+  margin-bottom: var(--settings-spacing-md);
+}
+
+.payment-channel-timing .setting-item:last-child {
+  margin-bottom: 0;
+}
+
 /* === PERMISSIONS === */
 .permissions-accordion__item {
   border: 1px solid var(--settings-border) !important;
