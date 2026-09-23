@@ -25,7 +25,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { formatCurrency } from '../../services/accessControl';
-import { formatDayHours, scheduleForDisplay } from '../../services/storeHoursService';
+import { scheduleForDisplay } from '../../services/storeHoursService';
+import StoreClosedHoursCard from '../../commons/components/StoreClosedHoursCard';
 import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
 import { createDeliveryPixPayment } from '../../services/deliveryPaymentService';
 import DeliveryCardCheckout from './components/DeliveryCardCheckout';
@@ -355,10 +356,27 @@ export default function PublicDelivery() {
   };
 
   const openAuthenticatedCheckout = () => {
+    const acceptOnDelivery = catalog?.acceptPaymentOnDelivery !== false;
+    const onlinePix = Boolean(catalog?.onlinePixEnabled);
+    const onlineCard = Boolean(catalog?.onlineCardEnabled);
+    let onlinePayment = false;
+    let paymentMethod = 'PIX';
+    if (!acceptOnDelivery) {
+      if (onlinePix) {
+        onlinePayment = true;
+        paymentMethod = 'PIX';
+      } else if (onlineCard) {
+        onlinePayment = true;
+        paymentMethod = 'CREDIT';
+      }
+    } else if (onlinePix) {
+      onlinePayment = true;
+      paymentMethod = 'PIX';
+    }
     setCheckout((prev) => ({
       ...prev,
-      onlinePayment: Boolean(catalog?.onlinePixEnabled),
-      paymentMethod: 'PIX',
+      onlinePayment,
+      paymentMethod,
     }));
     setCheckoutOpen(true);
   };
@@ -385,6 +403,14 @@ export default function PublicDelivery() {
     }
     if (Number(catalog?.minOrder || 0) > 0 && totals.subtotal < Number(catalog.minOrder)) {
       return `Pedido mínimo de ${formatCurrency(catalog.minOrder)}.`;
+    }
+    const acceptOnDelivery = catalog?.acceptPaymentOnDelivery !== false;
+    const hasOnline = Boolean(catalog?.onlinePixEnabled || catalog?.onlineCardEnabled);
+    if (!acceptOnDelivery && !hasOnline) {
+      return 'Esta loja exige pagamento antecipado e nenhum meio online (Pix ou cartão) está disponível no momento.';
+    }
+    if (!acceptOnDelivery && !checkout.onlinePayment) {
+      return 'Esta loja exige pagamento online antes de produzir o pedido.';
     }
     if (checkout.paymentMethod === 'CASH' && checkout.needsChange) {
       const changeFor = Number(checkout.changeFor);
@@ -543,26 +569,12 @@ export default function PublicDelivery() {
         <div className="delivery-layout">
           <div className="delivery-main">
             {closed ? (
-              <Box className="delivery-closed-banner" role="status">
-                <Typography className="delivery-closed-title">Loja fechada</Typography>
-                <Typography className="delivery-closed-copy">
-                  Você pode ver o cardápio, mas não é possível enviar pedido agora.
-                </Typography>
-                {scheduleRows.length > 0 ? (
-                  <Box className="delivery-hours-list" aria-label="Horários de funcionamento">
-                    {scheduleRows.map((day) => (
-                      <Box key={day.id} className="delivery-hours-row">
-                        <Typography component="span" className="delivery-hours-day">
-                          {day.label}
-                        </Typography>
-                        <Typography component="span" className="delivery-hours-value">
-                          {formatDayHours(day)}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : null}
-              </Box>
+              <StoreClosedHoursCard
+                title="Loja fechada"
+                copy="Você pode ver o cardápio, mas não é possível enviar pedido agora."
+                scheduleRows={scheduleRows}
+                variant="delivery"
+              />
             ) : null}
 
             <DeliveryMenuSearch value={query} onChange={setQuery} />
@@ -961,6 +973,7 @@ export default function PublicDelivery() {
             onChange={setCheckout}
             onlinePixEnabled={Boolean(catalog?.onlinePixEnabled)}
             onlineCardEnabled={Boolean(catalog?.onlineCardEnabled)}
+            acceptPaymentOnDelivery={catalog?.acceptPaymentOnDelivery !== false}
             total={totals.total}
           />
           <Divider sx={{ my: 2 }} />

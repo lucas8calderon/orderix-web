@@ -32,7 +32,7 @@ export function WaiterHome({ user }) {
       >
         <PhoneAndroidOutlinedIcon fontSize="large" />
       </Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+      <Typography component="h1" variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
         Área do garçom
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>

@@ -21,7 +21,7 @@ export default function ForgotPassword() {
         <ThemeToggleButton className="header-theme-toggle" />
       </Box>
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+        <Typography component="h1" variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
           Recuperar senha
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>

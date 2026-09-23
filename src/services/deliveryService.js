@@ -4,7 +4,7 @@ import { API_BASE_URL } from './apiConfig';
 const SETTINGS_URL = `${API_BASE_URL}/stores/me/delivery`;
 
 export function getDeliverySettings() {
-  return axios.get(SETTINGS_URL);
+  return axios.get(SETTINGS_URL, { timeout: 60000 });
 }
 
 export function updateDeliverySettings(payload) {
@@ -39,6 +39,9 @@ export function toDeliverySettingsUi(data = {}) {
     deliveryEnabled: Boolean(data.enabled),
     offersDelivery: data.offersDelivery == null ? true : Boolean(data.offersDelivery),
     offersPickup: data.offersPickup == null ? true : Boolean(data.offersPickup),
+    acceptPaymentOnDelivery: data.acceptPaymentOnDelivery == null
+      ? true
+      : Boolean(data.acceptPaymentOnDelivery),
     deliveryFee: Number(data.deliveryFee || 0),
     deliveryEstimatedMinutes: data.estimatedMinutes == null ? '' : data.estimatedMinutes,
     deliveryMinOrder: Number(data.minOrder || 0),
@@ -51,22 +54,38 @@ export function toDeliverySettingsUi(data = {}) {
   };
 }
 
+/** Marca remoção explícita. Campo vazio no estado não apaga o que já está no servidor. */
+export const CLEARED_BRANDING_IMAGE = '__cleared_branding__';
+
+export function isBrandingImage(value) {
+  const trimmed = String(value || '').trim();
+  return Boolean(trimmed) && trimmed !== CLEARED_BRANDING_IMAGE;
+}
+
+function brandingField(value) {
+  if (value === CLEARED_BRANDING_IMAGE) return '';
+  const trimmed = String(value || '').trim();
+  return trimmed || null;
+}
+
 export function toDeliverySettingsPayload(ui = {}) {
   const eta = ui.deliveryEstimatedMinutes;
   const address = (ui.storeAddress || '').trim();
-  const logoUrl = (ui.deliveryLogoUrl || '').trim();
-  const coverUrl = (ui.deliveryCoverUrl || '').trim();
   const offersDelivery = ui.offersDelivery == null ? true : Boolean(ui.offersDelivery);
   const offersPickup = ui.offersPickup == null ? true : Boolean(ui.offersPickup);
+  const acceptPaymentOnDelivery = ui.acceptPaymentOnDelivery == null
+    ? true
+    : Boolean(ui.acceptPaymentOnDelivery);
   return {
     enabled: Boolean(ui.deliveryEnabled),
     offersDelivery,
     offersPickup,
+    acceptPaymentOnDelivery,
     deliveryFee: Number(ui.deliveryFee || 0),
     minOrder: Number(ui.deliveryMinOrder || 0),
     estimatedMinutes: eta === '' || eta == null ? null : Number(eta),
     address: address || null,
-    logoUrl: logoUrl || null,
-    coverUrl: coverUrl || null,
+    logoUrl: brandingField(ui.deliveryLogoUrl),
+    coverUrl: brandingField(ui.deliveryCoverUrl),
   };
 }

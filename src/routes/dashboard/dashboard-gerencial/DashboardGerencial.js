@@ -24,6 +24,8 @@ import { formatCurrency } from '../../../services/accessControl';
 import { Loading } from '../../../commons/components/Loading';
 import { useDashboardOverview } from './hook/useDashboardOverview';
 import './DashboardGerencial.css';
+import { PageHeader } from '../../../commons/components/PageHeader';
+import { StatusBadge } from '../../../commons/components/StatusBadge';
 
 const PERIODS = [
   { id: 'TODAY', label: 'Hoje' },
@@ -38,14 +40,7 @@ const PRODUCT_SORTS = [
   { id: 'least', label: 'Menos vendidos' },
 ];
 
-const STATUS_CLASS = {
-  NEW: 'awaiting',
-  IN_PREPARATION: 'in-progress',
-  READY: 'ready',
-  DELIVERED: 'delivered',
-  FINALIZED: 'delivered',
-  CLOSED: 'delivered',
-};
+const STATUS_CLASS = { NEW: 'info', IN_PREPARATION: 'warning', READY: 'success', DELIVERED: 'neutral', FINALIZED: 'neutral', CLOSED: 'neutral', CANCELED: 'danger' };
 
 function formatChange(changePercent) {
   const value = Number(changePercent) || 0;
@@ -82,11 +77,9 @@ function operationTone(kind, operation) {
   return Number(operation.openComandas) > 12 ? 'warn' : 'ok';
 }
 
-function MetricCard({ title, value, changePercent, previous, period }) {
-  const current = Number(value) || 0;
-  const prior = Number(previous) || 0;
+export function MetricCard({ title, value, changePercent, previous, period }) {
   const isPositive = Number(changePercent) >= 0;
-  const showChange = current > 0 || prior > 0;
+  const showChange = changePercent != null && previous != null && Number.isFinite(Number(changePercent));
   return (
     <Card className="overview-metric-card" elevation={0}>
       <CardContent className="overview-metric-content">
@@ -98,7 +91,7 @@ function MetricCard({ title, value, changePercent, previous, period }) {
             <span>{formatChange(changePercent)} {previousLabel(period)}</span>
           </Box>
         ) : (
-          <Box className="overview-metric-change is-muted">Sem movimento no período</Box>
+          <Box className="overview-metric-change is-muted">Sem comparação disponível</Box>
         )}
       </CardContent>
     </Card>
@@ -168,7 +161,7 @@ export function DashboardGerencial({ onNavigate }) {
     return list.slice(0, 5);
   }, [overview.products, productSort]);
 
-  const visibleAlerts = showAllAlerts ? alerts : alerts.slice(0, 4);
+  const visibleAlerts = showAllAlerts ? alerts : alerts.slice(0, 2);
 
   const go = (title, intent) => {
     if (typeof onNavigate === 'function') onNavigate(title, intent);
@@ -194,45 +187,21 @@ export function DashboardGerencial({ onNavigate }) {
 
   return (
     <div className="dashboard-gerencial">
-      <Box className="overview-header">
-        <Box>
-          <Typography className="overview-title">Visão Geral</Typography>
-          <Typography className="overview-subtitle">
-            O que está acontecendo agora e onde você precisa agir
-          </Typography>
-        </Box>
-        <Button startIcon={<RefreshIcon />} onClick={refetch} className="overview-refresh-btn">
-          Atualizar
-        </Button>
-      </Box>
-
-      {alerts.length > 0 && (
-        <Card className="overview-alerts" elevation={0}>
-          <CardContent>
-            <Box className="overview-alerts-head">
-              <Typography className="overview-panel-title">Atenção necessária — {alerts.length}</Typography>
-            </Box>
-            <ul className="overview-alert-list">
-              {visibleAlerts.map((alert, index) => (
-                <li key={`${alert.code}-${index}`}>
+<PageHeader title="Visão geral" description="Vendas do período e prioridades da operação." actions={<Button variant="outlined" startIcon={<RefreshIcon />} onClick={refetch}>Atualizar</Button>} />
+      <Box component="section" aria-label="Período dos indicadores">              <Box className="overview-period-chips">
+                {PERIODS.map((item) => (
                   <button
+                    key={item.id}
                     type="button"
-                    className={`overview-alert overview-alert--${alert.severity}`}
-                    onClick={() => handleAlert(alert)}
+                    className={`overview-chip ${period === item.id ? 'is-active' : ''}`}
+                    aria-pressed={period === item.id}
+                    onClick={() => setPeriod(item.id)}
                   >
-                    {alert.message}
+                    {item.label}
                   </button>
-                </li>
-              ))}
-            </ul>
-            {alerts.length > 4 && (
-              <button type="button" className="overview-link-btn" onClick={() => setShowAllAlerts((open) => !open)}>
-                {showAllAlerts ? 'Ver menos' : 'Ver todos os alertas'}
-              </button>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                ))}
+              </Box></Box>
+
 
       <Box className="overview-metrics">
         <MetricCard
@@ -258,28 +227,34 @@ export function DashboardGerencial({ onNavigate }) {
         />
       </Box>
 
-      <Box className="overview-mini-kpis">
-        <button type="button" className="overview-mini-kpi" onClick={() => go('Atendimento')}>
-          <span>Mesas ocupadas</span>
-          <strong>{operation.tablesOccupied || 0} / {operation.tablesTotal || 0}</strong>
-        </button>
-        <button type="button" className="overview-mini-kpi" onClick={() => go('Atendimento')}>
-          <span>Comandas abertas</span>
-          <strong>{operation.openComandas || 0}</strong>
-        </button>
-        <button type="button" className="overview-mini-kpi" onClick={() => go('Cozinha')}>
-          <span>Pedidos na cozinha</span>
-          <strong>{operation.kitchenOrders || 0}</strong>
-        </button>
-        <button type="button" className="overview-mini-kpi">
-          <span>Tempo médio de preparo</span>
-          <strong>{operation.avgPrepMinutes != null ? `${operation.avgPrepMinutes} min` : '—'}</strong>
-        </button>
-        <button type="button" className="overview-mini-kpi" onClick={() => go('Cozinha', { kitchenFilter: 'atrasados' })}>
-          <span>Pedidos atrasados</span>
-          <strong>{operation.lateOrders || 0}</strong>
-        </button>
-      </Box>
+
+      {alerts.length > 0 && (
+        <Card className="overview-alerts" elevation={0}>
+          <CardContent>
+            <Box className="overview-alerts-head">
+              <Typography className="overview-panel-title">Atenção necessária — {alerts.length}</Typography>
+            </Box>
+            <ul className="overview-alert-list">
+              {visibleAlerts.map((alert, index) => (
+                <li key={`${alert.code}-${index}`}>
+                  <button
+                    type="button"
+                    className={`overview-alert overview-alert--${alert.severity}`}
+                    onClick={() => handleAlert(alert)}
+                  >
+                    {alert.message}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {alerts.length > 2 && (
+              <button type="button" className="overview-link-btn" onClick={() => setShowAllAlerts((open) => !open)}>
+                {showAllAlerts ? 'Ver menos' : 'Ver todos os alertas'}
+              </button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Box>
         <Typography className="overview-section-label">Operação agora</Typography>
@@ -292,7 +267,8 @@ export function DashboardGerencial({ onNavigate }) {
           <button type="button" className={`overview-now-card is-${operationTone('kitchen', operation)}`} onClick={() => go('Cozinha', Number(operation.lateOrders) > 0 ? { kitchenFilter: 'atrasados' } : undefined)}>
             <span className="overview-now-dot" />
             <strong>Cozinha</strong>
-            <p>{kitchen.inPreparation || 0} pedidos em preparo</p>
+            <p>{kitchen.inPreparation || 0} em preparo · {operation.kitchenOrders || 0} na cozinha</p>
+            <p>Preparo médio: {operation.avgPrepMinutes != null ? operation.avgPrepMinutes + ' min' : '—'}</p>
             <p>{kitchen.late || 0} atrasados{kitchen.onTimePercent != null ? ` · ${kitchen.onTimePercent}% no prazo` : ''}</p>
           </button>
           <button type="button" className={`overview-now-card is-${operationTone('service', operation)}`} onClick={() => go('Atendimento')}>
@@ -300,11 +276,6 @@ export function DashboardGerencial({ onNavigate }) {
             <strong>Atendimento</strong>
             <p>{operation.openComandas || 0} comandas abertas</p>
           </button>
-          <div className="overview-now-card is-static is-muted">
-            <span className="overview-now-dot" />
-            <strong>Estoque</strong>
-            <p>Estoque: sem movimentação</p>
-          </div>
         </Box>
       </Box>
 
@@ -319,18 +290,7 @@ export function DashboardGerencial({ onNavigate }) {
                   {overview.revenue?.changePercent != null ? ` · ${formatChange(overview.revenue.changePercent)}` : ''}
                 </Typography>
               </Box>
-              <Box className="overview-period-chips">
-                {PERIODS.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`overview-chip ${period === item.id ? 'is-active' : ''}`}
-                    onClick={() => setPeriod(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </Box>
+
             </Box>
             <Box className="overview-chart-wrap overview-chart-wrap--line">
               <ResponsiveContainer width="100%" height="100%">
@@ -351,7 +311,7 @@ export function DashboardGerencial({ onNavigate }) {
                   />
                   <Tooltip content={<DualCurrencyTooltip />} />
                   <Line type="monotone" dataKey="previous" name="Anterior" stroke="var(--color-text-muted)" strokeWidth={2} strokeDasharray="6 4" dot={false} />
-                  <Line type="monotone" dataKey="current" name="Atual" stroke="var(--color-success)" strokeWidth={3} dot={{ r: 3, fill: 'var(--color-success)', strokeWidth: 0 }} />
+                  <Line type="monotone" dataKey="current" name="Atual" stroke="var(--color-primary)" strokeWidth={3} dot={{ r: 3, fill: 'var(--color-primary)', strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
             </Box>
@@ -383,25 +343,23 @@ export function DashboardGerencial({ onNavigate }) {
             {(overview.recentOrders || []).length === 0 ? (
               <Typography className="overview-empty">Nenhum pedido registrado ainda.</Typography>
             ) : (
-              <div className="overview-orders-table">
-                <div className="overview-orders-head">
-                  <span>ID</span>
-                  <span>Cliente / Mesa</span>
-                  <span>Valor</span>
-                  <span>Status</span>
-                  <span>Hora</span>
+              <div className="overview-orders-table" role="table" aria-label="Pedidos recentes">
+                <div className="overview-orders-head" role="row">
+                  <span role="columnheader">ID</span>
+                  <span role="columnheader">Cliente / Mesa</span>
+                  <span role="columnheader">Valor</span>
+                  <span role="columnheader">Status</span>
+                  <span role="columnheader">Hora</span>
                 </div>
                 {overview.recentOrders.map((order) => (
-                  <div key={order.id} className="overview-orders-row">
-                    <span className="overview-order-id">#{order.id}</span>
-                    <span>{order.source || '—'}</span>
-                    <span className="overview-order-amount">{Number(order.amount) > 0 ? formatCurrency(order.amount) : '—'}</span>
-                    <span>
-                      <span className={`overview-status overview-status--${STATUS_CLASS[order.status] || 'awaiting'}`}>
-                        {order.statusLabel || order.status}
-                      </span>
+                  <div key={order.id} className="overview-orders-row" role="row">
+                    <span role="cell" className="overview-order-id">#{order.id}</span>
+                    <span role="cell">{order.source || '—'}</span>
+                    <span role="cell" className="overview-order-amount">{Number(order.amount) > 0 ? formatCurrency(order.amount) : '—'}</span>
+                    <span role="cell">
+                      <StatusBadge label={order.statusLabel || order.status} tone={STATUS_CLASS[order.status] || 'neutral'} />
                     </span>
-                    <span className="overview-order-time">{formatClock(order.createdAt)}</span>
+                    <span role="cell" className="overview-order-time">{formatClock(order.createdAt)}</span>
                   </div>
                 ))}
               </div>
@@ -420,6 +378,7 @@ export function DashboardGerencial({ onNavigate }) {
                   key={item.id}
                   type="button"
                   className={`overview-chip ${productSort === item.id ? 'is-active' : ''}`}
+                  aria-pressed={productSort === item.id}
                   onClick={() => setProductSort(item.id)}
                 >
                   {item.label}

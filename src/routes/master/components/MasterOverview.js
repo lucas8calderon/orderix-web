@@ -20,14 +20,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
   Tooltip,
   PieChart,
   Pie,
@@ -41,7 +35,8 @@ import {
   formatCurrency,
   formatDate,
 } from '../../../services/accessControl';
-import { buildMonthlyRevenueSeries } from '../data/mockRevenueHistory';
+import { PageHeader } from '../../../commons/components/PageHeader';
+import { EmptyState } from '../../../commons/components/EmptyState';
 
 const PRIMARY = '#2563EB';
 const PRIMARY_SOFT = 'rgba(37, 99, 235, 0.10)';
@@ -83,7 +78,7 @@ function MetricCard({ title, value, icon, accent, iconColor, hint }) {
         transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         '&:hover': {
           boxShadow: '0 8px 24px rgba(10, 104, 71, 0.08)',
-          transform: 'translateY(-2px)',
+
         },
       }}
     >
@@ -162,34 +157,15 @@ function ChartCard({ title, subtitle, children, action }) {
   );
 }
 
-function RevenueTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <Paper elevation={3} sx={{ px: 1.5, py: 1, borderRadius: 1.5 }}>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 700, color: PRIMARY }}>
-        {formatCurrency(payload[0].value)}
-      </Typography>
-    </Paper>
-  );
-}
-
 export function MasterOverview({ summary, stores, onViewAllStores }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isDark = theme.palette.mode === 'dark';
-  const axisColor = isDark ? '#B0B7C3' : '#6B7280';
-  const gridColor = isDark ? '#343B48' : '#E8EEEB';
-
   const totalStores = summary?.totalStores ?? stores.length;
   const activeStores = summary?.activeStores ?? 0;
   const blockedOrOverdue = summary?.blockedOrOverdueStores ?? 0;
   const mrr = summary?.monthlyRecurringRevenue ?? 0;
   const activeRate = totalStores > 0 ? Math.round((activeStores / totalStores) * 100) : 0;
 
-  const revenueSeries = buildMonthlyRevenueSeries(mrr);
 
   const statusDistribution = React.useMemo(() => {
     const counts = {
@@ -225,44 +201,9 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
       .slice(0, 5);
   }, [stores]);
 
-  const previousRevenue = revenueSeries.length > 1
-    ? revenueSeries[revenueSeries.length - 2].revenue
-    : null;
-  const revenueDelta = previousRevenue != null && previousRevenue > 0
-    ? Math.round(((Number(mrr) - previousRevenue) / previousRevenue) * 100)
-    : null;
-
   return (
     <Box>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ sm: 'flex-end' }}
-        spacing={1}
-        sx={{ mb: 3 }}
-      >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Dashboard Administrativo
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Visão geral da base de lojas, assinaturas e faturamento
-          </Typography>
-        </Box>
-        {revenueDelta != null && (
-          <Chip
-            icon={<TrendingUpIcon />}
-            label={`MRR ${revenueDelta >= 0 ? '+' : ''}${revenueDelta}% vs mês anterior`}
-            size="small"
-            sx={{
-              bgcolor: PRIMARY_SOFT,
-              color: PRIMARY,
-              fontWeight: 600,
-              '& .MuiChip-icon': { color: PRIMARY },
-            }}
-          />
-        )}
-      </Stack>
+      <PageHeader title="Visão geral da plataforma" description="Acompanhe lojas, assinaturas e receita recorrente atual." />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -305,46 +246,8 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={8}>
-          <ChartCard
-            title="Faturamento Mensal"
-            subtitle="Evolução do MRR nos últimos meses"
-          >
-            <Box sx={{ width: '100%', height: { xs: 240, sm: 280 } }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="mrrGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.35} />
-                      <stop offset="100%" stopColor={PRIMARY} stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: axisColor, fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: axisColor, fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={isMobile ? 40 : 56}
-                    tickFormatter={(value) => (isMobile ? `${value}` : `R$ ${value}`)}
-                  />
-                  <Tooltip content={<RevenueTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke={PRIMARY}
-                    strokeWidth={2.5}
-                    fill="url(#mrrGradient)"
-                    dot={{ r: 4, fill: PRIMARY, strokeWidth: 0 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Box>
+<ChartCard title="Histórico da receita" subtitle="Receita recorrente das assinaturas">
+            <EmptyState title="Histórico ainda indisponível" description="O valor atual aparece nos indicadores acima. A evolução mensal será exibida quando houver histórico de receita disponível." />
           </ChartCard>
         </Grid>
 
@@ -372,7 +275,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
                       innerRadius={isMobile ? 48 : 58}
                       outerRadius={isMobile ? 78 : 88}
                       paddingAngle={3}
-                      stroke="#fff"
+                      stroke="var(--color-surface)"
                       strokeWidth={2}
                     >
                       {statusDistribution.map((entry) => (

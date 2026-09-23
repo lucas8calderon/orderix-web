@@ -1,0 +1,109 @@
+.store-closed-hours-card {
+  margin: 8px 0 14px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.store-closed-hours-card--menu {
+  margin: 0 0 16px;
+  border-radius: 12px;
+  background: var(--status-warning-bg, #fff7ed);
+  border-color: var(--color-border, #fdba74);
+}
+
+.store-closed-hours-card__toggle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.store-closed-hours-card__toggle:focus-visible {
+  outline: 2px solid #c2410c;
+  outline-offset: 2px;
+}
+
+.store-closed-hours-card__summary {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.store-closed-hours-card.has-hours .store-closed-hours-card__summary {
+  padding: 0;
+}
+
+.store-closed-hours-card__title {
+  font-weight: 700 !important;
+  color: #9a3412 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.35 !important;
+}
+
+.store-closed-hours-card__copy {
+  color: #9a3412 !important;
+  font-size: 0.875rem !important;
+  margin-top: 4px !important;
+  line-height: 1.4 !important;
+}
+
+.store-closed-hours-card--menu .store-closed-hours-card__title,
+.store-closed-hours-card--menu .store-closed-hours-card__copy,
+.store-closed-hours-card--menu .store-closed-hours-card__day,
+.store-closed-hours-card--menu .store-closed-hours-card__value,
+.store-closed-hours-card--menu .store-closed-hours-card__chevron {
+  color: var(--status-warning-text, #9a3412) !important;
+}
+
+.store-closed-hours-card__chevron {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #9a3412 !important;
+  transition: transform 0.2s ease;
+}
+
+.store-closed-hours-card.is-expanded .store-closed-hours-card__chevron {
+  transform: rotate(180deg);
+}
+
+.store-closed-hours-card__panel {
+  margin: 0 12px 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.store-closed-hours-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+}
+
+.store-closed-hours-card__day,
+.store-closed-hours-card__value {
+  color: #9a3412 !important;
+  font-size: 0.875rem !important;
+}
+
+.store-closed-hours-card__day {
+  font-weight: 500 !important;
+  flex-shrink: 0;
+}
+
+.store-closed-hours-card__value {
+  text-align: right;
+}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Alert, Portal, Snackbar } from '@mui/material';
 import {
   Inventory2Outlined as InventoryIcon,
@@ -20,6 +20,7 @@ import { HoursCard } from './components/HoursCard';
 import { DeliverySettingsCard } from './components/DeliverySettingsCard';
 import { DigitalMenuCard } from './components/DigitalMenuCard';
 import { PaymentsSection } from './components/PaymentsSection';
+import { OnlineDeliveryPayments } from './components/OnlineDeliveryPayments';
 import { FeesSection } from './components/FeesSection';
 import { PermissionsSection } from './components/PermissionsSection';
 import { CompanySection } from './components/CompanySection';
@@ -56,6 +57,20 @@ export function Settings() {
   const goToSection = useCallback((sectionId) => {
     navigate(settingsSectionPath(sectionId));
   }, [navigate]);
+
+  const imageSaveQueued = useRef(false);
+  const handleSettingChange = useCallback((section, key, value) => {
+    updateSetting(section, key, value);
+    if (section === 'deliveryLogoUrl' || section === 'deliveryCoverUrl') {
+      imageSaveQueued.current = true;
+    }
+  }, [updateSetting]);
+
+  useEffect(() => {
+    if (!imageSaveQueued.current || loading) return;
+    imageSaveQueued.current = false;
+    saveSettings('delivery', { imageOnly: true });
+  }, [settings.deliveryLogoUrl, settings.deliveryCoverUrl, loading, saveSettings]);
 
   // Canonicaliza /app/configuracoes e ?section= legado para /app/configuracoes/:section
   useEffect(() => {
@@ -124,9 +139,19 @@ export function Settings() {
   const deliveryCard = (
     <DeliverySettingsCard
       settings={settings}
-      onSettingChange={updateSetting}
+      onSettingChange={handleSettingChange}
       onSave={saveSettings}
       onToast={showToast}
+      switchStyles={switchStyles}
+      saving={saving}
+    />
+  );
+
+  const onlineDeliveryPayments = (
+    <OnlineDeliveryPayments
+      settings={settings}
+      onSettingChange={updateSetting}
+      onSave={saveSettings}
       switchStyles={switchStyles}
       saving={saving}
     />
@@ -168,7 +193,7 @@ export function Settings() {
   const companySection = (
     <CompanySection
       settings={settings}
-      onSettingChange={updateSetting}
+      onSettingChange={handleSettingChange}
       onSave={saveSettings}
       saving={saving}
     />
@@ -177,11 +202,11 @@ export function Settings() {
   const stockShortcut = (
     <SettingsSectionCard
       icon={InventoryIcon}
-      title="Estoque"
-      description="Controle de disponibilidade e inventário fica no módulo de estoque."
-      actionLabel="Abrir estoque"
+      title="Disponibilidade dos produtos"
+      description="Ative ou desative produtos no catálogo para definir o que pode ser vendido."
+      actionLabel="Abrir catálogo"
       actionVariant="link"
-      onAction={() => navigate(PATHS.APP_ESTOQUE)}
+      onAction={() => navigate(PATHS.APP_PRODUTOS)}
       compact
       className="settings-card--nav"
     />
@@ -224,7 +249,12 @@ export function Settings() {
       break;
     case 'canais':
     case 'delivery':
-      sectionContent = deliveryCard;
+      sectionContent = (
+        <div className="settings-section-stack">
+          {deliveryCard}
+          {onlineDeliveryPayments}
+        </div>
+      );
       break;
     case 'cardapio':
       sectionContent = (
@@ -252,23 +282,14 @@ export function Settings() {
         <div className="settings-section-stack">
           <SettingsModuleIntro
             title="Aparência"
-            text="Logo e banner usam os uploads já existentes. Não há um segundo formulário de imagens aqui."
+            text="Logo e banner são editados na Visão Geral, na personalização visual."
           />
           <SettingsSectionCard
-            title="Logo da loja"
-            description="Alterar o logo fica em Empresa."
-            actionLabel="Ir para Empresa"
+            title="Personalização visual"
+            description="Altere o logo e o banner da loja na Visão Geral, sem sair das Configurações."
+            actionLabel="Ir para Visão Geral"
             actionVariant="edit"
-            onAction={() => goToSection('empresa')}
-            compact
-            className="settings-card--nav"
-          />
-          <SettingsSectionCard
-            title="Banner do Delivery"
-            description="A capa do Delivery é configurada na seção de Delivery."
-            actionLabel="Ir para Delivery"
-            actionVariant="edit"
-            onAction={() => goToSection('delivery')}
+            onAction={() => goToSection('geral')}
             compact
             className="settings-card--nav"
           />
@@ -299,6 +320,8 @@ export function Settings() {
           <SettingsOverview
             settings={settings}
             onNavigate={goToSection}
+            onSettingChange={handleSettingChange}
+            saving={saving}
             nav={settingsNav}
           />
         </div>

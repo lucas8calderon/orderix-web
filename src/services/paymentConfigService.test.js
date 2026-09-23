@@ -101,13 +101,19 @@ describe('channel charge timing', () => {
     expect(payload.defaultProvider).toBe('INFINITEPAY');
   });
 
-  it('toPaymentUi não devolve secrets do Mercado Pago', () => {
+  it('toPaymentUi não devolve secrets do Mercado Pago e mapeia lengths', () => {
     const ui = toPaymentUi({
       mercadoPagoConfigured: true,
       mercadoPagoAccessTokenConfigured: true,
       mercadoPagoPublicKeyConfigured: true,
       mercadoPagoWebhookSecretConfigured: true,
+      mercadoPagoStoreAccessTokenConfigured: false,
+      mercadoPagoServerTestCredentialsAvailable: true,
+      mercadoPagoServerTestPublicKeyAvailable: true,
       mercadoPagoEnvironment: 'test',
+      accessTokenLength: 32,
+      publicKeyLength: 20,
+      webhookSecretLength: 16,
       mercadoPagoAccessToken: 'should-not-leak',
       mercadoPagoPublicKey: 'public-key-value',
       mercadoPagoWebhookSecret: 'secret',
@@ -116,7 +122,12 @@ describe('channel charge timing', () => {
     expect(ui.mercadoPagoAccessToken).toBe('');
     expect(ui.mercadoPagoPublicKey).toBe('');
     expect(ui.mercadoPagoWebhookSecret).toBe('');
+    expect(ui.mercadoPagoAccessTokenLength).toBe(32);
+    expect(ui.mercadoPagoPublicKeyLength).toBe(20);
+    expect(ui.mercadoPagoWebhookSecretLength).toBe(16);
     expect(ui.mercadoPagoAccessTokenConfigured).toBe(true);
+    expect(ui.mercadoPagoServerTestCredentialsAvailable).toBe(true);
+    expect(ui.mercadoPagoStoreAccessTokenConfigured).toBe(false);
     expect(ui.onlinePixEnabled).toBe(true);
   });
 
@@ -157,6 +168,41 @@ describe('channel charge timing', () => {
     expect(payload.mercadoPagoPublicKey).toBeUndefined();
     expect(payload.mercadoPagoWebhookSecret).toBeUndefined();
     expect(payload.mercadoPagoEnvironment).toBe('test');
+  });
+
+  it('toPaymentPayload omite máscara de qualquer comprimento e envia só valor novo', () => {
+    const mask32 = '•'.repeat(32);
+    const unchanged = toPaymentPayload({
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      mercadoPagoEnvironment: 'prod',
+      mercadoPagoAccessToken: mask32,
+      mercadoPagoPublicKey: '*****',
+      mercadoPagoWebhookSecret: '*'.repeat(16),
+      onlinePixEnabled: true,
+    });
+    expect(unchanged.mercadoPagoAccessToken).toBeUndefined();
+    expect(unchanged.mercadoPagoPublicKey).toBeUndefined();
+    expect(unchanged.mercadoPagoWebhookSecret).toBeUndefined();
+
+    const replaced = toPaymentPayload({
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      mercadoPagoEnvironment: 'prod',
+      mercadoPagoAccessToken: mask32,
+      mercadoPagoPublicKey: 'pk-nova',
+      mercadoPagoWebhookSecret: '',
+      onlinePixEnabled: true,
+    });
+    expect(replaced.mercadoPagoAccessToken).toBeUndefined();
+    expect(replaced.mercadoPagoPublicKey).toBe('pk-nova');
+    expect(replaced.mercadoPagoWebhookSecret).toBeUndefined();
   });
 
   it('toPaymentPayload envia onlineCardEnabled e omite secrets vazios', () => {

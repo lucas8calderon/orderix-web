@@ -1074,6 +1074,31 @@
   gap: 2px;
 }
 
+.settings-visual__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.settings-visual__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: var(--settings-text-secondary);
+  font-size: 0.8125rem;
+  padding: 0;
+}
+
+.settings-branding-error {
+  margin: 0 0 12px;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
 .settings-visual button,
 .settings-inline-links button {
   justify-self: start;

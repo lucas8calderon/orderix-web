@@ -1,13 +1,16 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Container } from '@mui/material';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Tables } from '../tables/Tables';
 import { Comandas } from '../comandas/Comandas';
 import { CheckoutDialog } from './components/CheckoutDialog';
 import './Atendimento.css';
+import { PageHeader } from '../../../commons/components/PageHeader';
+import { PageTabs } from '../../../commons/components/PageTabs';
 
 export function Atendimento() {
+  const [tab, setTab] = useState('tables');
   const [accountTarget, setAccountTarget] = useState(null);
   const [floorVersion, setFloorVersion] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -34,16 +37,7 @@ export function Atendimento() {
   return (
     <Box className="atendimento-container">
       <Container maxWidth="xl" className="atendimento-content">
-        <Box className="atendimento-page-header">
-          <Box>
-            <Typography variant="h4" className="atendimento-page-title">
-              Atendimento
-            </Typography>
-            <Typography variant="body1" className="atendimento-page-subtitle">
-              Clique na mesa ou comanda para conferir os pedidos, fechar a conta e liberar o atendimento.
-            </Typography>
-          </Box>
-          <Button
+        <PageHeader title="Atendimento" description="Confira os pedidos e feche a conta de mesas e comandas." actions={<Button
             startIcon={<RefreshIcon className={isRefreshing ? 'atendimento-refresh-icon' : ''} />}
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -64,16 +58,16 @@ export function Atendimento() {
             }}
           >
             {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-          </Button>
-        </Box>
+          </Button>} />
+        <PageTabs id="service" label="Tipo de atendimento" value={tab} onChange={setTab} tabs={[{ value: 'tables', label: 'Mesas' }, { value: 'tabs', label: 'Comandas' }]} />
 
-        <Box className="atendimento-section">
+        <div role="tabpanel" id="service-panel-tables" aria-labelledby="service-tab-tables" hidden={tab !== 'tables'} className="atendimento-section">
           <Tables onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
-        </Box>
+        </div>
 
-        <Box className="atendimento-section">
+        <div role="tabpanel" id="service-panel-tabs" aria-labelledby="service-tab-tabs" hidden={tab !== 'tabs'} className="atendimento-section">
           <Comandas onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
-        </Box>
+        </div>
       </Container>
 
       <CheckoutDialog

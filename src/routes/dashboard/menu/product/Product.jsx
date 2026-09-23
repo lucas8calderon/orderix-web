@@ -3,8 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
-  IconButton,
   Paper,
   Snackbar,
   Table,
@@ -13,11 +11,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
+  TableSortLabel,
+  TextField,
+  MenuItem,
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { Loading } from '../../../../commons/components/Loading';
 import { GenericError } from '../../../../commons/components/GenericError';
 import { SearchBar } from '../../employees/components/SearchBar';
@@ -27,6 +27,10 @@ import { useGetProducts } from './hooks/useGetProducts';
 import { usePostProducts } from './hooks/usePostProducts';
 import { useDeleteProduct } from './hooks/useDeleteProduct';
 import './Product.css';
+import { EmptyState } from '../../../../commons/components/EmptyState';
+import { RowActions } from '../../../../commons/components/RowActions';
+import { StatusBadge } from '../../../../commons/components/StatusBadge';
+import { FilterBar } from '../../../../commons/components/FilterBar';
 import { resolveMenuImage } from '../utils/defaultMenuImage';
 import {
   buildCategoryTree,
@@ -41,6 +45,7 @@ function formatPrice(value) {
 }
 
 export function ProductContainer({
+  onManageCategories,
   categories = [],
   refreshToken = 0,
   presetCategoryId = null,
@@ -48,6 +53,10 @@ export function ProductContainer({
   onProductsChanged,
   onProductsLoaded,
 }) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sort, setSort] = useState({ key: 'name', direction: 'asc' });
   const [refreshKey, setRefreshKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -104,40 +113,26 @@ export function ProductContainer({
       list = list.filter((p) => ids.has(String(p.categoryId)));
     }
 
-    return list;
-  }, [products, searchTerm, categoryFilter, categories]);
+    if (statusFilter !== 'all') list = list.filter(p => (p.isAvailable !== false) === (statusFilter === 'active'));
+    return [...list].sort((a, b) => (sort.direction === 'asc' ? 1 : -1) * (sort.key === 'value' ? Number(a.value) - Number(b.value) : String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR')));
+  }, [products, searchTerm, categoryFilter, categories, statusFilter, sort]);
+  useEffect(() => { setPage(0); }, [searchTerm, categoryFilter, statusFilter, rowsPerPage, sort]);
+  const safePage = Math.min(page, Math.max(0, Math.ceil(filteredProducts.length / rowsPerPage) - 1));
+  const pageProducts = filteredProducts.slice(safePage * rowsPerPage, (safePage + 1) * rowsPerPage);
+  const toggleSort = key => setSort(current => ({ key, direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc' }));
 
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
-  const categoryFilters = useMemo(
-    () => [
-      { id: 'all', label: 'Todas' },
-      ...categoryTree.map((c) => ({ id: String(c.id), label: c.name })),
-    ],
-    [categoryTree]
-  );
-
-  const selectedFilterCategory = useMemo(
-    () => categories.find((c) => String(c.id) === String(categoryFilter)),
-    [categories, categoryFilter]
-  );
-  const activeRootFilterId =
-    selectedFilterCategory?.parentId != null
-      ? String(selectedFilterCategory.parentId)
-      : categoryFilter;
-
-  const subcategoryFilters = useMemo(() => {
-    if (categoryFilter === 'all') return [];
-    const selected = categories.find((c) => String(c.id) === String(categoryFilter));
-    const rootId = selected?.parentId != null ? selected.parentId : categoryFilter;
-    const root = categoryTree.find((c) => String(c.id) === String(rootId));
-    const children = root?.children || [];
-    if (children.length === 0) return [];
-    return [
-      { id: String(root.id), label: `Todas em ${root.name}` },
-      ...children.map((child) => ({ id: String(child.id), label: child.name })),
-    ];
-  }, [categories, categoryFilter, categoryTree]);
+  const categoryOptions = useMemo(() => {
+    const options = [];
+    categoryTree.forEach((root) => {
+      options.push({ id: String(root.id), label: root.name });
+      (root.children || []).forEach((child) => {
+        options.push({ id: String(child.id), label: child.name, nested: true });
+      });
+    });
+    return options;
+  }, [categoryTree]);
 
   useEffect(() => {
     if (presetCategoryId == null) return;
@@ -189,7 +184,7 @@ export function ProductContainer({
   }
 
   if (error) {
-    return <GenericError onTryAgain={refetch} />;
+    return <GenericError onTryAgain={refetch} message="Não foi possível carregar os produtos." />;
   }
 
   return (
@@ -217,78 +212,45 @@ export function ProductContainer({
       />
 
       <Box className="product-header">
-        <Typography variant="h5" className="product-title">
+        <Typography variant="h5" component="h2" className="product-title">
           Produtos
         </Typography>
         <Button
           startIcon={<AddIcon />}
           onClick={openCreate}
           disabled={!categories.length}
-          sx={{
-            backgroundColor: 'transparent !important',
-            color: 'var(--color-primary) !important',
-            border: '1px solid var(--color-primary) !important',
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: 'var(--color-primary) !important',
-              color: '#fff !important',
-            },
-            '&.Mui-disabled': {
-              borderColor: '#ddd !important',
-              color: '#999 !important',
-            },
-          }}
+          variant="contained"
         >
-          Novo produto
+          Cadastrar produto
         </Button>
       </Box>
 
-      <Box className="product-filters">
+      {!categories.length && <Alert severity="info" sx={{ mb: 2 }} action={<Button onClick={onManageCategories}>Criar categoria</Button>}>Comece criando uma categoria para organizar seus produtos.</Alert>}
+      <FilterBar label="Busca de produtos">
         <SearchBar
           onSearch={setSearchTerm}
-          placeholder="Buscar produto por nome"
+          placeholder="Buscar produtos"
         />
-        <Box className="filter-chips-container">
-          {categoryFilters.map((filter) => (
-            <Box
-              key={`cat-${filter.id}`}
-              className={`filter-chip ${
-                filter.id === 'all'
-                  ? categoryFilter === 'all'
-                    ? 'active'
-                    : ''
-                  : activeRootFilterId === filter.id
-                    ? 'active'
-                    : ''
-              }`}
-              onClick={() => setCategoryFilter(filter.id)}
-            >
-              {filter.label}
-            </Box>
+        <TextField select size="small" label="Categoria" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} sx={{ minWidth: 180 }}>
+          <MenuItem value="all">Todas</MenuItem>
+          {categoryOptions.map((option) => (
+            <MenuItem key={option.id} value={option.id} sx={option.nested ? { pl: 3 } : undefined}>{option.label}</MenuItem>
           ))}
-        </Box>
-        {subcategoryFilters.length > 0 ? (
-          <Box className="filter-chips-container subcategory-filters">
-            {subcategoryFilters.map((filter) => (
-              <Box
-                key={`subcat-${filter.id}`}
-                className={`filter-chip nested ${categoryFilter === filter.id ? 'active' : ''}`}
-                onClick={() => setCategoryFilter(filter.id)}
-              >
-                {filter.label}
-              </Box>
-            ))}
-          </Box>
-        ) : null}
-      </Box>
+        </TextField>
+        <TextField select size="small" label="Status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} sx={{ minWidth: 160 }}>
+          <MenuItem value="all">Todos os status</MenuItem>
+          <MenuItem value="active">Ativo</MenuItem>
+          <MenuItem value="inactive">Inativo</MenuItem>
+        </TextField>
+      </FilterBar>
 
       <TableContainer component={Paper} className="product-table product-table-desktop">
-        <Table>
+        <Table aria-label="Produtos do catálogo">
           <TableHead>
             <TableRow>
-              <TableCell>Produto</TableCell>
+              <TableCell sortDirection={sort.key === 'name' ? sort.direction : false}><TableSortLabel active={sort.key === 'name'} direction={sort.direction} onClick={() => toggleSort('name')}>Produto</TableSortLabel></TableCell>
               <TableCell>Categoria</TableCell>
-              <TableCell>Preço</TableCell>
+              <TableCell align="right" sortDirection={sort.key === 'value' ? sort.direction : false}><TableSortLabel active={sort.key === 'value'} direction={sort.direction} onClick={() => toggleSort('value')}>Preço</TableSortLabel></TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="right">Ações</TableCell>
             </TableRow>
@@ -297,13 +259,11 @@ export function ProductContainer({
             {filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  <Typography sx={{ py: 3, color: 'text.secondary' }}>
-                    Nenhum produto encontrado
-                  </Typography>
+                  <EmptyState title={products.length ? 'Nenhum produto encontrado' : 'Seu catálogo começa aqui'} description={products.length ? 'Tente outro nome, categoria ou status.' : 'Cadastre produtos para montar seu cardápio e começar a vender.'} actionLabel={products.length ? undefined : categories.length ? 'Cadastrar produto' : 'Criar categoria'} onAction={categories.length ? openCreate : onManageCategories} />
                 </TableCell>
               </TableRow>
             ) : (
-              filteredProducts.map((product) => (
+              pageProducts.map((product) => (
                 <TableRow key={product.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
@@ -339,37 +299,12 @@ export function ProductContainer({
                         ) || product.categoryName || '—'
                       : '—'}
                   </TableCell>
-                  <TableCell>{formatPrice(product.value)}</TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{formatPrice(product.value)}</TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      label={product.isAvailable !== false ? 'Ativo' : 'Inativo'}
-                      sx={
-                        product.isAvailable !== false
-                          ? {
-                              backgroundColor: 'var(--color-primary)',
-                              color: '#fff',
-                              fontWeight: 600,
-                            }
-                          : undefined
-                      }
-                    />
+                    <StatusBadge label={product.isAvailable !== false ? 'Ativo' : 'Inativo'} tone={product.isAvailable !== false ? 'success' : 'neutral'} />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => openEdit(product)}
-                      sx={{ color: 'var(--color-primary)' }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDeleteTarget(product)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <RowActions name={product.name} onEdit={() => openEdit(product)} onDelete={() => setDeleteTarget(product)} />
                   </TableCell>
                 </TableRow>
               ))
@@ -380,11 +315,9 @@ export function ProductContainer({
 
       <Box className="product-cards-mobile">
         {filteredProducts.length === 0 ? (
-          <Typography sx={{ py: 3, color: 'text.secondary', textAlign: 'center' }}>
-            Nenhum produto encontrado
-          </Typography>
+          <EmptyState title={products.length ? 'Nenhum produto encontrado' : 'Seu catálogo começa aqui'} description={products.length ? 'Tente outro nome, categoria ou status.' : 'Cadastre produtos para montar seu cardápio e começar a vender.'} actionLabel={products.length ? undefined : categories.length ? 'Cadastrar produto' : 'Criar categoria'} onAction={categories.length ? openCreate : onManageCategories} />
         ) : (
-          filteredProducts.map((product) => (
+          pageProducts.map((product) => (
             <Paper key={product.id} className="product-mobile-card" elevation={0}>
               <Box className="product-mobile-card-header">
                 <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0, flex: 1 }}>
@@ -416,20 +349,7 @@ export function ProductContainer({
                     </Typography>
                   </Box>
                 </Box>
-                <Chip
-                  size="small"
-                  label={product.isAvailable !== false ? 'Ativo' : 'Inativo'}
-                  sx={
-                    product.isAvailable !== false
-                      ? {
-                          backgroundColor: 'var(--color-primary)',
-                          color: '#fff',
-                          fontWeight: 600,
-                          flexShrink: 0,
-                        }
-                      : { flexShrink: 0 }
-                  }
-                />
+                <StatusBadge label={product.isAvailable !== false ? 'Ativo' : 'Inativo'} tone={product.isAvailable !== false ? 'success' : 'neutral'} />
               </Box>
               {product.observation ? (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1, wordBreak: 'break-word' }}>
@@ -439,28 +359,15 @@ export function ProductContainer({
               <Box className="product-mobile-card-footer">
                 <Typography fontWeight={700}>{formatPrice(product.value)}</Typography>
                 <Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => openEdit(product)}
-                    sx={{ color: 'var(--color-primary)' }}
-                    aria-label="Editar produto"
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => setDeleteTarget(product)}
-                    color="error"
-                    aria-label="Excluir produto"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  <RowActions name={product.name} onEdit={() => openEdit(product)} onDelete={() => setDeleteTarget(product)} />
                 </Box>
               </Box>
             </Paper>
           ))
         )}
       </Box>
+
+      <TablePagination component="div" count={filteredProducts.length} page={safePage} onPageChange={(_, next) => setPage(next)} rowsPerPage={rowsPerPage} rowsPerPageOptions={[10, 25, 50]} onRowsPerPageChange={event => setRowsPerPage(Number(event.target.value))} />
 
       <Snackbar
         open={toast.open}

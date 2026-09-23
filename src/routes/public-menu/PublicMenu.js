@@ -2,15 +2,30 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
+  Button,
   Chip,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  InputAdornment,
+  TextField,
   Typography,
 } from '@mui/material';
+import { Search } from 'lucide-react';
 import { getPublicMenuBySlug } from '../../services/publicMenuService';
 import { API_BASE_URL } from '../../services/apiConfig';
-import { formatDayHours, scheduleForDisplay } from '../../services/storeHoursService';
+import { scheduleForDisplay } from '../../services/storeHoursService';
+import StoreClosedHoursCard from '../../commons/components/StoreClosedHoursCard';
 import { defaultMenuImage, DEFAULT_MENU_IMAGE_PATH } from '../dashboard/menu/utils/defaultMenuImage';
+import PublicMenuProductCard from './components/PublicMenuProductCard';
+import SelectionStateFilter from './components/SelectionStateFilter';
+import SelectionBottomBar from './components/SelectionBottomBar';
+import MySelectionPanel from './components/MySelectionPanel';
+import { useMenuSelection } from './selection/useMenuSelection';
+import { DIGITAL_MENU_EVENTS, trackDigitalMenuEvent } from './selection/menuSelectionAnalytics';
 import './PublicMenu.css';
 
 function resolvePublicImage(image) {
@@ -27,18 +42,21 @@ function resolvePublicImage(image) {
   return value;
 }
 
-function formatPrice(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return '—';
-  return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
 export default function PublicMenu() {
   const { slug } = useParams();
   const [menu, setMenu] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
+  const [viewMode, setViewMode] = useState('all'); // 'all' | 'selected' — filtro de estado, NÃO categoria
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectionOpen, setSelectionOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
+  const storeKey = menu?.slug || slug;
+  const selection = useMenuSelection(storeKey, menu?.categories || [], {
+    catalogReady: Boolean(menu),
+  });
 
   useEffect(() => {
     const meta = document.createElement('meta');
@@ -56,6 +74,9 @@ export default function PublicMenu() {
     setNotFound(false);
     setMenu(null);
     setActiveCategoryId(null);
+    setViewMode('all');
+    setSearchQuery('');
+    setSelectionOpen(false);
 
     getPublicMenuBySlug(slug)
       .then((response) => {
@@ -88,15 +109,60 @@ export default function PublicMenu() {
     };
   }, [slug]);
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
   const visibleCategories = useMemo(() => {
     if (!menu?.categories?.length) return [];
-    if (!activeCategoryId) return menu.categories;
-    const selected = menu.categories.find((c) => c.id === activeCategoryId);
-    return selected ? [selected] : menu.categories;
-  }, [menu, activeCategoryId]);
+
+    const matchSearch = (product) => {
+      if (!normalizedQuery) return true;
+      const hay = `${product.name || ''} ${product.observation || ''} ${product.portion || ''}`.toLowerCase();
+      return hay.includes(normalizedQuery);
+    };
+
+    if (viewMode === 'selected') {
+      const selectedIds = new Set(selection.items.map((i) => String(i.productId)));
+      return menu.categories
+        .map((category) => ({
+          ...category,
+          products: (category.products || []).filter(
+            (product) => selectedIds.has(String(product.id)) && matchSearch(product)
+          ),
+        }))
+        .filter((category) => category.products.length > 0);
+    }
+
+    const source = activeCategoryId
+      ? menu.categories.filter((c) => c.id === activeCategoryId)
+      : menu.categories;
+
+    return source
+      .map((category) => ({
+        ...category,
+        products: (category.products || []).filter(matchSearch),
+      }))
+      .filter((category) => category.products.length > 0);
+  }, [menu, activeCategoryId, viewMode, normalizedQuery, selection.items]);
 
   const isOpen = Boolean(menu?.open);
   const scheduleRows = scheduleForDisplay(menu?.schedule);
+  const hasSelectionBar = selection.selectedCount > 0;
+
+  const openSelection = () => {
+    setSelectionOpen(true);
+    trackDigitalMenuEvent(DIGITAL_MENU_EVENTS.SELECTION_OPENED, {
+      storeId: storeKey,
+      count: selection.selectedCount,
+    });
+  };
+
+  const handleIncrease = (productId) => {
+    const product = selection.productById.get(String(productId))
+      ?? selection.productById.get(productId);
+    selection.increaseQuantity(productId, {
+      available: product?.isAvailable !== false,
+    });
+  };
 
   if (loading) {
     return (
@@ -120,7 +186,7 @@ export default function PublicMenu() {
   }
 
   return (
-    <Box className="public-menu-page">
+    <Box className={`public-menu-page${hasSelectionBar ? ' has-selection-bar' : ''}`}>
       <header className="public-menu-header">
         <Container maxWidth="sm">
           <Box className="public-menu-store-row">
@@ -139,32 +205,39 @@ export default function PublicMenu() {
 
       {!isOpen ? (
         <Container maxWidth="sm">
-          <Box className="public-menu-closed-banner" role="status">
-            <Typography className="public-menu-closed-title">
-              O estabelecimento está fechado no momento
-            </Typography>
-            <Typography className="public-menu-closed-copy">
-              Você pode ver o cardápio, mas não é possível enviar pedido.
-            </Typography>
-            {scheduleRows.length > 0 ? (
-              <Box className="public-menu-hours-list" aria-label="Horários de funcionamento">
-                {scheduleRows.map((day) => (
-                  <Box key={day.id} className="public-menu-hours-row">
-                    <Typography component="span" className="public-menu-hours-day">
-                      {day.label}
-                    </Typography>
-                    <Typography component="span" className="public-menu-hours-value">
-                      {formatDayHours(day)}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : null}
-          </Box>
+          <StoreClosedHoursCard
+            title="O estabelecimento está fechado no momento"
+            copy="Você pode ver o cardápio, mas não é possível enviar pedido."
+            scheduleRows={scheduleRows}
+            variant="menu"
+          />
         </Container>
       ) : null}
 
-      {menu.categories?.length > 0 && (
+      <Container maxWidth="sm" className="public-menu-toolbar">
+        <TextField
+          fullWidth
+          size="small"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Buscar no cardápio"
+          inputProps={{ 'aria-label': 'Buscar no cardápio' }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={18} aria-hidden="true" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <SelectionStateFilter
+          mode={viewMode}
+          selectedCount={selection.selectedCount}
+          onChange={setViewMode}
+        />
+      </Container>
+
+      {viewMode === 'all' && menu.categories?.length > 0 ? (
         <Box className="public-menu-chips" role="navigation" aria-label="Categorias">
           <Container maxWidth="sm" className="public-menu-chips-inner">
             {menu.categories.map((category) => (
@@ -179,12 +252,16 @@ export default function PublicMenu() {
             ))}
           </Container>
         </Box>
-      )}
+      ) : null}
 
       <Container maxWidth="sm" className="public-menu-content">
         {visibleCategories.length === 0 ? (
           <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-            Nenhum item disponível no momento.
+            {viewMode === 'selected'
+              ? (selection.selectedCount === 0
+                ? 'Nenhum item selecionado ainda.'
+                : 'Nenhum item selecionado corresponde à busca.')
+              : 'Nenhum item disponível no momento.'}
           </Typography>
         ) : (
           visibleCategories.map((category) => (
@@ -194,40 +271,71 @@ export default function PublicMenu() {
               </Typography>
               <Box className="public-menu-product-list">
                 {(category.products || []).map((product) => (
-                  <article
+                  <PublicMenuProductCard
                     key={product.id}
-                    className={`public-menu-product${product.isAvailable === false ? ' is-unavailable' : ''}`}
-                  >
-                    <img
-                      src={resolvePublicImage(product.image)}
-                      alt=""
-                      className="public-menu-product-image"
-                      loading="lazy"
-                    />
-                    <Box className="public-menu-product-body">
-                      <Box className="public-menu-product-top">
-                        <Typography className="public-menu-product-name">{product.name}</Typography>
-                        <Typography className="public-menu-product-price">
-                          {formatPrice(product.value)}
-                        </Typography>
-                      </Box>
-                      {product.portion ? (
-                        <Typography className="public-menu-product-meta">{product.portion}</Typography>
-                      ) : null}
-                      {product.observation ? (
-                        <Typography className="public-menu-product-obs">{product.observation}</Typography>
-                      ) : null}
-                      {product.isAvailable === false ? (
-                        <Typography className="public-menu-unavailable-label">Indisponível</Typography>
-                      ) : null}
-                    </Box>
-                  </article>
+                    product={product}
+                    imageSrc={resolvePublicImage(product.image)}
+                    selected={selection.isSelected(product.id)}
+                    quantity={selection.quantityOf(product.id)}
+                    onSelect={selection.selectProduct}
+                    onIncrease={handleIncrease}
+                    onDecrease={selection.decreaseQuantity}
+                    onRemove={selection.removeProduct}
+                  />
                 ))}
               </Box>
             </section>
           ))
         )}
       </Container>
+
+      <SelectionBottomBar
+        itemCount={selection.selectedCount}
+        onOpen={openSelection}
+      />
+
+      <MySelectionPanel
+        open={selectionOpen}
+        onClose={() => setSelectionOpen(false)}
+        selectedItems={selection.selectedItems}
+        selectedCount={selection.selectedCount}
+        estimatedTotal={selection.estimatedTotal}
+        onIncrease={handleIncrease}
+        onDecrease={selection.decreaseQuantity}
+        onRemove={selection.removeProduct}
+        onClear={() => {
+          selection.clearSelection();
+          setSelectionOpen(false);
+        }}
+        onRequestClearConfirm={() => setClearConfirmOpen(true)}
+      />
+
+      <Dialog
+        open={clearConfirmOpen}
+        onClose={() => setClearConfirmOpen(false)}
+        aria-labelledby="clear-selection-title"
+      >
+        <DialogTitle id="clear-selection-title">Limpar seleção?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Remover todos os {selection.selectedCount} itens da sua seleção?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearConfirmOpen(false)}>Cancelar</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              selection.clearSelection();
+              setClearConfirmOpen(false);
+              setSelectionOpen(false);
+            }}
+          >
+            Limpar seleção
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

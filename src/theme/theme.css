@@ -36,6 +36,7 @@
   --color-sidebar-hover: rgba(37, 99, 235, 0.12);
   --color-sidebar-selected: rgba(37, 99, 235, 0.18);
   --color-sidebar-brand: #93C5FD;
+  --color-sidebar-strong: #E2E8F0;
 
   --color-text-primary: #0F172A;
   --color-text-secondary: #64748B;
@@ -106,6 +107,7 @@ html[data-theme="dark"] {
   --color-sidebar-hover: rgba(37, 99, 235, 0.16);
   --color-sidebar-selected: rgba(37, 99, 235, 0.24);
   --color-sidebar-brand: #93C5FD;
+  --color-sidebar-strong: #E2E8F0;
 
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #94A3B8;

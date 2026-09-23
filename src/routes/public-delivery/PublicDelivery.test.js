@@ -113,9 +113,18 @@ describe('PublicDelivery', () => {
     expect(await screen.findByTestId('delivery-open-badge')).toHaveTextContent('Fechado');
     expect(screen.getByRole('button', { name: /^entrar$/i })).toBeInTheDocument();
     expect(screen.getByText(/não é possível enviar pedido/i)).toBeInTheDocument();
+    expect(screen.queryByText('Segunda-feira')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /loja fechada/i })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
     expect(screen.getByText('Pão francês')).toBeInTheDocument();
     expect(screen.getByText('Indisponível')).toBeInTheDocument();
     expect(screen.getByText('40 min')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /loja fechada/i }));
+    expect(screen.getByText('Segunda-feira')).toBeInTheDocument();
+    expect(screen.getAllByText('08:00 às 22:00').length).toBeGreaterThan(0);
 
     await userEvent.click(screen.getByRole('button', { name: /ver endereço/i }));
     expect(screen.getByText('Rua das Flores, 100')).toBeInTheDocument();

@@ -1,7 +1,6 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip, IconButton } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
+import { RowActions } from '../../../../commons/components/RowActions';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import KitchenIcon from '@mui/icons-material/Kitchen';
 import LocalAtmIcon from '@mui/icons-material/LocalAtm';
@@ -24,47 +23,13 @@ export function CardEmployee({ employee, onEdit, onDelete }) {
     return null;
   };
 
-  const getProfileChipClass = (profile) => {
-    if (profile === 'GARCOM' || profile === 'WAITER') return 'profile-chip-garcom';
-    if (profile === 'ADMIN' || profile === 'STORE_ADMIN') return 'profile-chip-caixa';
-    if (profile === 'COZINHA' || profile === 'KITCHEN') return 'profile-chip-cozinha';
-    if (profile === 'CAIXA' || profile === 'CASHIER') return 'profile-chip-caixa';
-    return '';
-  };
 
   return (
     <Card className="employee-card">
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <AvatarWithInitials name={employee.name} size={56} />
-          <Box className="action-buttons">
-            <IconButton 
-              className="action-button"
-              onClick={() => onEdit(employee)}
-              sx={{ 
-                color: '#6B7280',
-                '&:hover': { 
-                  backgroundColor: '#F3F4F6',
-                  color: 'var(--color-primary)'
-                }
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton 
-              className="action-button"
-              onClick={() => onDelete(employee)}
-              sx={{ 
-                color: '#6B7280',
-                '&:hover': { 
-                  backgroundColor: '#F3F4F6',
-                  color: '#DC2626'
-                }
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Box>
+<RowActions name={employee.name} onEdit={() => onEdit(employee)} onDelete={() => onDelete(employee)} />
         </Box>
 
         <Typography className="employee-name" sx={{ wordBreak: 'break-word' }}>
@@ -86,12 +51,13 @@ export function CardEmployee({ employee, onEdit, onDelete }) {
             icon={getProfileIcon(employee.profile)}
             label={getProfileLabel(employee.profile)}
             size="small"
-            className={getProfileChipClass(employee.profile)}
             sx={{ 
               fontWeight: 600,
-              borderRadius: '20px',
+              borderRadius: '6px',
+              color: 'var(--status-neutral-text)',
+              bgcolor: 'var(--status-neutral-bg)',
               '& .MuiChip-icon': {
-                color: 'white',
+                color: 'inherit',
               }
             }}
           />

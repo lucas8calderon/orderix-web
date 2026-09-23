@@ -78,7 +78,13 @@ const DEFAULT_PAYMENT = {
   mercadoPagoAccessTokenConfigured: false,
   mercadoPagoPublicKeyConfigured: false,
   mercadoPagoWebhookSecretConfigured: false,
+  mercadoPagoStoreAccessTokenConfigured: false,
+  mercadoPagoServerTestCredentialsAvailable: false,
+  mercadoPagoServerTestPublicKeyAvailable: false,
   mercadoPagoEnvironment: 'test',
+  mercadoPagoAccessTokenLength: 0,
+  mercadoPagoPublicKeyLength: 0,
+  mercadoPagoWebhookSecretLength: 0,
   mercadoPagoAccessToken: '',
   mercadoPagoPublicKey: '',
   mercadoPagoWebhookSecret: '',
@@ -115,13 +121,27 @@ const DEFAULT_DELIVERY = {
   deliveryCoverUrl: '',
   offersDelivery: true,
   offersPickup: true,
+  acceptPaymentOnDelivery: true,
 };
+
+function mergeSavedDelivery(prev, sent, received) {
+  const keepIfNewer = (field) => (
+    (prev[field] || '') !== (sent[field] || '') ? (prev[field] || '') : (received[field] || '')
+  );
+  return {
+    ...prev,
+    ...received,
+    deliveryLogoUrl: keepIfNewer('deliveryLogoUrl'),
+    deliveryCoverUrl: keepIfNewer('deliveryCoverUrl'),
+  };
+}
 
 function deliveryPayloadFrom(current) {
   return {
     deliveryEnabled: current.deliveryEnabled,
     offersDelivery: current.offersDelivery !== false,
     offersPickup: current.offersPickup !== false,
+    acceptPaymentOnDelivery: current.acceptPaymentOnDelivery !== false,
     deliveryFee: current.deliveryFee,
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
@@ -225,7 +245,7 @@ export const useSettingsState = () => {
     });
   }, []);
 
-  const saveSettings = useCallback(async (section) => {
+  const saveSettings = useCallback(async (section, options = {}) => {
     if (section === 'permissions') {
       showToast(
         'Configurações ainda não são salvas no servidor. Esta tela está em breve.',
@@ -250,7 +270,7 @@ export const useSettingsState = () => {
           );
           return false;
         }
-        setSettings((prev) => ({ ...prev, ...delivery }));
+        setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, delivery));
         showToast('Logotipo salvo com sucesso.');
         return true;
       } catch (error) {
@@ -297,8 +317,8 @@ export const useSettingsState = () => {
           );
           return false;
         }
-        setSettings((prev) => ({ ...prev, ...delivery }));
-        showToast('Delivery salvo com sucesso.');
+        setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, delivery));
+        showToast(options.imageOnly ? 'Logo e banner salvos.' : 'Delivery salvo com sucesso.');
         return true;
       }
 
@@ -333,7 +353,9 @@ export const useSettingsState = () => {
       showToast(
         section === 'serviceFee'
           ? 'Taxa de serviço salva com sucesso.'
-          : 'Pedidos e pagamentos salvos com sucesso.'
+          : section === 'onlinePayments'
+            ? 'Pagamentos online do delivery salvos.'
+            : 'Pedidos e pagamentos salvos com sucesso.'
       );
       return true;
     } catch (error) {

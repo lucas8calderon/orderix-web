@@ -54,8 +54,18 @@ function wait(ms) {
   });
 }
 
+function buildDemoEstimateWindow(minutes) {
+  const from = new Date();
+  const to = new Date(from.getTime() + Math.max(Number(minutes) || 25, 5) * 60 * 1000);
+  return {
+    estimatedReadyFrom: from.toISOString(),
+    estimatedReadyTo: to.toISOString(),
+  };
+}
+
 /**
  * Pedido 100% local. Não importa axios e não chama /api/orders.
+ * Retorna shape compatível com o layout de DeliveryTracking.
  */
 export async function simulateDemoOrder({ slug, cart, checkout }, { delayMs = 800 } = {}) {
   const store = getDemoStore(slug);
@@ -70,32 +80,49 @@ export async function simulateDemoOrder({ slug, cart, checkout }, { delayMs = 80
     await wait(delayMs);
   }
 
+  const fulfillment = checkout?.fulfillment || 'PICKUP';
   const totals = demoCartTotals(cart, {
     deliveryFee: store.settings?.deliveryFee,
-    fulfillment: checkout?.fulfillment || 'PICKUP',
+    fulfillment,
   });
 
   clearDemoCart(slug);
 
+  const createdAt = new Date();
+  const preparingAt = new Date(createdAt.getTime() + 2 * 60 * 1000);
+  const estimate = buildDemoEstimateWindow(store.settings?.estimatedMinutes);
+
   return {
+    id: DEMO_ORDER_NUMBER,
     orderNumber: DEMO_ORDER_NUMBER,
     displayId: `#${DEMO_ORDER_NUMBER}`,
-    createdAt: new Date().toISOString(),
+    createdAt: createdAt.toISOString(),
     slug,
+    storeSlug: slug,
     storeName: store.name,
-    fulfillment: checkout?.fulfillment || 'PICKUP',
+    storeAddress: store.address || '',
+    fulfillment,
     paymentMethod: checkout?.paymentMethod || 'PIX',
-    items: cart.items,
-    totals,
-    steps: [
-      { id: 'received', label: 'Pedido recebido', done: true },
-      { id: 'preparing', label: 'Em preparo', done: true },
-      {
-        id: 'ready',
-        label: checkout?.fulfillment === 'DELIVERY' ? 'Saiu para entrega' : 'Pronto para retirar',
-        done: false,
-      },
+    onlinePayment: false,
+    trackingStatus: 'IN_PREPARATION',
+    statusHistory: [
+      { status: 'RECEIVED', at: createdAt.toISOString() },
+      { status: 'IN_PREPARATION', at: preparingAt.toISOString() },
     ],
+    ...estimate,
+    items: (cart.items || []).map((item) => ({
+      productId: item.productId,
+      name: item.name,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      observation: item.observation || '',
+    })),
+    total: totals.total,
+    totals,
+    // Endereço fictício de entrega (checkout demo não coleta rua do cliente).
+    street: fulfillment === 'DELIVERY' ? 'Av. Demonstração' : undefined,
+    number: fulfillment === 'DELIVERY' ? '42' : undefined,
+    neighborhood: fulfillment === 'DELIVERY' ? 'Centro' : undefined,
   };
 }
 

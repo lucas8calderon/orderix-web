@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   BusinessOutlined as BusinessIcon,
   CreditCardOutlined as PayIcon,
@@ -17,13 +17,20 @@ import {
   EditOutlined as EditIcon,
   ChevronRight as ChevronIcon,
   LightbulbOutlined as TipIcon,
+  DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { getCurrentUser } from '../../../../services/authService';
+import { CLEARED_BRANDING_IMAGE, isBrandingImage } from '../../../../services/deliveryService';
 import {
   createDefaultSchedule,
   isStoreOpenNow,
   normalizeSchedule,
 } from '../../../../services/storeHoursService';
+import { fileToCompressedDataUrl } from '../../menu/utils/compressImage';
+
+const LOGO_UPLOAD = { maxWidth: 512, maxHeight: 512, quality: 0.82, maxFileBytes: 8 * 1024 * 1024 };
+const COVER_UPLOAD = { maxWidth: 1400, maxHeight: 525, quality: 0.72, maxFileBytes: 8 * 1024 * 1024 };
+const MAX_BRANDING_DATA_URL_CHARS = 1_200_000;
 
 const WEPER_TIPS = [
   {
@@ -74,18 +81,23 @@ function storeSegment(settings) {
  * Hub da Visão Geral.
  * `nav` é renderizado entre o card de identidade e os atalhos (como no layout de referência).
  */
-export function SettingsOverview({ settings, onNavigate, nav = null }) {
+export function SettingsOverview({ settings, onNavigate, onSettingChange, saving = false, nav = null }) {
   const user = getCurrentUser();
   const storeName = settings?.storeName || user?.storeName || 'Sua loja';
   const [tipIndex, setTipIndex] = useState(0);
+  const [brandingError, setBrandingError] = useState('');
+  const logoInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
   const openNow = useMemo(() => {
     const schedule = normalizeSchedule(settings?.schedule?.length ? settings.schedule : createDefaultSchedule());
     return isStoreOpenNow({ schedule });
   }, [settings?.schedule]);
   const status = useMemo(() => storeStatus(settings), [settings]);
   const pending = status.filter((item) => !item.ok).length;
-  const logo = settings?.deliveryLogoUrl || settings?.companyInfo?.logoUrl || '';
-  const banner = settings?.deliveryCoverUrl || '';
+  const logo = isBrandingImage(settings?.deliveryLogoUrl)
+    ? settings.deliveryLogoUrl
+    : (settings?.companyInfo?.logoUrl || '');
+  const banner = isBrandingImage(settings?.deliveryCoverUrl) ? settings.deliveryCoverUrl : '';
   const address = settings?.storeAddress || settings?.companyInfo?.address || '';
   const phone = settings?.companyInfo?.phone || '';
   const cnpj = settings?.companyInfo?.cnpj || '';
@@ -104,15 +116,63 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
     .map(([key]) => methodLabels[key] || key)
     .join(', ');
 
+  const processImage = async (file, uploadOptions, settingKey) => {
+    if (!file || !onSettingChange) return;
+    setBrandingError('');
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file, uploadOptions);
+      if (typeof dataUrl === 'string' && dataUrl.length > MAX_BRANDING_DATA_URL_CHARS) {
+        setBrandingError('A imagem ficou grande demais após o processamento. Use um arquivo menor.');
+        return;
+      }
+      onSettingChange(settingKey, null, dataUrl);
+    } catch (err) {
+      setBrandingError(err?.message || 'Não foi possível processar a imagem.');
+    }
+  };
+
+  const handleLogoFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    await processImage(file, LOGO_UPLOAD, 'deliveryLogoUrl');
+  };
+
+  const handleBannerFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    await processImage(file, COVER_UPLOAD, 'deliveryCoverUrl');
+  };
+
+  const openLogoPicker = () => logoInputRef.current?.click();
+  const openBannerPicker = () => bannerInputRef.current?.click();
+
   return (
     <div className="settings-hub">
+      <input
+        ref={logoInputRef}
+        type="file"
+        hidden
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        aria-label="Arquivo do logotipo"
+        onChange={handleLogoFile}
+      />
+      <input
+        ref={bannerInputRef}
+        type="file"
+        hidden
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        aria-label="Arquivo do banner"
+        onChange={handleBannerFile}
+      />
+
       <section className="settings-identity" aria-label="Identidade da loja">
         <div className="settings-identity__card">
           <div className="settings-identity__main">
             <button
               type="button"
               className="settings-identity__logo-wrap"
-              onClick={() => onNavigate('empresa')}
+              onClick={openLogoPicker}
+              disabled={saving}
               aria-label="Alterar logo"
             >
               {logo ? (
@@ -174,7 +234,7 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
           {banner ? (
             <img src={banner} alt="Banner da loja" />
           ) : (
-            <button type="button" onClick={() => onNavigate('delivery')}>
+            <button type="button" onClick={openBannerPicker} disabled={saving}>
               <CameraIcon fontSize="small" />
               Adicionar banner da loja
             </button>
@@ -183,7 +243,8 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
             <button
               type="button"
               className="settings-identity__banner-edit"
-              onClick={() => onNavigate('delivery')}
+              onClick={openBannerPicker}
+              disabled={saving}
               aria-label="Alterar banner"
             >
               <CameraIcon fontSize="small" />
@@ -191,6 +252,10 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
           ) : null}
         </div>
       </section>
+
+      {brandingError ? (
+        <p className="settings-branding-error" role="alert">{brandingError}</p>
+      ) : null}
 
       {nav}
 
@@ -259,7 +324,7 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
             <QuickCard
               icon={IntegrationIcon}
               title="Integrações"
-              text="Mercado Pago e InfinitePay, quando o canal usar."
+              text="InfinitePay no salão. Mercado Pago fica no Delivery."
               onClick={() => onNavigate('integracoes')}
             />
           </div>
@@ -289,14 +354,34 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
           <div className="settings-block-head">
             <h3>Personalização visual</h3>
           </div>
-          <p>Defina o logo e o banner da sua loja. Os uploads já existentes em Empresa e Delivery são reutilizados.</p>
+          <p>
+            Defina o logo e o banner da sua loja aqui. As imagens são gravadas ao escolher o arquivo e aparecem no Delivery e no cardápio.
+          </p>
           <div className="settings-visual__row">
             <figure>
               {logo ? <img src={logo} alt="" /> : <span>{storeName.slice(0, 1)}</span>}
               <figcaption>
                 <strong>Logo da loja</strong>
                 <small>512×512 recomendado</small>
-                <button type="button" onClick={() => onNavigate('empresa')}>Alterar logo</button>
+                <div className="settings-visual__actions">
+                  <button type="button" onClick={openLogoPicker} disabled={saving}>
+                    {logo ? 'Alterar logo' : 'Adicionar logo'}
+                  </button>
+                  {logo ? (
+                    <button
+                      type="button"
+                      className="settings-visual__remove"
+                      disabled={saving}
+                      onClick={() => {
+                        setBrandingError('');
+                        onSettingChange?.('deliveryLogoUrl', null, CLEARED_BRANDING_IMAGE);
+                      }}
+                    >
+                      <DeleteIcon fontSize="inherit" aria-hidden />
+                      Remover
+                    </button>
+                  ) : null}
+                </div>
               </figcaption>
             </figure>
             <figure>
@@ -304,7 +389,25 @@ export function SettingsOverview({ settings, onNavigate, nav = null }) {
               <figcaption>
                 <strong>Banner da loja</strong>
                 <small>1600×600 recomendado</small>
-                <button type="button" onClick={() => onNavigate('delivery')}>Alterar banner</button>
+                <div className="settings-visual__actions">
+                  <button type="button" onClick={openBannerPicker} disabled={saving}>
+                    {banner ? 'Alterar banner' : 'Adicionar banner'}
+                  </button>
+                  {banner ? (
+                    <button
+                      type="button"
+                      className="settings-visual__remove"
+                      disabled={saving}
+                      onClick={() => {
+                        setBrandingError('');
+                        onSettingChange?.('deliveryCoverUrl', null, CLEARED_BRANDING_IMAGE);
+                      }}
+                    >
+                      <DeleteIcon fontSize="inherit" aria-hidden />
+                      Remover
+                    </button>
+                  ) : null}
+                </div>
               </figcaption>
             </figure>
           </div>

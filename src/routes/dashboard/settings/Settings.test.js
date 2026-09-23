@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Settings } from './Settings';
 import { useSettingsState } from './hooks/useSettingsState';
+import { fileToCompressedDataUrl } from '../menu/utils/compressImage';
 
 jest.mock('./hooks/useSettingsState', () => ({
   useSettingsState: jest.fn(),
@@ -11,6 +12,10 @@ jest.mock('./hooks/useSettingsState', () => ({
 
 jest.mock('../../../services/authService', () => ({
   getCurrentUser: () => ({ storeName: 'Loja Teste' }),
+}));
+
+jest.mock('../menu/utils/compressImage', () => ({
+  fileToCompressedDataUrl: jest.fn(),
 }));
 
 const baseState = {
@@ -85,6 +90,7 @@ describe('Settings page navigation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useSettingsState.mockReturnValue(baseState);
+    fileToCompressedDataUrl.mockReset();
   });
 
   it('mostra a visão geral com hub do layout de referência', async () => {
@@ -100,10 +106,53 @@ describe('Settings page navigation', () => {
     expect(screen.getByText('Delivery ativo')).toBeInTheDocument();
   });
 
+  it('não navega para canais ao adicionar banner; o upload fica na visão geral', async () => {
+    fileToCompressedDataUrl.mockResolvedValue('data:image/jpeg;base64,banner');
+    renderSettings('/app/configuracoes/geral');
+
+    fireEvent.click(screen.getByRole('button', { name: /adicionar banner da loja/i }));
+
+    expect(screen.queryByText('Delivery habilitado')).not.toBeInTheDocument();
+    expect(screen.getByText('Personalização visual')).toBeInTheDocument();
+
+    const input = screen.getByLabelText('Arquivo do banner');
+    const file = new File(['banner'], 'banner.jpg', { type: 'image/jpeg' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(baseState.updateSetting).toHaveBeenCalledWith(
+        'deliveryCoverUrl',
+        null,
+        'data:image/jpeg;base64,banner'
+      );
+    });
+    expect(screen.queryByText('Delivery habilitado')).not.toBeInTheDocument();
+  });
+
+  it('permite upload de logo na visão geral sem ir para empresa', async () => {
+    fileToCompressedDataUrl.mockResolvedValue('data:image/jpeg;base64,logo');
+    renderSettings('/app/configuracoes/geral');
+
+    const input = screen.getByLabelText('Arquivo do logotipo');
+    const file = new File(['logo'], 'logo.png', { type: 'image/png' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(baseState.updateSetting).toHaveBeenCalledWith(
+        'deliveryLogoUrl',
+        null,
+        'data:image/jpeg;base64,logo'
+      );
+    });
+    expect(screen.queryByText(/dados fiscais e empresa/i)).not.toBeInTheDocument();
+  });
+
   it('abre Delivery pelo grupo Canais', async () => {
     renderSettings('/app/configuracoes/geral');
     fireEvent.click(screen.getByRole('tab', { name: /canais e delivery/i }));
     expect(await screen.findByText('Delivery habilitado')).toBeInTheDocument();
+    expect(screen.getByText('Pagamentos online')).toBeInTheDocument();
+    expect(screen.queryByText(/banner \(capa\)/i)).not.toBeInTheDocument();
   });
 
   it('abre Operação com horários e taxa de serviço', async () => {
@@ -113,10 +162,10 @@ describe('Settings page navigation', () => {
     expect(screen.getByText('Taxa de Serviço')).toBeInTheDocument();
   });
 
-  it('abre Cardápio e Estoque com atalho para estoque', async () => {
+  it('abre Cardápio e Produtos com atalho para o catálogo', async () => {
     renderSettings('/app/configuracoes/cardapio');
     expect(await screen.findByText(/cardápio digital \(qr\)/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /abrir estoque/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /abrir catálogo/i })).toBeInTheDocument();
   });
 
   it('abre Equipe com permissões', async () => {
@@ -138,6 +187,7 @@ describe('Settings page navigation', () => {
   it('mantém rota antiga de delivery', async () => {
     renderSettings('/app/configuracoes/delivery');
     expect(await screen.findByText('Delivery habilitado')).toBeInTheDocument();
+    expect(screen.getByText('Pagamentos online')).toBeInTheDocument();
   });
 
   it('canonicaliza /app/configuracoes para a visão geral', async () => {

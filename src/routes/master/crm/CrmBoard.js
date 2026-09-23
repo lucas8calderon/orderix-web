@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../commons/components/PageHeader';
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
@@ -173,20 +174,7 @@ export function CrmBoard() {
 
   return (
     <Box className="crm-board" sx={{ flex: 1, minHeight: 0, width: '100%' }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ sm: 'flex-start' }}
-        spacing={1.5}
-        className="crm-board-header"
-      >
-        <div>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>CRM de Prospecção</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Gerencie potenciais clientes e acompanhe todo o processo comercial da Weper.
-          </Typography>
-        </div>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+      <PageHeader title="CRM de prospecção" description="Organize seus contatos e acompanhe as próximas ações comerciais." actions={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <Button
             variant="outlined"
             startIcon={<TravelExploreIcon />}
@@ -207,10 +195,9 @@ export function CrmBoard() {
               minHeight: 44,
             }}
           >
-            + Novo Lead
+            Cadastrar lead
           </Button>
-        </Stack>
-      </Stack>
+        </Stack>} />
 
       {busy && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -259,6 +246,7 @@ export function CrmBoard() {
               />
             </Box>
             <ToggleButtonGroup
+              aria-label="Visualização do CRM"
               exclusive
               size="small"
               value={crm.view}

@@ -1,4 +1,9 @@
-import { buildDeliveryUrl, toDeliverySettingsPayload, toDeliverySettingsUi } from './deliveryService';
+import {
+  buildDeliveryUrl,
+  CLEARED_BRANDING_IMAGE,
+  toDeliverySettingsPayload,
+  toDeliverySettingsUi,
+} from './deliveryService';
 
 describe('deliveryService helpers', () => {
   it('monta URL /delivery/:slug', () => {
@@ -27,10 +32,12 @@ describe('deliveryService helpers', () => {
     expect(ui.deliveryCoverUrl).toBe('https://cdn.example.com/cover.jpg');
     expect(ui.offersDelivery).toBe(true);
     expect(ui.offersPickup).toBe(true);
+    expect(ui.acceptPaymentOnDelivery).toBe(true);
     expect(toDeliverySettingsPayload({ ...ui, deliveryEstimatedMinutes: '' })).toEqual({
       enabled: true,
       offersDelivery: true,
       offersPickup: true,
+      acceptPaymentOnDelivery: true,
       deliveryFee: 5,
       minOrder: 20,
       estimatedMinutes: null,
@@ -40,7 +47,7 @@ describe('deliveryService helpers', () => {
     });
   });
 
-  it('envia null ao remover logo e capa', () => {
+  it('omite logo e capa vazios para não apagar o que já está salvo', () => {
     expect(
       toDeliverySettingsPayload({
         deliveryEnabled: false,
@@ -55,6 +62,7 @@ describe('deliveryService helpers', () => {
       enabled: false,
       offersDelivery: true,
       offersPickup: true,
+      acceptPaymentOnDelivery: true,
       deliveryFee: 0,
       minOrder: 0,
       estimatedMinutes: null,
@@ -62,6 +70,19 @@ describe('deliveryService helpers', () => {
       logoUrl: null,
       coverUrl: null,
     });
+  });
+
+  it('envia string vazia só quando a imagem foi removida', () => {
+    expect(
+      toDeliverySettingsPayload({
+        deliveryEnabled: true,
+        deliveryLogoUrl: CLEARED_BRANDING_IMAGE,
+        deliveryCoverUrl: CLEARED_BRANDING_IMAGE,
+      })
+    ).toEqual(expect.objectContaining({
+      logoUrl: '',
+      coverUrl: '',
+    }));
   });
 
   it('inclui data URL curta de logo e capa no payload PUT', () => {
@@ -81,6 +102,7 @@ describe('deliveryService helpers', () => {
       enabled: true,
       offersDelivery: true,
       offersPickup: true,
+      acceptPaymentOnDelivery: true,
       deliveryFee: 3.5,
       minOrder: 10,
       estimatedMinutes: 30,
@@ -101,6 +123,17 @@ describe('deliveryService helpers', () => {
     expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
       offersDelivery: false,
       offersPickup: true,
+    }));
+  });
+
+  it('preserva exigência de pagamento antecipado', () => {
+    const ui = toDeliverySettingsUi({
+      enabled: true,
+      acceptPaymentOnDelivery: false,
+    });
+    expect(ui.acceptPaymentOnDelivery).toBe(false);
+    expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
+      acceptPaymentOnDelivery: false,
     }));
   });
 });

@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../commons/components/PageHeader';
 import React from 'react';
 import {
   Box,
@@ -21,9 +22,7 @@ import { statusColor } from './MasterOverview';
 export function MasterSubscriptions({ stores = [] }) {
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-        Assinaturas
-      </Typography>
+      <PageHeader title="Assinaturas" description="Acompanhe a situação e o vencimento das assinaturas." />
       <Paper
         elevation={0}
         sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}

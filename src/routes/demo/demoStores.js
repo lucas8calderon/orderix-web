@@ -576,6 +576,9 @@ export const DEMO_STORES = [
   },
 ];
 
+/** Âncora da grade de lojas em /demo (CTA “Outras lojas de demonstração”). */
+export const DEMO_STORES_SECTION_ID = 'demo-stores';
+
 export function listDemoStores() {
   return DEMO_STORES;
 }

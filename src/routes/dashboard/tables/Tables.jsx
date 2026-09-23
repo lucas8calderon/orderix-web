@@ -1,7 +1,8 @@
+import { EmptyState } from '../../../commons/components/EmptyState';
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import { Grid, ListItemButton, Button, Box, Typography } from "@mui/material";
+import { Grid, Button, Box, Typography } from "@mui/material";
 import { Loading } from "../../../commons/components/Loading";
 import { CardTable } from "../menu/utils/CardTable";
 import { TablesContext } from "./provider/TablesContext";
@@ -181,7 +182,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
       />
 
       <Box className="atendimento-section-header">
-        <Typography variant="h5" className="atendimento-section-title">
+        <Typography variant="h5" component="h2" className="atendimento-section-title">
           Mesas
         </Typography>
         {canManage && (
@@ -204,9 +205,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
         )}
       </Box>
       {!loading && tables.filter((table) => table.number !== 999).length === 0 && (
-        <Typography className="atendimento-empty" sx={{ color: "text.secondary" }}>
-          Nenhuma mesa cadastrada ainda.
-        </Typography>
+        <EmptyState title="Nenhuma mesa cadastrada" description={canManage ? 'Cadastre as mesas do salão para organizar o atendimento.' : 'Peça ao administrador para cadastrar as mesas do salão.'} actionLabel={canManage ? 'Cadastrar mesa' : undefined} onAction={() => setHandleAddNewTable(true)} />
       )}
       <Grid container spacing={2}>
         {tables
@@ -215,20 +214,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
           .sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0))
           .map((table) => (
             <Grid item key={table.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-              <ListItemButton
-                sx={{
-                  boxShadow: "none",
-                  width: "100%",
-                  p: { xs: 0, sm: 1 },
-                  "&:hover": {
-                    boxShadow: "none",
-                    backgroundColor: "transparent",
-                  },
-                }}
-                onClick={() => handleSelectedTable(table)}
-              >
-                <CardTable table={table} onShowQRCode={handleShowQRCode} canManage={canManage} />
-              </ListItemButton>
+              <CardTable table={table} onShowQRCode={handleShowQRCode} onOpen={() => handleSelectedTable(table)} canManage={canManage} />
             </Grid>
           ))}
       </Grid>

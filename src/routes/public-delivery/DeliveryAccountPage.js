@@ -1,3 +1,4 @@
+import { Loading } from '../../commons/components/Loading';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, Box, Button, Typography } from '@mui/material';
@@ -106,7 +107,7 @@ export default function DeliveryAccountPage() {
           </Alert>
         ) : null}
         {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert> : null}
-        {loading ? <Typography sx={{ mt: 2 }}>Carregando...</Typography> : null}
+        {loading ? <Loading loadingMessage="Carregando sua conta..." /> : null}
 
         {session && !loading ? (
           <section className="delivery-account-card" aria-label="Dados da conta">
@@ -128,7 +129,7 @@ export default function DeliveryAccountPage() {
               Endereços
             </Typography>
             {addresses.length === 0 ? (
-              <Typography color="text.secondary">Nenhum endereço salvo.</Typography>
+              <Typography color="text.secondary">Nenhum endereço salvo. Você pode informar seu endereço ao fazer um pedido.</Typography>
             ) : (
               <ul className="delivery-account-addresses">
                 {addresses.map((address) => (

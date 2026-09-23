@@ -288,7 +288,7 @@ export default function DemoStorePage() {
           </div>
         </>
       )}
-      <DemoFooter />
+      {!order ? <DemoFooter /> : null}
 
       {!order && !isMobile && totals.itemCount > 0 ? (
         <button type="button" className="demo-desktop-cart-btn" onClick={openCart}>

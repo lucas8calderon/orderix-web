@@ -5,6 +5,7 @@ import {
   Upload as UploadIcon,
   DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
+import { CLEARED_BRANDING_IMAGE, isBrandingImage } from '../../../../services/deliveryService';
 import { fileToCompressedDataUrl } from '../../menu/utils/compressImage';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
@@ -13,7 +14,7 @@ const MAX_LOGO_DATA_URL_CHARS = 1_200_000;
 
 export function CompanySection({ settings, onSettingChange, onSave, saving }) {
   const [error, setError] = useState('');
-  const logo = settings?.deliveryLogoUrl || '';
+  const logo = isBrandingImage(settings?.deliveryLogoUrl) ? settings.deliveryLogoUrl : '';
 
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
@@ -36,7 +37,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
     <SettingsSectionCard
       icon={BusinessIcon}
       title="Dados Fiscais e Empresa"
-      description="O logotipo é gravado ao salvar e aparece na loja e no Delivery. Nome, CNPJ e telefone ainda ficam só nesta tela."
+      description="O logotipo é gravado ao escolher o arquivo e aparece na loja e no Delivery. Nome, CNPJ e telefone ainda ficam só nesta tela."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={() => onSave('companyInfo')}
       actionDisabled={saving}
@@ -75,7 +76,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
         <Box className="upload-section">
           <Typography className="setting-label">Logotipo da empresa</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-            Tamanho ideal 512×512, PNG ou JPG, até 8 MB. Depois clique em Salvar.
+            Tamanho ideal 512×512, PNG ou JPG, até 8 MB. A imagem é gravada ao escolher o arquivo.
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
             <Button
@@ -103,7 +104,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
                 disabled={saving}
                 onClick={() => {
                   setError('');
-                  onSettingChange('deliveryLogoUrl', null, '');
+                  onSettingChange('deliveryLogoUrl', null, CLEARED_BRANDING_IMAGE);
                 }}
               >
                 Remover

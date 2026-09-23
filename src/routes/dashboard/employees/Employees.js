@@ -1,9 +1,25 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Grid, Box, Button, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  MenuItem,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Loading } from "../../../commons/components/Loading";
 import { CardEmployee } from "./components/CardEmployee";
 import { SearchBar } from "./components/SearchBar";
-import { FilterChips } from "./components/FilterChips";
+import { FilterBar } from '../../../commons/components/FilterBar';
+import { StatusBadge } from '../../../commons/components/StatusBadge';
+import { RowActions } from '../../../commons/components/RowActions';
+import { AvatarWithInitials } from './components/AvatarWithInitials';
 import { EmployeesContext } from "./provider/EmployeesContext";
 import { useGetEmployees } from "./hook/useGetEmployees";
 import { usePostEmployees } from "./hook/usePostEmployees";
@@ -13,6 +29,25 @@ import { ConfirmDeleteDialog } from "../menu/components/ConfirmDeleteDialog";
 import { EmployeeFormDialog } from "./components/EmployeeFormDialog";
 import { Snackbar, Alert } from '@mui/material';
 import './Employees.css';
+import { PageHeader } from '../../../commons/components/PageHeader';
+import { EmptyState } from '../../../commons/components/EmptyState';
+import { GenericError } from '../../../commons/components/GenericError';
+
+const PROFILE_FILTERS = [
+  { id: 'all', label: 'Todos os perfis' },
+  { id: 'STORE_ADMIN', label: 'Administrador' },
+  { id: 'GARCOM', label: 'Garçom' },
+  { id: 'KITCHEN', label: 'Cozinha' },
+  { id: 'CASHIER', label: 'Caixa' },
+];
+
+function profileMeta(profile) {
+  if (profile === 'GARCOM' || profile === 'WAITER') return { label: 'Garçom', tone: 'info' };
+  if (profile === 'ADMIN' || profile === 'STORE_ADMIN') return { label: 'Administrador', tone: 'neutral' };
+  if (profile === 'COZINHA' || profile === 'KITCHEN') return { label: 'Cozinha', tone: 'warning' };
+  if (profile === 'CAIXA' || profile === 'CASHIER') return { label: 'Caixa', tone: 'success' };
+  return { label: profile || '—', tone: 'neutral' };
+}
 
 export function Employees() {
   const {
@@ -184,23 +219,23 @@ export function Employees() {
     if (successSavingEmployee) {
       setOnAddEmployeeResult(handleSuccess);
       fetchEmployees();
-      handleToastOpen('Funcionário salvo com sucesso!', 'success');
+      handleToastOpen('Colaborador salvo.', 'success');
     }
   }, [successSavingEmployee]);
 
   useEffect(() => {
     if (successToDelete) {
-      handleToastOpen('Funcionário excluído com sucesso!', 'success');
+      handleToastOpen('Colaborador excluído.', 'success');
     }
   }, [successToDelete]);
 
   return (
     <div className="employees-container">
       {loading && !loadingToDelete && (
-        <Loading loadingMessage={"Carregando funcionários..."} />
+        <Loading loadingMessage={"Carregando colaboradores..."} />
       )}
       {loadingToDelete && !loading && (
-        <Loading loadingMessage={"Excluíndo funcionário..."} />
+        <Loading loadingMessage={"Excluindo colaborador..."} />
       )}
 
       {errorToDelete && (
@@ -252,58 +287,81 @@ export function Employees() {
       </Snackbar>
 
       {/* Header */}
-      <Box className="employees-header">
-        <Typography className="employees-title">Colaboradores</Typography>
-        <Button
-          sx={{
-            backgroundColor: "var(--color-primary)",
-            color: "white",
-            textTransform: "none",
-            borderRadius: "12px",
-            padding: "10px 24px",
-            fontWeight: 600,
-            fontSize: "15px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-            ":hover": {
-              backgroundColor: "var(--color-primary)",
-              boxShadow: "0 6px 16px rgba(0, 0, 0, 0.15)",
-              transform: "translateY(-1px)",
-            },
-          }}
-          onClick={() => setHandleAddNewEmployee(true)}
+<PageHeader title="Colaboradores" description="Gerencie quem atende, prepara pedidos e administra sua loja." actions={<Button variant="contained" onClick={() => setHandleAddNewEmployee(true)}>Cadastrar colaborador</Button>} />
+      {error && <GenericError onTryAgain={fetchEmployees} message="Não foi possível carregar a equipe." />}
+
+      <FilterBar label="Busca de colaboradores">
+        <SearchBar onSearch={handleSearch} placeholder="Buscar colaborador" />
+        <TextField
+          select
+          size="small"
+          label="Perfil"
+          value={activeFilter}
+          onChange={(event) => handleFilterChange(event.target.value)}
+          sx={{ minWidth: 180 }}
         >
-          Novo colaborador
-        </Button>
-      </Box>
+          {PROFILE_FILTERS.map((filter) => (
+            <MenuItem key={filter.id} value={filter.id}>{filter.label}</MenuItem>
+          ))}
+        </TextField>
+      </FilterBar>
 
-      {/* Search and Filters */}
-      <Box className="search-and-filters">
-        <SearchBar onSearch={handleSearch} />
-        <FilterChips activeFilter={activeFilter} onFilterChange={handleFilterChange} />
-      </Box>
+      {filteredEmployees.length === 0 && !loading && !error && <EmptyState title={searchTerm || activeFilter !== 'all' ? 'Nenhum colaborador encontrado' : 'Monte sua equipe'} description={searchTerm || activeFilter !== 'all' ? 'Tente outro nome ou perfil de acesso.' : 'Cadastre os colaboradores e defina o perfil de acesso de cada pessoa.'} actionLabel={searchTerm || activeFilter !== 'all' ? undefined : 'Cadastrar colaborador'} onAction={() => setHandleAddNewEmployee(true)} />}
 
-      {/* Employee Grid */}
-      {filteredEmployees.length === 0 && !loading && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary">
-            {searchTerm || activeFilter !== 'all' 
-              ? 'Nenhum colaborador encontrado' 
-              : 'Nenhum colaborador cadastrado'}
-          </Typography>
-        </Box>
+      {filteredEmployees.length > 0 && (
+        <>
+          <TableContainer component={Paper} elevation={0} sx={{ display: { xs: 'none', md: 'block' }, border: '1px solid', borderColor: 'divider' }}>
+            <Table aria-label="Colaboradores">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Colaborador</TableCell>
+                  <TableCell>Contato</TableCell>
+                  <TableCell>Perfil</TableCell>
+                  <TableCell align="right">Ações</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredEmployees.map((employee) => {
+                  const profile = profileMeta(employee.profile);
+                  return (
+                    <TableRow key={employee.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                          <AvatarWithInitials name={employee.name} size={32} />
+                          <Typography fontWeight={600} sx={{ wordBreak: 'break-word' }}>{employee.name}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ wordBreak: 'break-word' }}>{employee.email || '—'}</Typography>
+                        {employee.phone ? (
+                          <Typography variant="body2" color="text.secondary">{employee.phone}</Typography>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge label={profile.label} tone={profile.tone} />
+                      </TableCell>
+                      <TableCell align="right">
+                        <RowActions name={employee.name} onEdit={() => handleEdit(employee)} onDelete={() => handleDelete(employee)} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Box sx={{ display: { xs: 'grid', md: 'none' }, gap: 1.5 }}>
+            {filteredEmployees.map((employee) => (
+              <CardEmployee
+                key={employee.id}
+                employee={employee}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </Box>
+        </>
       )}
-
-      <Grid container spacing={3}>
-        {filteredEmployees.map((employee) => (
-          <Grid item key={employee.id} xs={12} sm={6} md={4} lg={3}>
-            <CardEmployee
-              employee={employee}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          </Grid>
-        ))}
-      </Grid>
     </div>
   );
 }

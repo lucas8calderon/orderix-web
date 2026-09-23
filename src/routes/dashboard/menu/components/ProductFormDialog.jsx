@@ -174,6 +174,7 @@ export function ProductFormDialog({
 
   return (
     <Dialog
+      aria-labelledby="product-dialog-title"
       open={open}
       TransitionComponent={Transition}
       keepMounted={false}
@@ -182,7 +183,7 @@ export function ProductFormDialog({
       {...dialogProps}
     >
       <DialogContent sx={{ p: { xs: 2, sm: 4 }, overflowY: 'auto' }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+        <Typography id="product-dialog-title" component="h2" variant="h5" sx={{ mb: 3, fontWeight: 600, color: 'var(--color-text-primary)' }}>
           {isEdit ? 'Editar produto' : 'Novo produto'}
         </Typography>
 
@@ -198,6 +199,7 @@ export function ProductFormDialog({
           </Alert>
         ) : null}
 
+<Typography component="h3" variant="subtitle2" sx={{ mb: 2 }}>Informações do produto</Typography>
         <TextField
           autoFocus
           fullWidth
@@ -219,6 +221,7 @@ export function ProductFormDialog({
           sx={{ mb: 2 }}
         />
 
+<Typography component="h3" variant="subtitle2" sx={{ mt: 1, mb: 2 }}>Preço e categoria</Typography>
         <TextField
           fullWidth
           label="Preço"
@@ -283,10 +286,11 @@ export function ProductFormDialog({
             })}
           </Select>
           <FormHelperText>
-            O produto entra só em categoria ou subcategoria, nunca em outro produto.
+            Escolha onde o produto aparece no seu catálogo.
           </FormHelperText>
         </FormControl>
 
+<Typography component="h3" variant="subtitle2" sx={{ mt: 1, mb: 1 }}>Disponibilidade e imagem</Typography>
         <FormControlLabel
           control={
             <Switch
@@ -314,9 +318,9 @@ export function ProductFormDialog({
             component="label"
             variant="outlined"
             startIcon={<CloudUploadIcon />}
-            sx={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+            sx={{ borderColor: 'var(--color-info)', color: 'var(--color-info)' }}
           >
-            Upload
+            Escolher imagem
             <VisuallyHiddenInput
               type="file"
               accept="image/*"
@@ -326,7 +330,7 @@ export function ProductFormDialog({
           <TextField
             fullWidth
             size="small"
-            label="Ou URL da imagem"
+            label="Ou cole o link da imagem"
             value={form.image?.startsWith?.('http') ? form.image : ''}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, image: e.target.value }));
@@ -339,13 +343,13 @@ export function ProductFormDialog({
           <Box
             component="img"
             src={imagePreview}
-            alt="Preview"
+            alt="Prévia da imagem do produto"
             sx={{
               width: 150,
               height: 100,
               objectFit: 'cover',
               borderRadius: '8px',
-              border: '1px solid #e0e0e0',
+              border: '1px solid var(--color-border)',
               mb: 2,
             }}
           />

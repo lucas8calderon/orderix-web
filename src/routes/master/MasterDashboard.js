@@ -1,3 +1,5 @@
+import { PageHeader } from '../../commons/components/PageHeader';
+import { EmptyState } from '../../commons/components/EmptyState';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -5,7 +7,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Container,
   Dialog,
   DialogActions,
   DialogContent,
@@ -27,8 +28,14 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
+import { AppShell } from '../../commons/components/AppShell';
+import weperLogo from '../../assets/images/weper-logo.png';
 import { logout } from '../../services/authService';
 import {
   PATHS,
@@ -250,6 +257,14 @@ const ADMIN_SECTIONS = {
   crm: PATHS.ADMIN_CRM,
 };
 
+const ADMIN_TITLES = {
+  dashboard: 'Dashboard',
+  restaurantes: 'Restaurantes',
+  planos: 'Planos',
+  assinaturas: 'Assinaturas',
+  crm: 'CRM',
+};
+
 export default function MasterDashboard() {
   const navigate = useNavigate();
   const { section } = useParams();
@@ -329,116 +344,41 @@ export default function MasterDashboard() {
     }
   };
 
+  const adminGroups = [
+    {
+      label: 'Visão geral',
+      items: [{ key: 'dashboard', title: 'Dashboard', icon: <DashboardOutlinedIcon />, to: PATHS.ADMIN_DASHBOARD, selected: section === 'dashboard' }],
+    },
+    {
+      label: 'Gestão',
+      items: [
+        { key: 'restaurantes', title: 'Restaurantes', icon: <StorefrontOutlinedIcon />, to: PATHS.ADMIN_RESTAURANTES, selected: section === 'restaurantes' },
+        { key: 'planos', title: 'Planos', icon: <SellOutlinedIcon />, to: PATHS.ADMIN_PLANOS, selected: section === 'planos' },
+        { key: 'assinaturas', title: 'Assinaturas', icon: <ReceiptLongOutlinedIcon />, to: PATHS.ADMIN_ASSINATURAS, selected: section === 'assinaturas' },
+      ],
+    },
+    {
+      label: 'Relacionamento',
+      items: [{ key: 'crm', title: 'CRM', icon: <GroupsOutlinedIcon />, to: PATHS.ADMIN_CRM, selected: section === 'crm' }],
+    },
+  ];
+
   if (!section || !ADMIN_SECTIONS[section]) {
     return <Navigate to={getPostLoginPath(user)} replace />;
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'var(--color-bg)' }}>
-      <Box
-        sx={{
-          bgcolor: 'var(--color-sidebar)',
-          color: 'var(--color-sidebar-text)',
-          px: { xs: 2, sm: 3 },
-          py: { xs: 1.5, sm: 2 },
-          display: 'flex',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
-          gap: 2,
-          flexWrap: 'wrap',
-          flexDirection: { xs: 'column', sm: 'row' },
-        }}
-      >
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--color-sidebar-brand)' }}>
-            Weper Master
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.85 }}>
-            Gestão administrativa da plataforma
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-          <ThemeToggleButton className="header-theme-toggle" />
-          <Button
-            color="inherit"
-            onClick={() => goToSection('dashboard')}
-            sx={{
-              textTransform: 'none',
-              fontWeight: section === 'dashboard' ? 700 : 400,
-              borderBottom: section === 'dashboard' ? '2px solid #fff' : '2px solid transparent',
-              borderRadius: 0,
-            }}
-          >
-            Dashboard
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => goToSection('restaurantes')}
-            sx={{
-              textTransform: 'none',
-              fontWeight: section === 'restaurantes' ? 700 : 400,
-              borderBottom: section === 'restaurantes' ? '2px solid #fff' : '2px solid transparent',
-              borderRadius: 0,
-            }}
-          >
-            Restaurantes
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => goToSection('planos')}
-            sx={{
-              textTransform: 'none',
-              fontWeight: section === 'planos' ? 700 : 400,
-              borderBottom: section === 'planos' ? '2px solid #fff' : '2px solid transparent',
-              borderRadius: 0,
-            }}
-          >
-            Planos
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => goToSection('assinaturas')}
-            sx={{
-              textTransform: 'none',
-              fontWeight: section === 'assinaturas' ? 700 : 400,
-              borderBottom: section === 'assinaturas' ? '2px solid #fff' : '2px solid transparent',
-              borderRadius: 0,
-            }}
-          >
-            Assinaturas
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => goToSection('crm')}
-            sx={{
-              textTransform: 'none',
-              fontWeight: section === 'crm' ? 700 : 400,
-              borderBottom: section === 'crm' ? '2px solid #fff' : '2px solid transparent',
-              borderRadius: 0,
-            }}
-          >
-            CRM
-          </Button>
-          <Button color="inherit" onClick={handleLogout} sx={{ textTransform: 'none' }}>
-            Sair
-          </Button>
-        </Stack>
-      </Box>
-
-      <Container
-        maxWidth={section === 'crm' ? false : 'lg'}
-        sx={{
-          py: section === 'crm' ? { xs: 2, md: 2 } : 4,
-          px: section === 'crm' ? { xs: 1.5, md: 2 } : undefined,
-          ...(section === 'crm' ? {
-            height: { md: 'calc(100vh - 88px)' },
-            display: { md: 'flex' },
-            flexDirection: { md: 'column' },
-            overflow: { md: 'hidden' },
-          } : {}),
-        }}
-      >
-        {section === 'crm' ? (
+    <AppShell
+      logo={weperLogo}
+      contextLabel="Weper Master"
+      contextHint={ADMIN_TITLES[section]}
+      groups={adminGroups}
+      accountName={user?.name || 'Administração'}
+      accountHint="Gestão da plataforma"
+      onLogout={handleLogout}
+      flush={section === 'crm'}
+    >
+      {section === 'crm' ? (
           <Box sx={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}>
             <CrmBoard />
           </Box>
@@ -451,7 +391,7 @@ export default function MasterDashboard() {
         )}
 
         {!loading && error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" onClick={refetch}>Tentar novamente</Button>}>
             Não foi possível carregar os dados administrativos.
           </Alert>
         )}
@@ -474,31 +414,7 @@ export default function MasterDashboard() {
 
         {!loading && !error && section === 'restaurantes' && (
           <>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              justifyContent="space-between"
-              alignItems={{ sm: 'center' }}
-              spacing={2}
-              sx={{ mb: 2 }}
-            >
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Restaurantes
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={openCreate}
-                sx={{
-                  backgroundColor: 'var(--color-primary)',
-                  '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
-                  textTransform: 'none',
-                  width: { xs: '100%', sm: 'auto' },
-                  minHeight: 44,
-                }}
-              >
-                Cadastrar Loja
-              </Button>
-            </Stack>
+            <PageHeader title="Restaurantes" description="Gerencie os estabelecimentos e seus acessos à Weper." actions={<Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Cadastrar loja</Button>} />
 
             <Paper
               elevation={0}
@@ -546,7 +462,7 @@ export default function MasterDashboard() {
                   {stores.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                        Nenhuma loja cadastrada.
+                        <EmptyState title="Cadastre a primeira loja" description="Adicione um estabelecimento para configurar seu acesso e assinatura." actionLabel="Cadastrar loja" onAction={openCreate} />
                       </TableCell>
                     </TableRow>
                   )}
@@ -606,9 +522,7 @@ export default function MasterDashboard() {
         )}
           </>
         )}
-      </Container>
-
-      <StoreFormDialog
+<StoreFormDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         initialValues={editingStore}
@@ -626,6 +540,6 @@ export default function MasterDashboard() {
           {toast.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </AppShell>
   );
 }

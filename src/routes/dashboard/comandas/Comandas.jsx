@@ -1,7 +1,8 @@
+import { EmptyState } from '../../../commons/components/EmptyState';
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
-import { Grid, ListItemButton, Button, Box, Typography } from '@mui/material';
+import { Grid, Button, Box, Typography } from '@mui/material';
 import { Loading } from '../../../commons/components/Loading';
 import { CardComanda } from './components/CardComanda';
 import { ComandasContext } from './provider/ComandasContext';
@@ -160,7 +161,7 @@ export function Comandas({ onOpenAccount, floorVersion = 0 }) {
       />
 
       <Box className="atendimento-section-header">
-        <Typography variant="h5" className="atendimento-section-title">
+        <Typography variant="h5" component="h2" className="atendimento-section-title">
           Comandas
         </Typography>
         {canManage && (
@@ -184,28 +185,13 @@ export function Comandas({ onOpenAccount, floorVersion = 0 }) {
       </Box>
 
       {emptyResult && !loading && (
-        <Typography className="atendimento-empty" sx={{ color: 'text.secondary' }}>
-          Nenhuma comanda cadastrada ainda.
-        </Typography>
+        <EmptyState title="Nenhuma comanda cadastrada" description={canManage ? 'Cadastre as comandas para organizar o atendimento.' : 'Peça ao administrador para cadastrar as comandas.'} actionLabel={canManage ? 'Cadastrar comanda' : undefined} onAction={() => setHandleAddNewComanda(true)} />
       )}
 
       <Grid container spacing={2}>
         {comandas.map((comanda) => (
           <Grid item key={comanda.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-            <ListItemButton
-              sx={{
-                boxShadow: 'none',
-                width: '100%',
-                p: { xs: 0, sm: 1 },
-                '&:hover': {
-                  boxShadow: 'none',
-                  backgroundColor: 'transparent',
-                },
-              }}
-              onClick={() => handleSelectedComanda(comanda)}
-            >
-              <CardComanda comanda={comanda} canManage={canManage} />
-            </ListItemButton>
+            <CardComanda comanda={comanda} onOpen={() => handleSelectedComanda(comanda)} canManage={canManage} />
           </Grid>
         ))}
       </Grid>

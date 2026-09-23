@@ -17,13 +17,15 @@ export function SearchBar({ onSearch, placeholder = "Buscar colaborador por nome
   return (
     <TextField
       className="search-bar"
+      size="small"
+      inputProps={{ 'aria-label': placeholder }}
       placeholder={placeholder}
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
-            <SearchIcon sx={{ color: '#9CA3AF' }} />
+            <SearchIcon sx={{ color: 'var(--color-text-muted)' }} />
           </InputAdornment>
         ),
       }}

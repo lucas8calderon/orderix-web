@@ -1,3 +1,5 @@
+import { EmptyState } from '../../commons/components/EmptyState';
+import { Loading } from '../../commons/components/Loading';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert, Box, Button, Typography } from '@mui/material';
@@ -29,6 +31,7 @@ export default function DeliveryOrdersPage() {
   const [session, setSession] = useState(() => readDeliveryCustomerSession());
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
   const [loading, setLoading] = useState(Boolean(session));
 
   useEffect(() => {
@@ -49,6 +52,7 @@ export default function DeliveryOrdersPage() {
     }
     let cancelled = false;
     setLoading(true);
+    setError('');
     listDeliveryCustomerOrders()
       .then((response) => {
         if (!cancelled) setOrders(response.data || []);
@@ -62,7 +66,7 @@ export default function DeliveryOrdersPage() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [session?.token]);
+  }, [session?.token, retryKey]);
 
   return (
     <Box className="delivery-page has-bottom-nav">
@@ -81,13 +85,11 @@ export default function DeliveryOrdersPage() {
         {!session ? (
           <Alert severity="info">Entre na sua conta para ver o histórico de pedidos.</Alert>
         ) : null}
-        {error ? <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert> : null}
-        {loading ? <Typography sx={{ mt: 2 }}>Carregando...</Typography> : null}
+        {error ? <Alert severity="error" sx={{ mt: 2 }} action={<Button color="inherit" onClick={() => setRetryKey(value => value + 1)}>Tentar novamente</Button>}>{error}</Alert> : null}
+        {loading ? <Loading loadingMessage="Carregando seus pedidos..." /> : null}
 
         {!loading && session && orders.length === 0 && !error ? (
-          <Typography sx={{ mt: 2 }} color="text.secondary">
-            Você ainda não fez pedidos com esta conta.
-          </Typography>
+          <EmptyState title="Seu primeiro pedido começa aqui" description="Escolha seus produtos no cardápio. Depois, acompanhe os pedidos por aqui." actionLabel="Ver cardápio" onAction={() => navigate(`/delivery/${encodeURIComponent(slug)}`)} />
         ) : null}
 
         <ul className="delivery-orders-list">

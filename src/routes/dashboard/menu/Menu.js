@@ -1,11 +1,14 @@
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import * as React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { ProductContainer } from './product/Product';
 import { CategoryContainer } from './category/Category';
 import './Menu.css';
+import { PageHeader } from '../../../commons/components/PageHeader';
+import { PageTabs } from '../../../commons/components/PageTabs';
 
 export function Menu() {
+  const [tab, setTab] = useState('products');
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [productsRefreshToken, setProductsRefreshToken] = useState(0);
@@ -26,6 +29,7 @@ export function Menu() {
 
   const handleAddProductToCategory = useCallback((category) => {
     if (category?.id == null) return;
+    setTab('products');
     setNewProductCategoryId(category.id);
   }, []);
 
@@ -50,14 +54,10 @@ export function Menu() {
   return (
     <Box className="menu-container">
       <Container maxWidth="xl" className="menu-content">
-        <Typography variant="h4" className="menu-page-title">
-          Catálogo
-        </Typography>
-        <Typography variant="body1" className="menu-page-subtitle">
-          Gerencie categorias, subcategorias e produtos da sua loja. Subcategorias são opcionais: lojas simples podem continuar só com categoria e produto.
-        </Typography>
+<PageHeader title="Catálogo" description="Organize seus produtos, preços e disponibilidade." />
+        <PageTabs id="catalog" label="Seções do catálogo" value={tab} onChange={setTab} tabs={[{ value: 'products', label: 'Produtos' }, { value: 'categories', label: 'Categorias' }]} />
 
-        <Box className="menu-section">
+        <div role="tabpanel" id="catalog-panel-categories" aria-labelledby="catalog-tab-categories" hidden={tab !== 'categories'} className="menu-section">
           <CategoryContainer
             onCategoriesChange={handleCategoriesChange}
             onCategoryDeleted={handleCategoryDeleted}
@@ -65,10 +65,11 @@ export function Menu() {
             refreshToken={categoriesRefreshToken}
             productCounts={productCounts}
           />
-        </Box>
+        </div>
 
-        <Box className="menu-section">
+        <div role="tabpanel" id="catalog-panel-products" aria-labelledby="catalog-tab-products" hidden={tab !== 'products'} className="menu-section">
           <ProductContainer
+            onManageCategories={() => setTab('categories')}
             categories={categories}
             refreshToken={productsRefreshToken}
             presetCategoryId={newProductCategoryId}
@@ -76,7 +77,7 @@ export function Menu() {
             onProductsChanged={handleProductsChanged}
             onProductsLoaded={handleProductsChange}
           />
-        </Box>
+        </div>
       </Container>
     </Box>
   );

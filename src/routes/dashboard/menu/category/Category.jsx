@@ -224,7 +224,7 @@ export function CategoryContainer({
       />
 
       <Box className="category-header">
-        <Typography variant="h5" className="category-title">
+        <Typography variant="h5" component="h2" className="category-title">
           Categorias
         </Typography>
         <Button
@@ -261,6 +261,7 @@ export function CategoryContainer({
               {categoryFilters.map((filter) => (
                 <Box
                   key={`cat-filter-${filter.id}`}
+                  component="button" type="button" aria-pressed={categoryFilter === filter.id}
                   className={`filter-chip ${categoryFilter === filter.id ? 'active' : ''}`}
                   onClick={() => {
                     setCategoryFilter(filter.id);
@@ -367,7 +368,7 @@ function CategoryManageCard({
               }}
             />
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="h6" className="category-card-name">
+              <Typography component="button" type="button" onClick={onSelect} aria-pressed={isSelected} className="category-card-name" sx={{ background: 'none', border: 0, p: 0, textAlign: 'left', color: 'inherit', cursor: 'pointer' }}>
                 {category.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -405,6 +406,7 @@ function CategoryManageCard({
           <Tooltip title={isActive ? 'Desativar' : 'Ativar'}>
             <Switch
               size="small"
+              inputProps={{ 'aria-label': (isActive ? 'Desativar ' : 'Ativar ') + category.name }}
               checked={isActive}
               onChange={onToggle}
               color="primary"
@@ -412,6 +414,7 @@ function CategoryManageCard({
           </Tooltip>
           <IconButton
             size="small"
+            aria-label={'Editar ' + category.name}
             onClick={onEdit}
             sx={{ color: 'var(--color-primary)' }}
           >
@@ -419,6 +422,7 @@ function CategoryManageCard({
           </IconButton>
           <IconButton
             size="small"
+            aria-label={'Excluir ' + category.name}
             onClick={onDelete}
             color="error"
           >
@@ -470,7 +474,7 @@ function SubcategoryCarouselCard({
         className="subcategory-carousel-image"
       />
       <Box className="subcategory-carousel-body">
-        <Typography className="subcategory-carousel-name">{category.name}</Typography>
+        <Typography component="button" type="button" className="subcategory-carousel-name" onClick={onEdit} sx={{ border: 0, background: 'none', color: 'inherit', p: 0, cursor: 'pointer', textAlign: 'left' }}>{category.name}</Typography>
         <Typography variant="caption" color="text.secondary">
           {productCount} {productCount === 1 ? 'produto' : 'produtos'}
         </Typography>

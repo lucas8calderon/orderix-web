@@ -20,3 +20,13 @@
   .weper-workspace .category-header, .weper-workspace .product-header { gap: 12px; }
   .weper-workspace .settings-title { font-size: 22px !important; }
 }
+
+.weper-workspace .dashboard-gerencial > header { margin-bottom: 0; }
+.weper-workspace .overview-chip { min-height: 40px; border-radius: var(--radius-md); padding: 8px 14px; font-size: 13px; }
+.weper-workspace .overview-alert-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.weper-workspace .overview-now-card strong { display: block; }
+.weper-workspace .overview-alerts { border-radius: var(--radius-lg); }
+.weper-workspace [role="tabpanel"][hidden] { display: none; }
+@media (max-width: 767px) { .weper-workspace .overview-alert-list { grid-template-columns: 1fr; } }
+
+.weper-workspace .settings-container { padding: 0; }

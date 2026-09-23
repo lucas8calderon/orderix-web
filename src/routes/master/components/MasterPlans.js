@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../commons/components/PageHeader';
 import React from 'react';
 import { Box, Grid, Paper, Typography } from '@mui/material';
 import { PLAN_LABELS, PLANS, formatCurrency } from '../../../services/accessControl';
@@ -7,9 +8,7 @@ export function MasterPlans({ stores = [] }) {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-        Planos
-      </Typography>
+      <PageHeader title="Planos" description="Consulte a distribuição das lojas e o valor recorrente por plano." />
       <Grid container spacing={2}>
         {planIds.map((planId) => {
           const planStores = stores.filter((store) => store.plan === planId);

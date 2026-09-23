@@ -81,6 +81,8 @@ export function createAppTheme(mode = 'light') {
               boxShadow: 'none',
             },
           },
+          outlinedPrimary: { color: 'var(--color-info)', borderColor: 'var(--color-info)' },
+          textPrimary: { color: 'var(--color-info)' },
           containedPrimary: {
             boxShadow: '0 1px 2px rgba(37, 99, 235, 0.18)',
           },
@@ -194,8 +196,10 @@ export function createAppTheme(mode = 'light') {
           },
           head: {
             backgroundColor: 'var(--color-table-header)',
-            color: 'var(--color-text-primary)',
-            fontWeight: 700,
+            color: 'var(--color-text-secondary)',
+            fontWeight: 600,
+            fontSize: 12,
+            letterSpacing: '0.02em',
           },
         },
       },
@@ -337,6 +341,7 @@ export function createAppTheme(mode = 'light') {
         },
       },
       MuiIconButton: {
+        defaultProps: { size: 'medium' },
         styleOverrides: {
           root: {
             '&.Mui-focusVisible': {

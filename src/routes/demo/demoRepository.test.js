@@ -76,7 +76,12 @@ describe('demoRepository isolation', () => {
     }, { delayMs: 0 });
 
     expect(order.displayId).toBe('#1042');
+    expect(order.id).toBe(1042);
     expect(order.storeName).toBe('Weper Burger');
+    expect(order.trackingStatus).toBe('IN_PREPARATION');
+    expect(order.total).toBe(36.9);
+    expect(order.items).toHaveLength(1);
+    expect(order.statusHistory).toHaveLength(2);
     expect(axios.post).not.toHaveBeenCalled();
     expect(axios.get).not.toHaveBeenCalled();
     expect(axios.post.mock.calls.find((call) => String(call[0]).includes('/api/orders'))).toBeUndefined();

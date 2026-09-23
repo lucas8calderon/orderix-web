@@ -24,7 +24,7 @@ import {
   WEEKDAY_OPTIONS,
 } from '../../../../services/storeHoursService';
 import { buildPublicMenuUrl } from '../../../../services/publicMenuService';
-import { buildDeliveryUrl } from '../../../../services/deliveryService';
+import { buildDeliveryUrl, isBrandingImage } from '../../../../services/deliveryService';
 import { formatCurrencyInput } from '../../../../utils/currencyInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
@@ -49,7 +49,7 @@ export function GeneralSection({ settings, onNavigate }) {
   const todayHours = schedule.find((d) => d.weekday === todayOption?.id);
   const menuUrl = buildPublicMenuUrl(settings?.slug);
   const deliveryUrl = buildDeliveryUrl(settings?.slug);
-  const logo = settings?.deliveryLogoUrl;
+  const logo = isBrandingImage(settings?.deliveryLogoUrl) ? settings.deliveryLogoUrl : '';
   const phone = settings?.companyInfo?.phone || '—';
   const cnpj = settings?.companyInfo?.cnpj || '—';
   const address = settings?.storeAddress || settings?.companyInfo?.address || '';

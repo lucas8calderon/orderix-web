@@ -1,3 +1,4 @@
+import { PageHeader } from '../../../commons/components/PageHeader';
 import React, { useState, useEffect } from 'react';
 import {
     Box,
@@ -488,16 +489,7 @@ export function Kitchen({ initialFilter }) {
 
     return (
         <Box className="kitchen-container">
-            <Box className="kitchen-header">
-                <Box>
-                    <Typography variant="h4" className="kitchen-page-title">
-                        Cozinha
-                    </Typography>
-                    <Typography variant="body1" className="kitchen-page-subtitle">
-                        Acompanhe os pedidos e atualize o status de cada etapa.
-                    </Typography>
-                </Box>
-                <Button
+            <PageHeader title="Cozinha" description="Acompanhe os pedidos e avance cada etapa do preparo." actions={<Button
                     variant="outlined"
                     startIcon={<RefreshIcon className={isRefreshing ? 'refreshing' : ''} />}
                     onClick={handleRefresh}
@@ -509,14 +501,13 @@ export function Kitchen({ initialFilter }) {
                         textTransform: 'none',
                         alignSelf: 'flex-start',
                         '&:hover': {
-                            borderColor: '#6a2599',
+                            borderColor: 'var(--color-primary-dark)',
                             backgroundColor: 'rgba(37, 99, 235, 0.08)',
                         },
                     }}
                 >
                     {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-                </Button>
-            </Box>
+                </Button>} />
 
             {/* Filter Section */}
             <Box className="filter-section">
@@ -537,7 +528,7 @@ export function Kitchen({ initialFilter }) {
                         width: '100%',
                         gap: { xs: 1, sm: 2 },
                         '& .MuiToggleButton-root': {
-                            border: '1px solid #e0e0e0',
+                            border: '1px solid var(--color-border)',
                             borderRadius: '8px',
                             px: { xs: 2, sm: 3 },
                             py: 1,
@@ -553,7 +544,7 @@ export function Kitchen({ initialFilter }) {
                                 backgroundColor: 'var(--color-primary)',
                                 color: 'white',
                                 '&:hover': {
-                                    backgroundColor: '#6a2599'
+                                    backgroundColor: 'var(--color-primary-dark)'
                                 }
                             },
                             '&:hover': {
@@ -589,39 +580,6 @@ export function Kitchen({ initialFilter }) {
                     </Typography>
                 ) : null}
             </Box>
-
-            {/* Floating Refresh Button */}
-            <Button
-                variant="contained"
-                startIcon={<RefreshIcon className={isRefreshing ? 'refreshing' : ''} />}
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="floating-refresh-btn"
-                sx={{
-                    position: 'fixed',
-                    bottom: 24,
-                    right: 24,
-                    zIndex: 1000,
-                    borderRadius: '50px',
-                    minWidth: 'auto',
-                    px: 3,
-                    py: 1.5,
-                    backgroundColor: 'var(--color-primary)',
-                    boxShadow: '0 4px 20px rgba(37, 99, 235, 0.3)',
-                    '&:hover': {
-                        backgroundColor: '#6a2599',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 6px 25px rgba(37, 99, 235, 0.4)'
-                    },
-                    '&:disabled': {
-                        backgroundColor: '#a0a0a0',
-                        color: '#ffffff'
-                    },
-                    transition: 'all 0.3s ease'
-                }}
-            >
-                {isRefreshing ? 'Atualizando...' : 'Atualizar'}
-            </Button>
 
             {/* Kanban Board */}
             <DragDropContext onDragEnd={handleDragEnd}>
@@ -662,6 +620,7 @@ export function Kitchen({ initialFilter }) {
                                                     getTimeAgo={getTimeAgo}
                                                 />
                                             ))}
+                                            {getOrdersByStatus(column.key).length === 0 && <Typography sx={{ py: 4, px: 2, textAlign: 'center', fontSize: 14 }} color="text.secondary">Nenhum pedido nesta etapa.</Typography>}
                                             {provided.placeholder}
                                         </Box>
                                     )}

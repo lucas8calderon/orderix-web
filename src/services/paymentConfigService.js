@@ -202,7 +202,13 @@ export function toPaymentUi(dto = {}) {
     mercadoPagoAccessTokenConfigured: Boolean(dto.mercadoPagoAccessTokenConfigured),
     mercadoPagoPublicKeyConfigured: Boolean(dto.mercadoPagoPublicKeyConfigured),
     mercadoPagoWebhookSecretConfigured: Boolean(dto.mercadoPagoWebhookSecretConfigured),
+    mercadoPagoStoreAccessTokenConfigured: Boolean(dto.mercadoPagoStoreAccessTokenConfigured),
+    mercadoPagoServerTestCredentialsAvailable: Boolean(dto.mercadoPagoServerTestCredentialsAvailable),
+    mercadoPagoServerTestPublicKeyAvailable: Boolean(dto.mercadoPagoServerTestPublicKeyAvailable),
     mercadoPagoEnvironment: dto.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test',
+    mercadoPagoAccessTokenLength: Number(dto.accessTokenLength) || 0,
+    mercadoPagoPublicKeyLength: Number(dto.publicKeyLength) || 0,
+    mercadoPagoWebhookSecretLength: Number(dto.webhookSecretLength) || 0,
     mercadoPagoAccessToken: '',
     mercadoPagoPublicKey: '',
     mercadoPagoWebhookSecret: '',
@@ -237,12 +243,31 @@ function inferDefaultProvider(tableMode, comandaMode, counterMode, tableProvider
   return 'NONE';
 }
 
+/** Caractere de máscara visual (comprimento = length real da credencial). */
+export const SECRET_MASK_CHAR = '•';
+
+/** Máscara de N caracteres; length 0/ausente → string vazia (não inventa tamanho). */
+export function secretInputMask(length) {
+  const n = Number(length);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  return SECRET_MASK_CHAR.repeat(Math.floor(n));
+}
+
+/** @deprecated use secretInputMask(length); mantido para compat de imports. */
+export const SECRET_INPUT_MASK = '*****';
+
+export function isSecretInputMask(value) {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return false;
+  return /^[•*]+$/.test(trimmed);
+}
+
 /** Só envia segredo novo; nunca máscara, placeholder ou vazio. */
 export function newSecretOrOmit(value) {
   if (value == null) return undefined;
   const trimmed = String(value).trim();
   if (!trimmed) return undefined;
-  if (trimmed.startsWith('•')) return undefined;
+  if (isSecretInputMask(trimmed)) return undefined;
   if (/^configurado$/i.test(trimmed)) return undefined;
   return trimmed;
 }

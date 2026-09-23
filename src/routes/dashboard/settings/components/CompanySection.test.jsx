@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { CLEARED_BRANDING_IMAGE } from '../../../../services/deliveryService';
 import { CompanySection } from './CompanySection';
 import { fileToCompressedDataUrl } from '../../menu/utils/compressImage';
 
@@ -60,6 +61,6 @@ describe('CompanySection', () => {
 
     expect(screen.getByAltText('Logotipo da empresa')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /remover/i }));
-    expect(onSettingChange).toHaveBeenCalledWith('deliveryLogoUrl', null, '');
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryLogoUrl', null, CLEARED_BRANDING_IMAGE);
   });
 });

@@ -6,7 +6,7 @@ export const SETTINGS_GROUPS = [
   { id: 'operacao', label: 'Operação', shortLabel: 'Operação' },
   { id: 'vendas', label: 'Vendas e Pagamentos', shortLabel: 'Pagamentos' },
   { id: 'canais', label: 'Canais e Delivery', shortLabel: 'Canais' },
-  { id: 'cardapio', label: 'Cardápio e Estoque', shortLabel: 'Cardápio' },
+  { id: 'cardapio', label: 'Cardápio e Produtos', shortLabel: 'Cardápio' },
   { id: 'equipe', label: 'Equipe', shortLabel: 'Equipe' },
   { id: 'empresa', label: 'Empresa', shortLabel: 'Empresa' },
 ];
@@ -70,17 +70,17 @@ export const DEFAULT_SETTINGS_SECTION = 'geral';
 
 export const SETTINGS_SEARCH = [
   { id: 'pix', title: 'Formas de pagamento', hint: 'Pix, débito, crédito e dinheiro', section: 'vendas', terms: ['pix', 'pagamento', 'dinheiro', 'cartao', 'cartão', 'debito', 'débito', 'credito', 'crédito', 'vale'] },
-  { id: 'mp', title: 'Mercado Pago', hint: 'Pix e cartão online do Delivery', section: 'vendas', terms: ['mercado pago', 'mercadopago', 'webhook', 'access token'] },
+  { id: 'mp', title: 'Mercado Pago', hint: 'Pix e cartão online do Delivery', section: 'delivery', terms: ['mercado pago', 'mercadopago', 'webhook', 'access token', 'pix online', 'cartão online', 'cartao online'] },
   { id: 'infinite', title: 'InfinitePay', hint: 'Pagamento integrado no salão', section: 'vendas', terms: ['infinitepay', 'infinite', 'maquininha'] },
   { id: 'horarios', title: 'Horários de funcionamento', hint: 'Dias e turnos da loja', section: 'horarios', terms: ['horario', 'horário', 'aberto', 'fechado', 'turno'] },
   { id: 'cobranca', title: 'Regras de cobrança', hint: 'Balcão, mesa e comanda', section: 'vendas', terms: ['balcao', 'balcão', 'mesa', 'comanda', 'cozinha', 'cobranca', 'cobrança'] },
   { id: 'taxa-servico', title: 'Taxa de serviço', hint: 'Percentual do salão', section: 'operacao', terms: ['taxa de servico', 'taxa de serviço', 'serviço', 'servico', '10%'] },
   { id: 'delivery', title: 'Delivery', hint: 'Entrega, retirada, taxa e pedido mínimo', section: 'delivery', terms: ['delivery', 'entrega', 'retirada', 'taxa entrega', 'pedido minimo', 'pedido mínimo'] },
   { id: 'cardapio', title: 'Cardápio digital', hint: 'Publicação, link e QR Code', section: 'cardapio-digital', terms: ['cardapio', 'cardápio', 'qr', 'qr code', 'publicado'] },
-  { id: 'estoque', title: 'Estoque', hint: 'Abre o módulo de estoque', section: 'cardapio', terms: ['estoque', 'indisponivel', 'indisponível'] },
+  { id: 'estoque', title: 'Disponibilidade de produtos', hint: 'Ative ou desative produtos no catálogo', section: 'cardapio', terms: ['estoque', 'indisponivel', 'indisponível'] },
   { id: 'equipe', title: 'Equipe e permissões', hint: 'Perfis Admin, garçom, cozinha e caixa', section: 'permissoes', terms: ['garcom', 'garçom', 'permiss', 'equipe', 'caixa', 'cozinha', 'admin'] },
   { id: 'empresa', title: 'Dados da empresa', hint: 'Nome, CNPJ, telefone e logo', section: 'empresa', terms: ['cnpj', 'empresa', 'telefone', 'logo', 'logotipo'] },
-  { id: 'aparencia', title: 'Aparência', hint: 'Logo na empresa e banner no Delivery', section: 'aparencia', terms: ['banner', 'aparencia', 'aparência', 'capa', 'logo'] },
+  { id: 'aparencia', title: 'Aparência', hint: 'Logo e banner na Visão Geral', section: 'geral', terms: ['banner', 'aparencia', 'aparência', 'capa', 'logo'] },
 ];
 
 export function searchSettings(query) {

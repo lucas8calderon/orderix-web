@@ -95,3 +95,5 @@ Mudanças funcionais identificadas antes da implementação: corrigir comparaç�
 ## 6. Limites para aceite
 
 Não afirmar prontidão de produção com base só em build. Fluxos com backend exigem loja de teste e perfis reais, especialmente pagamentos e mudanças de status. Nada será enviado a clientes, nenhum pedido/pagamento será criado para fins de validação. Esta auditoria diferencia recursos reais, protótipos e alterações preexistentes.
+
+Achado adicional na validação: CardTable e CardComanda exibiam botões Editar sem onClick e sem fluxo de edição associado. Serão retirados os controles inertes; cadastro, QR Code, consulta/fechamento e exclusão com confirmação permanecem. Os cards tinham botões aninhados no acionador de conta, a corrigir com ações independentes.

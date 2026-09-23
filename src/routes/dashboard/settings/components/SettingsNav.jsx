@@ -30,7 +30,7 @@ const SECTION_ICONS = {
 export function SettingsNav({ activeSection, onNavigate }) {
   return (
     <nav className="settings-nav" aria-label="Seções de configurações">
-      <div className="settings-nav__track" role="tablist">
+      <div className="settings-nav__track" role="tablist" aria-label="Categorias de configurações">
         {SETTINGS_GROUPS.map((section) => {
           const Icon = SECTION_ICONS[section.id] || HomeIcon;
           const active = section.id === sectionGroup(activeSection);
@@ -40,6 +40,15 @@ export function SettingsNav({ activeSection, onNavigate }) {
               type="button"
               role="tab"
               aria-selected={active}
+              tabIndex={active ? 0 : -1}
+              onKeyDown={event => {
+                const index = SETTINGS_GROUPS.findIndex(item => item.id === section.id);
+                const next = event.key === 'ArrowRight' ? (index + 1) % SETTINGS_GROUPS.length : event.key === 'ArrowLeft' ? (index + SETTINGS_GROUPS.length - 1) % SETTINGS_GROUPS.length : event.key === 'Home' ? 0 : event.key === 'End' ? SETTINGS_GROUPS.length - 1 : null;
+                if (next == null) return;
+                event.preventDefault();
+                event.currentTarget.parentElement.querySelectorAll('[role="tab"]')[next].focus();
+                onNavigate(SETTINGS_GROUPS[next].id);
+              }}
               className={`settings-nav__tab${active ? ' is-active' : ''}`}
               onClick={() => onNavigate(section.id)}
             >
