@@ -1,0 +1,22 @@
+.weper-workspace { background: var(--color-bg); color: var(--color-text-primary); }
+.weper-workspace .menu-container, .weper-workspace .atendimento-container, .weper-workspace .employees-container, .weper-workspace .kitchen-container { padding: 0; min-width: 0; }
+.weper-workspace .menu-content, .weper-workspace .atendimento-content { padding: 0; max-width: none; }
+.weper-workspace .menu-section, .weper-workspace .atendimento-section { padding: 0; border-radius: 0; box-shadow: none; background: transparent; margin: 0; }
+.weper-workspace .category-title, .weper-workspace .product-title, .weper-workspace .atendimento-section-title { color: var(--color-text-primary) !important; font-size: 18px !important; }
+.weper-workspace .category-manage-card, .weper-workspace .employee-card { border-radius: var(--radius-lg) !important; box-shadow: none; border: 1px solid var(--color-border); }
+.weper-workspace .category-manage-card:hover, .weper-workspace .employee-card:hover { transform: none; box-shadow: none; border-color: var(--color-outline); }
+.weper-workspace .category-manage-card.selected { box-shadow: none; }
+.weper-workspace .filter-chip { border-width: 1px; border-radius: var(--radius-md); font-size: 13px; min-height: 40px; }
+.weper-workspace .search-and-filters { padding: 0; }
+.weper-workspace .overview-title, .weper-workspace .kitchen-page-title, .weper-workspace .settings-title { font-size: 24px !important; line-height: 1.35 !important; }
+.weper-workspace .overview-panel, .weper-workspace .overview-metric-card { border-radius: var(--radius-lg) !important; }
+.weper-workspace .overview-now { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.weper-workspace .overview-period-chips { flex-wrap: wrap; }
+.weper-workspace .settings-header__icon { display: none; }
+.weper-workspace .overview-metric-value { font-variant-numeric: tabular-nums; }
+.weper-workspace .overview-metric-change.is-up { color: var(--status-success-text); }
+@media (max-width: 767px) {
+  .weper-workspace .overview-now { grid-template-columns: 1fr; }
+  .weper-workspace .category-header, .weper-workspace .product-header { gap: 12px; }
+  .weper-workspace .settings-title { font-size: 22px !important; }
+}

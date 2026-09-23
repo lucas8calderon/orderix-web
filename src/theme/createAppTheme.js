@@ -24,12 +24,12 @@ export function createAppTheme(mode = 'light') {
       },
       text: {
         primary: isDark ? '#F8FAFC' : '#0F172A',
-        secondary: isDark ? '#94A3B8' : '#5B6475',
+        secondary: isDark ? '#94A3B8' : '#64748B',
         disabled: isDark ? '#64748B' : '#8B93A7',
       },
-      divider: isDark ? '#2A3548' : '#D9D9E5',
-      success: { main: '#10B981' },
-      warning: { main: '#F59E0B' },
+      divider: isDark ? '#2A3548' : '#E2E8F0',
+      success: { main: isDark ? '#10B981' : '#15803D' },
+      warning: { main: isDark ? '#FBBF24' : '#A16207' },
       error: { main: isDark ? '#F87171' : '#B91C1C' },
       info: { main: isDark ? '#60A5FA' : '#2563EB' },
       action: {
@@ -52,12 +52,12 @@ export function createAppTheme(mode = 'light') {
       h6: { fontWeight: 600 },
       button: {
         fontWeight: 600,
-        letterSpacing: '0.05em',
+        letterSpacing: '0',
         textTransform: 'none',
       },
     },
     shape: {
-      borderRadius: 4,
+      borderRadius: 8,
     },
     components: {
       MuiCssBaseline: {
@@ -70,9 +70,10 @@ export function createAppTheme(mode = 'light') {
         },
       },
       MuiButton: {
+        defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 4,
+            borderRadius: 8,
             textTransform: 'none',
             fontWeight: 600,
             boxShadow: 'none',
@@ -180,11 +181,16 @@ export function createAppTheme(mode = 'light') {
           },
         },
       },
+      MuiTableContainer: { styleOverrides: { root: { maxWidth: '100%', overflowX: 'auto' } } },
+      MuiTablePagination: { defaultProps: { labelRowsPerPage: 'Itens por página:', labelDisplayedRows: ({ from, to, count }) => from + '–' + to + ' de ' + count, getItemAriaLabel: type => ({ first: 'Primeira página', last: 'Última página', next: 'Próxima página', previous: 'Página anterior' }[type]) } },
       MuiTableCell: {
         styleOverrides: {
           root: {
             borderColor: 'var(--color-border)',
             color: 'var(--color-text-primary)',
+            padding: '14px 16px',
+            fontSize: 14,
+            fontVariantNumeric: 'tabular-nums',
           },
           head: {
             backgroundColor: 'var(--color-table-header)',
@@ -205,7 +211,7 @@ export function createAppTheme(mode = 'light') {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: 4,
+            borderRadius: 8,
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--color-border)',
             },
@@ -292,7 +298,7 @@ export function createAppTheme(mode = 'light') {
       MuiListItemIcon: {
         styleOverrides: {
           root: {
-            color: 'var(--color-sidebar-text)',
+            color: 'var(--color-text-secondary)',
           },
         },
       },

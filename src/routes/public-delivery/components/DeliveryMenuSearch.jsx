@@ -8,7 +8,7 @@ export default function DeliveryMenuSearch({ value, onChange }) {
       <input
         type="search"
         className="delivery-menu-search-input"
-        placeholder="Buscar no cardápio..."
+        placeholder="Buscar no cardápio"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Buscar no cardápio"

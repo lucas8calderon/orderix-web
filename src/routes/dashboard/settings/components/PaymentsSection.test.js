@@ -82,4 +82,72 @@ describe('PaymentsSection', () => {
     fireEvent.click(screen.getByRole('option', { name: 'Antes de enviar à cozinha' }));
     expect(onSettingChange).toHaveBeenCalledWith('counterTiming', null, 'BEFORE_KITCHEN');
   });
+
+  it('mostra campos vazios e desliga Pix online sem credencial', () => {
+    renderSection();
+    expect(screen.getByLabelText('Access Token')).toHaveValue('');
+    expect(screen.getByLabelText('Public Key')).toHaveValue('');
+    expect(screen.getByLabelText('Webhook secret')).toHaveValue('');
+    expect(screen.getByText(/não configurado/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Pix online')).toBeDisabled();
+    expect(screen.getByLabelText('Cartão de crédito online')).toBeDisabled();
+  });
+
+  it('não coloca token da API no input e usa placeholder Configurado', () => {
+    renderSection({
+      mercadoPagoConfigured: true,
+      mercadoPagoAccessTokenConfigured: true,
+      mercadoPagoPublicKeyConfigured: true,
+      mercadoPagoWebhookSecretConfigured: true,
+      mercadoPagoEnvironment: 'test',
+      mercadoPagoAccessToken: '',
+      mercadoPagoPublicKey: '',
+      mercadoPagoWebhookSecret: '',
+    });
+    expect(screen.getByLabelText('Access Token')).toHaveValue('');
+    expect(screen.getByLabelText('Access Token')).toHaveAttribute('placeholder', 'Configurado');
+    expect(screen.getAllByText(/Já configurado\. Preencha só para substituir\./).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByDisplayValue(/APP_USR|TEST-|access_token/i)).not.toBeInTheDocument();
+  });
+
+  it('permite ligar Pix online quando o servidor está configurado', () => {
+    renderSection({ mercadoPagoConfigured: true, mercadoPagoEnvironment: 'test' });
+    expect(screen.getByLabelText('Pix online')).not.toBeDisabled();
+    expect(screen.getByText(/Mercado Pago · teste · configurado/i)).toBeInTheDocument();
+  });
+
+  it('permite ligar Pix online ao digitar Access Token novo', () => {
+    const onSettingChange = jest.fn();
+    renderSection({ mercadoPagoAccessToken: 'token-novo-digitado' }, onSettingChange);
+    expect(screen.getByLabelText('Pix online')).not.toBeDisabled();
+    fireEvent.click(screen.getByLabelText('Pix online'));
+    expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, true);
+  });
+
+  it('mantém cartão desligado sem Public Key mesmo com Access Token', () => {
+    renderSection({ mercadoPagoAccessToken: 'token-novo-digitado' });
+    expect(screen.getByLabelText('Pix online')).not.toBeDisabled();
+    expect(screen.getByLabelText('Cartão de crédito online')).toBeDisabled();
+    expect(screen.getByText(/Digite a Public Key acima/i)).toBeInTheDocument();
+  });
+
+  it('permite ligar cartão com Access Token e Public Key digitados', () => {
+    const onSettingChange = jest.fn();
+    renderSection(
+      { mercadoPagoAccessToken: 'token-novo', mercadoPagoPublicKey: 'pk-novo' },
+      onSettingChange,
+    );
+    expect(screen.getByLabelText('Cartão de crédito online')).not.toBeDisabled();
+    fireEvent.click(screen.getByLabelText('Cartão de crédito online'));
+    expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, true);
+  });
+
+  it('permite ligar cartão quando o servidor já tem Public Key configurada', () => {
+    renderSection({
+      mercadoPagoConfigured: true,
+      mercadoPagoAccessTokenConfigured: true,
+      mercadoPagoPublicKeyConfigured: true,
+    });
+    expect(screen.getByLabelText('Cartão de crédito online')).not.toBeDisabled();
+  });
 });

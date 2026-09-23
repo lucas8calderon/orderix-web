@@ -1,8 +1,10 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import PublicDelivery from './PublicDelivery';
 import { getDeliveryCatalog } from '../../services/deliveryService';
+import { listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
+import { lookupCep } from '../../services/viaCepService';
 import {
   productHighlightBadge,
   productTags,
@@ -19,6 +21,28 @@ jest.mock('../../services/deliveryCustomerService', () => ({
   loginDeliveryCustomer: jest.fn(),
   registerDeliveryCustomer: jest.fn(),
 }));
+
+jest.mock('../../services/viaCepService', () => ({
+  CEP_NOT_FOUND: 'CEP_NOT_FOUND',
+  lookupCep: jest.fn(),
+}));
+
+function seedCustomerSession() {
+  window.localStorage.setItem('weper.delivery.customer.session', JSON.stringify({
+    token: 'customer-token',
+    id: 1,
+    name: 'Ana Cliente',
+    email: 'ana@test.com',
+    phone: '11988888888',
+  }));
+}
+
+async function openCheckoutFromMenu() {
+  await userEvent.click(await screen.findByRole('button', { name: /adicionar pão francês/i }));
+  await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
+  await userEvent.click(await screen.findByRole('button', { name: /ver meu pedido/i }));
+  await userEvent.click(await screen.findByRole('button', { name: /finalizar pedido/i }));
+}
 
 function renderDelivery() {
   return render(
@@ -69,6 +93,10 @@ const closedCatalog = {
 describe('PublicDelivery', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    lookupCep.mockReset();
+    listDeliveryCustomerAddresses.mockReset();
+    listDeliveryCustomerAddresses.mockResolvedValue({ data: [] });
+    window.HTMLElement.prototype.scrollTo = jest.fn();
     class MockIntersectionObserver {
       observe() {}
       unobserve() {}
@@ -83,7 +111,7 @@ describe('PublicDelivery', () => {
     renderDelivery();
 
     expect(await screen.findByTestId('delivery-open-badge')).toHaveTextContent('Fechado');
-    expect(screen.getByRole('button', { name: /entrar ou criar conta/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^entrar$/i })).toBeInTheDocument();
     expect(screen.getByText(/não é possível enviar pedido/i)).toBeInTheDocument();
     expect(screen.getByText('Pão francês')).toBeInTheDocument();
     expect(screen.getByText('Indisponível')).toBeInTheDocument();
@@ -144,6 +172,84 @@ describe('PublicDelivery', () => {
     renderDelivery();
 
     expect(await screen.findByRole('button', { name: /Ver meu último pedido/i })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /navegação do delivery/i })).toBeInTheDocument();
+  });
+
+  it('pede login antes de preencher o endereço no checkout', async () => {
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    expect(await screen.findByRole('heading', { name: /entre ou crie uma conta/i })).toBeInTheDocument();
+    expect(screen.getByText(/para informar o endereço de entrega/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
+  });
+
+  it('mostra endereço salvo depois do login', async () => {
+    seedCustomerSession();
+    listDeliveryCustomerAddresses.mockResolvedValue({
+      data: [{
+        id: 9,
+        street: 'Avenida Paulista',
+        number: '1000',
+        neighborhood: 'Bela Vista',
+        postalCode: '01310100',
+        city: 'São Paulo',
+        state: 'SP',
+        isDefault: true,
+      }],
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /Avenida Paulista, 1000 — Bela Vista/i })).toBeChecked();
+    });
+    expect(screen.getByRole('radio', { name: /cadastrar outro endereço/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
+  });
+
+  it('preenche o endereço ao informar um CEP válido', async () => {
+    seedCustomerSession();
+    lookupCep.mockResolvedValue({
+      postalCode: '01310-100',
+      street: 'Avenida Paulista',
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP',
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+    await userEvent.type(await screen.findByLabelText(/^CEP/i), '01310100');
+
+    expect(await screen.findByDisplayValue('Avenida Paulista')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Bela Vista')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('São Paulo')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('SP')).toBeInTheDocument();
+    expect(lookupCep).toHaveBeenCalledWith('01310100', expect.objectContaining({ signal: expect.any(AbortSignal) }));
   });
 
   it('não mostra CTA do último pedido sem token salvo', async () => {
@@ -159,6 +265,52 @@ describe('PublicDelivery', () => {
 
     expect(await screen.findByTestId('delivery-open-badge')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Ver meu último pedido/i })).not.toBeInTheDocument();
+  });
+
+  it('mostra Pix online, meios na entrega e seletor de fulfillment no checkout autenticado', async () => {
+    seedCustomerSession();
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        onlinePixEnabled: true,
+        fulfillmentModes: ['DELIVERY', 'PICKUP'],
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    expect(await screen.findByText('Pague online')).toBeInTheDocument();
+    expect(screen.getByText('Pague na entrega')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^entrega$/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^retirada$/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^CEP/i)).toBeInTheDocument();
+    const pixOptions = screen.getAllByRole('radio', { name: /^pix$/i });
+    expect(pixOptions[0]).toBeChecked();
+    expect(pixOptions[1]).not.toBeChecked();
+  });
+
+  it('omite escolha de fulfillment quando a loja só faz retirada', async () => {
+    seedCustomerSession();
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        fulfillmentModes: ['PICKUP'],
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    expect(await screen.findByLabelText(/^Nome/i)).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^entrega$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^retirada$/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Retirada na loja')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
   });
 });
 

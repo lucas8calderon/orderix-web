@@ -8,9 +8,12 @@ const LazySlider = lazy(() =>
   import('@mui/material/Slider').then((mod) => ({ default: mod.default }))
 );
 
-export function FeesSection({ settings, onSettingChange, onSave, onNavigate, sliderStyles, saving }) {
+export function FeesSection({ settings, onSettingChange, onSave, onNavigate, sliderStyles, saving, variant = 'full' }) {
+  const showFee = variant !== 'summary';
+  const showDelivery = variant !== 'fee';
   return (
     <div className="settings-section-stack">
+      {showFee && (
       <SettingsSectionCard
         icon={PercentIcon}
         title="Taxa de Serviço"
@@ -51,7 +54,9 @@ export function FeesSection({ settings, onSettingChange, onSave, onNavigate, sli
           </Tooltip>
         </Box>
       </SettingsSectionCard>
+      )}
 
+      {showDelivery && (
       <SettingsSectionCard
         title="Regras de Delivery (somente leitura)"
         description="Taxa de entrega, pedido mínimo e tempo estimado ficam na seção Delivery."
@@ -86,6 +91,7 @@ export function FeesSection({ settings, onSettingChange, onSave, onNavigate, sli
           </div>
         </Box>
       </SettingsSectionCard>
+      )}
     </div>
   );
 }

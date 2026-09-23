@@ -25,6 +25,7 @@ const PublicMenu = lazy(() => import('./routes/public-menu/PublicMenu'));
 const PublicDelivery = lazy(() => import('./routes/public-delivery/PublicDelivery'));
 const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTracking'));
 const DeliveryOrdersPage = lazy(() => import('./routes/public-delivery/DeliveryOrdersPage'));
+const DeliveryAccountPage = lazy(() => import('./routes/public-delivery/DeliveryAccountPage'));
 const DemoIndex = lazy(() => import('./routes/demo/DemoIndex'));
 const DemoStorePage = lazy(() => import('./routes/demo/DemoStorePage'));
 
@@ -130,6 +131,14 @@ function App() {
             element={(
               <Suspense fallback={<RouteFallback />}>
                 <DeliveryOrdersPage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.PUBLIC_DELIVERY_ACCOUNT}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <DeliveryAccountPage />
               </Suspense>
             )}
           />

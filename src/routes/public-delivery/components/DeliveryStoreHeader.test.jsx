@@ -15,6 +15,7 @@ describe('DeliveryStoreHeader', () => {
       />
     );
 
+    expect(screen.getByRole('heading', { name: 'Padaria Belas Artes' })).toBeInTheDocument();
     const cover = container.querySelector('.delivery-store-cover');
     expect(cover).not.toHaveClass('is-fallback');
     expect(cover).toHaveStyle({

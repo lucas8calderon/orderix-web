@@ -1,10 +1,5 @@
-import { Button, Typography } from "@mui/material";
+import { Alert, Button, Box } from '@mui/material';
 
-export function GenericError({ onTryAgain }) {
-    return (
-        <>
-            <Typography variant="h6" sx={{ marginTop: 6, marginLeft: 2 }}>Erro ao carregar categorias</Typography>
-            <Button sx={{ marginTop: 3, marginLeft: 2 }} onClick={() => onTryAgain()} variant="contained">Tentar novamente</Button>
-        </>
-    )
+export function GenericError({ onTryAgain, message = 'Não foi possível carregar os dados. Tente novamente.' }) {
+  return <Box sx={{ py: 3 }}><Alert severity="error" action={onTryAgain ? <Button color="inherit" onClick={onTryAgain}>Tentar novamente</Button> : undefined}>{message}</Alert></Box>;
 }

@@ -3,6 +3,8 @@ export default function DeliveryMenuSkeleton() {
     <div className="delivery-page delivery-skeleton-page" aria-busy="true" aria-label="Carregando cardápio">
       <div className="delivery-skel-hero" />
       <div className="delivery-skel-body">
+        <div className="delivery-skel-identity" />
+        <div className="delivery-skel-info" />
         <div className="delivery-skel-search" />
         <div className="delivery-skel-cats">
           {Array.from({ length: 5 }).map((_, index) => (

@@ -43,6 +43,27 @@ export function clearLastOrder(slug) {
   window.localStorage.removeItem(storageKey(slug));
 }
 
+/** Loja do último pedido com este token, para voltar ao cardápio. */
+export function findSlugForOrderToken(token) {
+  if (typeof window === 'undefined') return '';
+  const normalized = typeof token === 'string' ? token.trim() : '';
+  if (!normalized) return '';
+
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const key = window.localStorage.key(i);
+    if (!key || !key.startsWith(KEY_PREFIX)) continue;
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(key));
+      if (parsed?.token === normalized) {
+        return key.slice(KEY_PREFIX.length);
+      }
+    } catch {
+      /* ignore corrupt entries */
+    }
+  }
+  return '';
+}
+
 /** Remove qualquer lastOrder cujo token coincida (ex.: tracking 404). */
 export function clearLastOrderByToken(token) {
   if (typeof window === 'undefined') return;

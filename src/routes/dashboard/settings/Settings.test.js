@@ -9,6 +9,10 @@ jest.mock('./hooks/useSettingsState', () => ({
   useSwitchStyles: () => ({}),
 }));
 
+jest.mock('../../../services/authService', () => ({
+  getCurrentUser: () => ({ storeName: 'Loja Teste' }),
+}));
+
 const baseState = {
   settings: {
     serviceFee: 10,
@@ -34,7 +38,9 @@ const baseState = {
     publicMenuShowUnavailable: false,
     slug: 'loja-teste',
     storeName: 'Loja Teste',
-    schedule: [],
+    schedule: [
+      { weekday: 1, enabled: true, intervals: [{ open: '08:00', close: '22:00' }] },
+    ],
     deliveryEnabled: true,
     deliveryFee: 5,
     deliveryMinOrder: 35,
@@ -81,22 +87,61 @@ describe('Settings page navigation', () => {
     useSettingsState.mockReturnValue(baseState);
   });
 
-  it('mostra overview Geral com atalhos Editar', async () => {
+  it('mostra a visão geral com hub do layout de referência', async () => {
     renderSettings('/app/configuracoes/geral');
     expect(await screen.findByRole('heading', { name: /configurações da loja/i })).toBeInTheDocument();
-    expect(screen.getByText('Informações da Loja')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /editar/i }).length).toBeGreaterThan(0);
+    expect(screen.getByText(/gerencie todas as informações e preferências do seu estabelecimento/i)).toBeInTheDocument();
+    expect(screen.getByText('Loja ativa')).toBeInTheDocument();
+    expect(screen.getByText('Status da sua loja')).toBeInTheDocument();
+    expect(screen.getByText('Configurações rápidas')).toBeInTheDocument();
+    expect(screen.getByText('Dicas da Weper')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /editar informações/i })).toBeInTheDocument();
+    expect(screen.getByText('Personalização visual')).toBeInTheDocument();
+    expect(screen.getByText('Delivery ativo')).toBeInTheDocument();
   });
 
-  it('navega para a aba Delivery ao clicar na tab', async () => {
+  it('abre Delivery pelo grupo Canais', async () => {
     renderSettings('/app/configuracoes/geral');
-    fireEvent.click(screen.getByRole('tab', { name: /delivery/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /canais e delivery/i }));
     expect(await screen.findByText('Delivery habilitado')).toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
   });
 
-  it('canonicaliza /app/configuracoes para /geral', async () => {
+  it('abre Operação com horários e taxa de serviço', async () => {
+    renderSettings('/app/configuracoes/geral');
+    fireEvent.click(screen.getByRole('tab', { name: /operação/i }));
+    expect(await screen.findByText(/horários de funcionamento/i)).toBeInTheDocument();
+    expect(screen.getByText('Taxa de Serviço')).toBeInTheDocument();
+  });
+
+  it('abre Cardápio e Estoque com atalho para estoque', async () => {
+    renderSettings('/app/configuracoes/cardapio');
+    expect(await screen.findByText(/cardápio digital \(qr\)/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /abrir estoque/i })).toBeInTheDocument();
+  });
+
+  it('abre Equipe com permissões', async () => {
+    renderSettings('/app/configuracoes/equipe');
+    expect(await screen.findByText(/perfis e permissões/i)).toBeInTheDocument();
+  });
+
+  it('abre Vendas e Pagamentos', async () => {
+    renderSettings('/app/configuracoes/vendas');
+    expect(await screen.findByText(/pedidos e pagamentos/i)).toBeInTheDocument();
+  });
+
+  it('abre Empresa pelo grupo', async () => {
+    renderSettings('/app/configuracoes/geral');
+    fireEvent.click(screen.getByRole('tab', { name: /empresa/i }));
+    expect(await screen.findByText(/dados fiscais e empresa/i)).toBeInTheDocument();
+  });
+
+  it('mantém rota antiga de delivery', async () => {
+    renderSettings('/app/configuracoes/delivery');
+    expect(await screen.findByText('Delivery habilitado')).toBeInTheDocument();
+  });
+
+  it('canonicaliza /app/configuracoes para a visão geral', async () => {
     renderSettings('/app/configuracoes');
-    expect(await screen.findByText('Informações da Loja')).toBeInTheDocument();
+    expect(await screen.findByText('Status da sua loja')).toBeInTheDocument();
   });
 });

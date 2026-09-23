@@ -9,26 +9,31 @@ import {
   PeopleOutline as PeopleIcon,
   BusinessOutlined as BusinessIcon,
 } from '@mui/icons-material';
-import { SETTINGS_SECTIONS } from '../settingsSections';
+import { SETTINGS_GROUPS, sectionGroup } from '../settingsSections';
 
 const SECTION_ICONS = {
   geral: HomeIcon,
+  operacao: ScheduleIcon,
+  vendas: CreditCardIcon,
+  canais: DeliveryIcon,
+  cardapio: QrCodeIcon,
+  equipe: PeopleIcon,
+  empresa: BusinessIcon,
   horarios: ScheduleIcon,
   pagamentos: CreditCardIcon,
   delivery: DeliveryIcon,
   'cardapio-digital': QrCodeIcon,
   taxas: PercentIcon,
   permissoes: PeopleIcon,
-  empresa: BusinessIcon,
 };
 
 export function SettingsNav({ activeSection, onNavigate }) {
   return (
     <nav className="settings-nav" aria-label="Seções de configurações">
       <div className="settings-nav__track" role="tablist">
-        {SETTINGS_SECTIONS.map((section) => {
+        {SETTINGS_GROUPS.map((section) => {
           const Icon = SECTION_ICONS[section.id] || HomeIcon;
-          const active = section.id === activeSection;
+          const active = section.id === sectionGroup(activeSection);
           return (
             <button
               key={section.id}

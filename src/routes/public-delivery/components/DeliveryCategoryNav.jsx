@@ -1,14 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { resolveDeliveryImage } from '../utils/resolveDeliveryImage';
-
-function CategoryIcon({ category }) {
-  const src = category.image ? resolveDeliveryImage(category.image) : null;
-  if (src) {
-    return <img src={src} alt="" className="delivery-cat-icon-img" loading="lazy" />;
-  }
-  const letter = String(category.name || '?').trim().charAt(0).toUpperCase();
-  return <span className="delivery-cat-icon-letter">{letter}</span>;
-}
 
 export default function DeliveryCategoryNav({ categories, activeId, onSelect }) {
   const scrollerRef = useRef(null);
@@ -38,10 +28,7 @@ export default function DeliveryCategoryNav({ categories, activeId, onSelect }) 
               onClick={() => onSelect(category.id)}
               aria-current={active ? 'true' : undefined}
             >
-              <span className="delivery-cat-icon">
-                <CategoryIcon category={category} />
-              </span>
-              <span className="delivery-cat-label">{category.name}</span>
+              {category.name}
             </button>
           );
         })}

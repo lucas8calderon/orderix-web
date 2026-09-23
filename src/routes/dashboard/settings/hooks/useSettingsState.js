@@ -72,6 +72,16 @@ const DEFAULT_PAYMENT = {
   defaultProvider: 'NONE',
   infinitePayHandle: '',
   infinitePayDocument: '',
+  onlinePixEnabled: false,
+  onlineCardEnabled: false,
+  mercadoPagoConfigured: false,
+  mercadoPagoAccessTokenConfigured: false,
+  mercadoPagoPublicKeyConfigured: false,
+  mercadoPagoWebhookSecretConfigured: false,
+  mercadoPagoEnvironment: 'test',
+  mercadoPagoAccessToken: '',
+  mercadoPagoPublicKey: '',
+  mercadoPagoWebhookSecret: '',
 };
 
 const DEFAULT_PUBLIC_MENU = {
@@ -103,7 +113,23 @@ const DEFAULT_DELIVERY = {
   deliveryPublicPath: '',
   deliveryLogoUrl: '',
   deliveryCoverUrl: '',
+  offersDelivery: true,
+  offersPickup: true,
 };
+
+function deliveryPayloadFrom(current) {
+  return {
+    deliveryEnabled: current.deliveryEnabled,
+    offersDelivery: current.offersDelivery !== false,
+    offersPickup: current.offersPickup !== false,
+    deliveryFee: current.deliveryFee,
+    deliveryMinOrder: current.deliveryMinOrder,
+    deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
+    storeAddress: current.storeAddress,
+    deliveryLogoUrl: current.deliveryLogoUrl,
+    deliveryCoverUrl: current.deliveryCoverUrl,
+  };
+}
 
 function apiErrorMessage(error, fallback) {
   const apiMessage = error?.response?.data?.message;
@@ -200,7 +226,7 @@ export const useSettingsState = () => {
   }, []);
 
   const saveSettings = useCallback(async (section) => {
-    if (section === 'permissions' || section === 'companyInfo') {
+    if (section === 'permissions') {
       showToast(
         'Configurações ainda não são salvas no servidor. Esta tela está em breve.',
         'info'
@@ -209,6 +235,32 @@ export const useSettingsState = () => {
     }
 
     const current = settingsRef.current;
+
+    if (section === 'companyInfo') {
+      setSaving(true);
+      try {
+        const deliveryPayload = deliveryPayloadFrom(current);
+        const delivery = await settingsStorage.updateDeliveryConfig(deliveryPayload);
+        const sentLogo = Boolean((deliveryPayload.deliveryLogoUrl || '').trim());
+        const gotLogo = Boolean((delivery.deliveryLogoUrl || '').trim());
+        if (sentLogo && !gotLogo) {
+          showToast(
+            'O servidor não gravou o logotipo. Tente uma imagem menor.',
+            'error'
+          );
+          return false;
+        }
+        setSettings((prev) => ({ ...prev, ...delivery }));
+        showToast('Logotipo salvo com sucesso.');
+        return true;
+      } catch (error) {
+        showToast(apiErrorMessage(error, 'Não foi possível salvar o logotipo.'), 'error');
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    }
+
     setSaving(true);
     try {
       if (section === 'publicMenu') {
@@ -232,15 +284,7 @@ export const useSettingsState = () => {
       }
 
       if (section === 'delivery') {
-        const deliveryPayload = {
-          deliveryEnabled: current.deliveryEnabled,
-          deliveryFee: current.deliveryFee,
-          deliveryMinOrder: current.deliveryMinOrder,
-          deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
-          storeAddress: current.storeAddress,
-          deliveryLogoUrl: current.deliveryLogoUrl,
-          deliveryCoverUrl: current.deliveryCoverUrl,
-        };
+        const deliveryPayload = deliveryPayloadFrom(current);
         const delivery = await settingsStorage.updateDeliveryConfig(deliveryPayload);
         const sentLogo = Boolean((deliveryPayload.deliveryLogoUrl || '').trim());
         const sentCover = Boolean((deliveryPayload.deliveryCoverUrl || '').trim());
@@ -278,6 +322,12 @@ export const useSettingsState = () => {
         serviceFee: current.serviceFee,
         infinitePayHandle: current.infinitePayHandle,
         infinitePayDocument: current.infinitePayDocument,
+        onlinePixEnabled: current.onlinePixEnabled,
+        onlineCardEnabled: current.onlineCardEnabled,
+        mercadoPagoEnvironment: current.mercadoPagoEnvironment,
+        mercadoPagoAccessToken: current.mercadoPagoAccessToken,
+        mercadoPagoPublicKey: current.mercadoPagoPublicKey,
+        mercadoPagoWebhookSecret: current.mercadoPagoWebhookSecret,
       });
       setSettings((prev) => ({ ...prev, ...payment }));
       showToast(

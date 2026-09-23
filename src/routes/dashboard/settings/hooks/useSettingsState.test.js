@@ -122,4 +122,36 @@ describe('useSettingsState delivery branding', () => {
     expect(result.current.toast.severity).toBe('error');
     expect(result.current.toast.message).toMatch(/não gravou logo\/banner/i);
   });
+
+  it('grava o logotipo ao salvar a seção empresa', async () => {
+    const logo = 'data:image/jpeg;base64,logodaempresa';
+    settingsStorage.updateDeliveryConfig.mockResolvedValue({
+      deliveryEnabled: true,
+      deliveryFee: 5,
+      deliveryMinOrder: 0,
+      deliveryEstimatedMinutes: 40,
+      storeAddress: '',
+      deliveryLogoUrl: logo,
+      deliveryCoverUrl: '',
+    });
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.updateSetting('deliveryLogoUrl', null, logo);
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('companyInfo');
+    });
+
+    expect(saved).toBe(true);
+    expect(settingsStorage.updateDeliveryConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ deliveryLogoUrl: logo })
+    );
+    expect(result.current.settings.deliveryLogoUrl).toBe(logo);
+    expect(result.current.toast.message).toMatch(/logotipo salvo/i);
+  });
 });

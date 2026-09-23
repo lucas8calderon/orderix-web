@@ -73,6 +73,24 @@ describe('DeliveryTracking', () => {
     expect(await screen.findByText('Endereço copiado')).toBeInTheDocument();
   });
 
+  it('volta ao início da loja a partir do acompanhamento', async () => {
+    getDeliveryOrder.mockResolvedValue({
+      data: baseOrder({ storeSlug: 'minions', trackingStatus: 'RECEIVED' }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/delivery/pedido/token-abc']}>
+        <Routes>
+          <Route path="/delivery/pedido/:publicToken" element={<DeliveryTracking />} />
+          <Route path="/delivery/:slug" element={<div>Cardápio da loja</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: /voltar ao início/i }));
+    expect(await screen.findByText('Cardápio da loja')).toBeInTheDocument();
+  });
+
   it('não mostra endereço da loja em DELIVERY', async () => {
     getDeliveryOrder.mockResolvedValue({
       data: baseOrder({

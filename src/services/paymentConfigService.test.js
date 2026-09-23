@@ -101,6 +101,83 @@ describe('channel charge timing', () => {
     expect(payload.defaultProvider).toBe('INFINITEPAY');
   });
 
+  it('toPaymentUi não devolve secrets do Mercado Pago', () => {
+    const ui = toPaymentUi({
+      mercadoPagoConfigured: true,
+      mercadoPagoAccessTokenConfigured: true,
+      mercadoPagoPublicKeyConfigured: true,
+      mercadoPagoWebhookSecretConfigured: true,
+      mercadoPagoEnvironment: 'test',
+      mercadoPagoAccessToken: 'should-not-leak',
+      mercadoPagoPublicKey: 'public-key-value',
+      mercadoPagoWebhookSecret: 'secret',
+      onlinePixEnabled: true,
+    });
+    expect(ui.mercadoPagoAccessToken).toBe('');
+    expect(ui.mercadoPagoPublicKey).toBe('');
+    expect(ui.mercadoPagoWebhookSecret).toBe('');
+    expect(ui.mercadoPagoAccessTokenConfigured).toBe(true);
+    expect(ui.onlinePixEnabled).toBe(true);
+  });
+
+  it('toPaymentPayload envia só segredos novos do Mercado Pago', () => {
+    const payload = toPaymentPayload({
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      mercadoPagoEnvironment: 'prod',
+      mercadoPagoAccessToken: '  novo-token  ',
+      mercadoPagoPublicKey: 'pk',
+      mercadoPagoWebhookSecret: 'whsec',
+      onlinePixEnabled: true,
+    });
+    expect(payload.mercadoPagoAccessToken).toBe('novo-token');
+    expect(payload.mercadoPagoPublicKey).toBe('pk');
+    expect(payload.mercadoPagoWebhookSecret).toBe('whsec');
+    expect(payload.mercadoPagoEnvironment).toBe('prod');
+    expect(payload.onlinePixEnabled).toBe(true);
+  });
+
+  it('toPaymentPayload omite máscara Configurado e campos vazios', () => {
+    const payload = toPaymentPayload({
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      mercadoPagoEnvironment: 'test',
+      mercadoPagoAccessToken: 'Configurado',
+      mercadoPagoPublicKey: '•••',
+      mercadoPagoWebhookSecret: '   ',
+      onlinePixEnabled: false,
+    });
+    expect(payload.mercadoPagoAccessToken).toBeUndefined();
+    expect(payload.mercadoPagoPublicKey).toBeUndefined();
+    expect(payload.mercadoPagoWebhookSecret).toBeUndefined();
+    expect(payload.mercadoPagoEnvironment).toBe('test');
+  });
+
+  it('toPaymentPayload envia onlineCardEnabled e omite secrets vazios', () => {
+    const payload = toPaymentPayload({
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      mercadoPagoEnvironment: 'test',
+      mercadoPagoAccessToken: '',
+      mercadoPagoPublicKey: '',
+      onlinePixEnabled: true,
+      onlineCardEnabled: true,
+    });
+    expect(payload.onlinePixEnabled).toBe(true);
+    expect(payload.onlineCardEnabled).toBe(true);
+    expect(payload.mercadoPagoAccessToken).toBeUndefined();
+    expect(payload.mercadoPagoPublicKey).toBeUndefined();
+  });
+
   it('não liga InfinitePay sozinho em loja manual', () => {
     const ui = toPaymentUi({
       tablePaymentMode: 'MANUAL_CONFIRMATION',

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -25,7 +25,9 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { formatCurrency } from '../../services/accessControl';
-import { clearLastOrderByToken } from '../../services/deliveryLastOrder';
+import { clearLastOrderByToken, findSlugForOrderToken } from '../../services/deliveryLastOrder';
+import { readDeliveryCustomerSession } from '../../services/deliveryCustomerSession';
+import DeliveryBottomNav from './components/DeliveryBottomNav';
 import {
   buildTelUrl,
   buildWhatsAppUrl,
@@ -80,6 +82,7 @@ function TrackingSkeleton() {
 
 export default function DeliveryTracking() {
   const { publicToken } = useParams();
+  const navigate = useNavigate();
   const location = useLocation();
   const initialOrder = location.state?.order || null;
   const {
@@ -112,6 +115,8 @@ export default function DeliveryTracking() {
   const storeAddress = (order?.storeAddress || '').trim();
   const items = order?.items || [];
   const count = itemCount(items);
+  const storeSlug = order?.storeSlug || location.state?.slug || findSlugForOrderToken(publicToken);
+  const hasSession = Boolean(readDeliveryCustomerSession());
 
   const handleCopyAddress = async () => {
     if (!storeAddress) return;
@@ -143,13 +148,18 @@ export default function DeliveryTracking() {
     return <TrackingSkeleton />;
   }
 
-  const paymentLabel = formatPaymentLabel(order.paymentMethod, fulfillment);
+  const paymentLabel = formatPaymentLabel(order.paymentMethod, fulfillment, order.onlinePayment);
   const fulfillmentDetail = isPickup
     ? 'No estabelecimento'
     : formatDeliveryAddressSummary(order);
 
+  const goHome = () => {
+    if (!storeSlug) return;
+    navigate(`/delivery/${encodeURIComponent(storeSlug)}`);
+  };
+
   return (
-    <Box className="delivery-page delivery-tracking-page">
+    <Box className="delivery-page delivery-tracking-page has-bottom-nav">
       <Container maxWidth="sm" className="delivery-tracking-container">
         {refreshError ? (
           <Alert
@@ -194,6 +204,12 @@ export default function DeliveryTracking() {
               <Typography className="dt-status-desc">{statusCard.description}</Typography>
             </div>
           </section>
+        ) : null}
+
+        {storeSlug ? (
+          <Button className="dt-home-button" variant="contained" fullWidth onClick={goHome}>
+            Voltar ao início
+          </Button>
         ) : null}
 
         {order.trackingStatus !== TRACKING_STATUS.CANCELLED ? (
@@ -341,6 +357,14 @@ export default function DeliveryTracking() {
           Feito para facilitar o seu dia ♥ <strong>weper</strong>
         </footer>
       </Container>
+      {storeSlug ? (
+        <DeliveryBottomNav
+          slug={storeSlug}
+          active="tracking"
+          hasSession={hasSession}
+          lastOrderToken={publicToken}
+        />
+      ) : null}
 
       <Dialog
         open={detailsOpen}

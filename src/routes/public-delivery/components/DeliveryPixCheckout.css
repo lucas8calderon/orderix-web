@@ -1,0 +1,124 @@
+.delivery-pix-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.delivery-pix-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding-bottom: 24px;
+}
+
+.delivery-pix-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+}
+
+.delivery-pix-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.delivery-pix-qr {
+  width: min(240px, 70vw);
+  height: auto;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.delivery-pix-copy {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delivery-pix-code {
+  word-break: break-all;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.delivery-pix-wait {
+  color: #475569;
+  font-weight: 600;
+}
+
+.delivery-pix-expiry {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 2px;
+}
+
+.delivery-pix-expiry-label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.delivery-pix-expiry--expired .delivery-pix-expiry-label {
+  color: #b45309;
+}
+
+.delivery-pix-expiry-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.delivery-pix-expiry-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #0f766e;
+  transition: width 0.4s linear;
+}
+
+.delivery-pix-expiry--expired .delivery-pix-expiry-fill {
+  background: #d97706;
+  width: 0 !important;
+}
+
+.delivery-pix-expiry-fill--indeterminate {
+  width: 36%;
+  background: #94a3b8;
+  animation: delivery-pix-expiry-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes delivery-pix-expiry-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(160%);
+  }
+}
+
+@media (max-width: 480px) {
+  .delivery-pix-expiry {
+    padding: 0;
+  }
+
+  .delivery-pix-expiry-label {
+    font-size: 0.8125rem;
+  }
+}

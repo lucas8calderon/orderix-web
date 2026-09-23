@@ -6,6 +6,7 @@ import { listDeliveryCustomerOrders } from '../../services/deliveryCustomerServi
 import { readDeliveryCustomerSession } from '../../services/deliveryCustomerSession';
 import { getCurrentStatusCard } from './orderTrackingConfig';
 import DeliveryAccountBar from './components/DeliveryAccountBar';
+import DeliveryBottomNav from './components/DeliveryBottomNav';
 import './PublicDelivery.css';
 
 function formatWhen(value) {
@@ -64,9 +65,9 @@ export default function DeliveryOrdersPage() {
   }, [session?.token]);
 
   return (
-    <Box className="delivery-page">
+    <Box className="delivery-page has-bottom-nav">
       <div className="delivery-shell">
-        <DeliveryAccountBar slug={slug} />
+        <DeliveryAccountBar slug={slug} variant="header" />
         <div className="delivery-orders-head">
           <Button onClick={() => navigate(`/delivery/${encodeURIComponent(slug)}`)}>
             Voltar ao cardápio
@@ -112,6 +113,12 @@ export default function DeliveryOrdersPage() {
           })}
         </ul>
       </div>
+      <DeliveryBottomNav
+        slug={slug}
+        active="orders"
+        hasSession={Boolean(session)}
+        onAccount={() => navigate(`/delivery/${encodeURIComponent(slug)}/conta`)}
+      />
     </Box>
   );
 }

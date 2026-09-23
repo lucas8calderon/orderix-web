@@ -37,6 +37,8 @@ export function buildDeliveryUrl(slug, origin = typeof window !== 'undefined' ? 
 export function toDeliverySettingsUi(data = {}) {
   return {
     deliveryEnabled: Boolean(data.enabled),
+    offersDelivery: data.offersDelivery == null ? true : Boolean(data.offersDelivery),
+    offersPickup: data.offersPickup == null ? true : Boolean(data.offersPickup),
     deliveryFee: Number(data.deliveryFee || 0),
     deliveryEstimatedMinutes: data.estimatedMinutes == null ? '' : data.estimatedMinutes,
     deliveryMinOrder: Number(data.minOrder || 0),
@@ -54,8 +56,12 @@ export function toDeliverySettingsPayload(ui = {}) {
   const address = (ui.storeAddress || '').trim();
   const logoUrl = (ui.deliveryLogoUrl || '').trim();
   const coverUrl = (ui.deliveryCoverUrl || '').trim();
+  const offersDelivery = ui.offersDelivery == null ? true : Boolean(ui.offersDelivery);
+  const offersPickup = ui.offersPickup == null ? true : Boolean(ui.offersPickup);
   return {
     enabled: Boolean(ui.deliveryEnabled),
+    offersDelivery,
+    offersPickup,
     deliveryFee: Number(ui.deliveryFee || 0),
     minOrder: Number(ui.deliveryMinOrder || 0),
     estimatedMinutes: eta === '' || eta == null ? null : Number(eta),

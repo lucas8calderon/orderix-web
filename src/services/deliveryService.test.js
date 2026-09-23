@@ -25,8 +25,12 @@ describe('deliveryService helpers', () => {
     expect(ui.storeAddress).toBe('Rua A, 10');
     expect(ui.deliveryLogoUrl).toBe('https://cdn.example.com/logo.png');
     expect(ui.deliveryCoverUrl).toBe('https://cdn.example.com/cover.jpg');
+    expect(ui.offersDelivery).toBe(true);
+    expect(ui.offersPickup).toBe(true);
     expect(toDeliverySettingsPayload({ ...ui, deliveryEstimatedMinutes: '' })).toEqual({
       enabled: true,
+      offersDelivery: true,
+      offersPickup: true,
       deliveryFee: 5,
       minOrder: 20,
       estimatedMinutes: null,
@@ -49,6 +53,8 @@ describe('deliveryService helpers', () => {
       })
     ).toEqual({
       enabled: false,
+      offersDelivery: true,
+      offersPickup: true,
       deliveryFee: 0,
       minOrder: 0,
       estimatedMinutes: null,
@@ -73,6 +79,8 @@ describe('deliveryService helpers', () => {
       })
     ).toEqual({
       enabled: true,
+      offersDelivery: true,
+      offersPickup: true,
       deliveryFee: 3.5,
       minOrder: 10,
       estimatedMinutes: 30,
@@ -80,5 +88,19 @@ describe('deliveryService helpers', () => {
       logoUrl: logo,
       coverUrl: cover,
     });
+  });
+
+  it('preserva modos de fulfillment da loja', () => {
+    const ui = toDeliverySettingsUi({
+      enabled: true,
+      offersDelivery: false,
+      offersPickup: true,
+    });
+    expect(ui.offersDelivery).toBe(false);
+    expect(ui.offersPickup).toBe(true);
+    expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
+      offersDelivery: false,
+      offersPickup: true,
+    }));
   });
 });

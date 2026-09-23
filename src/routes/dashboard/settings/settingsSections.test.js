@@ -11,13 +11,20 @@ describe('settingsSections', () => {
   it('expõe as abas obrigatórias na ordem esperada', () => {
     expect(SETTINGS_SECTIONS.map((s) => s.id)).toEqual([
       'geral',
+      'operacao',
       'horarios',
-      'pagamentos',
-      'delivery',
-      'cardapio-digital',
       'taxas',
+      'vendas',
+      'pagamentos',
+      'canais',
+      'delivery',
+      'cardapio',
+      'cardapio-digital',
+      'equipe',
       'permissoes',
       'empresa',
+      'integracoes',
+      'aparencia',
     ]);
   });
 
@@ -36,6 +43,9 @@ describe('settingsSections', () => {
       })
     ).toBe('pagamentos');
     expect(isValidSettingsSection('empresa')).toBe(true);
-    expect(isValidSettingsSection('integracoes')).toBe(false);
+    expect(isValidSettingsSection('vendas')).toBe(true);
+    expect(isValidSettingsSection('integracoes')).toBe(true);
+    expect(isValidSettingsSection('aparencia')).toBe(true);
+    expect(isValidSettingsSection('inexistente')).toBe(false);
   });
 });

@@ -9,6 +9,7 @@ import {
   Tab,
   Tabs,
   TextField,
+  Typography,
 } from '@mui/material';
 import { formatPhoneInput, isValidBrazilianPhone, phoneDigits } from '../../../utils/phoneInput';
 import {
@@ -17,7 +18,7 @@ import {
 } from '../../../services/deliveryCustomerService';
 import { saveDeliveryCustomerSession } from '../../../services/deliveryCustomerSession';
 
-export default function DeliveryAuthDialog({ open, onClose, onAuthenticated }) {
+export default function DeliveryAuthDialog({ open, onClose, onAuthenticated, purpose }) {
   const [tab, setTab] = useState(0);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -75,8 +76,15 @@ export default function DeliveryAuthDialog({ open, onClose, onAuthenticated }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Sua conta no delivery</DialogTitle>
+      <DialogTitle>
+        {purpose === 'checkout' ? 'Entre ou crie uma conta' : 'Sua conta no delivery'}
+      </DialogTitle>
       <DialogContent>
+        {purpose === 'checkout' ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Para informar o endereço de entrega, entre na sua conta. Depois você usa um endereço salvo ou cadastra outro.
+          </Typography>
+        ) : null}
         <Tabs value={tab} onChange={(_, value) => { setTab(value); setError(''); }} sx={{ mb: 2 }}>
           <Tab label="Entrar" />
           <Tab label="Criar conta" />

@@ -93,6 +93,81 @@ export function PaymentsSection({
         </Box>
       )}
 
+      <Box className="payment-channel-timing">
+        <Typography className="setting-label">Pagamentos online · Delivery</Typography>
+        <Typography className="setting-hint" variant="body2">
+          Mercado Pago · {settings.mercadoPagoEnvironment === 'prod' ? 'produção' : 'teste'} ·{' '}
+          {settings.mercadoPagoConfigured ? 'configurado' : 'não configurado'}.
+          Credenciais da loja têm prioridade; o servidor também pode usar variáveis de ambiente.
+        </Typography>
+        <Box className="payment-provider-fields">
+          <TextField
+            select
+            label="Ambiente"
+            value={settings.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test'}
+            onChange={(e) => onSettingChange('mercadoPagoEnvironment', null, e.target.value)}
+            className="setting-input"
+            fullWidth
+          >
+            <MenuItem value="test">Teste</MenuItem>
+            <MenuItem value="prod">Produção</MenuItem>
+          </TextField>
+          <SecretField
+            label="Access Token"
+            value={settings.mercadoPagoAccessToken}
+            configured={Boolean(settings.mercadoPagoAccessTokenConfigured || settings.mercadoPagoConfigured)}
+            onChange={(value) => onSettingChange('mercadoPagoAccessToken', null, value)}
+            autoComplete="new-password"
+          />
+          <SecretField
+            label="Public Key"
+            value={settings.mercadoPagoPublicKey}
+            configured={Boolean(settings.mercadoPagoPublicKeyConfigured)}
+            onChange={(value) => onSettingChange('mercadoPagoPublicKey', null, value)}
+          />
+          <SecretField
+            label="Webhook secret"
+            value={settings.mercadoPagoWebhookSecret}
+            configured={Boolean(settings.mercadoPagoWebhookSecretConfigured)}
+            onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
+          />
+        </Box>
+        <FormControlLabel
+          control={(
+            <Switch
+              checked={Boolean(settings.onlinePixEnabled)}
+              disabled={!canEnableOnlinePix(settings)}
+              onChange={(e) => onSettingChange('onlinePixEnabled', null, e.target.checked)}
+              sx={switchStyles}
+            />
+          )}
+          label="Pix online"
+        />
+        {!canEnableOnlinePix(settings) ? (
+          <Typography className="setting-hint" variant="body2">
+            Digite o Access Token acima (ou configure MERCADO_PAGO_ACCESS_TOKEN no servidor) e clique em Salvar para ligar o Pix online.
+          </Typography>
+        ) : null}
+        <FormControlLabel
+          control={(
+            <Switch
+              checked={Boolean(settings.onlineCardEnabled)}
+              disabled={!canEnableOnlineCard(settings)}
+              onChange={(e) => onSettingChange('onlineCardEnabled', null, e.target.checked)}
+              sx={switchStyles}
+            />
+          )}
+          label="Cartão de crédito online"
+        />
+        {!canEnableOnlineCard(settings) ? (
+          <Typography className="setting-hint" variant="body2">
+            {canEnableOnlinePix(settings)
+              ? 'Digite a Public Key acima (ou configure MERCADO_PAGO_PUBLIC_KEY no servidor) para ligar o cartão online.'
+              : 'Access Token e Public Key são necessários para ligar o cartão online.'}
+          </Typography>
+        ) : null}
+      </Box>
+
       <Typography className="setting-label">Meios aceitos</Typography>
       <Box className="payment-methods payment-methods--grid">
         {PAYMENT_METHOD_ORDER.map((method) => (
@@ -111,6 +186,42 @@ export function PaymentsSection({
         ))}
       </Box>
     </SettingsSectionCard>
+  );
+}
+
+function hasMercadoPagoAccessToken(settings) {
+  if (settings.mercadoPagoConfigured || settings.mercadoPagoAccessTokenConfigured) return true;
+  return Boolean(String(settings.mercadoPagoAccessToken || '').trim());
+}
+
+function hasMercadoPagoPublicKey(settings) {
+  if (settings.mercadoPagoPublicKeyConfigured) return true;
+  return Boolean(String(settings.mercadoPagoPublicKey || '').trim());
+}
+
+function canEnableOnlinePix(settings) {
+  return hasMercadoPagoAccessToken(settings);
+}
+
+/** Cartão exige token + Public Key (Checkout Transparente). */
+function canEnableOnlineCard(settings) {
+  return hasMercadoPagoAccessToken(settings) && hasMercadoPagoPublicKey(settings);
+}
+
+function SecretField({ label, value, configured, onChange, autoComplete = 'new-password' }) {
+  return (
+    <TextField
+      label={label}
+      type="password"
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      className="setting-input"
+      fullWidth
+      autoComplete={autoComplete}
+      placeholder={configured ? 'Configurado' : undefined}
+      helperText={configured ? 'Já configurado. Preencha só para substituir.' : undefined}
+      inputProps={{ 'aria-label': label }}
+    />
   );
 }
 

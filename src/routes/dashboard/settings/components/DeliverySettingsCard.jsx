@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
   Button,
   Switch,
   FormControlLabel,
+  FormControl,
+  Radio,
+  RadioGroup,
   TextField,
   InputAdornment,
 } from '@mui/material';
@@ -14,11 +18,11 @@ import {
   DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { buildDeliveryUrl } from '../../../../services/deliveryService';
+import { settingsSectionPath } from '../settingsSections';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
 import { fileToCompressedDataUrl } from '../../menu/utils/compressImage';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
-const LOGO_UPLOAD = { maxWidth: 512, maxHeight: 512, quality: 0.82, maxFileBytes: 8 * 1024 * 1024 };
 const COVER_UPLOAD = { maxWidth: 1400, maxHeight: 525, quality: 0.72, maxFileBytes: 8 * 1024 * 1024 };
 /** Evita payload PUT > limite prático do servidor (dois data URLs). */
 const MAX_BRANDING_DATA_URL_CHARS = 1_200_000;
@@ -140,6 +144,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
   switchStyles,
   saving,
 }) {
+  const navigate = useNavigate();
   const [copyHint, setCopyHint] = useState('');
   const publicUrl = useMemo(
     () => buildDeliveryUrl(settings?.slug),
@@ -188,6 +193,34 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
           <Typography variant="caption" color="text.secondary" display="block">
             Desative para pausar o canal sem alterar o horário da loja.
           </Typography>
+        </Box>
+        <Box className="setting-item">
+          <FormControl>
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              Como o cliente recebe o pedido
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+              Só entrega, só retirada ou os dois. O cardápio público mostra apenas as opções ativas.
+            </Typography>
+            <RadioGroup
+              value={
+                settings?.offersDelivery !== false && settings?.offersPickup === false
+                  ? 'DELIVERY'
+                  : settings?.offersDelivery === false && settings?.offersPickup !== false
+                    ? 'PICKUP'
+                    : 'BOTH'
+              }
+              onChange={(e) => {
+                const value = e.target.value;
+                onSettingChange('offersDelivery', null, value !== 'PICKUP');
+                onSettingChange('offersPickup', null, value !== 'DELIVERY');
+              }}
+            >
+              <FormControlLabel value="BOTH" control={<Radio />} label="Entrega e retirada" />
+              <FormControlLabel value="DELIVERY" control={<Radio />} label="Somente entrega" />
+              <FormControlLabel value="PICKUP" control={<Radio />} label="Somente retirada" />
+            </RadioGroup>
+          </FormControl>
         </Box>
       </DeliveryGroup>
 
@@ -270,7 +303,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
 
       <DeliveryGroup title="Visual">
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Logo e banner aparecem no link público do Delivery. Use imagens de até 8 MB (mesmo limite do catálogo).
+          A capa do Delivery aparece no link público. O logo da loja é alterado em Empresa. Imagens de até 8 MB.
         </Typography>
 
         <BrandingImageField
@@ -285,17 +318,20 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
           inputId="delivery-cover-upload"
         />
 
-        <BrandingImageField
-          label="Logo"
-          hint="Tamanho ideal 512×512, quadrado, preferencialmente PNG."
-          value={settings?.deliveryLogoUrl}
-          settingKey="deliveryLogoUrl"
-          onSettingChange={onSettingChange}
-          uploadOptions={LOGO_UPLOAD}
-          previewHeight={96}
-          previewWidth={96}
-          inputId="delivery-logo-upload"
-        />
+        <Box className="setting-item">
+          <Typography variant="subtitle2">Logo da loja</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            O logo é editado em Empresa e vale para a loja inteira. Aqui fica só a capa do Delivery.
+          </Typography>
+          {settings?.deliveryLogoUrl ? (
+            <Box component="img" src={settings.deliveryLogoUrl} alt="" sx={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 1 }} />
+          ) : (
+            <Typography variant="caption" color="text.secondary">Nenhum logo cadastrado.</Typography>
+          )}
+          <Box>
+            <Button size="small" onClick={() => navigate(settingsSectionPath('empresa'))}>Alterar logo</Button>
+          </Box>
+        </Box>
       </DeliveryGroup>
     </SettingsSectionCard>
   );

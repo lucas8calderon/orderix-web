@@ -2,9 +2,9 @@
 
 :root {
   --font-family: 'Inter', sans-serif;
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
   --space-xs: 4px;
   --space-sm: 8px;
@@ -39,7 +39,7 @@
 
   --color-text-primary: #0F172A;
   --color-text-secondary: #64748B;
-  --color-text-muted: #94A3B8;
+  --color-text-muted: #64748B;
   --color-text-inverse: #FFFFFF;
 
   --color-border: #E2E8F0;
@@ -109,7 +109,7 @@ html[data-theme="dark"] {
 
   --color-text-primary: #F8FAFC;
   --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
+  --color-text-muted: #94A3B8;
   --color-text-inverse: #0B1220;
 
   --color-border: #2A3548;
@@ -203,4 +203,29 @@ body,
   color: var(--color-text-primary) !important;
   background-image: none !important;
   opacity: 1 !important;
+}
+
+/* Semantic status colors are independent of brand actions. */
+:root {
+  --status-success-text: #166534; --status-success-bg: #DCFCE7;
+  --status-warning-text: #854D0E; --status-warning-bg: #FEF9C3;
+  --status-danger-text: #991B1B; --status-danger-bg: #FEE2E2;
+  --status-info-text: #1D4ED8; --status-info-bg: #DBEAFE;
+  --status-neutral-text: #475569; --status-neutral-bg: #F1F5F9;
+  --color-focus: #2563EB;
+}
+html[data-theme="dark"] {
+  --status-success-text: #86EFAC; --status-success-bg: #143329;
+  --status-warning-text: #FDE68A; --status-warning-bg: #3B301B;
+  --status-danger-text: #FCA5A5; --status-danger-bg: #402329;
+  --status-info-text: #93C5FD; --status-info-bg: #1B3155;
+  --status-neutral-text: #CBD5E1; --status-neutral-bg: #253247;
+  --color-focus: #93C5FD;
+}
+:where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+button, input, select, textarea { font: inherit; }
+.weper-skip-link { position: fixed; top: 8px; left: 8px; z-index: 2000; padding: 12px 16px; background: var(--color-surface); color: var(--color-text-primary); transform: translateY(-160%); }
+.weper-skip-link:focus { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

@@ -1,5 +1,4 @@
 import AddIcon from '@mui/icons-material/Add';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import { formatCurrency } from '../../../services/accessControl';
 import {
   productHighlightBadge,
@@ -33,19 +32,12 @@ export default function DeliveryProductCard({ product, disabled, onOpen }) {
             loading="lazy"
             decoding="async"
           />
-          {badge ? (
-            <span className="delivery-product-badge">
-              <LocalFireDepartmentIcon fontSize="inherit" />
-              {badge}
-            </span>
-          ) : null}
+          {unavailable ? <span className="delivery-product-media-overlay" aria-hidden="true" /> : null}
+          {badge ? <span className="delivery-product-badge">{badge}</span> : null}
         </div>
 
         <div className="delivery-product-body">
-          <div className="delivery-product-top">
-            <h3 className="delivery-product-name">{product.name}</h3>
-            <p className="delivery-product-price">{formatCurrency(product.value)}</p>
-          </div>
+          <h3 className="delivery-product-name">{product.name}</h3>
           {product.observation ? (
             <p className="delivery-product-desc">{product.observation}</p>
           ) : null}
@@ -59,20 +51,19 @@ export default function DeliveryProductCard({ product, disabled, onOpen }) {
           {unavailable ? (
             <span className="delivery-product-unavailable">Indisponível</span>
           ) : null}
+          <p className="delivery-product-price">{formatCurrency(product.value)}</p>
         </div>
       </button>
 
-      {!unavailable ? (
-        <button
-          type="button"
-          className="delivery-product-add"
-          onClick={() => onOpen(product)}
-          disabled={disabled}
-          aria-label={`Adicionar ${product.name}`}
-        >
-          <AddIcon fontSize="small" />
-        </button>
-      ) : null}
+      <button
+        type="button"
+        className="delivery-product-add"
+        onClick={() => onOpen(product)}
+        disabled={blocked}
+        aria-label={unavailable ? `${product.name} indisponível` : `Adicionar ${product.name}`}
+      >
+        <AddIcon fontSize="small" />
+      </button>
     </article>
   );
 }

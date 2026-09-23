@@ -1,5 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { DeliverySettingsCard } from './DeliverySettingsCard';
+
+function renderCard(ui) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 describe('DeliverySettingsCard', () => {
   const baseSettings = {
@@ -11,7 +16,7 @@ describe('DeliverySettingsCard', () => {
   };
 
   it('exibe valores monetários mascarados em pt-BR', () => {
-    render(
+    renderCard(
       <DeliverySettingsCard
         settings={baseSettings}
         onSettingChange={jest.fn()}
@@ -27,7 +32,7 @@ describe('DeliverySettingsCard', () => {
 
   it('envia número decimal ao alterar a taxa de entrega', () => {
     const onSettingChange = jest.fn();
-    render(
+    renderCard(
       <DeliverySettingsCard
         settings={baseSettings}
         onSettingChange={onSettingChange}
@@ -46,7 +51,7 @@ describe('DeliverySettingsCard', () => {
 
   it('dispara salvar da seção delivery', () => {
     const onSave = jest.fn();
-    render(
+    renderCard(
       <DeliverySettingsCard
         settings={baseSettings}
         onSettingChange={jest.fn()}
@@ -62,7 +67,7 @@ describe('DeliverySettingsCard', () => {
 
   it('exibe dicas de tamanho e permite remover logo/banner', () => {
     const onSettingChange = jest.fn();
-    render(
+    renderCard(
       <DeliverySettingsCard
         settings={{
           ...baseSettings,
@@ -77,13 +82,26 @@ describe('DeliverySettingsCard', () => {
     );
 
     expect(screen.getByText(/1600×600/)).toBeInTheDocument();
-    expect(screen.getByText(/512×512/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /alterar logo/i })).toBeInTheDocument();
 
-    const removeButtons = screen.getAllByRole('button', { name: /remover/i });
-    expect(removeButtons).toHaveLength(2);
-    fireEvent.click(removeButtons[0]);
+    fireEvent.click(screen.getByRole('button', { name: /remover/i }));
     expect(onSettingChange).toHaveBeenCalledWith('deliveryCoverUrl', null, '');
-    fireEvent.click(removeButtons[1]);
-    expect(onSettingChange).toHaveBeenCalledWith('deliveryLogoUrl', null, '');
+  });
+
+  it('permite escolher somente retirada', () => {
+    const onSettingChange = jest.fn();
+    renderCard(
+      <DeliverySettingsCard
+        settings={{ ...baseSettings, offersDelivery: true, offersPickup: true }}
+        onSettingChange={onSettingChange}
+        onSave={jest.fn()}
+        switchStyles={{}}
+        saving={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('radio', { name: /somente retirada/i }));
+    expect(onSettingChange).toHaveBeenCalledWith('offersDelivery', null, false);
+    expect(onSettingChange).toHaveBeenCalledWith('offersPickup', null, true);
   });
 });

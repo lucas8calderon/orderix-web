@@ -4,6 +4,7 @@
  */
 
 export const TRACKING_STATUS = {
+  WAITING_PAYMENT: 'WAITING_PAYMENT',
   RECEIVED: 'RECEIVED',
   IN_PREPARATION: 'IN_PREPARATION',
   READY: 'READY',
@@ -226,8 +227,11 @@ export function getEstimateCopy(fulfillment) {
     : 'Previsão de entrega';
 }
 
-export function formatPaymentLabel(paymentMethod, fulfillment) {
+export function formatPaymentLabel(paymentMethod, fulfillment, onlinePayment) {
   const method = PAYMENT_LABELS[paymentMethod] || paymentMethod || 'Pagamento';
+  if (onlinePayment && String(paymentMethod || '').toUpperCase() === 'PIX') {
+    return 'Pix online';
+  }
   const when = normalizeFulfillment(fulfillment) === FULFILLMENT.PICKUP ? 'na retirada' : 'na entrega';
   return `${method} ${when}`;
 }
@@ -280,6 +284,21 @@ export function getTrackingSteps(order) {
 
   if (status === TRACKING_STATUS.CANCELLED) {
     return [];
+  }
+
+  if (status === TRACKING_STATUS.WAITING_PAYMENT) {
+    return stepIds.map((id) => {
+      const meta = copy[id];
+      return {
+        id,
+        label: meta.label,
+        description: meta.description,
+        icon: meta.icon,
+        state: STEP_STATE.PENDING,
+        timestamp: null,
+        at: null,
+      };
+    });
   }
 
   let currentIndex = stepIds.indexOf(status);

@@ -196,6 +196,16 @@ export function toPaymentUi(dto = {}) {
     serviceFee: serviceFeePercentToUi(dto.serviceFeePercent ?? 0.1),
     infinitePayHandle: dto.infinitePayHandle || '',
     infinitePayDocument: dto.infinitePayDocument || '',
+    onlinePixEnabled: Boolean(dto.onlinePixEnabled),
+    onlineCardEnabled: Boolean(dto.onlineCardEnabled),
+    mercadoPagoConfigured: Boolean(dto.mercadoPagoConfigured),
+    mercadoPagoAccessTokenConfigured: Boolean(dto.mercadoPagoAccessTokenConfigured),
+    mercadoPagoPublicKeyConfigured: Boolean(dto.mercadoPagoPublicKeyConfigured),
+    mercadoPagoWebhookSecretConfigured: Boolean(dto.mercadoPagoWebhookSecretConfigured),
+    mercadoPagoEnvironment: dto.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test',
+    mercadoPagoAccessToken: '',
+    mercadoPagoPublicKey: '',
+    mercadoPagoWebhookSecret: '',
   };
 }
 
@@ -225,6 +235,16 @@ function inferDefaultProvider(tableMode, comandaMode, counterMode, tableProvider
     return counterProvider;
   }
   return 'NONE';
+}
+
+/** Só envia segredo novo; nunca máscara, placeholder ou vazio. */
+export function newSecretOrOmit(value) {
+  if (value == null) return undefined;
+  const trimmed = String(value).trim();
+  if (!trimmed) return undefined;
+  if (trimmed.startsWith('•')) return undefined;
+  if (/^configurado$/i.test(trimmed)) return undefined;
+  return trimmed;
 }
 
 export function toPaymentPayload(ui) {
@@ -260,11 +280,20 @@ export function toPaymentPayload(ui) {
       counterPaymentProvider,
     ),
     serviceFeePercent: serviceFeeUiToPercent(ui.serviceFee),
+    onlinePixEnabled: Boolean(ui.onlinePixEnabled),
+    onlineCardEnabled: Boolean(ui.onlineCardEnabled),
+    mercadoPagoEnvironment: ui.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test',
   };
   if ([tablePaymentProvider, comandaPaymentProvider, counterPaymentProvider].includes('INFINITEPAY')) {
     payload.infinitePayHandle = ui.infinitePayHandle || '';
     payload.infinitePayDocument = ui.infinitePayDocument || '';
   }
+  const accessToken = newSecretOrOmit(ui.mercadoPagoAccessToken);
+  const publicKey = newSecretOrOmit(ui.mercadoPagoPublicKey);
+  const webhookSecret = newSecretOrOmit(ui.mercadoPagoWebhookSecret);
+  if (accessToken !== undefined) payload.mercadoPagoAccessToken = accessToken;
+  if (publicKey !== undefined) payload.mercadoPagoPublicKey = publicKey;
+  if (webhookSecret !== undefined) payload.mercadoPagoWebhookSecret = webhookSecret;
   return payload;
 }
 
