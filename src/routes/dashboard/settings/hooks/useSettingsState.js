@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PAYMENT_METHOD_LABELS } from '../../../../services/paymentConfigService';
+import { isValidStoreWhatsApp } from '../../../public-delivery/utils/neighborhoodWhatsApp';
+import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../../../../utils/phoneInput';
 import { settingsStorage } from '../utils/settingsStorage';
 
 const MOCK_PERMISSIONS = {
@@ -126,6 +128,7 @@ const DEFAULT_DELIVERY = {
   acceptPayOnPickup: true,
   acceptPrepaidPickup: true,
   deliveryFeeMode: 'PER_NEIGHBORHOOD',
+  storePhone: '',
 };
 
 function mergeSavedDelivery(prev, sent, received) {
@@ -138,6 +141,27 @@ function mergeSavedDelivery(prev, sent, received) {
     deliveryLogoUrl: keepIfNewer('deliveryLogoUrl'),
     deliveryCoverUrl: keepIfNewer('deliveryCoverUrl'),
   };
+}
+
+function storePhoneDigits(value) {
+  if (value == null || value === CLEARED_STORE_PHONE) return '';
+  return normalizeStoreWhatsApp(value);
+}
+
+/** Se o servidor não devolve o número enviado, o campo continua com o que o usuário digitou. */
+function confirmSavedStorePhone(sent, received) {
+  const sentDigits = storePhoneDigits(sent?.storePhone);
+  const gotDigits = normalizeStoreWhatsApp(received?.storePhone);
+  if (sentDigits && gotDigits !== sentDigits) {
+    return {
+      ok: false,
+      delivery: {
+        ...received,
+        storePhone: formatStoreWhatsAppInput(sentDigits),
+      },
+    };
+  }
+  return { ok: true, delivery: received };
 }
 
 function deliveryPayloadFrom(current) {
@@ -154,6 +178,7 @@ function deliveryPayloadFrom(current) {
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
     storeAddress: current.storeAddress,
+    storePhone: current.storePhone,
     deliveryLogoUrl: current.deliveryLogoUrl,
     deliveryCoverUrl: current.deliveryCoverUrl,
   };
@@ -263,6 +288,13 @@ export const useSettingsState = () => {
     }
 
     const current = settingsRef.current;
+    if (section === 'companyInfo' || section === 'delivery') {
+      const phone = storePhoneDigits(current.storePhone);
+      if (phone && !isValidStoreWhatsApp(phone)) {
+        showToast('Informe um WhatsApp válido com DDD', 'error');
+        return false;
+      }
+    }
 
     if (section === 'companyInfo') {
       setSaving(true);
@@ -276,6 +308,12 @@ export const useSettingsState = () => {
             'O servidor não gravou o logotipo. Tente uma imagem menor.',
             'error'
           );
+          return false;
+        }
+        const phoneResult = confirmSavedStorePhone(deliveryPayload, delivery);
+        if (!phoneResult.ok) {
+          setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, phoneResult.delivery));
+          showToast('O servidor não gravou o WhatsApp da loja.', 'error');
           return false;
         }
         setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, delivery));
@@ -323,6 +361,12 @@ export const useSettingsState = () => {
             'O servidor não gravou logo/banner. Reinicie o backend (migration V13/V14) e tente de novo com imagens menores.',
             'error'
           );
+          return false;
+        }
+        const phoneResult = confirmSavedStorePhone(deliveryPayload, delivery);
+        if (!phoneResult.ok) {
+          setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, phoneResult.delivery));
+          showToast('O servidor não gravou o WhatsApp da loja.', 'error');
           return false;
         }
         setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, delivery));

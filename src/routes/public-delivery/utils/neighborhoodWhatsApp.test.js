@@ -20,5 +20,13 @@ describe('neighborhood WhatsApp request', () => {
     expect(isValidStoreWhatsApp('')).toBe(false);
     expect(isValidStoreWhatsApp('123')).toBe(false);
     expect(neighborhoodWhatsAppUrl('123', 'Loja', 'Centro')).toBeNull();
+    expect(neighborhoodWhatsAppUrl('1234567890123', 'Loja', 'Centro')).toBeNull();
+  });
+
+  it('usa o WhatsApp da loja mesmo com máscara ou DDD 55', () => {
+    const masked = neighborhoodWhatsAppUrl('(11) 98888-7777', 'Padaria Sol', 'Centro');
+    const withCountry = neighborhoodWhatsAppUrl('5511988887777', 'Padaria Sol', 'Centro');
+    expect(masked.startsWith('https://wa.me/5511988887777?text=')).toBe(true);
+    expect(withCountry.startsWith('https://wa.me/5511988887777?text=')).toBe(true);
   });
 });

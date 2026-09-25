@@ -36,3 +36,33 @@ export function formatPhoneInput(raw) {
 export function isValidBrazilianPhone(raw) {
   return /^\d{10,11}$/.test(phoneDigits(raw));
 }
+
+/**
+ * O usuário apagou o WhatsApp de propósito. Campo vazio sem esta marca
+ * não entra no PUT, para um reload ou a máscara não apagarem o número salvo.
+ */
+export const CLEARED_STORE_PHONE = '__cleared_store_phone__';
+
+/**
+ * Dígitos do WhatsApp da loja. Remove máscara, 55 e o 0 de tronco
+ * quando o número já está completo. Não corta um número longo em um válido.
+ */
+export function normalizeStoreWhatsApp(raw) {
+  let digits = String(raw ?? '').replace(/\D/g, '');
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    digits = digits.slice(2);
+  } else if (digits.startsWith('0') && (digits.length === 11 || digits.length === 12)) {
+    digits = digits.slice(1);
+  }
+  return digits;
+}
+
+/** Máscara enquanto o número cabe em DDD + telefone. Acima disso, deixa os dígitos para a validação rejeitar. */
+export function formatStoreWhatsAppInput(raw) {
+  const digits = normalizeStoreWhatsApp(raw);
+  if (!digits || digits.length > 11) return digits;
+  return formatPhoneInput(digits);
+}

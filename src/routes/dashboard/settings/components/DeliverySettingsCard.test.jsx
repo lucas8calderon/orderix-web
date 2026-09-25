@@ -188,4 +188,27 @@ describe('DeliverySettingsCard', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent(/não há pix nem cartão online/i);
   });
+
+  it('mostra o WhatsApp da loja preenchido para o cliente falar com o estabelecimento', () => {
+    const onSettingChange = jest.fn();
+    renderCard(
+      <DeliverySettingsCard
+        settings={{ ...baseSettings, storePhone: '11988887777' }}
+        onSettingChange={onSettingChange}
+        onSave={jest.fn()}
+        switchStyles={{}}
+        saving={false}
+      />
+    );
+
+    const field = screen.getByLabelText('WhatsApp da loja');
+    expect(field).toHaveValue('(11) 98888-7777');
+    expect(screen.getByText(/o cliente usa para falar com o estabelecimento/i)).toBeInTheDocument();
+
+    fireEvent.change(field, { target: { value: '(11) 3333-4444' } });
+    expect(onSettingChange).toHaveBeenCalledWith('storePhone', null, '(11) 3333-4444');
+
+    fireEvent.change(field, { target: { value: '' } });
+    expect(onSettingChange).toHaveBeenCalledWith('storePhone', null, '__cleared_store_phone__');
+  });
 });

@@ -1,6 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useSettingsState } from './useSettingsState';
 import { settingsStorage } from '../utils/settingsStorage';
+import { toDeliverySettingsPayload, toDeliverySettingsUi } from '../../../../services/deliveryService';
+import { CLEARED_STORE_PHONE } from '../../../../utils/phoneInput';
 
 jest.mock('../utils/settingsStorage', () => ({
   settingsStorage: {
@@ -153,5 +155,151 @@ describe('useSettingsState delivery branding', () => {
     );
     expect(result.current.settings.deliveryLogoUrl).toBe(logo);
     expect(result.current.toast.message).toMatch(/logotipo salvo/i);
+  });
+
+  it('salva WhatsApp válido, a resposta devolve o número e o form mostra de novo', async () => {
+    settingsStorage.getDeliveryConfig.mockResolvedValue(toDeliverySettingsUi({
+      enabled: true,
+      deliveryFee: 5,
+      minOrder: 0,
+      estimatedMinutes: 40,
+      address: '',
+      phone: '11988887777',
+    }));
+    settingsStorage.updateDeliveryConfig.mockImplementation(async (ui) => {
+      const payload = toDeliverySettingsPayload(ui);
+      return toDeliverySettingsUi({
+        enabled: payload.enabled,
+        deliveryFee: payload.deliveryFee,
+        minOrder: payload.minOrder,
+        estimatedMinutes: payload.estimatedMinutes,
+        address: payload.address,
+        feeMode: payload.feeMode,
+        phone: payload.phone,
+      });
+    });
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.settings.storePhone).toBe('(11) 98888-7777'));
+
+    act(() => {
+      result.current.updateSetting('storePhone', null, '(11) 97777-6666');
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('delivery');
+    });
+
+    expect(saved).toBe(true);
+    const sent = toDeliverySettingsPayload(settingsStorage.updateDeliveryConfig.mock.calls[0][0]);
+    expect(sent.phone).toBe('11977776666');
+    expect(result.current.settings.storePhone).toBe('(11) 97777-6666');
+    expect(result.current.toast.severity).toBe('success');
+  });
+
+  it('não apaga o WhatsApp salvo quando o campo vazio não foi limpo de propósito', async () => {
+    let serverPhone = '11988887777';
+    settingsStorage.getDeliveryConfig.mockResolvedValue(toDeliverySettingsUi({
+      enabled: true,
+      deliveryFee: 5,
+      phone: null,
+    }));
+    settingsStorage.updateDeliveryConfig.mockImplementation(async (ui) => {
+      const payload = toDeliverySettingsPayload(ui);
+      if (Object.prototype.hasOwnProperty.call(payload, 'phone')) {
+        serverPhone = payload.phone || null;
+      }
+      return toDeliverySettingsUi({
+        enabled: true,
+        deliveryFee: payload.deliveryFee,
+        phone: serverPhone,
+      });
+    });
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.settings.storePhone).toBe('');
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('delivery');
+    });
+
+    expect(saved).toBe(true);
+    expect(toDeliverySettingsPayload(settingsStorage.updateDeliveryConfig.mock.calls[0][0]).phone).toBeUndefined();
+    expect(serverPhone).toBe('11988887777');
+    expect(result.current.settings.storePhone).toBe('(11) 98888-7777');
+  });
+
+  it('apaga o WhatsApp quando o usuário limpa o campo', async () => {
+    settingsStorage.getDeliveryConfig.mockResolvedValue(toDeliverySettingsUi({
+      enabled: true,
+      phone: '11988887777',
+    }));
+    settingsStorage.updateDeliveryConfig.mockImplementation(async (ui) => {
+      const payload = toDeliverySettingsPayload(ui);
+      return toDeliverySettingsUi({ enabled: true, phone: payload.phone || null });
+    });
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.settings.storePhone).toBe('(11) 98888-7777'));
+
+    act(() => {
+      result.current.updateSetting('storePhone', null, CLEARED_STORE_PHONE);
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('delivery');
+    });
+
+    expect(saved).toBe(true);
+    expect(toDeliverySettingsPayload(settingsStorage.updateDeliveryConfig.mock.calls[0][0]).phone).toBe('');
+    expect(result.current.settings.storePhone).toBe('');
+  });
+
+  it('mantém o número digitado se a resposta não devolve o WhatsApp', async () => {
+    settingsStorage.updateDeliveryConfig.mockResolvedValue(toDeliverySettingsUi({
+      enabled: true,
+      deliveryFee: 5,
+      phone: null,
+    }));
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.updateSetting('storePhone', null, '(11) 97777-6666');
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('delivery');
+    });
+
+    expect(saved).toBe(false);
+    expect(result.current.toast.severity).toBe('error');
+    expect(result.current.toast.message).toMatch(/não gravou o whatsapp/i);
+    expect(result.current.settings.storePhone).toBe('(11) 97777-6666');
+  });
+
+  it('não grava WhatsApp inválido', async () => {
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.updateSetting('storePhone', null, '(11) 123');
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('delivery');
+    });
+
+    expect(saved).toBe(false);
+    expect(settingsStorage.updateDeliveryConfig).not.toHaveBeenCalled();
+    expect(result.current.toast.severity).toBe('error');
+    expect(result.current.toast.message).toMatch(/whatsapp válido com ddd/i);
   });
 });

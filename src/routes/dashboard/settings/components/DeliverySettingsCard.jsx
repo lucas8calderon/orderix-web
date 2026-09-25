@@ -17,6 +17,7 @@ import {
 } from '@mui/icons-material';
 import { buildDeliveryUrl } from '../../../../services/deliveryService';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
+import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput } from '../../../../utils/phoneInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { DeliveryNeighborhoodsSection } from './DeliveryNeighborhoodsSection';
 
@@ -251,6 +252,25 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
       </DeliveryGroup>
 
       <DeliveryGroup title="Operação">
+        <Box className="setting-item">
+          <TextField
+            label="WhatsApp da loja"
+            value={formatStoreWhatsAppInput(settings?.storePhone ?? '')}
+            onChange={(e) => {
+              const formatted = formatStoreWhatsAppInput(e.target.value);
+              onSettingChange('storePhone', null, formatted || CLEARED_STORE_PHONE);
+            }}
+            fullWidth
+            placeholder="(11) 98888-8888"
+            helperText="Este número é o que o cliente usa para falar com o estabelecimento."
+            inputProps={{
+              inputMode: 'tel',
+              autoComplete: 'tel',
+              'aria-label': 'WhatsApp da loja',
+            }}
+          />
+        </Box>
+
         <Box className="setting-item">
           <TextField
             label="Endereço da loja (retirada)"

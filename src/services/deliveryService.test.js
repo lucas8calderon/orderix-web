@@ -4,6 +4,8 @@ import {
   toDeliverySettingsPayload,
   toDeliverySettingsUi,
 } from './deliveryService';
+import { CLEARED_STORE_PHONE } from '../utils/phoneInput';
+import { neighborhoodWhatsAppUrl } from '../routes/public-delivery/utils/neighborhoodWhatsApp';
 
 describe('deliveryService helpers', () => {
   it('monta URL /delivery/:slug', () => {
@@ -180,5 +182,34 @@ describe('deliveryService helpers', () => {
       acceptPrepaidPickup: false,
       acceptPaymentOnDelivery: true,
     }));
+  });
+
+  it('não manda phone vazio no PUT, para a máscara ou o reload não apagarem o número', () => {
+    expect(toDeliverySettingsPayload({ storePhone: '', deliveryEnabled: true }).phone).toBeUndefined();
+    expect(toDeliverySettingsPayload({ deliveryEnabled: true }).phone).toBeUndefined();
+    expect(toDeliverySettingsPayload({ storePhone: CLEARED_STORE_PHONE }).phone).toBe('');
+  });
+
+  it('salva o número, o GET seguinte devolve os dígitos e a UI mostra a máscara de novo', () => {
+    const payload = toDeliverySettingsPayload({ storePhone: '(11) 98888-7777', deliveryEnabled: true });
+    expect(payload.phone).toBe('11988887777');
+    expect(toDeliverySettingsUi({ enabled: true, phone: payload.phone }).storePhone).toBe('(11) 98888-7777');
+    const edited = toDeliverySettingsPayload({ storePhone: '5511977776666' });
+    expect(edited.phone).toBe('11977776666');
+    expect(toDeliverySettingsUi({ phone: edited.phone }).storePhone).toBe('(11) 97777-6666');
+  });
+
+  it('grava o WhatsApp da loja em dígitos e o bairro abre esse número', () => {
+    const ui = toDeliverySettingsUi({
+      enabled: true,
+      phone: '5511988887777',
+    });
+    expect(ui.storePhone).toBe('(11) 98888-7777');
+    const payload = toDeliverySettingsPayload({ ...ui, storePhone: '(11) 98888-7777' });
+    expect(payload.phone).toBe('11988887777');
+    const url = neighborhoodWhatsAppUrl(payload.phone, 'Padaria Sol', 'Centro');
+    expect(url.startsWith('https://wa.me/5511988887777?text=')).toBe(true);
+    expect(toDeliverySettingsPayload({ storePhone: '123' }).phone).toBe('123');
+    expect(neighborhoodWhatsAppUrl('123', 'Padaria Sol', 'Centro')).toBeNull();
   });
 });

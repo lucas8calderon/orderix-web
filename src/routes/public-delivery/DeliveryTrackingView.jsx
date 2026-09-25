@@ -47,7 +47,7 @@ function WeperTrackingPromo() {
       <section className="dt-weper-card" aria-labelledby="dt-weper-title">
         <p className="dt-weper-brand">
           <span className="dt-weper-logo">weper</span>
-          <span className="dt-weper-tagline">Tecnologia para negócios de alimentação</span>
+          <span className="dt-weper-tagline">Tecnologia para seu estabelecimento</span>
         </p>
         <h2 className="dt-weper-title" id="dt-weper-title">
           Seu estabelecimento também pode ter pedidos online.

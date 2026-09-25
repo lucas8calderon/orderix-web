@@ -1,8 +1,9 @@
+import { normalizeStoreWhatsApp } from '../../../utils/phoneInput';
 import { buildWhatsAppUrl } from '../orderTrackingConfig';
 
 export function isValidStoreWhatsApp(phone) {
-  const digits = String(phone || '').replace(/\D/g, '');
-  return digits.length >= 10 && digits.length <= 13;
+  const digits = normalizeStoreWhatsApp(phone);
+  return digits.length === 10 || digits.length === 11;
 }
 
 export function neighborhoodRequestMessage(storeName, neighborhood) {

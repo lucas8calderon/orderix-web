@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from './apiConfig';
+import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../utils/phoneInput';
 
 const SETTINGS_URL = `${API_BASE_URL}/stores/me/delivery`;
 
@@ -64,7 +65,7 @@ export function toDeliverySettingsUi(data = {}) {
     ...paymentOptionsFromApi(data),
     deliveryFee: Number(data.deliveryFee || 0),
     deliveryFeeMode: data.feeMode || 'PER_NEIGHBORHOOD',
-    storePhone: data.phone || '',
+    storePhone: formatStoreWhatsAppInput(data.phone),
     deliveryEstimatedMinutes: data.estimatedMinutes == null ? '' : data.estimatedMinutes,
     deliveryMinOrder: Number(data.minOrder || 0),
     slug: data.slug || '',
@@ -99,7 +100,7 @@ export function toDeliverySettingsPayload(ui = {}) {
   const acceptPrepaidDelivery = ui.acceptPrepaidDelivery == null ? true : Boolean(ui.acceptPrepaidDelivery);
   const acceptPayOnPickup = ui.acceptPayOnPickup == null ? true : Boolean(ui.acceptPayOnPickup);
   const acceptPrepaidPickup = ui.acceptPrepaidPickup == null ? true : Boolean(ui.acceptPrepaidPickup);
-  return {
+  const payload = {
     enabled: Boolean(ui.deliveryEnabled),
     offersDelivery,
     offersPickup,
@@ -116,4 +117,11 @@ export function toDeliverySettingsPayload(ui = {}) {
     logoUrl: brandingField(ui.deliveryLogoUrl),
     coverUrl: brandingField(ui.deliveryCoverUrl),
   };
+  if (ui.storePhone === CLEARED_STORE_PHONE) {
+    payload.phone = '';
+  } else {
+    const phone = normalizeStoreWhatsApp(ui.storePhone);
+    if (phone) payload.phone = phone;
+  }
+  return payload;
 }

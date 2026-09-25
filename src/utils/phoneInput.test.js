@@ -1,4 +1,4 @@
-import { formatPhoneInput, isValidBrazilianPhone, phoneDigits } from './phoneInput';
+import { formatPhoneInput, formatStoreWhatsAppInput, isValidBrazilianPhone, normalizeStoreWhatsApp, phoneDigits } from './phoneInput';
 
 describe('phoneInput', () => {
   describe('phoneDigits', () => {
@@ -49,6 +49,23 @@ describe('phoneInput', () => {
       expect(isValidBrazilianPhone('')).toBe(false);
       expect(isValidBrazilianPhone('(11) 9888-888')).toBe(false);
       expect(isValidBrazilianPhone('119')).toBe(false);
+    });
+  });
+
+  describe('normalizeStoreWhatsApp', () => {
+    it('guarda DDD + número, com máscara, 55 ou 0 de tronco', () => {
+      expect(normalizeStoreWhatsApp('(11) 98888-7777')).toBe('11988887777');
+      expect(normalizeStoreWhatsApp('1133334444')).toBe('1133334444');
+      expect(normalizeStoreWhatsApp('+55 (11) 98888-7777')).toBe('11988887777');
+      expect(normalizeStoreWhatsApp('01133334444')).toBe('1133334444');
+      expect(normalizeStoreWhatsApp('55988887777')).toBe('55988887777');
+    });
+
+    it('não transforma um número inválido em um válido', () => {
+      expect(normalizeStoreWhatsApp('123')).toBe('123');
+      expect(normalizeStoreWhatsApp('123456789012345')).toBe('123456789012345');
+      expect(formatStoreWhatsAppInput('5511988887777')).toBe('(11) 98888-7777');
+      expect(formatStoreWhatsAppInput('12345')).toBe('(12) 345');
     });
   });
 });
