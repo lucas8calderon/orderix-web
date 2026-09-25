@@ -23,6 +23,7 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { formatCurrency } from '../../services/accessControl';
+import { WEPER_COMMERCIAL_URL } from '../../config/weperSite';
 import {
   buildTelUrl,
   buildWhatsAppUrl,
@@ -39,6 +40,37 @@ import {
   STEP_STATE,
   TRACKING_STATUS,
 } from './orderTrackingConfig';
+
+function WeperTrackingPromo() {
+  return (
+    <div className="dt-weper-promo">
+      <section className="dt-weper-card" aria-labelledby="dt-weper-title">
+        <p className="dt-weper-brand">
+          <span className="dt-weper-logo">weper</span>
+          <span className="dt-weper-tagline">Tecnologia para negócios de alimentação</span>
+        </p>
+        <h2 className="dt-weper-title" id="dt-weper-title">
+          Seu estabelecimento também pode ter pedidos online.
+        </h2>
+        <p className="dt-weper-desc">
+          Delivery próprio, cardápio digital e gestão em um só lugar.
+        </p>
+        <a
+          className="dt-weper-cta"
+          href={WEPER_COMMERCIAL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Conhecer a Weper
+          <span className="dt-weper-cta-arrow" aria-hidden="true">↗</span>
+        </a>
+      </section>
+      <p className="dt-weper-note">
+        Este pedido é atendido pelo estabelecimento. Plataforma desenvolvida pela weper.
+      </p>
+    </div>
+  );
+}
 
 function StatusIcon({ name, className }) {
   const props = { className, fontSize: 'inherit', 'aria-hidden': true };
@@ -77,11 +109,7 @@ export default function DeliveryTrackingView({
   helpAriaLabel = 'Falar com o estabelecimento',
   banner = null,
   actions = null,
-  footer = (
-    <>
-      Feito para facilitar o seu dia ♥ <strong>weper</strong>
-    </>
-  ),
+  footer,
   refreshError = null,
   onRetryRefresh = null,
 }) {
@@ -328,7 +356,9 @@ export default function DeliveryTrackingView({
         </div>
       )}
 
-      <footer className="dt-footer">{footer}</footer>
+      <footer className="dt-footer">
+        {footer !== undefined ? footer : <WeperTrackingPromo />}
+      </footer>
 
       <Dialog
         open={detailsOpen}

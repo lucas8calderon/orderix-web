@@ -322,6 +322,52 @@ export function toPaymentPayload(ui) {
   return payload;
 }
 
+const SAVED_SECRET_FIELDS = [
+  {
+    valueKey: 'mercadoPagoAccessToken',
+    lengthKey: 'mercadoPagoAccessTokenLength',
+    flags: ['mercadoPagoAccessTokenConfigured', 'mercadoPagoConfigured', 'mercadoPagoStoreAccessTokenConfigured'],
+  },
+  {
+    valueKey: 'mercadoPagoPublicKey',
+    lengthKey: 'mercadoPagoPublicKeyLength',
+    flags: ['mercadoPagoPublicKeyConfigured'],
+  },
+  {
+    valueKey: 'mercadoPagoWebhookSecret',
+    lengthKey: 'mercadoPagoWebhookSecretLength',
+    flags: ['mercadoPagoWebhookSecretConfigured'],
+  },
+];
+
+/**
+ * O servidor não devolve o segredo. Campo vazio ou máscara mantém o length anterior;
+ * valor novo preenche o length quando a resposta ainda veio zerada. O plaintext não fica no estado.
+ */
+export function hydrateSavedSecretLengths(ui = {}, submitted = {}) {
+  const next = { ...ui };
+  SAVED_SECRET_FIELDS.forEach(({ valueKey, lengthKey, flags }) => {
+    const secret = newSecretOrOmit(submitted[valueKey]);
+    next[valueKey] = '';
+    if (secret) {
+      if (!(Number(next[lengthKey]) > 0)) {
+        next[lengthKey] = secret.length;
+      }
+      flags.forEach((flag) => {
+        next[flag] = true;
+      });
+      return;
+    }
+    if (!(Number(next[lengthKey]) > 0) && Number(submitted[lengthKey]) > 0) {
+      next[lengthKey] = Number(submitted[lengthKey]);
+      flags.forEach((flag) => {
+        if (submitted[flag]) next[flag] = true;
+      });
+    }
+  });
+  return next;
+}
+
 export function paymentMethodsFromConfig(dto) {
   const accepted = Array.isArray(dto?.acceptedMethods) && dto.acceptedMethods.length > 0
     ? dto.acceptedMethods.map((method) => String(method).toUpperCase())

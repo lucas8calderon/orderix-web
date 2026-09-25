@@ -45,7 +45,8 @@ describe('DeliveryPaymentGroups', () => {
         checkout={{ ...baseCheckout, onlinePayment: true, paymentMethod: 'PIX' }}
         onChange={jest.fn()}
         onlinePixEnabled
-        acceptPaymentOnDelivery={false}
+        acceptPayOnFulfillment={false}
+        acceptPrepaid
         total={20}
       />
     );
@@ -60,12 +61,30 @@ describe('DeliveryPaymentGroups', () => {
         onChange={jest.fn()}
         onlinePixEnabled={false}
         onlineCardEnabled={false}
-        acceptPaymentOnDelivery={false}
+        acceptPayOnFulfillment={false}
+        acceptPrepaid
         total={20}
       />
     );
     expect(screen.getByRole('alert')).toHaveTextContent(PREPAY_NO_ONLINE_MSG);
     expect(screen.queryByText('Pague na entrega')).not.toBeInTheDocument();
     expect(screen.queryByText('Pague online')).not.toBeInTheDocument();
+  });
+
+  it('mostra pagar na retirada e esconde o online quando a loja não aceita antecipado', () => {
+    render(
+      <DeliveryPaymentGroups
+        checkout={baseCheckout}
+        onChange={jest.fn()}
+        onlinePixEnabled
+        acceptPayOnFulfillment
+        acceptPrepaid={false}
+        fulfillment="PICKUP"
+        total={20}
+      />
+    );
+    expect(screen.getByText('Pague na retirada')).toBeInTheDocument();
+    expect(screen.queryByText('Pague online')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pague na entrega')).not.toBeInTheDocument();
   });
 });

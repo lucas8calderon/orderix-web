@@ -18,7 +18,9 @@ export default function DeliveryPaymentGroups({
   onChange,
   onlinePixEnabled,
   onlineCardEnabled,
-  acceptPaymentOnDelivery = true,
+  acceptPayOnFulfillment = true,
+  acceptPrepaid = true,
+  fulfillment = 'DELIVERY',
   total,
 }) {
   const onlinePix = Boolean(onlinePixEnabled && checkout.onlinePayment && checkout.paymentMethod === 'PIX');
@@ -26,15 +28,19 @@ export default function DeliveryPaymentGroups({
   const onlineSelected = onlinePix || onlineCard;
   const onlineValue = onlineCard ? 'CARD_ONLINE' : onlinePix ? 'PIX_ONLINE' : '';
   const setField = (patch) => onChange((prev) => ({ ...prev, ...patch }));
-  const showOnline = Boolean(onlinePixEnabled || onlineCardEnabled);
-  const showOnDelivery = acceptPaymentOnDelivery !== false;
-  const blocked = !showOnDelivery && !showOnline;
+  const showOnline = Boolean(acceptPrepaid && (onlinePixEnabled || onlineCardEnabled));
+  const showOnFulfillment = acceptPayOnFulfillment !== false;
+  const onSpotTitle = fulfillment === 'PICKUP' ? 'Pague na retirada' : 'Pague na entrega';
+  const blocked = !showOnFulfillment && !showOnline;
+  const blockedMessage = acceptPrepaid
+    ? PREPAY_NO_ONLINE_MSG
+    : 'Este canal não tem uma forma de pagamento disponível.';
 
   return (
     <Box className="delivery-payment-groups">
       {blocked ? (
         <Typography variant="body2" color="error" role="alert" sx={{ mb: 1 }}>
-          {PREPAY_NO_ONLINE_MSG}
+          {blockedMessage}
         </Typography>
       ) : null}
 
@@ -73,10 +79,10 @@ export default function DeliveryPaymentGroups({
         </section>
       ) : null}
 
-      {showOnDelivery ? (
+      {showOnFulfillment ? (
         <section className="delivery-payment-group" aria-labelledby="pay-on-delivery-title">
           <Typography id="pay-on-delivery-title" className="delivery-payment-group-title" variant="subtitle2">
-            Pague na entrega
+            {onSpotTitle}
           </Typography>
           <RadioGroup
             value={onlineSelected ? '' : checkout.paymentMethod}

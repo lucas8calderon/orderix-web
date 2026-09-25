@@ -244,7 +244,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
   const total = Math.max(0, subtotal + serviceTax - discountValue);
   const itemCount = useMemo(() => countAccountItems(account), [account]);
   const needsPaymentMethod = paymentMode !== 'ORDER_ONLY';
-  const canClose = !loading && !empty && !error && itemCount > 0 && (!needsPaymentMethod || Boolean(paymentMethod));
+  const canClose = !loading && !empty && itemCount > 0 && (!needsPaymentMethod || Boolean(paymentMethod));
   const confirmCopy = getCloseAccountConfirmCopy(target, {
     paymentMode,
     totalLabel: formatCurrency(total),
@@ -287,7 +287,12 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
       if (paymentMode === 'ORDER_ONLY') {
         return Promise.resolve({ status: 'NOT_REQUIRED' });
       }
-      const body = { clientPaymentId, paymentMethod: payload.paymentMethod };
+      const body = {
+        clientPaymentId,
+        paymentMethod: payload.paymentMethod,
+        applyServiceTax,
+        discount: discountValue,
+      };
       if (groupOrderId) body.groupOrderId = groupOrderId;
       else if (orderId) body.orderId = orderId;
       if (paymentMode === 'INTEGRATED_PAYMENT') {

@@ -121,7 +121,11 @@ const DEFAULT_DELIVERY = {
   deliveryCoverUrl: '',
   offersDelivery: true,
   offersPickup: true,
-  acceptPaymentOnDelivery: true,
+  acceptPayOnDelivery: true,
+  acceptPrepaidDelivery: true,
+  acceptPayOnPickup: true,
+  acceptPrepaidPickup: true,
+  deliveryFeeMode: 'PER_NEIGHBORHOOD',
 };
 
 function mergeSavedDelivery(prev, sent, received) {
@@ -141,8 +145,12 @@ function deliveryPayloadFrom(current) {
     deliveryEnabled: current.deliveryEnabled,
     offersDelivery: current.offersDelivery !== false,
     offersPickup: current.offersPickup !== false,
-    acceptPaymentOnDelivery: current.acceptPaymentOnDelivery !== false,
+    acceptPayOnDelivery: current.acceptPayOnDelivery !== false,
+    acceptPrepaidDelivery: current.acceptPrepaidDelivery !== false,
+    acceptPayOnPickup: current.acceptPayOnPickup !== false,
+    acceptPrepaidPickup: current.acceptPrepaidPickup !== false,
     deliveryFee: current.deliveryFee,
+    deliveryFeeMode: current.deliveryFeeMode || 'PER_NEIGHBORHOOD',
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
     storeAddress: current.storeAddress,

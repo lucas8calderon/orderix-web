@@ -34,15 +34,37 @@ export function buildDeliveryUrl(slug, origin = typeof window !== 'undefined' ? 
   return `${base}/delivery/${encodeURIComponent(slug)}`;
 }
 
+function flagOr(value, fallback) {
+  if (value == null) return fallback;
+  return Boolean(value);
+}
+
+function paymentOptionsFromApi(data = {}) {
+  const legacyPayOn = data.acceptPaymentOnDelivery == null
+    ? true
+    : Boolean(data.acceptPaymentOnDelivery);
+  const acceptPayOnDelivery = flagOr(data.acceptPayOnDelivery, legacyPayOn);
+  const acceptPayOnPickup = flagOr(data.acceptPayOnPickup, legacyPayOn);
+  const acceptPrepaidDelivery = flagOr(data.acceptPrepaidDelivery, true);
+  const acceptPrepaidPickup = flagOr(data.acceptPrepaidPickup, true);
+  return {
+    acceptPayOnDelivery,
+    acceptPrepaidDelivery,
+    acceptPayOnPickup,
+    acceptPrepaidPickup,
+    acceptPaymentOnDelivery: acceptPayOnDelivery || acceptPayOnPickup,
+  };
+}
+
 export function toDeliverySettingsUi(data = {}) {
   return {
     deliveryEnabled: Boolean(data.enabled),
     offersDelivery: data.offersDelivery == null ? true : Boolean(data.offersDelivery),
     offersPickup: data.offersPickup == null ? true : Boolean(data.offersPickup),
-    acceptPaymentOnDelivery: data.acceptPaymentOnDelivery == null
-      ? true
-      : Boolean(data.acceptPaymentOnDelivery),
+    ...paymentOptionsFromApi(data),
     deliveryFee: Number(data.deliveryFee || 0),
+    deliveryFeeMode: data.feeMode || 'PER_NEIGHBORHOOD',
+    storePhone: data.phone || '',
     deliveryEstimatedMinutes: data.estimatedMinutes == null ? '' : data.estimatedMinutes,
     deliveryMinOrder: Number(data.minOrder || 0),
     slug: data.slug || '',
@@ -73,15 +95,21 @@ export function toDeliverySettingsPayload(ui = {}) {
   const address = (ui.storeAddress || '').trim();
   const offersDelivery = ui.offersDelivery == null ? true : Boolean(ui.offersDelivery);
   const offersPickup = ui.offersPickup == null ? true : Boolean(ui.offersPickup);
-  const acceptPaymentOnDelivery = ui.acceptPaymentOnDelivery == null
-    ? true
-    : Boolean(ui.acceptPaymentOnDelivery);
+  const acceptPayOnDelivery = ui.acceptPayOnDelivery == null ? true : Boolean(ui.acceptPayOnDelivery);
+  const acceptPrepaidDelivery = ui.acceptPrepaidDelivery == null ? true : Boolean(ui.acceptPrepaidDelivery);
+  const acceptPayOnPickup = ui.acceptPayOnPickup == null ? true : Boolean(ui.acceptPayOnPickup);
+  const acceptPrepaidPickup = ui.acceptPrepaidPickup == null ? true : Boolean(ui.acceptPrepaidPickup);
   return {
     enabled: Boolean(ui.deliveryEnabled),
     offersDelivery,
     offersPickup,
-    acceptPaymentOnDelivery,
+    acceptPayOnDelivery,
+    acceptPrepaidDelivery,
+    acceptPayOnPickup,
+    acceptPrepaidPickup,
+    acceptPaymentOnDelivery: acceptPayOnDelivery || acceptPayOnPickup,
     deliveryFee: Number(ui.deliveryFee || 0),
+    feeMode: ui.deliveryFeeMode || 'PER_NEIGHBORHOOD',
     minOrder: Number(ui.deliveryMinOrder || 0),
     estimatedMinutes: eta === '' || eta == null ? null : Number(eta),
     address: address || null,

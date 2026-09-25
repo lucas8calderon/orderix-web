@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import PublicMenu from './PublicMenu';
 import { getPublicMenuBySlug } from '../../services/publicMenuService';
 import { selectionStorageKey } from './selection/selectionConstants';
+import { WEPER_COMMERCIAL_URL } from '../../config/weperSite';
 
 jest.mock('../../services/publicMenuService', () => ({
   getPublicMenuBySlug: jest.fn(),
@@ -154,6 +155,27 @@ describe('PublicMenu — Minha seleção', () => {
     await userEvent.click(within(confirmDialog).getByRole('button', { name: 'Limpar seleção' }));
     expect(screen.queryByRole('button', { name: /Ver seleção/i })).not.toBeInTheDocument();
     expect(screen.queryByText('3 itens selecionados')).not.toBeInTheDocument();
+  });
+});
+
+describe('PublicMenu — assinatura Weper', () => {
+  it('mostra a assinatura depois dos produtos e só o nome da marca é link', async () => {
+    getPublicMenuBySlug.mockResolvedValue({
+      status: 200,
+      data: menuPayload,
+    });
+    renderMenu();
+    expect(await screen.findByText('X-Bacon')).toBeInTheDocument();
+
+    const prefix = screen.getByText('Cardápio digital por');
+    expect(prefix.closest('a')).toBeNull();
+
+    const link = screen.getByRole('link', { name: /weper/i });
+    expect(link).toHaveAttribute('href', WEPER_COMMERCIAL_URL);
+    expect(WEPER_COMMERCIAL_URL).toBe('https://weper.com.br');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveTextContent('↗');
   });
 });
 

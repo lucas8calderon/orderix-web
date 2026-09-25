@@ -84,6 +84,7 @@ export default function LoginForm() {
   const [passwordError, setPasswordError] = useState(false);
   const [passwordHelperText, setPasswordHelperText] = useState('');
   const [loginError, setLoginError] = useState(false);
+  const [loginErrorText, setLoginErrorText] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -123,6 +124,7 @@ export default function LoginForm() {
 
     setLoading(true);
     setLoginError(false);
+    setLoginErrorText('');
 
     signIn(userEmail, userPassword)
       .then((user) => {
@@ -136,6 +138,12 @@ export default function LoginForm() {
         }
       })
       .catch((error) => {
+        const apiMessage = error?.response?.data?.message;
+        setLoginErrorText(
+          typeof apiMessage === 'string' && apiMessage.trim()
+            ? apiMessage.trim()
+            : LoginConstants.LOGIN_ERROR_TEXT,
+        );
         setLoginError(true);
         console.error('Error signing in:', error);
       })
@@ -183,7 +191,7 @@ export default function LoginForm() {
             },
           }}
         >
-          {LoginConstants.LOGIN_ERROR_TEXT}{' '}
+          {loginErrorText || LoginConstants.LOGIN_ERROR_TEXT}{' '}
           <Link
             to={PATHS.FORGOT_PASSWORD}
             style={{ color: 'var(--color-primary)', fontWeight: 600 }}

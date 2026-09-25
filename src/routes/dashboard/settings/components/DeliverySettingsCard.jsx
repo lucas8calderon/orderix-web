@@ -18,6 +18,84 @@ import {
 import { buildDeliveryUrl } from '../../../../services/deliveryService';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
+import { DeliveryNeighborhoodsSection } from './DeliveryNeighborhoodsSection';
+
+function ChannelPaymentOptions({
+  title,
+  visible,
+  payOnLabel,
+  prepaidLabel,
+  payOnCaption,
+  prepaidCaption,
+  payOn,
+  prepaid,
+  payOnKey,
+  prepaidKey,
+  channelName,
+  onlineReady,
+  onSettingChange,
+  onToast,
+  switchStyles,
+}) {
+  if (!visible) return null;
+  const payOnEnabled = payOn !== false;
+  const prepaidEnabled = prepaid !== false;
+  const blockLast = (nextPayOn, nextPrepaid) => {
+    if (nextPayOn || nextPrepaid) return false;
+    onToast?.(
+      `Deixe pelo menos uma forma de concluir o pedido na ${channelName}.`,
+      'warning'
+    );
+    return true;
+  };
+  const prepaidOnlyWithoutOnline = !payOnEnabled && prepaidEnabled && !onlineReady;
+
+  return (
+    <Box className="setting-item">
+      <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+        {title}
+      </Typography>
+      <FormControlLabel
+        control={(
+          <Switch
+            checked={payOnEnabled}
+            onChange={(e) => {
+              if (blockLast(e.target.checked, prepaidEnabled)) return;
+              onSettingChange(payOnKey, null, e.target.checked);
+            }}
+            sx={switchStyles}
+          />
+        )}
+        label={payOnLabel}
+      />
+      <Typography variant="caption" color="text.secondary" display="block">
+        {payOnCaption}
+      </Typography>
+      <FormControlLabel
+        control={(
+          <Switch
+            checked={prepaidEnabled}
+            onChange={(e) => {
+              if (blockLast(payOnEnabled, e.target.checked)) return;
+              onSettingChange(prepaidKey, null, e.target.checked);
+            }}
+            sx={switchStyles}
+          />
+        )}
+        label={prepaidLabel}
+      />
+      <Typography variant="caption" color="text.secondary" display="block">
+        {prepaidCaption}
+      </Typography>
+      {prepaidOnlyWithoutOnline ? (
+        <Typography variant="caption" color="error" display="block" role="alert">
+          Este canal ficou só com pagamento antes de produzir, e não há Pix nem cartão online.
+          O cliente não consegue concluir o pedido até você ativar um meio online.
+        </Typography>
+      ) : null}
+    </Box>
+  );
+}
 
 function DeliveryGroup({ title, children }) {
   return (
@@ -66,7 +144,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
     <SettingsSectionCard
       icon={DeliveryIcon}
       title="Delivery"
-      description="Clientes pedem pelo link público. Você escolhe se aceita pagamento na hora ou só online antes de produzir."
+      description="Clientes pedem pelo link público. Entrega e retirada escolhem à parte: pagar na hora, pagar antes de produzir, ou as duas."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={() => onSave('delivery')}
       actionDisabled={saving}
@@ -115,22 +193,40 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
             </RadioGroup>
           </FormControl>
         </Box>
-        <Box className="setting-item">
-          <FormControlLabel
-            control={(
-              <Switch
-                checked={settings?.acceptPaymentOnDelivery !== false}
-                onChange={(e) => onSettingChange('acceptPaymentOnDelivery', null, e.target.checked)}
-                sx={switchStyles}
-              />
-            )}
-            label="Aceitar pagamento na entrega ou na retirada"
-          />
-          <Typography variant="caption" color="text.secondary" display="block">
-            Ligado: o cliente pode pagar na hora (dinheiro, Pix, crédito ou débito) e o pedido entra na cozinha.
-            Desligado: só Pix ou cartão online; o pedido só entra na operação depois do pagamento aprovado.
-          </Typography>
-        </Box>
+        <ChannelPaymentOptions
+          title="Entrega"
+          visible={settings?.offersDelivery !== false}
+          payOnLabel="Aceitar pagar na hora na entrega"
+          prepaidLabel="Aceitar pagamento antes de produzir na entrega"
+          payOnCaption="Dinheiro, Pix, crédito ou débito na entrega. O pedido entra na cozinha sem pagamento antecipado."
+          prepaidCaption="O pedido só entra na operação depois que o pagamento online for aprovado."
+          payOn={settings?.acceptPayOnDelivery}
+          prepaid={settings?.acceptPrepaidDelivery}
+          payOnKey="acceptPayOnDelivery"
+          prepaidKey="acceptPrepaidDelivery"
+          channelName="entrega"
+          onlineReady={Boolean(settings?.onlinePixEnabled || settings?.onlineCardEnabled)}
+          onSettingChange={onSettingChange}
+          onToast={onToast}
+          switchStyles={switchStyles}
+        />
+        <ChannelPaymentOptions
+          title="Retirada"
+          visible={settings?.offersPickup !== false}
+          payOnLabel="Aceitar pagar na hora na retirada"
+          prepaidLabel="Aceitar pagamento antes de produzir na retirada"
+          payOnCaption="Dinheiro, Pix, crédito ou débito na retirada. O pedido entra na cozinha sem pagamento antecipado."
+          prepaidCaption="O pedido só entra na operação depois que o pagamento online for aprovado."
+          payOn={settings?.acceptPayOnPickup}
+          prepaid={settings?.acceptPrepaidPickup}
+          payOnKey="acceptPayOnPickup"
+          prepaidKey="acceptPrepaidPickup"
+          channelName="retirada"
+          onlineReady={Boolean(settings?.onlinePixEnabled || settings?.onlineCardEnabled)}
+          onSettingChange={onSettingChange}
+          onToast={onToast}
+          switchStyles={switchStyles}
+        />
       </DeliveryGroup>
 
       <DeliveryGroup title="Link">
@@ -183,6 +279,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
               inputMode: 'numeric',
               'aria-label': 'Taxa de entrega em reais',
             }}
+            helperText="Usada só enquanto não houver bairro cadastrado. Com bairros, a taxa de cada um passa a valer."
           />
           <TextField
             label="Pedido mínimo"
@@ -209,6 +306,8 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
           />
         </Box>
       </DeliveryGroup>
+
+      <DeliveryNeighborhoodsSection settings={settings} onSettingChange={onSettingChange} />
     </SettingsSectionCard>
   );
 });

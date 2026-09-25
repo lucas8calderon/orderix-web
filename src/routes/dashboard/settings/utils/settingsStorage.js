@@ -1,5 +1,6 @@
 import {
   getStorePaymentConfig,
+  hydrateSavedSecretLengths,
   toPaymentPayload,
   toPaymentUi,
   updateStorePaymentConfig,
@@ -66,7 +67,7 @@ export const settingsStorage = {
       throw error;
     }
     const response = await updateStorePaymentConfig(payload);
-    return toPaymentUi(response.data || {});
+    return hydrateSavedSecretLengths(toPaymentUi(response.data || {}), paymentUi);
   },
 
   async getHoursConfig() {
@@ -134,6 +135,12 @@ export const settingsStorage = {
       serviceFee,
       infinitePayHandle,
       infinitePayDocument,
+      onlinePixEnabled,
+      onlineCardEnabled,
+      mercadoPagoEnvironment,
+      mercadoPagoAccessToken,
+      mercadoPagoPublicKey,
+      mercadoPagoWebhookSecret,
       ...rest
     } = newSettings || {};
     mockSettings = { ...mockSettings, ...rest };
@@ -157,6 +164,12 @@ export const settingsStorage = {
       serviceFee,
       infinitePayHandle,
       infinitePayDocument,
+      onlinePixEnabled,
+      onlineCardEnabled,
+      mercadoPagoEnvironment,
+      mercadoPagoAccessToken,
+      mercadoPagoPublicKey,
+      mercadoPagoWebhookSecret,
     });
     return { ...mockSettings, ...payment };
   },
@@ -182,6 +195,12 @@ export const settingsStorage = {
       'serviceFee',
       'infinitePayHandle',
       'infinitePayDocument',
+      'onlinePixEnabled',
+      'onlineCardEnabled',
+      'mercadoPagoEnvironment',
+      'mercadoPagoAccessToken',
+      'mercadoPagoPublicKey',
+      'mercadoPagoWebhookSecret',
     ]);
     if (paymentKeys.has(key)) {
       const current = await this.getPaymentConfig();

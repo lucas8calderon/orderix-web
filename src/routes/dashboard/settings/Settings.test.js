@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Settings } from './Settings';
 import { useSettingsState } from './hooks/useSettingsState';
 import { fileToCompressedDataUrl } from '../menu/utils/compressImage';
+import { listStoreNeighborhoods } from '../../../services/deliveryNeighborhoodService';
 
 jest.mock('./hooks/useSettingsState', () => ({
   useSettingsState: jest.fn(),
@@ -16,6 +17,13 @@ jest.mock('../../../services/authService', () => ({
 
 jest.mock('../menu/utils/compressImage', () => ({
   fileToCompressedDataUrl: jest.fn(),
+}));
+
+jest.mock('../../../services/deliveryNeighborhoodService', () => ({
+  listStoreNeighborhoods: jest.fn(),
+  createStoreNeighborhood: jest.fn(),
+  updateStoreNeighborhood: jest.fn(),
+  deleteStoreNeighborhood: jest.fn(),
 }));
 
 const baseState = {
@@ -89,6 +97,7 @@ function renderSettings(initialPath = '/app/configuracoes/geral') {
 describe('Settings page navigation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    listStoreNeighborhoods.mockResolvedValue({ data: [] });
     useSettingsState.mockReturnValue(baseState);
     fileToCompressedDataUrl.mockReset();
   });

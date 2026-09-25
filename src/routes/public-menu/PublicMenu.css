@@ -143,6 +143,36 @@
   padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
+.public-menu-credit {
+  margin: 28px 0 12px;
+  padding: 16px 12px 8px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.public-menu-credit-prefix {
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+.public-menu-credit-link {
+  color: #2563EB;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.public-menu-credit-link:hover {
+  text-decoration: underline;
+}
+
+.public-menu-credit-link:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 .public-menu-toolbar {
   display: flex !important;
   flex-direction: column;

@@ -22,7 +22,7 @@ export default function DeliveryStoreHeader({
   const open = Boolean(catalog.open);
   const typeLabel = storeTypeLabel(catalog);
   const fee = Number(catalog.deliveryFee || 0);
-  const showFee = offersDelivery(fulfillmentModes) && fee > 0;
+  const showFee = offersDelivery(fulfillmentModes) && fee > 0 && !catalog.usesNeighborhoodPricing;
   const accountNode = accountSlot || account;
   const addressHint = hasAddress
     ? (offersPickup(fulfillmentModes) && !offersDelivery(fulfillmentModes) ? 'Retirada' : 'Endereço')

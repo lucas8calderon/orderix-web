@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import PublicDelivery from './PublicDelivery';
 import { getDeliveryCatalog } from '../../services/deliveryService';
 import { listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
+import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodService';
 import { lookupCep } from '../../services/viaCepService';
 import {
   productHighlightBadge,
@@ -18,6 +19,7 @@ jest.mock('../../services/deliveryService', () => ({
 
 jest.mock('../../services/deliveryCustomerService', () => ({
   listDeliveryCustomerAddresses: jest.fn().mockResolvedValue({ data: [] }),
+  createDeliveryCustomerAddress: jest.fn(),
   loginDeliveryCustomer: jest.fn(),
   registerDeliveryCustomer: jest.fn(),
 }));
@@ -25,6 +27,10 @@ jest.mock('../../services/deliveryCustomerService', () => ({
 jest.mock('../../services/viaCepService', () => ({
   CEP_NOT_FOUND: 'CEP_NOT_FOUND',
   lookupCep: jest.fn(),
+}));
+
+jest.mock('../../services/deliveryNeighborhoodService', () => ({
+  listPublicNeighborhoods: jest.fn().mockResolvedValue({ data: [] }),
 }));
 
 function seedCustomerSession() {
@@ -93,6 +99,7 @@ const closedCatalog = {
 describe('PublicDelivery', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.sessionStorage.clear();
     lookupCep.mockReset();
     listDeliveryCustomerAddresses.mockReset();
     listDeliveryCustomerAddresses.mockResolvedValue({ data: [] });
@@ -296,9 +303,8 @@ describe('PublicDelivery', () => {
     expect(screen.getByRole('radio', { name: /^entrega$/i })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /^retirada$/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/^CEP/i)).toBeInTheDocument();
-    const pixOptions = screen.getAllByRole('radio', { name: /^pix$/i });
-    expect(pixOptions[0]).toBeChecked();
-    expect(pixOptions[1]).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: /aprovação rápida/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^pix$/i })).not.toBeChecked();
   });
 
   it('omite escolha de fulfillment quando a loja só faz retirada', async () => {
@@ -320,6 +326,78 @@ describe('PublicDelivery', () => {
     expect(screen.queryByRole('radio', { name: /^retirada$/i })).not.toBeInTheDocument();
     expect(screen.getByText('Retirada na loja')).toBeInTheDocument();
     expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
+  });
+
+  it('respeita pagamento diferente na entrega e na retirada', async () => {
+    seedCustomerSession();
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        onlinePixEnabled: true,
+        fulfillmentModes: ['DELIVERY', 'PICKUP'],
+        acceptPayOnDelivery: false,
+        acceptPrepaidDelivery: true,
+        acceptPayOnPickup: true,
+        acceptPrepaidPickup: false,
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    expect(await screen.findByText('Pague online')).toBeInTheDocument();
+    expect(screen.queryByText('Pague na entrega')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: /^retirada$/i }));
+
+    expect(screen.getByText('Pague na retirada')).toBeInTheDocument();
+    expect(screen.queryByText('Pague online')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pague na entrega')).not.toBeInTheDocument();
+  });
+
+  it('pede o endereço antes do primeiro item quando a loja entrega por bairro', async () => {
+    listPublicNeighborhoods.mockResolvedValue({
+      data: [{ id: 4, name: 'Centro', city: 'São Paulo', state: 'SP', effectiveFee: 8.5 }],
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        usesNeighborhoodPricing: true,
+        phone: '11988887777',
+        storeName: 'Padaria Belas Artes',
+      },
+    });
+
+    renderDelivery();
+    expect(await screen.findByText(/informe o endereço para saber se entregamos/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /adicionar pão francês/i }));
+    await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
+
+    expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
+    expect(screen.getByText(/não encontrou seu bairro/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /ver meu pedido/i })).not.toBeInTheDocument();
+  });
+
+  it('retirada não pede bairro mesmo com entrega por bairro configurada', async () => {
+    seedCustomerSession();
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        usesNeighborhoodPricing: true,
+        fulfillmentModes: ['PICKUP'],
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+    expect(await screen.findByText('Retirada na loja')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
   });
 });
 

@@ -8,7 +8,8 @@
   background: var(--color-bg);
   color: var(--color-text-primary);
   padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  overflow-x: hidden;
+  /* clip corta o eixo X sem virar scroll container; hidden quebrava o sticky das categorias. */
+  overflow-x: clip;
 }
 
 .delivery-page.has-bottom-nav {
@@ -371,7 +372,7 @@
 /* Category chips */
 .delivery-category-nav {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 12;
   margin: 0 -16px 4px;
   padding: 6px 0 10px;
@@ -500,7 +501,7 @@
 }
 
 .delivery-menu-section {
-  scroll-margin-top: 72px;
+  scroll-margin-top: calc(76px + env(safe-area-inset-top, 0px));
   margin-bottom: 24px;
 }
 
@@ -1652,6 +1653,115 @@
   padding-bottom: 8px;
 }
 
+.dt-weper-promo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.dt-weper-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 20px 18px 18px;
+  border-radius: 22px;
+  background: #EFF6FF;
+  color: #0F172A;
+  box-sizing: border-box;
+}
+
+.dt-weper-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+}
+
+.dt-weper-logo {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: #2563EB;
+}
+
+.dt-weper-tagline {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #64748B;
+}
+
+.dt-weper-title {
+  margin: 8px 0 0 !important;
+  font-size: clamp(1.05rem, 4.2vw, 1.28rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em;
+  line-height: 1.25 !important;
+  color: #0F172A !important;
+}
+
+.dt-weper-desc {
+  margin: 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
+  color: #475569 !important;
+}
+
+.dt-weper-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 18px;
+  border: 1.5px solid #2563EB;
+  border-radius: 999px;
+  background: #fff;
+  color: #2563EB;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.dt-weper-cta:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1D4ED8;
+  border-color: #1D4ED8;
+}
+
+.dt-weper-cta:focus-visible {
+  outline: 2px solid #1D4ED8;
+  outline-offset: 3px;
+}
+
+.dt-weper-cta-arrow {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.dt-weper-note {
+  margin: 4px 8px 0;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.delivery-page.delivery-tracking-page.has-bottom-nav {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+}
+
 .dt-details-title {
   display: flex !important;
   align-items: center;
@@ -1743,6 +1853,21 @@
 
   .dt-fulfillment-badge {
     max-width: none;
+  }
+
+  .dt-weper-card {
+    padding: 18px 14px 16px;
+  }
+
+  .dt-weper-cta {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .delivery-page.delivery-tracking-page.has-bottom-nav {
+    padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
   }
 }
 

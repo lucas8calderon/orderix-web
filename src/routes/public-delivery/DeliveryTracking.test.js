@@ -5,6 +5,7 @@ import DeliveryTracking from './DeliveryTracking';
 import { getDeliveryOrder } from '../../services/deliveryService';
 import { writeLastOrder, readLastOrder } from '../../services/deliveryLastOrder';
 import { POLL_INTERVAL_MS } from './orderTrackingConfig';
+import { WEPER_COMMERCIAL_URL } from '../../config/weperSite';
 
 jest.mock('../../services/deliveryService', () => ({
   getDeliveryOrder: jest.fn(),
@@ -269,5 +270,28 @@ describe('DeliveryTracking', () => {
 
     const help = await screen.findByLabelText('Falar com o estabelecimento');
     expect(help.getAttribute('href')).toMatch(/wa\.me\/55/);
+  });
+
+  it('mostra o card da Weper abaixo da ajuda, com link da landing', async () => {
+    getDeliveryOrder.mockResolvedValue({
+      data: baseOrder({ storeSlug: 'minions' }),
+    });
+
+    renderTracking();
+
+    const help = await screen.findByLabelText('Falar com o estabelecimento');
+    const promoTitle = screen.getByRole('heading', {
+      name: /Seu estabelecimento também pode ter pedidos online/i,
+    });
+    const link = screen.getByRole('link', { name: /Conhecer a Weper/i });
+
+    expect(screen.getByText('Delivery próprio, cardápio digital e gestão em um só lugar.')).toBeInTheDocument();
+    expect(screen.getByText(/Este pedido é atendido pelo estabelecimento/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Feito para facilitar o seu dia/i)).not.toBeInTheDocument();
+    expect(link).toHaveAttribute('href', WEPER_COMMERCIAL_URL);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(help.compareDocumentPosition(promoTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('navigation', { name: 'Navegação do delivery' })).toBeInTheDocument();
   });
 });

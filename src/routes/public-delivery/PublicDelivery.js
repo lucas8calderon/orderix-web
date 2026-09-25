@@ -30,7 +30,7 @@ import StoreClosedHoursCard from '../../commons/components/StoreClosedHoursCard'
 import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
 import { createDeliveryPixPayment } from '../../services/deliveryPaymentService';
 import DeliveryCardCheckout from './components/DeliveryCardCheckout';
-import { listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
+import { listDeliveryCustomerAddresses, createDeliveryCustomerAddress } from '../../services/deliveryCustomerService';
 import { readDeliveryCustomerSession } from '../../services/deliveryCustomerSession';
 import { cepDigits, formatCepInput, isValidCep } from '../../utils/cepInput';
 import { formatPhoneInput, isValidBrazilianPhone, phoneDigits } from '../../utils/phoneInput';
@@ -67,7 +67,16 @@ import {
   offersDelivery,
   resolveFulfillmentModes,
 } from './utils/fulfillmentModes';
+import {
+  channelPaymentOptions,
+  checkoutPaymentStillValid,
+  defaultCheckoutPayment,
+} from './utils/channelPayment';
 import { productTags, resolveDeliveryImage } from './utils/resolveDeliveryImage';
+import DeliveryAddressGate from './components/DeliveryAddressGate';
+import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodService';
+import { deliveryCoverageLabel, moneyCents } from './utils/neighborhoodPlace';
+import { clearServiceAddress, readServiceAddress, writeServiceAddress } from './utils/serviceAddress';
 import './PublicDelivery.css';
 
 const emptyCheckout = {
@@ -125,6 +134,9 @@ export default function PublicDelivery() {
   const [cardOrder, setCardOrder] = useState(null);
   const [pixError, setPixError] = useState('');
   const [pixCreating, setPixCreating] = useState(false);
+  const [serviceAddress, setServiceAddress] = useState(() => readServiceAddress(slug));
+  const [addressGateOpen, setAddressGateOpen] = useState(false);
+  const pendingAddRef = useRef(null);
 
   useEffect(() => {
     const sync = () => setCustomer(readDeliveryCustomerSession());
@@ -169,7 +181,11 @@ export default function PublicDelivery() {
       const nextMode = fulfillmentModes.includes(prev.fulfillment)
         ? prev.fulfillment
         : defaultFulfillment(fulfillmentModes);
-      return nextMode === prev.fulfillment ? prev : { ...prev, fulfillment: nextMode };
+      const payment = checkoutPaymentStillValid(catalog, nextMode, prev)
+        ? null
+        : defaultCheckoutPayment(catalog, nextMode);
+      if (nextMode === prev.fulfillment && !payment) return prev;
+      return { ...prev, fulfillment: nextMode, ...(payment || {}) };
     });
   }, [catalog, fulfillmentModes]);
 
@@ -198,6 +214,59 @@ export default function PublicDelivery() {
   }, [customer]);
 
   useEffect(() => {
+    setServiceAddress(readServiceAddress(slug));
+  }, [slug]);
+
+  useEffect(() => {
+    if (!serviceAddress?.neighborhoodId) return;
+    setCheckout((prev) => ({
+      ...prev,
+      addressId: serviceAddress.addressId ? String(serviceAddress.addressId) : prev.addressId,
+      postalCode: formatCepInput(serviceAddress.postalCode || ''),
+      street: serviceAddress.street || '',
+      number: serviceAddress.number || '',
+      complement: serviceAddress.complement || '',
+      neighborhood: serviceAddress.neighborhood || '',
+      neighborhoodId: serviceAddress.neighborhoodId,
+      city: serviceAddress.city || '',
+      state: serviceAddress.state || '',
+      reference: serviceAddress.reference || '',
+      saveAddress: !serviceAddress.addressId,
+    }));
+  }, [serviceAddress]);
+
+  useEffect(() => {
+    if (!catalog?.usesNeighborhoodPricing || !serviceAddress?.neighborhoodId || !serviceAddress.city || !serviceAddress.state) {
+      return undefined;
+    }
+    let cancelled = false;
+    listPublicNeighborhoods(slug, { state: serviceAddress.state, city: serviceAddress.city })
+      .then((response) => {
+        if (cancelled) return;
+        const match = (response.data || []).find((item) => String(item.id) === String(serviceAddress.neighborhoodId));
+        if (!match) {
+          clearServiceAddress(slug);
+          setServiceAddress(null);
+          setToast({ open: true, message: 'Este bairro não está mais disponível para entrega. Escolha outro.' });
+          return;
+        }
+        if (moneyCents(match.effectiveFee) !== moneyCents(serviceAddress.effectiveFee)) {
+          const next = {
+            ...serviceAddress,
+            neighborhood: match.name,
+            city: match.city,
+            state: match.state,
+            effectiveFee: Number(match.effectiveFee || 0),
+          };
+          writeServiceAddress(slug, next);
+          setServiceAddress(next);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [catalog?.usesNeighborhoodPricing, slug, serviceAddress]);
+
+  useEffect(() => {
     if (!checkoutOpen || !customer) return;
     setCheckout((prev) => {
       const next = { ...prev };
@@ -205,7 +274,7 @@ export default function PublicDelivery() {
       if (!next.customerPhone) next.customerPhone = formatPhoneInput(customer.phone || '');
       const preferred = addresses.find((item) => item.isDefault) || addresses[0];
       const alreadyTypingAddress = Boolean(cepDigits(next.postalCode));
-      if (preferred && !next.addressId && next.fulfillment === 'DELIVERY' && !alreadyTypingAddress) {
+      if (preferred && !next.addressId && next.fulfillment === 'DELIVERY' && !alreadyTypingAddress && !serviceAddress?.neighborhoodId) {
         next.addressId = String(preferred.id);
         next.postalCode = formatCepInput(preferred.postalCode || '');
         next.street = preferred.street || '';
@@ -299,8 +368,11 @@ export default function PublicDelivery() {
 
   const featuredProducts = useMemo(() => collectFeaturedProducts(catalog), [catalog]);
   const promoBanners = useMemo(() => collectPromoBanners(catalog), [catalog]);
+  const quotedFee = catalog?.usesNeighborhoodPricing
+    ? Number(serviceAddress?.effectiveFee || 0)
+    : catalog?.deliveryFee;
   const totals = cartTotals(cart, {
-    deliveryFee: catalog?.deliveryFee,
+    deliveryFee: quotedFee,
     fulfillment: checkout.fulfillment,
   });
   const closed = catalog && (!catalog.acceptingOrders || !catalog.open);
@@ -342,7 +414,7 @@ export default function PublicDelivery() {
     if ((selected.mandatoryGroups || []).length && mandatorySelections.length !== selected.mandatoryGroups.length) {
       return;
     }
-    setCart((prev) => addCartItem(prev, {
+    const item = {
       productId: selected.id,
       name: selected.name,
       unitPrice: selected.value,
@@ -350,33 +422,63 @@ export default function PublicDelivery() {
       observation: draftObs.trim(),
       extras,
       mandatorySelections,
-    }));
+    };
+    const needsAddress = Boolean(catalog?.usesNeighborhoodPricing)
+      && checkout.fulfillment === 'DELIVERY'
+      && offersDelivery(fulfillmentModes)
+      && !serviceAddress?.neighborhoodId;
+    if (needsAddress) {
+      pendingAddRef.current = item;
+      setSelected(null);
+      setAddressGateOpen(true);
+      return;
+    }
+    setCart((prev) => addCartItem(prev, item));
     setSelected(null);
     setToast({ open: true, message: 'Adicionado ao carrinho' });
   };
 
-  const openAuthenticatedCheckout = () => {
-    const acceptOnDelivery = catalog?.acceptPaymentOnDelivery !== false;
-    const onlinePix = Boolean(catalog?.onlinePixEnabled);
-    const onlineCard = Boolean(catalog?.onlineCardEnabled);
-    let onlinePayment = false;
-    let paymentMethod = 'PIX';
-    if (!acceptOnDelivery) {
-      if (onlinePix) {
-        onlinePayment = true;
-        paymentMethod = 'PIX';
-      } else if (onlineCard) {
-        onlinePayment = true;
-        paymentMethod = 'CREDIT';
+  const acceptServiceAddress = async (draft) => {
+    let next = { ...draft };
+    if (customer && !draft.addressId) {
+      try {
+        const response = await createDeliveryCustomerAddress({
+          postalCode: draft.postalCode,
+          street: draft.street,
+          number: draft.number,
+          complement: draft.complement,
+          neighborhood: draft.neighborhood,
+          neighborhoodId: draft.neighborhoodId,
+          city: draft.city,
+          state: draft.state,
+          reference: draft.reference,
+          isDefault: addresses.length === 0,
+        });
+        next = { ...next, addressId: response.data?.id || '' };
+        if (response.data) setAddresses((prev) => [response.data, ...prev.filter((item) => item.id !== response.data.id)]);
+      } catch (err) {
+        setToast({
+          open: true,
+          message: err?.response?.data?.message || 'Não foi possível salvar o endereço. Escolha um bairro atendido.',
+        });
+        return;
       }
-    } else if (onlinePix) {
-      onlinePayment = true;
-      paymentMethod = 'PIX';
     }
+    writeServiceAddress(slug, next);
+    setServiceAddress(next);
+    setAddressGateOpen(false);
+    if (pendingAddRef.current) {
+      const pending = pendingAddRef.current;
+      pendingAddRef.current = null;
+      setCart((prev) => addCartItem(prev, pending));
+      setToast({ open: true, message: 'Adicionado ao carrinho' });
+    }
+  };
+
+  const openAuthenticatedCheckout = () => {
     setCheckout((prev) => ({
       ...prev,
-      onlinePayment,
-      paymentMethod,
+      ...defaultCheckoutPayment(catalog, prev.fulfillment),
     }));
     setCheckoutOpen(true);
   };
@@ -395,6 +497,9 @@ export default function PublicDelivery() {
     if (!customer) return 'Entre ou crie uma conta para continuar.';
     if (!checkout.customerName.trim()) return 'Informe o nome.';
     if (!isValidBrazilianPhone(checkout.customerPhone)) return 'Informe um telefone válido.';
+    if (deliverySelected && catalog?.usesNeighborhoodPricing && !serviceAddress?.neighborhoodId) {
+      return 'Escolha o endereço e um bairro atendido antes de confirmar.';
+    }
     if (deliverySelected) {
       if (!isValidCep(checkout.postalCode)) return 'Informe um CEP válido.';
       if (!checkout.street.trim() || !checkout.number.trim() || !checkout.neighborhood.trim() || !checkout.city.trim() || checkout.state.trim().length !== 2) {
@@ -404,12 +509,17 @@ export default function PublicDelivery() {
     if (Number(catalog?.minOrder || 0) > 0 && totals.subtotal < Number(catalog.minOrder)) {
       return `Pedido mínimo de ${formatCurrency(catalog.minOrder)}.`;
     }
-    const acceptOnDelivery = catalog?.acceptPaymentOnDelivery !== false;
-    const hasOnline = Boolean(catalog?.onlinePixEnabled || catalog?.onlineCardEnabled);
-    if (!acceptOnDelivery && !hasOnline) {
-      return 'Esta loja exige pagamento antecipado e nenhum meio online (Pix ou cartão) está disponível no momento.';
+    const paymentOptions = channelPaymentOptions(catalog, checkout.fulfillment);
+    if (!paymentOptions.showPayOnFulfillment && !paymentOptions.showOnline) {
+      if (paymentOptions.prepaid) {
+        return 'Esta loja exige pagamento antecipado e nenhum meio online (Pix ou cartão) está disponível no momento.';
+      }
+      return 'Este canal não tem uma forma de pagamento disponível.';
     }
-    if (!acceptOnDelivery && !checkout.onlinePayment) {
+    if (checkout.onlinePayment && !paymentOptions.prepaid) {
+      return 'Esta loja não aceita pagamento antecipado neste tipo de pedido.';
+    }
+    if (!checkout.onlinePayment && !paymentOptions.showPayOnFulfillment) {
       return 'Esta loja exige pagamento online antes de produzir o pedido.';
     }
     if (checkout.paymentMethod === 'CASH' && checkout.needsChange) {
@@ -425,6 +535,34 @@ export default function PublicDelivery() {
       setCheckoutError(message);
       return;
     }
+    if (catalog?.usesNeighborhoodPricing && deliverySelected && serviceAddress?.neighborhoodId) {
+      try {
+        const fresh = await listPublicNeighborhoods(slug, {
+          state: checkout.state,
+          city: checkout.city,
+        });
+        const match = (fresh.data || []).find((item) => String(item.id) === String(serviceAddress.neighborhoodId));
+        if (!match) {
+          clearServiceAddress(slug);
+          setServiceAddress(null);
+          setCheckoutError('Este bairro não está mais disponível para entrega. Escolha outro endereço.');
+          return;
+        }
+        if (moneyCents(match.effectiveFee) !== moneyCents(serviceAddress.effectiveFee)) {
+          const next = {
+            ...serviceAddress,
+            neighborhood: match.name,
+            effectiveFee: Number(match.effectiveFee || 0),
+          };
+          writeServiceAddress(slug, next);
+          setServiceAddress(next);
+          setCheckoutError(`A taxa de entrega mudou. O valor atual é ${formatCurrency(match.effectiveFee)}. Confira o total antes de confirmar.`);
+          return;
+        }
+      } catch {
+        // O backend recalcula mesmo se a lista pública falhar.
+      }
+    }
     setSubmitting(true);
     setCheckoutError('');
     try {
@@ -434,8 +572,11 @@ export default function PublicDelivery() {
         fulfillment: checkout.fulfillment,
         paymentMethod: checkout.paymentMethod,
         onlinePayment: Boolean(
-          (catalog?.onlinePixEnabled && checkout.onlinePayment && checkout.paymentMethod === 'PIX')
-          || (catalog?.onlineCardEnabled && checkout.onlinePayment && checkout.paymentMethod === 'CREDIT')
+          channelPaymentOptions(catalog, checkout.fulfillment).prepaid
+          && (
+            (catalog?.onlinePixEnabled && checkout.onlinePayment && checkout.paymentMethod === 'PIX')
+            || (catalog?.onlineCardEnabled && checkout.onlinePayment && checkout.paymentMethod === 'CREDIT')
+          )
         ),
         changeFor: !checkout.onlinePayment && checkout.paymentMethod === 'CASH' && checkout.needsChange
           ? Number(checkout.changeFor)
@@ -448,6 +589,12 @@ export default function PublicDelivery() {
         city: checkout.city,
         state: checkout.state,
         reference: checkout.reference,
+        neighborhoodId: catalog?.usesNeighborhoodPricing && deliverySelected
+          ? Number(serviceAddress?.neighborhoodId)
+          : null,
+        expectedDeliveryFee: catalog?.usesNeighborhoodPricing && deliverySelected
+          ? Number(serviceAddress?.effectiveFee || 0)
+          : null,
         addressId: checkout.addressId ? Number(checkout.addressId) : null,
         saveAddress: Boolean(customer) && deliverySelected && !checkout.addressId && checkout.saveAddress,
         items: cart.items.map((item) => ({
@@ -575,6 +722,38 @@ export default function PublicDelivery() {
                 scheduleRows={scheduleRows}
                 variant="delivery"
               />
+            ) : null}
+
+            {catalog.usesNeighborhoodPricing && offersDelivery(fulfillmentModes) ? (
+              <Box sx={{ mb: 2 }}>
+                {fulfillmentModes.length > 1 ? (
+                  <RadioGroup
+                    row
+                    value={checkout.fulfillment}
+                    onChange={(event) => setCheckout((prev) => ({ ...prev, fulfillment: event.target.value }))}
+                  >
+                    <FormControlLabel value="DELIVERY" control={<Radio />} label="Entrega" />
+                    <FormControlLabel value="PICKUP" control={<Radio />} label="Retirada" />
+                  </RadioGroup>
+                ) : null}
+                {checkout.fulfillment === 'PICKUP' ? (
+                  <Alert severity="info">Retirada no local não precisa de bairro.</Alert>
+                ) : serviceAddress?.neighborhood ? (
+                  <Alert
+                    severity="success"
+                    action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Trocar</Button>}
+                  >
+                    {deliveryCoverageLabel(serviceAddress.neighborhood, serviceAddress.effectiveFee, formatCurrency)}
+                  </Alert>
+                ) : (
+                  <Alert
+                    severity="info"
+                    action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Informar endereço</Button>}
+                  >
+                    Informe o endereço para saber se entregamos e quanto custa. O cardápio continua visível, e o endereço é obrigatório ao adicionar o primeiro item.
+                  </Alert>
+                )}
+              </Box>
             ) : null}
 
             <DeliveryMenuSearch value={query} onChange={setQuery} />
@@ -824,7 +1003,14 @@ export default function PublicDelivery() {
               <RadioGroup
                 row
                 value={checkout.fulfillment}
-                onChange={(e) => setCheckout((prev) => ({ ...prev, fulfillment: e.target.value }))}
+                onChange={(e) => {
+                  const fulfillment = e.target.value;
+                  setCheckout((prev) => ({
+                    ...prev,
+                    fulfillment,
+                    ...defaultCheckoutPayment(catalog, fulfillment),
+                  }));
+                }}
               >
                 {fulfillmentModes.includes('DELIVERY') ? (
                   <FormControlLabel value="DELIVERY" control={<Radio />} label="Entrega" />
@@ -855,6 +1041,22 @@ export default function PublicDelivery() {
             }))}
           />
           {deliverySelected ? (
+            catalog?.usesNeighborhoodPricing ? (
+              <Box sx={{ mb: 2 }}>
+                {serviceAddress?.neighborhood ? (
+                  <>
+                    <Alert severity="success" sx={{ mb: 1 }}>
+                      {deliveryCoverageLabel(serviceAddress.neighborhood, serviceAddress.effectiveFee, formatCurrency)}
+                    </Alert>
+                    <Button onClick={() => setAddressGateOpen(true)}>Trocar endereço</Button>
+                  </>
+                ) : (
+                  <Button variant="outlined" onClick={() => setAddressGateOpen(true)}>
+                    Cadastrar endereço de entrega
+                  </Button>
+                )}
+              </Box>
+            ) : (
             <>
               {addresses.length > 0 ? (
                 <FormControl sx={{ mb: 1.5 }}>
@@ -967,13 +1169,16 @@ export default function PublicDelivery() {
                 </>
               ) : null}
             </>
+            )
           ) : null}
           <DeliveryPaymentGroups
             checkout={checkout}
             onChange={setCheckout}
             onlinePixEnabled={Boolean(catalog?.onlinePixEnabled)}
             onlineCardEnabled={Boolean(catalog?.onlineCardEnabled)}
-            acceptPaymentOnDelivery={catalog?.acceptPaymentOnDelivery !== false}
+            acceptPayOnFulfillment={channelPaymentOptions(catalog, checkout.fulfillment).showPayOnFulfillment}
+            acceptPrepaid={channelPaymentOptions(catalog, checkout.fulfillment).prepaid}
+            fulfillment={checkout.fulfillment}
             total={totals.total}
           />
           <Divider sx={{ my: 2 }} />
@@ -1054,6 +1259,18 @@ export default function PublicDelivery() {
             openAuthenticatedCheckout();
           }
         }}
+      />
+      <DeliveryAddressGate
+        open={addressGateOpen}
+        onClose={() => {
+          pendingAddRef.current = null;
+          setAddressGateOpen(false);
+        }}
+        onConfirm={acceptServiceAddress}
+        slug={slug}
+        catalog={catalog}
+        addresses={addresses}
+        initial={serviceAddress}
       />
     </Box>
   );

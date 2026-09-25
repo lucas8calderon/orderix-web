@@ -18,6 +18,7 @@ describe('deliveryService helpers', () => {
       enabled: true,
       slug: 'padaria',
       deliveryFee: 5,
+      feeMode: 'PER_NEIGHBORHOOD',
       estimatedMinutes: 40,
       minOrder: 20,
       publicPath: '/delivery/padaria',
@@ -32,13 +33,22 @@ describe('deliveryService helpers', () => {
     expect(ui.deliveryCoverUrl).toBe('https://cdn.example.com/cover.jpg');
     expect(ui.offersDelivery).toBe(true);
     expect(ui.offersPickup).toBe(true);
+    expect(ui.acceptPayOnDelivery).toBe(true);
+    expect(ui.acceptPrepaidDelivery).toBe(true);
+    expect(ui.acceptPayOnPickup).toBe(true);
+    expect(ui.acceptPrepaidPickup).toBe(true);
     expect(ui.acceptPaymentOnDelivery).toBe(true);
     expect(toDeliverySettingsPayload({ ...ui, deliveryEstimatedMinutes: '' })).toEqual({
       enabled: true,
       offersDelivery: true,
       offersPickup: true,
+      acceptPayOnDelivery: true,
+      acceptPrepaidDelivery: true,
+      acceptPayOnPickup: true,
+      acceptPrepaidPickup: true,
       acceptPaymentOnDelivery: true,
       deliveryFee: 5,
+      feeMode: 'PER_NEIGHBORHOOD',
       minOrder: 20,
       estimatedMinutes: null,
       address: 'Rua A, 10',
@@ -62,8 +72,13 @@ describe('deliveryService helpers', () => {
       enabled: false,
       offersDelivery: true,
       offersPickup: true,
+      acceptPayOnDelivery: true,
+      acceptPrepaidDelivery: true,
+      acceptPayOnPickup: true,
+      acceptPrepaidPickup: true,
       acceptPaymentOnDelivery: true,
       deliveryFee: 0,
+      feeMode: 'PER_NEIGHBORHOOD',
       minOrder: 0,
       estimatedMinutes: null,
       address: null,
@@ -102,8 +117,13 @@ describe('deliveryService helpers', () => {
       enabled: true,
       offersDelivery: true,
       offersPickup: true,
+      acceptPayOnDelivery: true,
+      acceptPrepaidDelivery: true,
+      acceptPayOnPickup: true,
+      acceptPrepaidPickup: true,
       acceptPaymentOnDelivery: true,
       deliveryFee: 3.5,
+      feeMode: 'PER_NEIGHBORHOOD',
       minOrder: 10,
       estimatedMinutes: 30,
       address: 'Rua B, 2',
@@ -131,9 +151,34 @@ describe('deliveryService helpers', () => {
       enabled: true,
       acceptPaymentOnDelivery: false,
     });
+    expect(ui.acceptPayOnDelivery).toBe(false);
+    expect(ui.acceptPayOnPickup).toBe(false);
+    expect(ui.acceptPrepaidDelivery).toBe(true);
+    expect(ui.acceptPrepaidPickup).toBe(true);
     expect(ui.acceptPaymentOnDelivery).toBe(false);
     expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
+      acceptPayOnDelivery: false,
+      acceptPayOnPickup: false,
+      acceptPrepaidDelivery: true,
+      acceptPrepaidPickup: true,
       acceptPaymentOnDelivery: false,
+    }));
+  });
+
+  it('separa pagamento na hora e antecipado por canal', () => {
+    const ui = toDeliverySettingsUi({
+      enabled: true,
+      acceptPayOnDelivery: false,
+      acceptPrepaidDelivery: true,
+      acceptPayOnPickup: true,
+      acceptPrepaidPickup: false,
+    });
+    expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
+      acceptPayOnDelivery: false,
+      acceptPrepaidDelivery: true,
+      acceptPayOnPickup: true,
+      acceptPrepaidPickup: false,
+      acceptPaymentOnDelivery: true,
     }));
   });
 });

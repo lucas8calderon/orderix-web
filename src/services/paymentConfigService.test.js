@@ -1,4 +1,5 @@
 import {
+  hydrateSavedSecretLengths,
   isQuickCounterProvider,
   paymentMethodsFromConfig,
   toChannelTiming,
@@ -233,5 +234,45 @@ describe('channel charge timing', () => {
     });
     expect(ui.tablePaymentProvider).toBe('NONE');
     expect(ui.defaultProvider).toBe('NONE');
+  });
+});
+
+describe('hydrateSavedSecretLengths', () => {
+  it('mantém o length anterior quando o campo volta vazio e a API devolve zero', () => {
+    const ui = hydrateSavedSecretLengths(
+      toPaymentUi({ mercadoPagoEnvironment: 'test', accessTokenLength: 0, publicKeyLength: 0 }),
+      {
+        mercadoPagoAccessToken: '',
+        mercadoPagoPublicKey: '•'.repeat(20),
+        mercadoPagoAccessTokenLength: 32,
+        mercadoPagoPublicKeyLength: 20,
+        mercadoPagoAccessTokenConfigured: true,
+        mercadoPagoConfigured: true,
+        mercadoPagoPublicKeyConfigured: true,
+      },
+    );
+    expect(ui.mercadoPagoAccessToken).toBe('');
+    expect(ui.mercadoPagoPublicKey).toBe('');
+    expect(ui.mercadoPagoAccessTokenLength).toBe(32);
+    expect(ui.mercadoPagoPublicKeyLength).toBe(20);
+    expect(ui.mercadoPagoConfigured).toBe(true);
+  });
+
+  it('usa o tamanho do segredo recém-digitado se a resposta não trouxer length', () => {
+    const ui = hydrateSavedSecretLengths(
+      toPaymentUi({ mercadoPagoEnvironment: 'test' }),
+      {
+        mercadoPagoAccessToken: 'tok-novo',
+        mercadoPagoPublicKey: 'pk-nova',
+        mercadoPagoWebhookSecret: '',
+      },
+    );
+    expect(ui.mercadoPagoAccessToken).toBe('');
+    expect(ui.mercadoPagoPublicKey).toBe('');
+    expect(ui.mercadoPagoAccessTokenLength).toBe('tok-novo'.length);
+    expect(ui.mercadoPagoPublicKeyLength).toBe('pk-nova'.length);
+    expect(ui.mercadoPagoWebhookSecretLength).toBe(0);
+    expect(ui.mercadoPagoStoreAccessTokenConfigured).toBe(true);
+    expect(ui.mercadoPagoPublicKeyConfigured).toBe(true);
   });
 });

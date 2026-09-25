@@ -26,6 +26,7 @@ import SelectionBottomBar from './components/SelectionBottomBar';
 import MySelectionPanel from './components/MySelectionPanel';
 import { useMenuSelection } from './selection/useMenuSelection';
 import { DIGITAL_MENU_EVENTS, trackDigitalMenuEvent } from './selection/menuSelectionAnalytics';
+import { WEPER_COMMERCIAL_URL } from '../../config/weperSite';
 import './PublicMenu.css';
 
 function resolvePublicImage(image) {
@@ -287,6 +288,18 @@ export default function PublicMenu() {
             </section>
           ))
         )}
+        <p className="public-menu-credit">
+          <span className="public-menu-credit-prefix">Cardápio digital por</span>
+          {' '}
+          <a
+            className="public-menu-credit-link"
+            href={WEPER_COMMERCIAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            weper <span aria-hidden="true">↗</span>
+          </a>
+        </p>
       </Container>
 
       <SelectionBottomBar
