@@ -1,0 +1,24 @@
+# Testa o frontend. Não faz deploy.
+name: CI
+
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Instalar
+        run: npm ci
+      - name: Testes
+        env:
+          CI: "true"
+        run: npm test -- --watchAll=false
