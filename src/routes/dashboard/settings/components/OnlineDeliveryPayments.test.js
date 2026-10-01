@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { OnlineDeliveryPayments } from './OnlineDeliveryPayments';
-import { secretInputMask } from '../../../../services/paymentConfigService';
+import { CLEAR_STORED_SECRET, secretInputMask } from '../../../../services/paymentConfigService';
 
 function renderSection(settings = {}, onSettingChange = jest.fn(), onSave = jest.fn()) {
   return render(
@@ -44,7 +44,7 @@ describe('OnlineDeliveryPayments', () => {
     expect(screen.getByLabelText('Public Key')).toHaveValue(secretInputMask(20));
     expect(screen.getByLabelText('Webhook secret')).toHaveValue(secretInputMask(16));
     expect(screen.getByLabelText('Access Token')).toHaveAttribute('placeholder', 'Configurado');
-    expect(screen.getAllByText(/Já configurado\. Preencha só para substituir\./).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Já configurado\. Clique no campo para substituir\./).length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByDisplayValue(/APP_USR|TEST-|access_token/i)).not.toBeInTheDocument();
   });
 
@@ -109,6 +109,22 @@ describe('OnlineDeliveryPayments', () => {
     }, onSettingChange);
     fireEvent.focus(screen.getByLabelText('Access Token'));
     expect(onSettingChange).toHaveBeenCalledWith('mercadoPagoAccessToken', null, '');
+    expect(screen.getByLabelText('Access Token')).toHaveValue('');
+  });
+
+  it('Limpar remove a máscara e marca o segredo para apagar', () => {
+    const onSettingChange = jest.fn();
+    renderSection({
+      mercadoPagoConfigured: true,
+      mercadoPagoWebhookSecretConfigured: true,
+      mercadoPagoEnvironment: 'test',
+      mercadoPagoWebhookSecretLength: 16,
+      mercadoPagoWebhookSecret: '',
+    }, onSettingChange);
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar Webhook secret' }));
+    expect(onSettingChange).toHaveBeenCalledWith('mercadoPagoWebhookSecret', null, CLEAR_STORED_SECRET);
+    expect(screen.getByLabelText('Webhook secret')).toHaveValue('');
+    expect(screen.getByText(/Será removido ao salvar/)).toBeInTheDocument();
   });
 
   it('permite substituir a máscara digitando um valor novo', () => {

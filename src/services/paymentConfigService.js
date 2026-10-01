@@ -262,9 +262,16 @@ export function isSecretInputMask(value) {
   return /^[•*]+$/.test(trimmed);
 }
 
+/** Pedido para apagar o segredo gravado. Não é um token. */
+export const CLEAR_STORED_SECRET = '\u0000';
+
+export function isClearStoredSecret(value) {
+  return String(value ?? '') === CLEAR_STORED_SECRET;
+}
+
 /** Só envia segredo novo; nunca máscara, placeholder ou vazio. */
 export function newSecretOrOmit(value) {
-  if (value == null) return undefined;
+  if (value == null || isClearStoredSecret(value)) return undefined;
   const trimmed = String(value).trim();
   if (!trimmed) return undefined;
   if (isSecretInputMask(trimmed)) return undefined;
@@ -313,9 +320,9 @@ export function toPaymentPayload(ui) {
     payload.infinitePayHandle = ui.infinitePayHandle || '';
     payload.infinitePayDocument = ui.infinitePayDocument || '';
   }
-  const accessToken = newSecretOrOmit(ui.mercadoPagoAccessToken);
-  const publicKey = newSecretOrOmit(ui.mercadoPagoPublicKey);
-  const webhookSecret = newSecretOrOmit(ui.mercadoPagoWebhookSecret);
+  const accessToken = secretPayload(ui.mercadoPagoAccessToken);
+  const publicKey = secretPayload(ui.mercadoPagoPublicKey);
+  const webhookSecret = secretPayload(ui.mercadoPagoWebhookSecret);
   if (accessToken !== undefined) payload.mercadoPagoAccessToken = accessToken;
   if (publicKey !== undefined) payload.mercadoPagoPublicKey = publicKey;
   if (webhookSecret !== undefined) payload.mercadoPagoWebhookSecret = webhookSecret;
@@ -344,11 +351,23 @@ const SAVED_SECRET_FIELDS = [
  * O servidor não devolve o segredo. Campo vazio ou máscara mantém o length anterior;
  * valor novo preenche o length quando a resposta ainda veio zerada. O plaintext não fica no estado.
  */
+function secretPayload(value) {
+  if (isClearStoredSecret(value)) return CLEAR_STORED_SECRET;
+  return newSecretOrOmit(value);
+}
+
 export function hydrateSavedSecretLengths(ui = {}, submitted = {}) {
   const next = { ...ui };
   SAVED_SECRET_FIELDS.forEach(({ valueKey, lengthKey, flags }) => {
-    const secret = newSecretOrOmit(submitted[valueKey]);
     next[valueKey] = '';
+    if (isClearStoredSecret(submitted[valueKey])) {
+      next[lengthKey] = 0;
+      flags.forEach((flag) => {
+        next[flag] = false;
+      });
+      return;
+    }
+    const secret = newSecretOrOmit(submitted[valueKey]);
     if (secret) {
       if (!(Number(next[lengthKey]) > 0)) {
         next[lengthKey] = secret.length;

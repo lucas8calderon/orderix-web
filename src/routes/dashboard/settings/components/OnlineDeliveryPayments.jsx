@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -6,9 +6,16 @@ import {
   Switch,
   FormControlLabel,
   MenuItem,
+  InputAdornment,
+  Button,
 } from '@mui/material';
 import { CreditCardOutlined as CreditCardIcon } from '@mui/icons-material';
-import { isSecretInputMask, secretInputMask } from '../../../../services/paymentConfigService';
+import {
+  CLEAR_STORED_SECRET,
+  isClearStoredSecret,
+  isSecretInputMask,
+  secretInputMask,
+} from '../../../../services/paymentConfigService';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
 export function OnlineDeliveryPayments({
@@ -132,11 +139,13 @@ function onEnvironmentChange(nextEnvironment, settings, onSettingChange) {
 }
 
 function isUnsetSecret(value) {
+  if (isClearStoredSecret(value)) return true;
   const trimmed = String(value || '').trim();
   return !trimmed || isSecretInputMask(trimmed);
 }
 
 function hasTypedSecret(value) {
+  if (isClearStoredSecret(value)) return false;
   const trimmed = String(value || '').trim();
   return Boolean(trimmed) && !isSecretInputMask(trimmed);
 }
@@ -173,29 +182,42 @@ function hasMercadoPagoWebhookSecret(settings, environment = settings.mercadoPag
 }
 
 /**
- * Máscara com exatamente N caracteres (length da API). type=text + value controlado
- * para a contagem visual ser confiável. Foco limpa a máscara para digitar valor novo.
+ * A máscara é só visual. O valor controlado fica vazio enquanto ela aparece,
+ * então backspace não a remove. Ao focar, o campo abre vazio para digitar outro segredo.
+ * Limpar marca a remoção do valor gravado.
  */
 function SecretField({ label, value, configured, configuredLength, onChange }) {
+  const [editing, setEditing] = useState(false);
+  const [markedClear, setMarkedClear] = useState(false);
   const length = Number(configuredLength) || 0;
   const mask = secretInputMask(length);
-  const showingMask = Boolean(configured) && length > 0 && isUnsetSecret(value);
-  const displayValue = showingMask ? mask : (value || '');
-  const showHelper = Boolean(configured) && length > 0;
+  const cleared = markedClear || isClearStoredSecret(value);
+  const showingMask = !editing && !cleared && Boolean(configured) && length > 0 && isUnsetSecret(value);
+  const displayValue = showingMask ? mask : (cleared ? '' : (value || ''));
+  const showHelper = showingMask;
 
-  const handleFocus = () => {
+  const openForEdit = () => {
+    setEditing(true);
     if (showingMask) {
       onChange('');
     }
   };
 
   const handleChange = (event) => {
+    setEditing(true);
+    setMarkedClear(false);
     const next = event.target.value;
-    if (isSecretInputMask(next)) {
+    if (isSecretInputMask(next) || isClearStoredSecret(next)) {
       onChange('');
       return;
     }
     onChange(next);
+  };
+
+  const handleClear = () => {
+    setEditing(true);
+    setMarkedClear(true);
+    onChange(CLEAR_STORED_SECRET);
   };
 
   return (
@@ -203,14 +225,35 @@ function SecretField({ label, value, configured, configuredLength, onChange }) {
       label={label}
       type="text"
       value={displayValue}
-      onFocus={handleFocus}
+      onFocus={openForEdit}
       onChange={handleChange}
       className="setting-input"
       fullWidth
       autoComplete="new-password"
-      placeholder={showHelper ? 'Configurado' : undefined}
-      helperText={showHelper ? 'Já configurado. Preencha só para substituir.' : undefined}
+      placeholder={showingMask ? 'Configurado' : undefined}
+      helperText={
+        cleared
+          ? 'Será removido ao salvar. Digite outro valor para substituir.'
+          : showHelper
+            ? 'Já configurado. Clique no campo para substituir.'
+            : undefined
+      }
       inputProps={{ 'aria-label': label, spellCheck: false }}
+      InputProps={showingMask || cleared ? {
+        endAdornment: (
+          <InputAdornment position="end">
+            <Button
+              type="button"
+              size="small"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={handleClear}
+              aria-label={`Limpar ${label}`}
+            >
+              Limpar
+            </Button>
+          </InputAdornment>
+        ),
+      } : undefined}
     />
   );
 }

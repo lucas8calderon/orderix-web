@@ -1,4 +1,5 @@
 import {
+  CLEAR_STORED_SECRET,
   hydrateSavedSecretLengths,
   isQuickCounterProvider,
   paymentMethodsFromConfig,
@@ -169,6 +170,21 @@ describe('channel charge timing', () => {
     expect(payload.mercadoPagoPublicKey).toBeUndefined();
     expect(payload.mercadoPagoWebhookSecret).toBeUndefined();
     expect(payload.mercadoPagoEnvironment).toBe('test');
+  });
+
+  it('toPaymentPayload envia a marca de remoção do segredo', () => {
+    const payload = toPaymentPayload({
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      mercadoPagoEnvironment: 'test',
+      mercadoPagoWebhookSecret: CLEAR_STORED_SECRET,
+      onlinePixEnabled: true,
+    });
+    expect(payload.mercadoPagoWebhookSecret).toBe(CLEAR_STORED_SECRET);
+    expect(payload.mercadoPagoAccessToken).toBeUndefined();
   });
 
   it('toPaymentPayload omite máscara de qualquer comprimento e envia só valor novo', () => {
