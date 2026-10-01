@@ -150,7 +150,9 @@ describe('DeliveryTracking', () => {
     renderTracking('token-abc');
 
     expect(await screen.findByText('Pedido não encontrado')).toBeInTheDocument();
-    expect(readLastOrder('padaria')).toBeNull();
+    await waitFor(() => {
+      expect(readLastOrder('padaria')).toBeNull();
+    });
     expect(readLastOrder('outra')?.token).toBe('token-outro');
   });
 
