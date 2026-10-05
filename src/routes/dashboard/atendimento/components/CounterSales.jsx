@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { Box, Card, CardActionArea, CardContent, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, CardActionArea, CardContent, Grid, Typography } from '@mui/material';
 import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
 import { formatCurrency } from '../../../../services/accessControl';
@@ -12,7 +12,7 @@ export function isOpenCounterOrder(order) {
   return status !== 'CLOSED' && status !== 'CANCELLED';
 }
 
-export function CounterSales({ onOpenAccount, floorVersion = 0 }) {
+export function CounterSales({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,10 +50,13 @@ export function CounterSales({ onOpenAccount, floorVersion = 0 }) {
 
   return (
     <>
-      <Box className="atendimento-section-header">
+      <Box className="atendimento-section-header" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
         <Typography variant="h5" component="h2" className="atendimento-section-title">
           Balcão
         </Typography>
+        <Button onClick={() => onPlaceOrder?.({ kind: 'counter' })} sx={{ textTransform: 'none' }}>
+          Novo pedido
+        </Button>
       </Box>
       {error ? (
         <EmptyState title="Não foi possível carregar o balcão" description={error} />
@@ -61,7 +64,7 @@ export function CounterSales({ onOpenAccount, floorVersion = 0 }) {
       {!error && orders.length === 0 ? (
         <EmptyState
           title="Nenhum pedido aberto no balcão"
-          description="Pedidos lançados no aplicativo Android aparecem aqui para o caixa fechar."
+          description="Lance um pedido aqui ou feche os que vieram do aplicativo Android."
         />
       ) : null}
       <Grid container spacing={2}>

@@ -15,7 +15,7 @@ import { ComandaFormDialog } from './components/ComandaFormDialog';
 import { getCurrentUser } from '../../../services/session';
 import { canManageFloor } from '../../../services/accessControl';
 
-export function Comandas({ onOpenAccount, floorVersion = 0 }) {
+export function Comandas({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
   const {
     setBlockComandaFields,
     setOnAddComandaResult,
@@ -191,7 +191,7 @@ export function Comandas({ onOpenAccount, floorVersion = 0 }) {
       <Grid container spacing={2}>
         {comandas.map((comanda) => (
           <Grid item key={comanda.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-            <CardComanda comanda={comanda} onOpen={() => handleSelectedComanda(comanda)} canManage={canManage} />
+            <CardComanda comanda={comanda} onOpen={() => handleSelectedComanda(comanda)} onPlace={() => onPlaceOrder?.({ kind: 'comanda', id: comanda.id, number: comanda.number })} canManage={canManage} />
           </Grid>
         ))}
       </Grid>

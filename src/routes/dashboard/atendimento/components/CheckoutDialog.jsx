@@ -119,7 +119,7 @@ export function getCloseAccountConfirmCopy(target, options = {}) {
   };
 }
 
-export function CheckoutDialog({ open, target, onClose, onPaid }) {
+export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, onAddProducts }) {
   const dialogProps = useDialogResponsiveProps({
     paperSx: {
       maxWidth: 640,
@@ -207,7 +207,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     return () => {
       cancelled = true;
     };
-  }, [open, target]);
+  }, [open, target, refreshKey]);
 
   useEffect(() => {
     if (!open) {
@@ -573,6 +573,11 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
           >
             Fechar
           </Button>
+          {onAddProducts ? (
+            <Button variant="outlined" onClick={() => onAddProducts(target)} disabled={closing}>
+              Adicionar produtos
+            </Button>
+          ) : null}
           {!empty && (
             <Button
               variant="contained"

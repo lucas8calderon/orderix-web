@@ -16,7 +16,7 @@ import { TableQRCodeDialog } from "../menu/components/TableQRCodeDialog";
 import { getCurrentUser } from "../../../services/session";
 import { canManageFloor } from "../../../services/accessControl";
 
-export function Tables({ onOpenAccount, floorVersion = 0 }) {
+export function Tables({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
   const {
     showTables,
     setShowTables,
@@ -214,7 +214,7 @@ export function Tables({ onOpenAccount, floorVersion = 0 }) {
           .sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0))
           .map((table) => (
             <Grid item key={table.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-              <CardTable table={table} onShowQRCode={handleShowQRCode} onOpen={() => handleSelectedTable(table)} canManage={canManage} />
+              <CardTable table={table} onShowQRCode={handleShowQRCode} onOpen={() => handleSelectedTable(table)} onPlace={() => onPlaceOrder?.({ kind: 'table', id: table.id, number: table.number })} canManage={canManage} />
             </Grid>
           ))}
       </Grid>
