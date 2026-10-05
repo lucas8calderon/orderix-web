@@ -8,6 +8,7 @@ import { Kitchen } from './kitchen/Kitchen';
 import { Employees } from './employees/Employees';
 import { WaiterHome } from './WaiterHome';
 import { Settings } from './settings/Settings';
+import InventoryPanel from './inventory/Inventory';
 import { getCurrentUser, logout } from '../../services/authService';
 import { getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
 import { AppShell } from '../../commons/components/AppShell';
@@ -17,7 +18,7 @@ import './Workspace.css';
 const GROUPS = [
   { label: 'Visão geral', slugs: ['dashboard'] },
   { label: 'Operação', slugs: ['atendimento', 'cozinha', 'garcom'] },
-  { label: 'Gestão', slugs: ['produtos', 'colaboradores'] },
+  { label: 'Gestão', slugs: ['produtos', 'estoque', 'colaboradores'] },
   { label: 'Sistema', slugs: ['configuracoes'] },
 ];
 
@@ -45,6 +46,7 @@ export default function Dashboard() {
     dashboard: <DashboardGerencial onNavigate={goToScreen} />,
     colaboradores: <Employees />,
     produtos: <Menu />,
+    estoque: <InventoryPanel />,
     atendimento: <Atendimento />,
     cozinha: <Kitchen initialFilter={navIntent?.kitchenFilter} />,
     garcom: <WaiterHome user={user} />,

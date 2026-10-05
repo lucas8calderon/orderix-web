@@ -24,3 +24,11 @@ export function closeComandaAccount(comandaId, payload, idempotencyKey) {
   }
   return axios.post(`${API_BASE_URL}/comandas/${comandaId}/orders/close`, payload, { headers });
 }
+
+export function closeCounterOrder(orderId, payload, idempotencyKey) {
+  const headers = {};
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
+  return axios.post(`${API_BASE_URL}/counter/orders/${orderId}/close`, payload, { headers });
+}

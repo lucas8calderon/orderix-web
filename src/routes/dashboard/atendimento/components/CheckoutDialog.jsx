@@ -34,6 +34,7 @@ import {
 } from '../../../../services/paymentConfigService';
 import {
   closeComandaAccount,
+  closeCounterOrder,
   closeTableAccount,
   getComandaAccount,
   getTableAccount,
@@ -88,31 +89,33 @@ const confirmPaperSx = {
 
 export function getCloseAccountConfirmCopy(target, options = {}) {
   const isComanda = target?.kind === 'comanda';
+  const isCounter = target?.kind === 'counter';
   const number = target?.number != null && String(target.number).trim() !== ''
     ? String(target.number).trim()
     : '';
-  const subject = number
-    ? `${isComanda ? 'comanda' : 'mesa'} ${number}`
-    : (isComanda ? 'comanda' : 'mesa');
+  const noun = isCounter ? 'pedido de balcão' : isComanda ? 'comanda' : 'mesa';
+  const subject = number ? `${noun} ${number}` : noun;
+  const article = isCounter ? 'o' : 'a';
   const mode = options.paymentMode || 'MANUAL_CONFIRMATION';
   const totalLabel = options.totalLabel || '';
+  const releaseVerb = isCounter ? 'fechado' : 'liberada';
 
   if (mode === 'ORDER_ONLY') {
     return {
-      title: isComanda ? 'Liberar comanda?' : 'Liberar mesa?',
-      description: `O Weper não cobra neste canal. Ao confirmar, a ${subject} será liberada. Esta ação não pode ser desfeita.`,
+      title: isCounter ? 'Fechar pedido?' : isComanda ? 'Liberar comanda?' : 'Liberar mesa?',
+      description: `O Weper não cobra neste canal. Ao confirmar, ${article} ${subject} será ${releaseVerb}. Esta ação não pode ser desfeita.`,
     };
   }
   if (mode === 'INTEGRATED_PAYMENT') {
     return {
-      title: isComanda ? 'Fechar comanda?' : 'Fechar mesa?',
-      description: `Só feche se o pagamento já foi aprovado no terminal. A ${subject} será liberada e os dados desta conta serão limpos.`,
+      title: isCounter ? 'Fechar pedido de balcão?' : isComanda ? 'Fechar comanda?' : 'Fechar mesa?',
+      description: `Só feche se o pagamento já foi aprovado no terminal. ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb} e os dados desta conta serão limpos.`,
     };
   }
 
   return {
     title: 'Confirma que o pagamento foi realizado?',
-    description: `Confirma que o pagamento de ${totalLabel || 'R$ 0,00'} foi realizado fora do Weper? A ${subject} será liberada. O Weper não processou esta transação.`,
+    description: `Confirma que o pagamento de ${totalLabel || 'R$ 0,00'} foi realizado fora do Weper? ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb}. O Weper não processou esta transação.`,
   };
 }
 
@@ -145,7 +148,7 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     fullScreenOnMobile: false,
     paperSx: confirmPaperSx,
   });
-  const kindLabel = target?.kind === 'comanda' ? 'Comanda' : 'Mesa';
+  const kindLabel = target?.kind === 'comanda' ? 'Comanda' : target?.kind === 'counter' ? 'Pedido' : 'Mesa';
   const title = target ? `${kindLabel} ${target.number ?? ''}` : '';
 
   useEffect(() => {
@@ -165,14 +168,22 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     const request =
       target.kind === 'comanda'
         ? getComandaAccount(target.id)
-        : getTableAccount(target.id);
+        : getTableAccount(target.kind === 'counter' ? 999 : target.id);
 
     request
       .then((response) => {
         if (cancelled) return;
         const data = response.data || {};
-        const orders = data.orders || [];
-        const closed = String(data.status || '').toUpperCase() === 'CLOSED';
+        const orders = target.kind === 'counter'
+          ? (data.orders || []).filter((order) => Number(order.id) === Number(target.id) && String(order.status || 'ACTIVE').toUpperCase() !== 'CLOSED')
+          : (data.orders || []);
+        const closed = target.kind === 'counter'
+          ? orders.length === 0
+          : String(data.status || '').toUpperCase() === 'CLOSED';
+        if (target.kind === 'counter') {
+          data.orders = orders;
+          data.groupOrderId = null;
+        }
         if (closed || orders.length === 0) {
           setEmpty(true);
           setAccount(data);
@@ -224,7 +235,8 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
         ));
         const rate = Number(dto.serviceFeePercent);
         setServiceFeeRate(Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0.1);
-        setPaymentMode(channelPaymentMode(dto, target?.kind === 'comanda' ? 'comanda' : 'table'));
+        const channel = target?.kind === 'comanda' ? 'comanda' : target?.kind === 'counter' ? 'counter' : 'table';
+        setPaymentMode(channelPaymentMode(dto, channel));
       })
       .catch(() => {
         if (cancelled) return;
@@ -277,11 +289,15 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     const intentKey = newUuid();
     const closeKey = newUuid();
 
-    const closeAccount = () => (
-      target.kind === 'comanda'
-        ? closeComandaAccount(target.id, payload, closeKey)
-        : closeTableAccount(target.id, payload, closeKey)
-    );
+    const closeAccount = () => {
+      if (target.kind === 'comanda') {
+        return closeComandaAccount(target.id, payload, closeKey);
+      }
+      if (target.kind === 'counter') {
+        return closeCounterOrder(target.id, payload, closeKey);
+      }
+      return closeTableAccount(target.id, payload, closeKey);
+    };
 
     const settle = () => {
       if (paymentMode === 'ORDER_ONLY') {
@@ -304,7 +320,8 @@ export function CheckoutDialog({ open, target, onClose, onPaid }) {
     settle()
       .then((approved) => {
         if (paymentMode === 'MANUAL_CONFIRMATION' && !isSettledPaymentStatus(approved?.status)) {
-          throw new Error('Pagamento não confirmado. A mesa não foi liberada.');
+          const held = target.kind === 'counter' ? 'O pedido não foi fechado.' : 'A conta não foi liberada.';
+          throw new Error(`Pagamento não confirmado. ${held}`);
         }
         setPaymentStatus(
           paymentMode === 'ORDER_ONLY'

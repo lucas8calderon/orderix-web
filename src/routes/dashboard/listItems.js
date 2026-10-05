@@ -6,6 +6,7 @@ import SoupKitchenOutlinedIcon from '@mui/icons-material/SoupKitchenOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import RoomServiceOutlinedIcon from '@mui/icons-material/RoomServiceOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import { PATHS, ROLES } from '../../services/accessControl';
 
 export const dashboardItems = [
@@ -29,6 +30,13 @@ export const dashboardItems = [
     path: PATHS.APP_COZINHA,
     icon: <SoupKitchenOutlinedIcon />,
     roles: [ROLES.ADMIN, ROLES.STORE_ADMIN, ROLES.KITCHEN],
+  },
+  {
+    title: 'Estoque',
+    slug: 'estoque',
+    path: PATHS.APP_ESTOQUE,
+    icon: <Inventory2OutlinedIcon />,
+    roles: [ROLES.ADMIN, ROLES.STORE_ADMIN],
   },
   {
     title: 'Catálogo',

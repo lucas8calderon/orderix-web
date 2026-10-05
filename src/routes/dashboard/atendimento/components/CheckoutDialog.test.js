@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { CheckoutDialog, getCloseAccountConfirmCopy } from './CheckoutDialog';
 import {
   closeComandaAccount,
+  closeCounterOrder,
   closeTableAccount,
   getComandaAccount,
   getTableAccount,
@@ -13,6 +14,7 @@ import {
 
 jest.mock('../service/accountService', () => ({
   closeComandaAccount: jest.fn(() => Promise.resolve({ data: {} })),
+  closeCounterOrder: jest.fn(() => Promise.resolve({ data: {} })),
   closeTableAccount: jest.fn(() => Promise.resolve({ data: {} })),
   getComandaAccount: jest.fn(),
   getTableAccount: jest.fn(),
@@ -150,5 +152,49 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     expect(closeComandaAccount).toHaveBeenCalledWith(3, expect.objectContaining({
       paymentMethod: 'PIX',
     }), expect.any(String));
+  });
+
+  it('fecha o pedido de balcão pelo endpoint individual', async () => {
+    getTableAccount.mockResolvedValue({
+      data: {
+        status: 'ACTIVE',
+        orders: [
+          { id: 23, status: 'ACTIVE', products: [{ id: 7, name: 'Café', value: 5, quantity: 1 }] },
+          { id: 24, status: 'CLOSED', products: [{ id: 8, name: 'Suco', value: 8, quantity: 1 }] },
+        ],
+      },
+    });
+    getStorePaymentConfig.mockResolvedValue({
+      data: {
+        acceptedMethods: ['CASH'],
+        serviceFeePercent: 0,
+        counterPaymentMode: 'MANUAL_CONFIRMATION',
+      },
+    });
+
+    render(
+      <CheckoutDialog
+        open
+        target={{ kind: 'counter', id: 23, number: 23 }}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(/Café/)).toBeInTheDocument();
+    expect(screen.queryByText(/Suco/)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' })).toBeEnabled();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
+
+    await waitFor(() => {
+      expect(closeCounterOrder).toHaveBeenCalledWith(23, expect.objectContaining({
+        paymentMethod: 'CASH',
+      }), expect.any(String));
+    });
+    expect(closeTableAccount).not.toHaveBeenCalled();
+    expect(getTableAccount).toHaveBeenCalledWith(999);
   });
 });
