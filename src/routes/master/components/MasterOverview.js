@@ -203,22 +203,22 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
 
   return (
     <Box>
-      <PageHeader title="Visão geral da plataforma" description="Acompanhe lojas, assinaturas e receita recorrente atual." />
+      <PageHeader title="Visão geral da plataforma" description="Acompanhe estabelecimentos, assinaturas e receita recorrente atual." />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
-            title="Total de lojas"
+            title="Total de estabelecimentos"
             value={totalStores}
-            hint="Lojas cadastradas na plataforma"
+            hint="Estabelecimentos cadastrados na plataforma"
             icon={<StorefrontIcon />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
-            title="Lojas ativas"
+            title="Estabelecimentos ativos"
             value={activeStores}
-            hint={totalStores ? `${activeRate}% da base` : 'Sem lojas ainda'}
+            hint={totalStores ? `${activeRate}% da base` : 'Nenhum estabelecimento ainda'}
             icon={<CheckCircleOutlineIcon />}
             accent="rgba(10, 104, 71, 0.12)"
           />
@@ -253,13 +253,13 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
 
         <Grid item xs={12} md={4}>
           <ChartCard
-            title="Status das lojas"
+            title="Status dos estabelecimentos"
             subtitle="Saúde da base de clientes"
           >
             {statusDistribution.length === 0 ? (
               <Box sx={{ py: 6, textAlign: 'center' }}>
                 <Typography variant="body2" color="text.secondary">
-                  Nenhuma loja para exibir
+                  Nenhum estabelecimento para exibir
                 </Typography>
               </Box>
             ) : (
@@ -286,7 +286,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value, name) => [`${value} loja(s)`, name]}
+                      formatter={(value, name) => [`${value} estabelecimento(s)`, name]}
                     />
                     <Legend
                       verticalAlign="bottom"
@@ -324,10 +324,10 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
         >
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              Lojas Recentes
+              Estabelecimentos recentes
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Últimas lojas cadastradas na plataforma
+              Últimos estabelecimentos cadastrados na plataforma
             </Typography>
           </Box>
           <Button
@@ -335,7 +335,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
             onClick={onViewAllStores}
             sx={{ textTransform: 'none', color: PRIMARY, fontWeight: 600, alignSelf: { xs: 'flex-start', sm: 'center' } }}
           >
-            Ver todas as lojas
+            Ver todos
           </Button>
         </Stack>
 
@@ -343,7 +343,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
           <Table size="small" sx={{ minWidth: 560 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Loja</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Estabelecimento</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Plano</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Valor</TableCell>
@@ -373,7 +373,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
               {recentStores.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    Nenhuma loja cadastrada ainda.
+                    Nenhum estabelecimento cadastrado ainda.
                   </TableCell>
                 </TableRow>
               )}
@@ -383,7 +383,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
         <Stack spacing={1.5} sx={{ display: { xs: 'flex', sm: 'none' }, p: 1.5 }}>
           {recentStores.length === 0 && (
             <Typography align="center" sx={{ py: 3 }} color="text.secondary">
-              Nenhuma loja cadastrada ainda.
+              Nenhum estabelecimento cadastrado ainda.
             </Typography>
           )}
           {recentStores.map((store) => (

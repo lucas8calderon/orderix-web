@@ -31,7 +31,6 @@ import AddIcon from '@mui/icons-material/Add';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../commons/components/AppShell';
@@ -51,7 +50,6 @@ import { useMasterStores } from './hook/useMasterStores';
 import { createStore, updateStore } from './service/storesService';
 import { MasterOverview, statusColor } from './components/MasterOverview';
 import { MasterPlans } from './components/MasterPlans';
-import { MasterSubscriptions } from './components/MasterSubscriptions';
 import { CrmBoard } from './crm/CrmBoard';
 import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
 import { getCurrentUser } from '../../services/session';
@@ -121,14 +119,14 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" {...dialogProps}>
-      <DialogTitle>{isEdit ? 'Editar loja' : 'Cadastrar loja'}</DialogTitle>
+      <DialogTitle>{isEdit ? 'Editar estabelecimento' : 'Cadastrar estabelecimento'}</DialogTitle>
       <DialogContent>
         <Typography variant="subtitle2" sx={{ mt: 1, mb: 1.5 }}>
-          Informações da loja
+          Informações do estabelecimento
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Nome da loja" value={form.name} onChange={handleChange('name')} required />
+            <TextField fullWidth label="Nome do estabelecimento" value={form.name} onChange={handleChange('name')} required />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField fullWidth label="Nome do responsável" value={form.responsibleName} onChange={handleChange('responsibleName')} />
@@ -137,7 +135,7 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
             <TextField fullWidth label="Telefone" value={form.phone} onChange={handleChange('phone')} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="E-mail da loja" value={form.email} onChange={handleChange('email')} />
+            <TextField fullWidth label="E-mail do estabelecimento" value={form.email} onChange={handleChange('email')} />
           </Grid>
         </Grid>
 
@@ -251,17 +249,15 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
 
 const ADMIN_SECTIONS = {
   dashboard: PATHS.ADMIN_DASHBOARD,
-  restaurantes: PATHS.ADMIN_RESTAURANTES,
+  estabelecimentos: PATHS.ADMIN_ESTABELECIMENTOS,
   planos: PATHS.ADMIN_PLANOS,
-  assinaturas: PATHS.ADMIN_ASSINATURAS,
   crm: PATHS.ADMIN_CRM,
 };
 
 const ADMIN_TITLES = {
   dashboard: 'Dashboard',
-  restaurantes: 'Restaurantes',
+  estabelecimentos: 'Estabelecimentos',
   planos: 'Planos',
-  assinaturas: 'Assinaturas',
   crm: 'CRM',
 };
 
@@ -299,7 +295,7 @@ export default function MasterDashboard() {
 
   const handleSubmit = async (form) => {
     if (!form.name?.trim() || !form.adminEmail?.trim()) {
-      setToast({ open: true, message: 'Informe nome da loja e e-mail de acesso.', severity: 'error' });
+      setToast({ open: true, message: 'Informe o nome do estabelecimento e o e-mail de acesso.', severity: 'error' });
       return;
     }
     if (!editingStore && (!form.adminPassword || form.adminPassword.length < 6)) {
@@ -328,16 +324,16 @@ export default function MasterDashboard() {
 
       if (editingStore?.id) {
         await updateStore(editingStore.id, payload);
-        setToast({ open: true, message: 'Loja atualizada com sucesso.', severity: 'success' });
+        setToast({ open: true, message: 'Estabelecimento atualizado.', severity: 'success' });
       } else {
         await createStore(payload);
-        setToast({ open: true, message: 'Loja cadastrada com sucesso.', severity: 'success' });
+        setToast({ open: true, message: 'Estabelecimento cadastrado.', severity: 'success' });
       }
       setDialogOpen(false);
       await refetch();
-      navigate(PATHS.ADMIN_RESTAURANTES);
+      navigate(PATHS.ADMIN_ESTABELECIMENTOS);
     } catch (err) {
-      const message = err?.response?.data?.message || 'Não foi possível salvar a loja.';
+      const message = err?.response?.data?.message || 'Não foi possível salvar o estabelecimento.';
       setToast({ open: true, message, severity: 'error' });
     } finally {
       setSaving(false);
@@ -352,9 +348,8 @@ export default function MasterDashboard() {
     {
       label: 'Gestão',
       items: [
-        { key: 'restaurantes', title: 'Restaurantes', icon: <StorefrontOutlinedIcon />, to: PATHS.ADMIN_RESTAURANTES, selected: section === 'restaurantes' },
+        { key: 'estabelecimentos', title: 'Estabelecimentos', icon: <StorefrontOutlinedIcon />, to: PATHS.ADMIN_ESTABELECIMENTOS, selected: section === 'estabelecimentos' },
         { key: 'planos', title: 'Planos', icon: <SellOutlinedIcon />, to: PATHS.ADMIN_PLANOS, selected: section === 'planos' },
-        { key: 'assinaturas', title: 'Assinaturas', icon: <ReceiptLongOutlinedIcon />, to: PATHS.ADMIN_ASSINATURAS, selected: section === 'assinaturas' },
       ],
     },
     {
@@ -362,6 +357,10 @@ export default function MasterDashboard() {
       items: [{ key: 'crm', title: 'CRM', icon: <GroupsOutlinedIcon />, to: PATHS.ADMIN_CRM, selected: section === 'crm' }],
     },
   ];
+
+  if (section === 'restaurantes' || section === 'assinaturas') {
+    return <Navigate to={PATHS.ADMIN_ESTABELECIMENTOS} replace />;
+  }
 
   if (!section || !ADMIN_SECTIONS[section]) {
     return <Navigate to={getPostLoginPath(user)} replace />;
@@ -400,7 +399,7 @@ export default function MasterDashboard() {
           <MasterOverview
             summary={summary}
             stores={stores}
-            onViewAllStores={() => goToSection('restaurantes')}
+            onViewAllStores={() => goToSection('estabelecimentos')}
           />
         )}
 
@@ -408,13 +407,9 @@ export default function MasterDashboard() {
           <MasterPlans stores={stores} />
         )}
 
-        {!loading && !error && section === 'assinaturas' && (
-          <MasterSubscriptions stores={stores} />
-        )}
-
-        {!loading && !error && section === 'restaurantes' && (
+        {!loading && !error && section === 'estabelecimentos' && (
           <>
-            <PageHeader title="Restaurantes" description="Gerencie os estabelecimentos e seus acessos à Weper." actions={<Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Cadastrar loja</Button>} />
+            <PageHeader title="Estabelecimentos" description="Gerencie os estabelecimentos, o acesso e a assinatura de cada um." actions={<Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>Cadastrar estabelecimento</Button>} />
 
             <Paper
               elevation={0}
@@ -424,7 +419,7 @@ export default function MasterDashboard() {
               <Table size="small" sx={{ minWidth: 720 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Loja</TableCell>
+                    <TableCell>Estabelecimento</TableCell>
                     <TableCell>Responsável</TableCell>
                     <TableCell>Plano</TableCell>
                     <TableCell>Valor</TableCell>
@@ -462,7 +457,7 @@ export default function MasterDashboard() {
                   {stores.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                        <EmptyState title="Cadastre a primeira loja" description="Adicione um estabelecimento para configurar seu acesso e assinatura." actionLabel="Cadastrar loja" onAction={openCreate} />
+                        <EmptyState title="Cadastre o primeiro estabelecimento" description="Adicione um estabelecimento para configurar o acesso e a assinatura." actionLabel="Cadastrar estabelecimento" onAction={openCreate} />
                       </TableCell>
                     </TableRow>
                   )}
@@ -473,7 +468,7 @@ export default function MasterDashboard() {
               <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' }, p: 1.5 }}>
                 {stores.length === 0 && (
                   <Typography align="center" sx={{ py: 4 }} color="text.secondary">
-                    Nenhuma loja cadastrada.
+                    Nenhum estabelecimento cadastrado.
                   </Typography>
                 )}
                 {stores.map((store) => (

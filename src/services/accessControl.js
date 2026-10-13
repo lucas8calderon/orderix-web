@@ -56,6 +56,8 @@ export const PATHS = {
   APP_GARCOM: '/app/garcom',
   ADMIN: '/admin',
   ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_ESTABELECIMENTOS: '/admin/estabelecimentos',
+  /** Endereços antigos; o painel redireciona para ADMIN_ESTABELECIMENTOS. */
   ADMIN_RESTAURANTES: '/admin/restaurantes',
   ADMIN_PLANOS: '/admin/planos',
   ADMIN_ASSINATURAS: '/admin/assinaturas',
@@ -89,6 +91,7 @@ const STORE_ADMIN_APP_ROUTES = [
 
 const PLATFORM_ADMIN_ROUTES = [
   PATHS.ADMIN_DASHBOARD,
+  PATHS.ADMIN_ESTABELECIMENTOS,
   PATHS.ADMIN_RESTAURANTES,
   PATHS.ADMIN_PLANOS,
   PATHS.ADMIN_ASSINATURAS,

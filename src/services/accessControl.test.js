@@ -107,7 +107,9 @@ describe('canAccessRoute', () => {
     const master = user({ role: ROLES.MASTER, storeId: null });
     expect(canAccessRoute(master, PATHS.APP_DASHBOARD)).toBe(false);
     expect(canAccessRoute(master, PATHS.ADMIN_DASHBOARD)).toBe(true);
+    expect(canAccessRoute(master, PATHS.ADMIN_ESTABELECIMENTOS)).toBe(true);
     expect(canAccessRoute(master, PATHS.ADMIN_RESTAURANTES)).toBe(true);
+    expect(canAccessRoute(master, PATHS.ADMIN_ASSINATURAS)).toBe(true);
     expect(canAccessRoute(master, PATHS.ADMIN_CRM)).toBe(true);
     expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_CRM)).toBe(false);
   });

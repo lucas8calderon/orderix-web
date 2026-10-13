@@ -8,7 +8,7 @@ export function MasterPlans({ stores = [] }) {
 
   return (
     <Box>
-      <PageHeader title="Planos" description="Consulte a distribuição das lojas e o valor recorrente por plano." />
+      <PageHeader title="Planos" description="Consulte a distribuição dos estabelecimentos e o valor recorrente por plano." />
       <Grid container spacing={2}>
         {planIds.map((planId) => {
           const planStores = stores.filter((store) => store.plan === planId);
@@ -29,7 +29,7 @@ export function MasterPlans({ stores = [] }) {
                   {planStores.length}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  restaurantes · {formatCurrency(revenue)} recorrente
+                  estabelecimentos · {formatCurrency(revenue)} recorrente
                 </Typography>
               </Paper>
             </Grid>
