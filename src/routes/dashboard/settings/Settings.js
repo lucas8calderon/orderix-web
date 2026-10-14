@@ -26,6 +26,7 @@ import { PermissionsSection } from './components/PermissionsSection';
 import { CompanySection } from './components/CompanySection';
 import { SettingsSectionCard } from './components/SettingsSectionCard';
 import './Settings.css';
+import { SettingsFinder } from './components/SettingsFinder';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -315,6 +316,8 @@ export function Settings() {
         </div>
       </header>
 
+      <SettingsFinder onNavigate={goToSection} />
+      {settingsNav}
       {isOverview ? (
         <div className="settings-section-panel" role="tabpanel">
           <SettingsOverview
@@ -322,12 +325,11 @@ export function Settings() {
             onNavigate={goToSection}
             onSettingChange={handleSettingChange}
             saving={saving}
-            nav={settingsNav}
+
           />
         </div>
       ) : (
         <>
-          {settingsNav}
           <div className="settings-section-panel" role="tabpanel">
             {sectionContent}
           </div>

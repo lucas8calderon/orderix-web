@@ -27,7 +27,7 @@ export function SettingsSectionCard({
           <Box className="card-title-section">
             {Icon ? <Icon className="card-icon" /> : null}
             <Box className="card-title-stack">
-              <Typography className="card-title">{title}</Typography>
+              <Typography component="h2" className="card-title">{title}</Typography>
               {description ? (
                 <Typography className="card-description" variant="body2">
                   {description}

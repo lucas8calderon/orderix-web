@@ -84,11 +84,12 @@ export const SETTINGS_SEARCH = [
 ];
 
 export function searchSettings(query) {
-  const normalized = String(query || '').trim().toLowerCase();
+  const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const normalized = normalize(query);
   if (normalized.length < 2) return [];
   return SETTINGS_SEARCH.filter((entry) => (
-    entry.title.toLowerCase().includes(normalized)
-    || entry.terms.some((term) => term.includes(normalized) || normalized.includes(term))
+    normalize(entry.title).includes(normalized)
+    || entry.terms.some((term) => normalize(term).includes(normalized) || normalized.includes(normalize(term)))
   ));
 }
 

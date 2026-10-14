@@ -35,11 +35,12 @@ export function PaymentsSection({
     <SettingsSectionCard
       icon={CreditCardIcon}
       title="Pedidos e pagamentos"
-      description="Cada canal (balcão, mesa e comanda) tem modo, momento e fallback independentes. A loja define a cobrança. O aparelho só informa se o InfinitePay está disponível. O colaborador não escolhe adquirente."
+      description="Defina como e quando cobrar no balcão, nas mesas e nas comandas. Depois, escolha as formas de pagamento aceitas pela loja."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={() => onSave('paymentMethods')}
       actionDisabled={saving}
     >
+      <div className="payment-channel-grid">
       <ChannelPolicy
         title="Balcão"
         mode={settings.counterPaymentMode}
@@ -71,6 +72,7 @@ export function PaymentsSection({
         onFallbackChange={(value) => onSettingChange('comandaFallbackMode', null, value)}
       />
 
+      </div>
       {showInfinitePayFields && (
         <Box className="payment-provider-fields">
           <Typography className="setting-hint" variant="body2">
@@ -167,7 +169,7 @@ function ChannelPolicy({
       {showFallback && (
         <>
           <Typography className="setting-hint" variant="body2">
-            Integração: {providerLabel}. O APK Play executa a cobrança se o aparelho tiver o SDK.
+            Integração: {providerLabel}. A cobrança é realizada no aplicativo em um aparelho compatível.
           </Typography>
           <Box className="setting-item">
             <TextField

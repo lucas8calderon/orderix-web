@@ -30,6 +30,7 @@ export function AppShell({
   onLogout,
   onNavigate,
   flush = false,
+  className = '',
   children,
 }) {
   const isMobile = useMediaQuery('(max-width:900px)');
@@ -112,7 +113,7 @@ export function AppShell({
   );
 
   return (
-    <Box className="weper-workspace weper-shell">
+    <Box className={`weper-workspace weper-shell ${className}`}>
       <a className="weper-skip-link" href="#workspace-main">Ir para o conteúdo</a>
       <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}

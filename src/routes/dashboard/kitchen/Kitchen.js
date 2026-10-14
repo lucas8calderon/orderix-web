@@ -305,6 +305,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
 
 export function Kitchen({ initialFilter }) {
     const [orders, setOrders] = useState([]);
+    const [loadError, setLoadError] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showToast, setShowToast] = useState(false);
@@ -386,10 +387,11 @@ export function Kitchen({ initialFilter }) {
             .then((response) => {
                 const data = Array.isArray(response.data) ? response.data : [];
                 setOrders(data.map(mapKitchenOrder));
+                setLoadError(false);
                 return true;
             })
             .catch(() => {
-                showToastMessage('Não foi possível carregar os pedidos da cozinha.');
+                setLoadError(true);
                 return false;
             });
     };
@@ -509,6 +511,7 @@ export function Kitchen({ initialFilter }) {
                     {isRefreshing ? 'Atualizando...' : 'Atualizar'}
                 </Button>} />
 
+            {loadError && <Alert severity="warning" sx={{ mb: 2 }}>Não foi possível atualizar os pedidos. As informações abaixo podem estar desatualizadas. Use Atualizar para tentar novamente.</Alert>}
             {/* Filter Section */}
             <Box className="filter-section">
                 <Typography variant="h6" fontWeight="600" color="text.primary" mb={2}>

@@ -43,7 +43,7 @@ export function SettingsNav({ activeSection, onNavigate }) {
               tabIndex={active ? 0 : -1}
               onKeyDown={event => {
                 const index = SETTINGS_GROUPS.findIndex(item => item.id === section.id);
-                const next = event.key === 'ArrowRight' ? (index + 1) % SETTINGS_GROUPS.length : event.key === 'ArrowLeft' ? (index + SETTINGS_GROUPS.length - 1) % SETTINGS_GROUPS.length : event.key === 'Home' ? 0 : event.key === 'End' ? SETTINGS_GROUPS.length - 1 : null;
+                const next = (event.key === 'ArrowRight' || event.key === 'ArrowDown') ? (index + 1) % SETTINGS_GROUPS.length : (event.key === 'ArrowLeft' || event.key === 'ArrowUp') ? (index + SETTINGS_GROUPS.length - 1) % SETTINGS_GROUPS.length : event.key === 'Home' ? 0 : event.key === 'End' ? SETTINGS_GROUPS.length - 1 : null;
                 if (next == null) return;
                 event.preventDefault();
                 event.currentTarget.parentElement.querySelectorAll('[role="tab"]')[next].focus();

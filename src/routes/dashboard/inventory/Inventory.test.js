@@ -65,3 +65,17 @@ describe('InventoryPanel', () => {
     });
   });
 });
+
+it('combina busca e filtro sem alterar os saldos', async () => {
+  getInventorySnapshot.mockResolvedValue({ data: { items: [item, { ...item, productId: 5, name: 'Suco', stockQuantity: 0 }] } });
+  getInventoryMovements.mockResolvedValue({ data: [] });
+  render(<InventoryPanel />);
+  expect(await screen.findByText('Café')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Sem estoque', exact: true }));
+  expect(screen.queryByText('Café')).not.toBeInTheDocument();
+  expect(screen.getByText('Suco')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Buscar produto no estoque'), { target: { value: 'café' } });
+  expect(screen.getByText('Nenhum produto encontrado')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Todos', exact: true }));
+  expect(screen.getByText('Café')).toBeInTheDocument();
+});

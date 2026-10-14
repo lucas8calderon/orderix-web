@@ -39,6 +39,8 @@ export function stockTone(item) {
 
 export default function InventoryPanel() {
   const [items, setItems] = useState([]);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -101,11 +103,13 @@ export default function InventoryPanel() {
   const lowCount = items.filter((item) => stockTone(item) === 'low').length;
   const outCount = items.filter((item) => stockTone(item) === 'out').length;
 
+  const filteredItems = items.filter(item => (filter === 'all' || stockTone(item) === filter) && String(item.name || '').toLocaleLowerCase('pt-BR').includes(search.trim().toLocaleLowerCase('pt-BR')));
+
   return (
-    <Box>
+    <Box className="inventory-page">
       <PageHeader
         title="Estoque"
-        description="Saldo dos produtos desta loja. Entrada e saída gravam na API."
+        description="Acompanhe os saldos, identifique o que precisa de reposição e registre entradas e saídas."
         actions={<Button onClick={load} disabled={loading}>Atualizar</Button>}
       />
       {loading ? <Loading loadingMessage="Carregando estoque..." /> : null}
@@ -115,17 +119,18 @@ export default function InventoryPanel() {
       ) : null}
       {!loading && !error && items.length > 0 ? (
         <>
-          <Typography sx={{ mb: 2 }} color="text.secondary">
-            {lowCount} com estoque baixo · {outCount} sem estoque
-          </Typography>
+          <div className="inventory-summary"><div><span>Produtos cadastrados</span><strong>{items.length}</strong></div><div><span>Estoque baixo</span><strong>{lowCount}</strong></div><div><span>Sem estoque</span><strong>{outCount}</strong></div></div>
+          <div className="inventory-toolbar"><TextField size="small" label="Buscar produto no estoque" value={search} onChange={event => setSearch(event.target.value)} /><div className="inventory-filters" role="group" aria-label="Filtrar estoque">{[['all','Todos'],['low','Estoque baixo'],['out','Sem estoque'],['off','Sem controle']].map(([value,label]) => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div></div>
+          {!filteredItems.length && <EmptyState title="Nenhum produto encontrado" description="Tente outro nome ou altere o filtro de estoque." />}
           <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, display: 'grid', gap: 1.5 }}>
-            {items.map((item) => (
-              <Box component="li" key={item.productId} sx={{ border: '1px solid var(--color-border)', borderRadius: 2, p: 2 }}>
-                <Typography fontWeight={700}>{item.name}</Typography>
+            {filteredItems.map((item) => (
+              <Box component="li" className="inventory-product" key={item.productId} sx={{ border: '1px solid var(--color-border)', borderRadius: 2, p: 2 }}>
+                <div><Typography fontWeight={700}>{item.name}</Typography>
                 <Typography color="text.secondary">
                   Saldo {item.stockQuantity} · mínimo {item.minimumStock}
                   {item.trackInventory ? '' : ' · sem controle'}
                 </Typography>
+                <span className={`inventory-product__status is-${stockTone(item)}`}>{({off: 'Sem controle', out: 'Sem estoque', low: 'Repor estoque', ok: 'Em estoque'})[stockTone(item)]}</span></div>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Button size="small" onClick={() => openAdjust(item, 'in')}>Entrada</Button>
                   <Button size="small" onClick={() => openAdjust(item, 'out')}>Saída</Button>
@@ -133,7 +138,7 @@ export default function InventoryPanel() {
               </Box>
             ))}
           </Box>
-          <Typography component="h2" sx={{ mt: 4, mb: 1, fontWeight: 700 }}>Movimentos</Typography>
+          <Typography component="h2" className="inventory-movements" sx={{ mt: 4, mb: 1, fontWeight: 700 }}>Movimentos</Typography>
           {movements.length === 0 ? (
             <Typography color="text.secondary">Nenhum movimento registrado.</Typography>
           ) : (

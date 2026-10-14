@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { dashboardItems } from './listItems';
 import { DashboardGerencial } from './dashboard-gerencial/DashboardGerencial';
 import { Menu } from './menu/Menu';
@@ -14,6 +14,7 @@ import { getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../service
 import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
 import './Workspace.css';
+import './WorkspaceRebrand.css';
 
 const GROUPS = [
   { label: 'Visão geral', slugs: ['dashboard'] },
@@ -85,6 +86,7 @@ export default function Dashboard() {
 
   return (
     <AppShell
+      className="weper-establishment"
       logo={weperLogo}
       contextLabel={user?.storeName || 'Weper'}
       contextHint={selectedItem.title}
@@ -94,6 +96,10 @@ export default function Dashboard() {
       onLogout={handleLogout}
       onNavigate={() => setNavIntent(null)}
     >
+      {selectedItem.slug === 'dashboard' && <section className="workspace-launchpad" aria-label="Acessos rápidos">
+        <div className="workspace-launchpad__intro"><span>Seu centro de controle</span><strong>Vamos cuidar do seu negócio.</strong><p>Acompanhe os resultados e vá direto para a próxima tarefa.</p></div>
+        <div className="workspace-launchpad__links">{visibleItems.filter(item => ['atendimento', 'cozinha', 'produtos', 'configuracoes'].includes(item.slug)).map(item => <Link key={item.slug} to={item.path}>{item.icon}<span>{item.title}</span></Link>)}</div>
+      </section>}
       {screens[selectedItem.slug]}
     </AppShell>
   );

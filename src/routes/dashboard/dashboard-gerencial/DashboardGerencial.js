@@ -25,6 +25,7 @@ import { Loading } from '../../../commons/components/Loading';
 import { useDashboardOverview } from './hook/useDashboardOverview';
 import './DashboardGerencial.css';
 import { PageHeader } from '../../../commons/components/PageHeader';
+import { EmptyState } from '../../../commons/components/EmptyState';
 import { StatusBadge } from '../../../commons/components/StatusBadge';
 
 const PERIODS = [
@@ -179,8 +180,8 @@ export function DashboardGerencial({ onNavigate }) {
   if (error) {
     return (
       <Box className="dashboard-gerencial">
-        <Typography className="overview-error-title">Não foi possível carregar o dashboard</Typography>
-        <Button variant="contained" onClick={refetch}>Tentar novamente</Button>
+<PageHeader title="Visão geral" description="Vendas do período e prioridades da operação." />
+        <div className="workspace-data-error"><EmptyState title="Não foi possível carregar o dashboard" description="Não conseguimos consultar os indicadores. Tente atualizar em instantes. Você pode continuar pelos acessos rápidos acima." actionLabel="Tentar novamente" onAction={refetch} /></div>
       </Box>
     );
   }

@@ -58,12 +58,12 @@ function storeStatus(settings) {
   const deliveryOn = Boolean(settings?.deliveryEnabled);
   const menuOn = Boolean(settings?.publicMenuEnabled);
   return [
-    { ok: nameReady, label: nameReady ? 'Informações da loja preenchidas' : 'Nome da loja ainda não veio do servidor', section: 'empresa' },
+    { ok: nameReady, label: nameReady ? 'Informações da loja preenchidas' : 'Confira o nome do estabelecimento', section: 'empresa' },
     { ok: hoursReady, label: hoursReady ? 'Horários de funcionamento configurados' : 'Horários ainda não configurados', section: 'horarios' },
     { ok: paymentsReady, label: paymentsReady ? 'Pelo menos uma forma de pagamento ativa' : 'Nenhuma forma de pagamento ativa', section: 'vendas' },
     { ok: deliveryOn, label: deliveryOn ? 'Delivery configurado' : 'Delivery desligado', section: 'delivery' },
     { ok: menuOn, label: menuOn ? 'Cardápio digital publicado' : 'Cardápio digital não publicado', section: 'cardapio-digital' },
-    { ok: false, pending: true, label: 'Perfis de equipe ainda não são salvos no servidor', section: 'permissoes' },
+    { ok: false, pending: true, label: 'Permissões disponíveis apenas como rascunho local', section: 'permissoes' },
   ];
 }
 
@@ -312,13 +312,13 @@ export function SettingsOverview({ settings, onNavigate, onSettingChange, saving
             <QuickCard
               icon={TeamIcon}
               title="Equipe e Permissões"
-              text="Perfis de acesso. Ainda não são gravados no servidor."
+              text="Revise os perfis de acesso. Alterações disponíveis apenas neste navegador."
               onClick={() => onNavigate('permissoes')}
             />
             <QuickCard
               icon={BusinessIcon}
               title="Dados da Empresa"
-              text="CNPJ, telefone e logo. Dados fiscais ainda locais."
+              text="Dados de identificação e contato. Dados fiscais salvos apenas neste navegador."
               onClick={() => onNavigate('empresa')}
             />
             <QuickCard
