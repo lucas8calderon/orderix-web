@@ -41,12 +41,12 @@ export function CrmKanban({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <Box className="crm-kanban">
+      <Box className="crm-kanban" sx={{ minWidth: 0, maxWidth: '100%', width: '100%' }}>
         {CRM_STATUSES.map((column) => (
           <Paper
             key={column.id}
             elevation={0}
-            className={`crm-kanban-column ${column.id === 'LOST' ? 'is-lost' : ''} ${column.id === 'WON' ? 'is-won' : ''}`}
+            className={`crm-kanban-column ${column.id === 'LOST' ? 'is-lost' : ''} ${column.id === 'WON' ? 'is-won' : ''} ${column.id === 'NO_WHATSAPP' ? 'is-no-whatsapp' : ''}`}
             sx={{
               minWidth: 260,
               width: 260,

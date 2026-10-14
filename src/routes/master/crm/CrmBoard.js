@@ -18,6 +18,7 @@ import { CrmMetrics } from './components/CrmMetrics';
 import { CrmActionCenter } from './components/CrmActionCenter';
 import { CrmFilters } from './components/CrmFilters';
 import { CrmKanban } from './components/CrmKanban';
+import { CrmStatusChart } from './components/CrmStatusChart';
 import { CrmLeadList } from './components/CrmLeadList';
 import { CrmLeadFormDialog } from './components/CrmLeadFormDialog';
 import { CrmLeadDetailsDialog } from './components/CrmLeadDetailsDialog';
@@ -171,9 +172,10 @@ export function CrmBoard() {
   );
   const emptyCatalog = !crm.loading && !crm.error && (crm.metrics?.totalLeads ?? 0) === 0 && !hasFilters;
   const busy = crm.view === 'list' ? crm.listLoading && !crm.listPage.items.length : crm.loading;
+  const showBoardFilters = crm.view !== 'dashboard';
 
   return (
-    <Box className="crm-board" sx={{ flex: 1, minHeight: 0, width: '100%' }}>
+    <Box className="crm-board" sx={{ flex: 1, minHeight: 0, minWidth: 0, width: '100%', maxWidth: '100%' }}>
       <PageHeader title="CRM de prospecção" description="Organize seus contatos e acompanhe as próximas ações comerciais." actions={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <Button
             variant="outlined"
@@ -238,12 +240,14 @@ export function CrmBoard() {
             justifyContent="space-between"
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <CrmFilters
-                filters={crm.filters}
-                onChange={crm.setFilter}
-                onQuickFollowUp={crm.setQuickFollowUp}
-                onClear={crm.clearFilters}
-              />
+              {showBoardFilters && (
+                <CrmFilters
+                  filters={crm.filters}
+                  onChange={crm.setFilter}
+                  onQuickFollowUp={crm.setQuickFollowUp}
+                  onClear={crm.clearFilters}
+                />
+              )}
             </Box>
             <ToggleButtonGroup
               aria-label="Visualização do CRM"
@@ -251,15 +255,20 @@ export function CrmBoard() {
               size="small"
               value={crm.view}
               onChange={(_, value) => value && crm.setView(value)}
-              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, mt: { md: 4 } }}
+              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, mt: { md: showBoardFilters ? 4 : 0 } }}
             >
+              <ToggleButton value="dashboard" sx={{ textTransform: 'none', px: 2 }}>Painel</ToggleButton>
               <ToggleButton value="kanban" sx={{ textTransform: 'none', px: 2 }}>Kanban</ToggleButton>
               <ToggleButton value="list" sx={{ textTransform: 'none', px: 2 }}>Lista</ToggleButton>
             </ToggleButtonGroup>
           </Stack>
 
           <Box className="crm-board-main">
-            {crm.view === 'list' ? (
+            {crm.view === 'dashboard' ? (
+              <Box sx={{ overflow: 'auto', minHeight: 0, flex: 1 }}>
+                <CrmStatusChart metrics={crm.metrics} />
+              </Box>
+            ) : crm.view === 'list' ? (
               <CrmLeadList
                 pageData={crm.listPage}
                 sort={crm.sort}

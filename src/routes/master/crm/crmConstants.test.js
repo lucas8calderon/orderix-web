@@ -25,7 +25,8 @@ describe('adjacentStatus', () => {
   it('avança e recua no funil', () => {
     expect(adjacentStatus('NEW', 1)).toBe('CONTACTED');
     expect(adjacentStatus('CONTACTED', -1)).toBe('NEW');
-    expect(adjacentStatus('NEW', -1)).toBeNull();
+    expect(adjacentStatus('NEW', -1)).toBe('NO_WHATSAPP');
+    expect(adjacentStatus('NO_WHATSAPP', -1)).toBeNull();
     expect(adjacentStatus('LOST', 1)).toBeNull();
   });
 });

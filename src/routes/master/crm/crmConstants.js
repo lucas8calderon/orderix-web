@@ -1,4 +1,5 @@
 export const CRM_STATUSES = [
+  { id: 'NO_WHATSAPP', label: 'Sem WhatsApp' },
   { id: 'NEW', label: 'Novo lead' },
   { id: 'CONTACTED', label: 'Contatado' },
   { id: 'WAITING_RESPONSE', label: 'Aguardando retorno' },

@@ -7,6 +7,9 @@ describe('CrmLeadMoveButtons', () => {
     const onMove = jest.fn();
     render(<CrmLeadMoveButtons status="CONTACTED" onMove={onMove} />);
 
+    expect(screen.queryByText('Novo lead')).not.toBeInTheDocument();
+    expect(screen.queryByText('Aguardando retorno')).not.toBeInTheDocument();
+
     await userEvent.click(screen.getByRole('button', { name: 'Mover para Novo lead' }));
     await userEvent.click(screen.getByRole('button', { name: 'Mover para Aguardando retorno' }));
 
@@ -15,8 +18,8 @@ describe('CrmLeadMoveButtons', () => {
   });
 
   it('esconde a direção que não existe na ponta do funil', () => {
-    render(<CrmLeadMoveButtons status="NEW" onMove={jest.fn()} />);
-    expect(screen.queryByRole('button', { name: /Novo lead/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mover para Contatado' })).toBeInTheDocument();
+    render(<CrmLeadMoveButtons status="NO_WHATSAPP" onMove={jest.fn()} />);
+    expect(screen.queryByRole('button', { name: /Sem WhatsApp/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mover para Novo lead' })).toBeInTheDocument();
   });
 });
