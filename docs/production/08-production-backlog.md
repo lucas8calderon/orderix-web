@@ -25,13 +25,13 @@ Prefixo da categoria e `ORDEM GLOBAL` andam juntos. A ordem global é a que mand
 018 [ANDROID 02] APKs staging contra a API
 019 [QA 01] Smoke de homologação
 020 [QA 02] Isolamento entre lojas
-021 [DATABASE 02] PostgreSQL de produção e restore
+021 [DATABASE 02] PostgreSQL de produção e restore  [PLANO PAGO]
 022 [SECURITY 04] Secrets exclusivos de produção
-023 [INFRA 04] API de produção
+023 [INFRA 04] API de produção  [PLANO PAGO]
 024 [INFRA 05] Site www e apex
 025 [DEVOPS 03] DNS e HTTPS
-026 [INTEGRATION 03] Webhook Mercado Pago de produção
-027 [PRODUCTION 01] Go-live manual
+026 [INTEGRATION 03] Webhook Mercado Pago de produção  [PLANO PAGO]
+027 [PRODUCTION 01] Go-live manual  [PLANO PAGO]
 028 [ANDROID 03] Play internal
 029 [ANDROID 04] Release Getnet
 030 [OBSERVABILITY 01] Alerta, log e runbook
@@ -39,6 +39,8 @@ Prefixo da categoria e `ORDEM GLOBAL` andam juntos. A ordem global é a que mand
 ```
 
 001 a 007 bloqueiam a criação dos ambientes. 008 a 020 levam à homologação. 021 a 030 são produção. 031 é posterior ao primeiro cliente.
+
+`[PLANO PAGO]` marca demanda que não fecha no plano free do Render. O Postgres free expira em 30 dias e não tem backup. O web service free dorme após 15 minutos; login de cliente e webhook não esperam esse retorno. Site estático, DNS e o restante seguem no free.
 
 ---
 
@@ -990,6 +992,8 @@ OBSERVAÇÕES: Olhar em especial services do pacote `delivery` e `payment.online
 
 ## 021 [DATABASE 02] PostgreSQL de produção e restore
 
+FLAG: PLANO PAGO RENDER. O Postgres free expira em 30 dias e não tem backup. Este card fica parado até o plano pago.
+
 ORDEM GLOBAL: 021
 
 OBJETIVO: Terceira instância Postgres, só de produção, com backup e um restore ensaiado.
@@ -1071,6 +1075,8 @@ OBSERVAÇÕES: Mascarar qualquer menção (`APP_USR-***********`).
 ---
 
 ## 023 [INFRA 04] API de produção
+
+FLAG: PLANO PAGO RENDER. Web service free dorme após 15 minutos. A API de cliente precisa de instância que não dorme.
 
 ORDEM GLOBAL: 023
 
@@ -1210,6 +1216,8 @@ OBSERVAÇÕES: Parte de staging pode ser feita mais cedo, antes do card 015. Se 
 
 ## 026 [INTEGRATION 03] Webhook Mercado Pago de produção
 
+FLAG: PLANO PAGO RENDER. A notificação do Mercado Pago não espera o retorno do serviço free. Só fecha com a API de produção no plano pago.
+
 ORDEM GLOBAL: 026
 
 OBJETIVO: A loja piloto recebe confirmação de pagamento na API de produção.
@@ -1254,6 +1262,8 @@ OBSERVAÇÕES: Não reutilizar o webhook secret de teste.
 ---
 
 ## 027 [PRODUCTION 01] Go-live manual
+
+FLAG: PLANO PAGO RENDER. O aceite inclui o backup automático do Postgres, que o plano free não oferece.
 
 ORDEM GLOBAL: 027
 

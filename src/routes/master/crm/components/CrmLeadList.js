@@ -28,6 +28,7 @@ import { CrmEmptyState } from './CrmEmptyState';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
+import { CrmLeadMoveButtons } from './CrmLeadMoveButtons';
 
 export function CrmLeadList({
   pageData,
@@ -103,7 +104,13 @@ export function CrmLeadList({
                 <TableCell>{businessTypeLabel(lead.businessType)}</TableCell>
                 <TableCell>{locationLabel(lead)}</TableCell>
                 <TableCell>{lead.phone || '—'}</TableCell>
-                <TableCell>{statusLabel(lead.status)}</TableCell>
+                <TableCell onClick={(event) => event.stopPropagation()}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>{statusLabel(lead.status)}</Typography>
+                  <CrmLeadMoveButtons
+                    status={lead.status}
+                    onMove={(status) => onChangeStatus?.(lead, status)}
+                  />
+                </TableCell>
                 <TableCell>{formatDate(lead.lastContactAt)}</TableCell>
                 <TableCell>
                   <CrmFollowUpIndicator lead={lead} compact />

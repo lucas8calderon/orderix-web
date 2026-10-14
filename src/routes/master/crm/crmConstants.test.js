@@ -58,7 +58,11 @@ describe('whatsapp template', () => {
     expect(whatsAppDigits('(11) 99999-8888')).toBe('5511999998888');
     const url = buildWhatsAppUrl('11999998888');
     expect(url.startsWith('https://wa.me/5511999998888?text=')).toBe(true);
-    expect(url).toContain(encodeURIComponent('Sou da Weper'));
-    expect(url).toContain(encodeURIComponent('Posso te explicar rapidamente como funciona?'));
+    expect(url).toContain(encodeURIComponent('Hoje vocês já utilizam algum software para ajudar na gestão?'));
+    expect(url).toContain(encodeURIComponent('*App Garçom*'));
+    expect(url).toContain(encodeURIComponent('*Cardápio digital*'));
+    expect(url).toContain(encodeURIComponent('*Delivery próprio*'));
+    expect(url).toContain(encodeURIComponent('*módulos gratuitos*'));
+    expect(url).toContain(encodeURIComponent('https://www.instagram.com/weper.com.br/'));
   });
 });

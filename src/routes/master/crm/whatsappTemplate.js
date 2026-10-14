@@ -1,12 +1,24 @@
 /** Template centralizado da primeira mensagem. O envio continua manual no WhatsApp. */
 export const DEFAULT_WHATSAPP_MESSAGE = [
-  'Olá! Tudo bem?',
+  'Olá, tudo bem? 😊💙',
   '',
-  'Sou da Weper e gostaria de apresentar uma solução que pode ajudar na operação do seu estabelecimento.',
+  'Hoje vocês já utilizam algum software para ajudar na gestão?',
   '',
-  'A Weper reúne gestão de pedidos, aplicativo para atendimento, cardápio digital, delivery próprio, controle de estoque, autoatendimento e integrações de pagamento.',
+  'A Weper junta a operação do estabelecimento em um só sistema:',
   '',
-  'Posso te explicar rapidamente como funciona?',
+  '📱 *App Garçom* — mesas, comandas e pedidos no celular',
+  '🍽️ *Cardápio digital* — o cliente escolhe pelo QR Code',
+  '🛵 *Delivery próprio* — pedido, retirada e entrega no seu canal',
+  '🍳 *Cozinha* — cada pedido na etapa certa',
+  '📦 *Estoque* — o que entra e o que sai',
+  '💳 *PDV e pagamentos* — caixa e impressão no balcão',
+  '📊 *Painel administrativo* — faturamento, equipe e indicadores',
+  '',
+  'Estamos selecionando alguns estabelecimentos para uma *parceria com condições especiais*, incluindo *módulos gratuitos*, de acordo com a operação.',
+  '',
+  'Que tal conversarmos para entender como vocês trabalham hoje e avaliar uma parceria? 💙🚀',
+  '',
+  '🌐 https://www.instagram.com/weper.com.br/',
 ].join('\n');
 
 export function whatsAppDigits(phone) {

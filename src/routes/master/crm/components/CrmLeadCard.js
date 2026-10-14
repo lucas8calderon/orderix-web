@@ -10,6 +10,7 @@ import { openWhatsApp } from '../whatsappTemplate';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
+import { CrmLeadMoveButtons } from './CrmLeadMoveButtons';
 
 export function CrmLeadCard({
   lead,
@@ -28,6 +29,7 @@ export function CrmLeadCard({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
+          {...provided.dragHandleProps}
           style={{
             ...provided.draggableProps.style,
             opacity: snapshot.isDragging ? 0.85 : 1,
@@ -36,32 +38,32 @@ export function CrmLeadCard({
           <Paper
             elevation={snapshot.isDragging ? 6 : 0}
             onClick={() => onOpen(lead)}
-            className={`crm-lead-card ${followUp === 'OVERDUE' ? 'is-overdue' : ''} ${followUp === 'TODAY' ? 'is-today' : ''}`}
+            className={`crm-lead-card ${followUp === 'OVERDUE' ? 'is-overdue' : ''} ${followUp === 'TODAY' ? 'is-today' : ''} ${snapshot.isDragging ? 'is-dragging' : ''}`}
             sx={{
               p: 1.25,
               mb: 1,
               borderRadius: 2,
               border: '1px solid',
               borderColor: 'divider',
-              cursor: 'pointer',
+              cursor: 'grab',
               bgcolor: 'background.paper',
             }}
           >
             <Stack direction="row" alignItems="flex-start" spacing={0.25} sx={{ mb: 0.5 }}>
-              <IconButton
-                size="small"
+              <Box
                 className="crm-drag-handle"
-                aria-label="Arrastar card"
-                {...provided.dragHandleProps}
-                onClick={(event) => event.stopPropagation()}
-                sx={{ mt: -0.5, ml: -0.75, cursor: 'grab', color: 'text.secondary' }}
+                aria-hidden="true"
+                sx={{ mt: 0.15, color: 'text.secondary', display: 'flex' }}
               >
                 <DragIndicatorIcon fontSize="small" />
-              </IconButton>
+              </Box>
               <Typography fontWeight={700} sx={{ wordBreak: 'break-word', flex: 1, lineHeight: 1.3 }}>
                 {lead.businessName}
               </Typography>
-              <Box onClick={(event) => event.stopPropagation()}>
+              <Box
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+              >
                 <CrmLeadMenu
                   lead={lead}
                   onEdit={onEdit}
@@ -84,11 +86,18 @@ export function CrmLeadCard({
               </Typography>
               <CrmFollowUpIndicator lead={lead} compact />
             </Box>
+            <Box sx={{ mt: 0.85 }}>
+              <CrmLeadMoveButtons
+                status={lead.status}
+                onMove={(status) => onChangeStatus?.(lead, status)}
+              />
+            </Box>
             <Stack
               direction="row"
               spacing={0.25}
               justifyContent="flex-end"
               sx={{ mt: 0.75 }}
+              onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => event.stopPropagation()}
             >
               <Tooltip title={lead.phone ? 'Abrir WhatsApp' : 'Sem telefone cadastrado'}>
