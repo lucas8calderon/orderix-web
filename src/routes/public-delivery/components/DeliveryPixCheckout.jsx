@@ -50,9 +50,10 @@ export default function DeliveryPixCheckout({
   const qrSrc = useMemo(() => {
     const raw = live?.qrCodeBase64 || payment?.qrCodeBase64;
     if (!raw) return '';
-    return raw.startsWith('data:') ? raw : `data:image/jpeg;base64,${raw}`;
+    return raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
   }, [live?.qrCodeBase64, payment?.qrCodeBase64]);
   const copyCode = live?.qrCode || payment?.qrCode || '';
+  const ticketUrl = live?.ticketUrl || payment?.ticketUrl || '';
   const expiryProgress = useMemo(
     () => computeExpiryProgress({
       expiresAtMs,
@@ -96,7 +97,7 @@ export default function DeliveryPixCheckout({
       try {
         const response = await getDeliveryPixPaymentByToken(token);
         if (stopped) return;
-        setLive(response.data);
+        setLive((current) => mergePixCharge(current, response.data, payment));
         if (isPixTerminal(response.data?.status)) {
           stopped = true;
           window.clearInterval(timer);
@@ -164,6 +165,22 @@ export default function DeliveryPixCheckout({
                 <Button variant="outlined" onClick={copy}>{copied ? 'Copiado' : 'Copiar código'}</Button>
               </Box>
             ) : null}
+            {ticketUrl ? (
+              <Button
+                variant="text"
+                href={ticketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir cobrança no Mercado Pago
+              </Button>
+            ) : null}
+            {!qrSrc && !copyCode && !ticketUrl ? (
+              <Alert severity="warning">
+                O Mercado Pago não devolveu o código desta cobrança. Gere um novo Pix.
+                Se continuar vazio, cadastre uma chave Pix na conta que emitiu a cobrança.
+              </Alert>
+            ) : null}
             {!paid ? (
               <PixExpiryBar progress={expiryProgress} />
             ) : null}
@@ -180,6 +197,22 @@ export default function DeliveryPixCheckout({
       </DialogContent>
     </Dialog>
   );
+}
+
+export function mergePixCharge(current, incoming, original) {
+  const pick = (key) => {
+    const value = incoming?.[key];
+    if (value != null && String(value).trim() !== '') return value;
+    return current?.[key] || original?.[key] || '';
+  };
+  return {
+    ...original,
+    ...current,
+    ...incoming,
+    qrCode: pick('qrCode'),
+    qrCodeBase64: pick('qrCodeBase64'),
+    ticketUrl: pick('ticketUrl'),
+  };
 }
 
 function PixExpiryBar({ progress }) {

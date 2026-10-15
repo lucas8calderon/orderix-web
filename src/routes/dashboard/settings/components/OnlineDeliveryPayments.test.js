@@ -62,6 +62,7 @@ describe('OnlineDeliveryPayments', () => {
     expect(screen.getByLabelText('Access Token')).toHaveValue('');
     expect(screen.getByLabelText('Public Key')).toHaveValue('');
     expect(screen.getByLabelText('Webhook secret')).toHaveValue('');
+    expect(screen.getAllByText(/Salvo no servidor\. O valor não volta para esta tela\./).length).toBe(3);
   });
 
   it('em Produção configurada mostra máscara do tamanho informado', () => {
@@ -220,6 +221,55 @@ describe('OnlineDeliveryPayments', () => {
     });
     expect(screen.getByText(/Mercado Pago · produção · não configurado/i)).toBeInTheDocument();
     expect(screen.getByLabelText('Pix online')).toBeDisabled();
+  });
+
+  it('depois de salvar restaura a máscara de configurado', () => {
+    const props = {
+      onSettingChange: jest.fn(),
+      onSave: jest.fn(),
+      switchStyles: {},
+    };
+    const { rerender } = render(
+      <OnlineDeliveryPayments
+        {...props}
+        saving
+        settings={{
+          mercadoPagoEnvironment: 'test',
+          mercadoPagoAccessToken: 'token-novo-digitado',
+          mercadoPagoPublicKey: 'pk-nova',
+          mercadoPagoWebhookSecret: 'whsec-novo',
+        }}
+      />,
+    );
+    fireEvent.focus(screen.getByLabelText('Access Token'));
+    expect(screen.getByLabelText('Access Token')).toHaveValue('token-novo-digitado');
+
+    rerender(
+      <OnlineDeliveryPayments
+        {...props}
+        saving={false}
+        settings={{
+          mercadoPagoEnvironment: 'test',
+          mercadoPagoConfigured: true,
+          mercadoPagoAccessTokenConfigured: true,
+          mercadoPagoStoreAccessTokenConfigured: true,
+          mercadoPagoPublicKeyConfigured: true,
+          mercadoPagoWebhookSecretConfigured: true,
+          mercadoPagoAccessTokenLength: 19,
+          mercadoPagoPublicKeyLength: 7,
+          mercadoPagoWebhookSecretLength: 10,
+          mercadoPagoAccessToken: '',
+          mercadoPagoPublicKey: '',
+          mercadoPagoWebhookSecret: '',
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText('Access Token')).toHaveValue(secretInputMask(19));
+    expect(screen.getByLabelText('Public Key')).toHaveValue(secretInputMask(7));
+    expect(screen.getByLabelText('Webhook secret')).toHaveValue(secretInputMask(10));
+    expect(screen.getAllByText(/Já configurado\. Clique no campo para substituir\./).length).toBe(3);
+    expect(screen.queryByDisplayValue('token-novo-digitado')).not.toBeInTheDocument();
   });
 
   it('salva como pagamentos online do delivery', () => {

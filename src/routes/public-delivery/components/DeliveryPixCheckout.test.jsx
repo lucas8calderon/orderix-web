@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DeliveryPixCheckout from './DeliveryPixCheckout';
+import DeliveryPixCheckout, { mergePixCharge } from './DeliveryPixCheckout';
 
 jest.mock('../../../services/deliveryPaymentService', () => ({
   PIX_POLL_INTERVAL_MS: 60_000,
@@ -56,9 +56,39 @@ describe('DeliveryPixCheckout', () => {
       />
     );
 
-    expect(screen.getByText(/Total/i)).toBeInTheDocument();
+    expect(screen.getByText('000201pix')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'QR Code do Pix' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Aguardando pagamento');
     expect(screen.queryByRole('button', { name: /Já paguei/i })).not.toBeInTheDocument();
+  });
+
+  it('explica quando a cobrança chega sem código', () => {
+    render(
+      <DeliveryPixCheckout
+        open
+        payment={{ ...basePayment, qrCode: '', qrCodeBase64: '', ticketUrl: '' }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText(/não devolveu o código/i)).toBeInTheDocument();
+  });
+
+  it('mantém o código quando a consulta seguinte volta vazia', () => {
+    const merged = mergePixCharge(
+      { qrCode: '000201pix', qrCodeBase64: 'abc', ticketUrl: 'https://mp.test/ticket' },
+      { status: 'PENDING', qrCode: null, qrCodeBase64: '', ticketUrl: null },
+      basePayment,
+    );
+
+    expect(merged.qrCode).toBe('000201pix');
+    expect(merged.qrCodeBase64).toBe('abc');
+    expect(merged.ticketUrl).toBe('https://mp.test/ticket');
+    expect(merged.status).toBe('PENDING');
   });
 
   it('mostra tempo restante quando expiresAt está no futuro', () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -59,6 +59,7 @@ export function OnlineDeliveryPayments({
           value={settings.mercadoPagoAccessToken}
           configuredLength={settings.mercadoPagoAccessTokenLength}
           configured={accessConfigured && isUnsetSecret(settings.mercadoPagoAccessToken)}
+          saving={saving}
           onChange={(value) => onSettingChange('mercadoPagoAccessToken', null, value)}
         />
         <SecretField
@@ -66,6 +67,7 @@ export function OnlineDeliveryPayments({
           value={settings.mercadoPagoPublicKey}
           configuredLength={settings.mercadoPagoPublicKeyLength}
           configured={publicKeyConfigured && isUnsetSecret(settings.mercadoPagoPublicKey)}
+          saving={saving}
           onChange={(value) => onSettingChange('mercadoPagoPublicKey', null, value)}
         />
         <SecretField
@@ -74,6 +76,7 @@ export function OnlineDeliveryPayments({
           configuredLength={settings.mercadoPagoWebhookSecretLength}
           configured={hasMercadoPagoWebhookSecret(settings, environment)
             && isUnsetSecret(settings.mercadoPagoWebhookSecret)}
+          saving={saving}
           onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
         />
       </Box>
@@ -186,15 +189,25 @@ function hasMercadoPagoWebhookSecret(settings, environment = settings.mercadoPag
  * então backspace não a remove. Ao focar, o campo abre vazio para digitar outro segredo.
  * Limpar marca a remoção do valor gravado.
  */
-function SecretField({ label, value, configured, configuredLength, onChange }) {
+function SecretField({ label, value, configured, configuredLength, saving, onChange }) {
   const [editing, setEditing] = useState(false);
   const [markedClear, setMarkedClear] = useState(false);
+  const wasSaving = useRef(false);
   const length = Number(configuredLength) || 0;
   const mask = secretInputMask(length);
   const cleared = markedClear || isClearStoredSecret(value);
+  const savedWithoutLength = !editing && !cleared && Boolean(configured) && length <= 0 && isUnsetSecret(value);
   const showingMask = !editing && !cleared && Boolean(configured) && length > 0 && isUnsetSecret(value);
   const displayValue = showingMask ? mask : (cleared ? '' : (value || ''));
-  const showHelper = showingMask;
+  const showHelper = showingMask || savedWithoutLength;
+
+  useEffect(() => {
+    if (wasSaving.current && !saving) {
+      setEditing(false);
+      setMarkedClear(false);
+    }
+    wasSaving.current = Boolean(saving);
+  }, [saving]);
 
   const openForEdit = () => {
     setEditing(true);
@@ -230,13 +243,15 @@ function SecretField({ label, value, configured, configuredLength, onChange }) {
       className="setting-input"
       fullWidth
       autoComplete="new-password"
-      placeholder={showingMask ? 'Configurado' : undefined}
+      placeholder={showingMask || savedWithoutLength ? 'Configurado' : undefined}
       helperText={
         cleared
           ? 'Será removido ao salvar. Digite outro valor para substituir.'
-          : showHelper
-            ? 'Já configurado. Clique no campo para substituir.'
-            : undefined
+          : savedWithoutLength
+            ? 'Salvo no servidor. O valor não volta para esta tela.'
+            : showHelper
+              ? 'Já configurado. Clique no campo para substituir.'
+              : undefined
       }
       inputProps={{ 'aria-label': label, spellCheck: false }}
       InputProps={showingMask || cleared ? {
