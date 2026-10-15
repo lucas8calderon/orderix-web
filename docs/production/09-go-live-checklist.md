@@ -1,6 +1,6 @@
 # 09 — Go-live
 
-Usar só depois que o staging correspondente passou. Nenhum item abaixo está feito.
+Usar só depois que o staging correspondente passou. Itens marcados foram conferidos em 14 out 2026. O restante continua aberto.
 
 ```text
 WEPER — GO LIVE CHECKLIST
@@ -8,37 +8,37 @@ WEPER — GO LIVE CHECKLIST
 
 ## Infraestrutura
 
-- [ ] Web Service de produção no ar, 1 instância
-- [ ] Static Site de produção com build de produção
-- [ ] PostgreSQL de produção, instância diferente da de staging e da de lab
-- [ ] `www.weper.com.br` e apex
+- [x] Web Service de produção no ar, 1 instância
+- [x] Static Site de produção com build de produção
+- [x] PostgreSQL de produção, instância diferente da de staging e da de lab
+- [x] `www.weper.com.br` e apex
 - [ ] `api.weper.com.br`
 - [ ] DNS publicado
 - [ ] HTTPS válido nos quatro nomes públicos (www, apex, api, e os de staging continuam de pé)
-- [ ] `GET /health` 200 sem corpo sensível
-- [ ] Autoscaling desligado
-- [ ] Auto-deploy de produção desligado ou com aprovação explícita
+- [x] `GET /health` 200 sem corpo sensível
+- [x] Autoscaling desligado
+- [x] Auto-deploy de produção desligado ou com aprovação explícita
 
 ## Segurança
 
 - [ ] `JWT_SECRET` exclusivo, longo, diferente de staging
 - [ ] `PAYMENT_SECRETS_KEY` exclusiva e obrigatória
-- [ ] `DEMO_SEED=false` e boot recusa `true`
-- [ ] Senha bootstrap não é a default
-- [ ] CORS só `https://www.weper.com.br` e `https://weper.com.br`
-- [ ] WebSocket sem origem `*`
-- [ ] Swagger inacessível
-- [ ] Login exige usuário real; conta demo não existe
+- [x] `DEMO_SEED=false` e boot recusa `true`
+- [x] Senha bootstrap não é a default
+- [x] CORS só `https://www.weper.com.br` e `https://weper.com.br`
+- [x] WebSocket sem origem `*`
+- [x] Swagger inacessível
+- [x] Login exige usuário real; conta demo não existe
 - [ ] Loja A não lê dados da loja B
 - [ ] Log sem senha, JWT, access token, PAN ou data URL
 
 ## Banco
 
-- [ ] Flyway aplica a baseline num banco vazio
-- [ ] `DDL_OPTION=validate`
+- [x] Flyway aplica a baseline num banco vazio
+- [x] `DDL_OPTION=validate`
 - [ ] Backup automático do plano
 - [ ] Restore ensaiado em instância descartável
-- [ ] Staging não aponta para essa URL
+- [x] Staging não aponta para essa URL
 
 ## Integrações
 
@@ -56,7 +56,7 @@ WEPER — GO LIVE CHECKLIST
 - [ ] `REACT_APP_API_BASE_URL=https://api.weper.com.br` no build
 - [ ] Refresh em `/cardapio/{slug}` e `/delivery/{slug}` não cai em 404
 - [ ] Login, painel, cozinha, estoque, configurações
-- [ ] Landing em `www`
+- [x] Landing em `www`
 
 ## Android
 
