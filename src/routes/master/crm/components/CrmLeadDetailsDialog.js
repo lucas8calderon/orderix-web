@@ -1,4 +1,4 @@
-import { CrmWhatsAppQualification } from './CrmWhatsAppPanel';
+import { CrmWhatsAppOptOut } from './CrmWhatsAppPanel';
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -71,6 +71,9 @@ export function CrmLeadDetailsDialog({
 }) {
   const isMobile = useIsMobile();
   const [status, setStatus] = useState(lead?.status || 'NEW');
+  const [whatsAppBlocked, setWhatsAppBlocked] = useState(false);
+
+  useEffect(() => { setWhatsAppBlocked(false); }, [lead?.id]);
 
   useEffect(() => {
     setStatus(lead?.status || 'NEW');
@@ -85,7 +88,7 @@ export function CrmLeadDetailsDialog({
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         <Button
           variant="contained"
-          disabled={!lead.phone}
+          disabled={!lead.phone || whatsAppBlocked}
           onClick={() => openWhatsAppLead(lead.id)}
           sx={{
             textTransform: 'none',
@@ -101,7 +104,10 @@ export function CrmLeadDetailsDialog({
         </Button>
       </Stack>
 
-      <CrmWhatsAppQualification key={lead.id} lead={lead} />
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        Após enviar no WhatsApp, volte para registrar o contato ou atualizar o status no quadro.
+      </Typography>
+      <CrmWhatsAppOptOut key={lead.id} lead={lead} onBlocked={setWhatsAppBlocked} />
       <Section title="Contato">
         <Stack spacing={1.25}>
           <Field label="Responsável" value={lead.contactName} />

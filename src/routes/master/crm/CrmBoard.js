@@ -267,7 +267,7 @@ export function CrmBoard() {
           <Box className="crm-board-main">
             {crm.view === 'dashboard' ? (
               <Box sx={{ overflow: 'auto', minHeight: 0, flex: 1 }}>
-                <CrmWhatsAppPanel onChanged={crm.refetch} onOpenLead={async id => { try { const { data } = await getCrmLead(id); await loadDetails(data); } catch (e) { showToast('Não foi possível abrir o lead.', 'error'); } }} />
+                <CrmWhatsAppPanel />
                 <CrmStatusChart metrics={crm.metrics} />
               </Box>
             ) : crm.view === 'list' ? (
