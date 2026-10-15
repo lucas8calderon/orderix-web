@@ -22,7 +22,7 @@ import {
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { CRM_BUSINESS_TYPES, businessTypeLabel, statusLabel } from '../crmConstants';
 import { createGooglePlacesProspectingClient } from '../prospecting/GooglePlacesProspectingProvider';
-import { openWhatsApp } from '../whatsappTemplate';
+import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmInstagramButton } from './CrmInstagramButton';
 
 const prospectingClient = createGooglePlacesProspectingClient();
@@ -334,7 +334,7 @@ export function CrmProspectingDialog({ open, onClose, onImported, onOpenLead }) 
                           size="small"
                           variant="contained"
                           disabled={!phone}
-                          onClick={() => openWhatsApp(item.lead?.whatsAppUrl || phone)}
+                          onClick={() => openWhatsAppLead(item.leadId || item.lead?.id)}
                           sx={{
                             textTransform: 'none',
                             backgroundColor: 'var(--color-primary)',

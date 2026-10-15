@@ -23,7 +23,7 @@ import {
   locationLabel,
   statusLabel,
 } from '../crmConstants';
-import { openWhatsApp } from '../whatsappTemplate';
+import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmEmptyState } from './CrmEmptyState';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
@@ -123,7 +123,7 @@ export function CrmLeadList({
                           size="small"
                           disabled={!lead.phone}
                           aria-label="WhatsApp"
-                          onClick={() => openWhatsApp(lead.whatsAppUrl || lead.phone)}
+                          onClick={() => openWhatsAppLead(lead.id)}
                         >
                           <ChatOutlinedIcon fontSize="small" />
                         </IconButton>
