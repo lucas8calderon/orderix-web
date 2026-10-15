@@ -102,7 +102,7 @@ export default function LoginForm() {
 
     if (!userEmail) {
       setEmailError(true);
-      setEmailHelperText('Digite seu e-mail');
+      setEmailHelperText('Digite seu usuário ou e-mail');
       hasError = true;
     } else {
       setEmailError(false);
@@ -206,8 +206,9 @@ export default function LoginForm() {
         name="email"
         label={LoginConstants.EMAIL_LABEL}
         placeholder={LoginConstants.EMAIL_PLACEHOLDER}
-        type="email"
-        autoComplete="email"
+        type="text"
+        autoComplete="username"
+        inputProps={{ inputMode: 'text', autoCapitalize: 'none', autoCorrect: 'off' }}
         value={userEmail}
         onChange={(e) => setUserEmail(e.target.value)}
         error={emailError}

@@ -1,8 +1,8 @@
 export const TAGLINE_TEXT = 'A gestão completa que o seu estabelecimento precisa.';
 export const WELCOME_TEXT = 'Bem-vindo de volta!';
 export const CREDENTIALS_TEXT = 'Entre com suas credenciais para acessar o sistema';
-export const EMAIL_LABEL = 'E-mail';
-export const EMAIL_PLACEHOLDER = 'seu@email.com';
+export const EMAIL_LABEL = 'Usuário ou e-mail';
+export const EMAIL_PLACEHOLDER = 'usuário ou e-mail';
 export const PASSWORD_LABEL = 'Senha';
 export const PASSWORD_PLACEHOLDER = 'Sua senha';
 export const REMEMBER_ME_TEXT = 'Lembrar de mim';
