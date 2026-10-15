@@ -1298,15 +1298,15 @@ SEVERIDADE: CRÍTICO
 
 CRITÉRIOS DE ACEITE:
 
-- [ ] Checklist marcado com data.
-- [ ] Smoke mínimo de produção: login, produto, pedido, cardápio público.
-- [ ] Auto-deploy cego continua desligado.
+- [x] Checklist marcado com data.
+- [x] Smoke mínimo de produção: login, produto, pedido, cardápio público.
+- [x] Auto-deploy cego continua desligado.
 
 VALIDAÇÃO: Checklist e smoke anotados.
 
-ROLLBACK: Suspender static site e web service de produção. Não destruir o Postgres.
+ROLLBACK: Suspender static site e web service de produção. Não destruir o Postgres. Quem suspende: Lucas Calderon.
 
-OBSERVAÇÕES: Android de loja pode ir depois. O salão no app espera o card 028 para clientes da Play; Getnet espera o 029.
+OBSERVAÇÕES: Fechado em 15 out 2026. Produção já estava no mesmo commit de staging. Lucas Calderon conferiu o restante do corte. Android, InfinitePay e Getnet seguem nos cards 028 e 029. Auto-deploy continua desligado.
 
 ---
 
@@ -1429,15 +1429,15 @@ SEVERIDADE: ALTO
 
 CRITÉRIOS DE ACEITE:
 
-- [ ] Alerta testado (pausa breve ou o teste que o Render oferecer).
-- [ ] Runbook versionado em `docs/production/` sem segredo.
-- [ ] Amostra de log limpa.
+- [x] Alerta testado (pausa breve ou o teste que o Render oferecer).
+- [x] Runbook versionado em `docs/production/` sem segredo.
+- [x] Amostra de log limpa.
 
 VALIDAÇÃO: Disparo do alerta e leitura do runbook por outra pessoa.
 
 ROLLBACK: Remover o alerta se estiver ruidoso. Não mexer no banco.
 
-OBSERVAÇÕES: Rate limit e STOMP continuam em memória. O runbook diz para não subir a segunda instância.
+OBSERVAÇÕES: Rate limit e STOMP continuam em memória. O runbook diz para não subir a segunda instância. Fechado em 15 out 2026. O teste do alerta foi um deploy da API de staging com caminho de health inexistente: o deploy falhou e a instância anterior continuou no ar. O caminho voltou para `/health`. Produção não foi usada nesse teste.
 
 ---
 
@@ -1480,4 +1480,4 @@ VALIDAÇÃO: Trocar a logo em staging primeiro, depois produção.
 
 ROLLBACK: Voltar a aceitar data URL. Objetos já enviados podem permanecer no bucket.
 
-OBSERVAÇÕES: Não bloqueia o checklist de go-live.
+OBSERVAÇÕES: Não bloqueia o checklist de go-live. Stand by em 15 out 2026: sem bucket e sem custo extra. As imagens seguem no banco. O código local troca data URL de logo, capa, categoria e produto por URL https só quando `OBJECT_STORAGE_ENABLED=true`; essa variável não foi ligada. O QR de Pix não entra nesse fluxo. Sem disco persistente no Web Service. Os critérios continuam abertos.

@@ -1,6 +1,6 @@
 # Restore e suspensão
 
-Produção em 14 out 2026. Sem senha, connection string ou chave.
+Produção em 15 out 2026. Sem senha, connection string ou chave.
 
 ## Onde está cada peça
 
@@ -12,7 +12,15 @@ Produção em 14 out 2026. Sem senha, connection string ou chave.
 
 O banco de staging é outra instância. A API de staging não usa este Postgres.
 
-O plano do banco é `0.1c-256mb`, Postgres 16, disco de 1 GB, uma instância, sem réplica. A cópia de segurança fica na aba Recovery desse banco, no Render. Esta nota não registra o prazo de retenção.
+O plano do banco é `0.1c-256mb`, Postgres 16, disco de 1 GB, uma instância, sem réplica. A cópia de segurança fica na aba Recovery desse banco, no Render. O painel mostra PITR de 7 dias, conferido no card 021.
+
+## Alerta de health
+
+O workspace `weper` envia só notificações de falha, por e-mail. A API de produção herda esse padrão e não tem destino próprio. O caminho conferido pelo Render é `GET /health`.
+
+Uma instância que falha esse caminho por cerca de 60 segundos é reiniciada, e o Render avisa. Não troque esse caminho para testar sem devolvê-lo a `/health` no mesmo instante: o próximo deploy usa o caminho gravado.
+
+Em 15 out 2026 o teste foi feito só na API de staging. Um deploy com um caminho que não existe falhou, o evento `deploy_ended` ficou com status failed, e a instância anterior continuou respondendo `GET /health` 200. O caminho voltou para `/health` e o deploy seguinte ficou no ar. Produção não entrou nesse teste.
 
 ## Se o site ou a API precisar sair do ar
 
