@@ -1,3 +1,4 @@
+import { CrmWhatsAppQualification } from './CrmWhatsAppPanel';
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -21,7 +22,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useIsMobile } from '../../../../commons/hooks/useResponsive';
 import { businessTypeLabel, CRM_STATUSES, formatDateTime, locationLabel, phoneContactLabel, sourceLabel } from '../crmConstants';
 import { buildInstagramUrl } from '../instagram';
-import { openWhatsApp } from '../whatsappTemplate';
+import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmActivityTimeline } from './CrmActivityTimeline';
 import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
@@ -85,7 +86,7 @@ export function CrmLeadDetailsDialog({
         <Button
           variant="contained"
           disabled={!lead.phone}
-          onClick={() => openWhatsApp(lead.whatsAppUrl || lead.phone)}
+          onClick={() => openWhatsAppLead(lead.id)}
           sx={{
             textTransform: 'none',
             backgroundColor: 'var(--color-primary)',
@@ -100,6 +101,7 @@ export function CrmLeadDetailsDialog({
         </Button>
       </Stack>
 
+      <CrmWhatsAppQualification key={lead.id} lead={lead} />
       <Section title="Contato">
         <Stack spacing={1.25}>
           <Field label="Responsável" value={lead.contactName} />

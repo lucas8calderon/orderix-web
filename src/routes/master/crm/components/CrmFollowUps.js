@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Paper, Stack, Typography } from '@mui/material';
 import { followUpDelayLabel } from '../crmConstants';
-import { openWhatsApp } from '../whatsappTemplate';
+import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmInstagramButton } from './CrmInstagramButton';
 
 function FollowUpList({ title, leads, emptyLabel }) {
@@ -36,7 +36,7 @@ function FollowUpList({ title, leads, emptyLabel }) {
               <Button
                 size="small"
                 disabled={!lead.phone}
-                onClick={() => openWhatsApp(lead.whatsAppUrl || lead.phone)}
+                onClick={() => openWhatsAppLead(lead.id)}
                 sx={{ textTransform: 'none', minHeight: 36 }}
               >
                 WhatsApp

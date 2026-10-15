@@ -1,3 +1,4 @@
+import { CrmWhatsAppPanel } from './components/CrmWhatsAppPanel';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import React, { useCallback, useState } from 'react';
 import {
@@ -266,6 +267,7 @@ export function CrmBoard() {
           <Box className="crm-board-main">
             {crm.view === 'dashboard' ? (
               <Box sx={{ overflow: 'auto', minHeight: 0, flex: 1 }}>
+                <CrmWhatsAppPanel onChanged={crm.refetch} onOpenLead={async id => { try { const { data } = await getCrmLead(id); await loadDetails(data); } catch (e) { showToast('Não foi possível abrir o lead.', 'error'); } }} />
                 <CrmStatusChart metrics={crm.metrics} />
               </Box>
             ) : crm.view === 'list' ? (

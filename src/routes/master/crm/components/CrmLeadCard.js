@@ -6,7 +6,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import { Draggable } from 'react-beautiful-dnd';
 import { businessTypeLabel, locationLabel } from '../crmConstants';
-import { openWhatsApp } from '../whatsappTemplate';
+import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
@@ -106,7 +106,7 @@ export function CrmLeadCard({
                     size="small"
                     disabled={!lead.phone}
                     aria-label="WhatsApp"
-                    onClick={() => openWhatsApp(lead.whatsAppUrl || lead.phone)}
+                    onClick={() => openWhatsAppLead(lead.id)}
                   >
                     <ChatOutlinedIcon fontSize="small" />
                   </IconButton>
