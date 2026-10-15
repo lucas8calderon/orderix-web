@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  TextField,
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -16,6 +17,7 @@ import { createDeliveryCardPayment, getDeliveryPixPayment, isPixPaid } from '../
 import './DeliveryCardCheckout.css';
 
 const SDK_URL = 'https://sdk.mercadopago.com/js/v2';
+const PAGBANK_SDK_URL = 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js';
 
 function newKey() {
   if (window.crypto && window.crypto.randomUUID) {
@@ -45,12 +47,34 @@ function loadMercadoPago() {
   });
 }
 
+function loadPagBank() {
+  if (window.PagSeguro && typeof window.PagSeguro.encryptCard === 'function') {
+    return Promise.resolve(window.PagSeguro);
+  }
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-pagbank-sdk="1"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.PagSeguro), { once: true });
+      existing.addEventListener('error', () => reject(new Error('sdk')), { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = PAGBANK_SDK_URL;
+    script.async = true;
+    script.dataset.pagbankSdk = '1';
+    script.onload = () => resolve(window.PagSeguro);
+    script.onerror = () => reject(new Error('sdk'));
+    document.body.appendChild(script);
+  });
+}
+
 export default function DeliveryCardCheckout({
   open,
   slug,
   orderId,
   amount,
   publicKey,
+  provider = 'MERCADOPAGO',
   payerEmail,
   onClose,
   onApproved,
@@ -64,6 +88,13 @@ export default function DeliveryCardCheckout({
   const [error, setError] = useState('');
   const [payment, setPayment] = useState(null);
   const [loadingBrick, setLoadingBrick] = useState(false);
+  const [holder, setHolder] = useState('');
+  const [number, setNumber] = useState('');
+  const [expMonth, setExpMonth] = useState('');
+  const [expYear, setExpYear] = useState('');
+  const [securityCode, setSecurityCode] = useState('');
+  const pagbank = provider === 'PAGBANK';
+  const providerLabel = pagbank ? 'PagBank' : 'Mercado Pago';
 
   useEffect(() => {
     if (!open) {
@@ -76,7 +107,7 @@ export default function DeliveryCardCheckout({
   }, [open, orderId]);
 
   useEffect(() => {
-    if (!open || phase !== 'form' || !publicKey || !orderId) {
+    if (!open || phase !== 'form' || !publicKey || !orderId || pagbank) {
       return undefined;
     }
     let cancelled = false;
@@ -132,7 +163,7 @@ export default function DeliveryCardCheckout({
         controller.unmount();
       }
     };
-  }, [open, phase, publicKey, orderId, amount, payerEmail, attempt, containerId]);
+  }, [open, phase, publicKey, orderId, amount, payerEmail, attempt, containerId, pagbank]);
 
   useEffect(() => {
     if (!open || phase !== 'pending' || !payment?.id) {
@@ -196,6 +227,42 @@ export default function DeliveryCardCheckout({
       });
   };
 
+  const submitPagBank = async (event) => {
+    event.preventDefault();
+    setError('');
+    let sent = false;
+    try {
+      const pagseguro = await loadPagBank();
+      const result = pagseguro.encryptCard({
+        publicKey,
+        holder,
+        number: String(number || '').replace(/\D/g, ''),
+        expMonth,
+        expYear,
+        securityCode,
+      });
+      const encrypted = result && (result.encryptedCard || result.encrypted);
+      setNumber('');
+      setSecurityCode('');
+      if (!encrypted || result.hasErrors) {
+        setError('Não foi possível proteger os dados do cartão.');
+        return;
+      }
+      sent = true;
+      await submitCard({
+        token: encrypted,
+        payment_method_id: 'credit',
+        installments: 1,
+      });
+    } catch {
+      setNumber('');
+      setSecurityCode('');
+      if (!sent) {
+        setError('Não foi possível carregar o PagBank.');
+      }
+    }
+  };
+
   const tryAnotherCard = () => {
     keyRef.current = newKey();
     setPayment(null);
@@ -215,7 +282,19 @@ export default function DeliveryCardCheckout({
       <DialogContent className="delivery-card-content">
         <Typography className="delivery-card-total">Total {formatCurrency(amount)}</Typography>
         {error && phase !== 'approved' ? <Alert severity={phase === 'unknown' ? 'warning' : 'error'} sx={{ mb: 2 }}>{error}</Alert> : null}
-        {phase === 'form' ? (
+        {phase === 'form' && pagbank ? (
+          <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick">
+            <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required sx={{ mb: 1 }} />
+            <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} sx={{ mb: 1 }} />
+            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <TextField label="Mês" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} required inputProps={{ inputMode: 'numeric', maxLength: 2 }} />
+              <TextField label="Ano" value={expYear} onChange={(e) => setExpYear(e.target.value)} required inputProps={{ inputMode: 'numeric', maxLength: 4 }} />
+              <TextField label="CVV" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} required type="password" inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-csc' }} />
+            </Box>
+            <Button type="submit" variant="contained" disabled={!publicKey}>Pagar à vista</Button>
+          </Box>
+        ) : null}
+        {phase === 'form' && !pagbank ? (
           <>
             {loadingBrick ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -247,7 +326,7 @@ export default function DeliveryCardCheckout({
         {phase === 'pending' || phase === 'unknown' ? (
           <Box className="delivery-card-result" role="status">
             <Typography variant="h6">Pagamento em análise</Typography>
-            <Typography>Estamos aguardando a confirmação do Mercado Pago.</Typography>
+            <Typography>Estamos aguardando a confirmação do {providerLabel}.</Typography>
             {phase === 'pending' ? <CircularProgress size={22} sx={{ alignSelf: 'center' }} /> : null}
           </Box>
         ) : null}

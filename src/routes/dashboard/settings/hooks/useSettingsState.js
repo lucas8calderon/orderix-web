@@ -90,6 +90,12 @@ const DEFAULT_PAYMENT = {
   mercadoPagoAccessToken: '',
   mercadoPagoPublicKey: '',
   mercadoPagoWebhookSecret: '',
+  deliveryOnlineProvider: 'MERCADOPAGO',
+  pagbankEnvironment: 'sandbox',
+  pagbankAccessTokenConfigured: false,
+  pagbankCardPublicKeyConfigured: false,
+  pagbankAccessTokenLength: 0,
+  pagbankAccessToken: '',
 };
 
 const DEFAULT_PUBLIC_MENU = {
@@ -400,6 +406,9 @@ export const useSettingsState = () => {
         mercadoPagoAccessToken: current.mercadoPagoAccessToken,
         mercadoPagoPublicKey: current.mercadoPagoPublicKey,
         mercadoPagoWebhookSecret: current.mercadoPagoWebhookSecret,
+        deliveryOnlineProvider: current.deliveryOnlineProvider,
+        pagbankEnvironment: current.pagbankEnvironment,
+        pagbankAccessToken: current.pagbankAccessToken,
       });
       setSettings((prev) => ({ ...prev, ...payment }));
       showToast(

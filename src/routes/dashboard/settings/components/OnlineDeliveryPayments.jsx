@@ -15,6 +15,7 @@ import {
   isClearStoredSecret,
   isSecretInputMask,
   secretInputMask,
+  testPagBankConnection,
 } from '../../../../services/paymentConfigService';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
@@ -25,61 +26,133 @@ export function OnlineDeliveryPayments({
   switchStyles,
   saving,
 }) {
+  const provider = settings.deliveryOnlineProvider === 'PAGBANK' ? 'PAGBANK' : 'MERCADOPAGO';
+  const pagbank = provider === 'PAGBANK';
   const environment = settings.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test';
-  const accessConfigured = hasMercadoPagoAccessToken(settings, environment);
-  const publicKeyConfigured = hasMercadoPagoPublicKey(settings, environment);
+  const pagbankEnvironment = settings.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox';
+  const accessConfigured = pagbank
+    ? hasTypedSecret(settings.pagbankAccessToken) || Boolean(settings.pagbankAccessTokenConfigured)
+    : hasMercadoPagoAccessToken(settings, environment);
+  const publicKeyConfigured = pagbank
+    ? Boolean(settings.pagbankCardPublicKeyConfigured)
+    : hasMercadoPagoPublicKey(settings, environment);
+  const [testing, setTesting] = useState(false);
+  const [testMessage, setTestMessage] = useState('');
+
+  const testConnection = async () => {
+    setTesting(true);
+    setTestMessage('');
+    try {
+      const response = await testPagBankConnection();
+      if (response?.data?.ok) {
+        onSettingChange('pagbankCardPublicKeyConfigured', null, true);
+        setTestMessage('Conexão ok. A chave de cartão ficou guardada nesta loja.');
+      } else {
+        setTestMessage('Não foi possível consultar a chave com o token salvo.');
+      }
+    } catch {
+      setTestMessage('Não foi possível consultar a chave com o token salvo.');
+    } finally {
+      setTesting(false);
+    }
+  };
 
   return (
     <SettingsSectionCard
       icon={CreditCardIcon}
       title="Pagamentos online"
-      description="Pix e cartão pelo Mercado Pago, só no delivery. Em Teste, o servidor pode usar MERCADO_PAGO_* do ambiente. Em Produção, digite as credenciais da loja."
+      description="Pix e cartão no delivery. O dinheiro cai na conta do provedor escolhido para esta loja. Mercado Pago e PagBank ficam separados."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={() => onSave('onlinePayments')}
       actionDisabled={saving}
     >
+      <TextField
+        select
+        label="Provedor online"
+        value={provider}
+        onChange={(e) => onSettingChange('deliveryOnlineProvider', null, e.target.value)}
+        className="setting-input"
+        fullWidth
+      >
+        <MenuItem value="MERCADOPAGO">Mercado Pago</MenuItem>
+        <MenuItem value="PAGBANK">PagBank</MenuItem>
+      </TextField>
       <Typography className="setting-hint" variant="body2">
-        Mercado Pago · {environment === 'prod' ? 'produção' : 'teste'} ·{' '}
+        {pagbank ? 'PagBank' : 'Mercado Pago'}
+        {' · '}
+        {pagbank ? (pagbankEnvironment === 'prod' ? 'produção' : 'sandbox') : (environment === 'prod' ? 'produção' : 'teste')}
+        {' · '}
         {accessConfigured ? 'configurado' : 'não configurado'}.
       </Typography>
-      <Box className="payment-provider-fields">
-        <TextField
-          select
-          label="Ambiente"
-          value={environment}
-          onChange={(e) => onEnvironmentChange(e.target.value, settings, onSettingChange)}
-          className="setting-input"
-          fullWidth
-        >
-          <MenuItem value="test">Teste</MenuItem>
-          <MenuItem value="prod">Produção</MenuItem>
-        </TextField>
-        <SecretField
-          label="Access Token"
-          value={settings.mercadoPagoAccessToken}
-          configuredLength={settings.mercadoPagoAccessTokenLength}
-          configured={accessConfigured && isUnsetSecret(settings.mercadoPagoAccessToken)}
-          saving={saving}
-          onChange={(value) => onSettingChange('mercadoPagoAccessToken', null, value)}
-        />
-        <SecretField
-          label="Public Key"
-          value={settings.mercadoPagoPublicKey}
-          configuredLength={settings.mercadoPagoPublicKeyLength}
-          configured={publicKeyConfigured && isUnsetSecret(settings.mercadoPagoPublicKey)}
-          saving={saving}
-          onChange={(value) => onSettingChange('mercadoPagoPublicKey', null, value)}
-        />
-        <SecretField
-          label="Webhook secret"
-          value={settings.mercadoPagoWebhookSecret}
-          configuredLength={settings.mercadoPagoWebhookSecretLength}
-          configured={hasMercadoPagoWebhookSecret(settings, environment)
-            && isUnsetSecret(settings.mercadoPagoWebhookSecret)}
-          saving={saving}
-          onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
-        />
-      </Box>
+      {pagbank ? (
+        <Box className="payment-provider-fields">
+          <TextField
+            select
+            label="Ambiente"
+            value={pagbankEnvironment}
+            onChange={(e) => onSettingChange('pagbankEnvironment', null, e.target.value === 'prod' ? 'prod' : 'sandbox')}
+            className="setting-input"
+            fullWidth
+          >
+            <MenuItem value="sandbox">Sandbox</MenuItem>
+            <MenuItem value="prod">Produção</MenuItem>
+          </TextField>
+          <SecretField
+            label="Token da conta"
+            value={settings.pagbankAccessToken}
+            configuredLength={settings.pagbankAccessTokenLength}
+            configured={Boolean(settings.pagbankAccessTokenConfigured) && isUnsetSecret(settings.pagbankAccessToken)}
+            saving={saving}
+            onChange={(value) => onSettingChange('pagbankAccessToken', null, value)}
+          />
+          <Button type="button" variant="outlined" onClick={testConnection} disabled={testing || saving}>
+            {testing ? 'Testando...' : 'Testar conexão'}
+          </Button>
+          <Typography className="setting-hint" variant="body2">
+            Salve o token antes de testar. O teste só consulta a chave pública de cartão e não mostra o token.
+          </Typography>
+          {testMessage ? <Typography className="setting-hint" variant="body2">{testMessage}</Typography> : null}
+        </Box>
+      ) : (
+        <Box className="payment-provider-fields">
+          <TextField
+            select
+            label="Ambiente"
+            value={environment}
+            onChange={(e) => onEnvironmentChange(e.target.value, settings, onSettingChange)}
+            className="setting-input"
+            fullWidth
+          >
+            <MenuItem value="test">Teste</MenuItem>
+            <MenuItem value="prod">Produção</MenuItem>
+          </TextField>
+          <SecretField
+            label="Access Token"
+            value={settings.mercadoPagoAccessToken}
+            configuredLength={settings.mercadoPagoAccessTokenLength}
+            configured={accessConfigured && isUnsetSecret(settings.mercadoPagoAccessToken)}
+            saving={saving}
+            onChange={(value) => onSettingChange('mercadoPagoAccessToken', null, value)}
+          />
+          <SecretField
+            label="Public Key"
+            value={settings.mercadoPagoPublicKey}
+            configuredLength={settings.mercadoPagoPublicKeyLength}
+            configured={publicKeyConfigured && isUnsetSecret(settings.mercadoPagoPublicKey)}
+            saving={saving}
+            onChange={(value) => onSettingChange('mercadoPagoPublicKey', null, value)}
+          />
+          <SecretField
+            label="Webhook secret"
+            value={settings.mercadoPagoWebhookSecret}
+            configuredLength={settings.mercadoPagoWebhookSecretLength}
+            configured={hasMercadoPagoWebhookSecret(settings, environment)
+              && isUnsetSecret(settings.mercadoPagoWebhookSecret)}
+            saving={saving}
+            onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
+          />
+        </Box>
+      )}
       <FormControlLabel
         control={(
           <Switch
@@ -93,9 +166,11 @@ export function OnlineDeliveryPayments({
       />
       {!accessConfigured ? (
         <Typography className="setting-hint" variant="body2">
-          {environment === 'prod'
-            ? 'Digite o Access Token da loja e clique em Salvar para ligar o Pix online.'
-            : 'Selecione Teste (com MERCADO_PAGO_ACCESS_TOKEN no servidor) ou digite o Access Token e clique em Salvar.'}
+          {pagbank
+            ? 'Digite o token da conta PagBank e clique em Salvar para ligar o Pix online.'
+            : environment === 'prod'
+              ? 'Digite o Access Token da loja e clique em Salvar para ligar o Pix online.'
+              : 'Selecione Teste (com MERCADO_PAGO_ACCESS_TOKEN no servidor) ou digite o Access Token e clique em Salvar.'}
         </Typography>
       ) : null}
       <FormControlLabel
@@ -111,11 +186,13 @@ export function OnlineDeliveryPayments({
       />
       {!accessConfigured || !publicKeyConfigured ? (
         <Typography className="setting-hint" variant="body2">
-          {!accessConfigured
-            ? 'Access Token e Public Key são necessários para ligar o cartão online.'
-            : environment === 'prod'
-              ? 'Digite a Public Key da loja para ligar o cartão online.'
-              : 'Configure MERCADO_PAGO_PUBLIC_KEY no servidor ou digite a Public Key para ligar o cartão online.'}
+          {pagbank
+            ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'
+            : !accessConfigured
+              ? 'Access Token e Public Key são necessários para ligar o cartão online.'
+              : environment === 'prod'
+                ? 'Digite a Public Key da loja para ligar o cartão online.'
+                : 'Configure MERCADO_PAGO_PUBLIC_KEY no servidor ou digite a Public Key para ligar o cartão online.'}
         </Typography>
       ) : null}
     </SettingsSectionCard>

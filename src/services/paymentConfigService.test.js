@@ -291,4 +291,30 @@ describe('hydrateSavedSecretLengths', () => {
     expect(ui.mercadoPagoStoreAccessTokenConfigured).toBe(true);
     expect(ui.mercadoPagoPublicKeyConfigured).toBe(true);
   });
+
+  it('separa o provedor online e não devolve o token do PagBank', () => {
+    const ui = toPaymentUi({
+      deliveryOnlineProvider: 'PAGBANK',
+      pagbankEnvironment: 'sandbox',
+      pagbankAccessTokenConfigured: true,
+      pagbankAccessTokenLength: 12,
+      pagbankAccessToken: 'nao-devolver',
+    });
+    expect(ui.deliveryOnlineProvider).toBe('PAGBANK');
+    expect(ui.pagbankAccessToken).toBe('');
+    expect(ui.pagbankAccessTokenLength).toBe(12);
+
+    const payload = toPaymentPayload({
+      ...ui,
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      pagbankAccessToken: 'token-da-loja',
+    });
+    expect(payload.deliveryOnlineProvider).toBe('PAGBANK');
+    expect(payload.pagbankAccessToken).toBe('token-da-loja');
+    expect(payload.pagbankEnvironment).toBe('sandbox');
+  });
 });

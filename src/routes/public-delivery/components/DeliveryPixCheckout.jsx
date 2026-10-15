@@ -50,7 +50,9 @@ export default function DeliveryPixCheckout({
   const qrSrc = useMemo(() => {
     const raw = live?.qrCodeBase64 || payment?.qrCodeBase64;
     if (!raw) return '';
-    return raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
+    return raw.startsWith('data:') || raw.startsWith('https://') || raw.startsWith('http://')
+      ? raw
+      : `data:image/png;base64,${raw}`;
   }, [live?.qrCodeBase64, payment?.qrCodeBase64]);
   const copyCode = live?.qrCode || payment?.qrCode || '';
   const ticketUrl = live?.ticketUrl || payment?.ticketUrl || '';
@@ -343,7 +345,9 @@ export function computeExpiryProgress({ expiresAtMs, windowStartMs, nowMs, expir
 
 function statusLabel(status) {
   if (status === 'EXPIRED') return 'Pix expirado';
-  if (status === 'FAILED') return 'Não foi possível concluir o Pix';
+  if (status === 'FAILED' || status === 'DECLINED') return 'Não foi possível concluir o Pix';
   if (status === 'CANCELLED') return 'Pix cancelado';
-  return status;
+  if (status === 'REFUNDED') return 'Pagamento estornado';
+  if (status === 'APPROVED' || status === 'PAID') return 'Pagamento confirmado';
+  return 'Aguardando confirmação do provedor';
 }

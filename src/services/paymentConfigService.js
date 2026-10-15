@@ -142,6 +142,10 @@ export function updateStorePaymentConfig(payload) {
   return axios.put(PAYMENT_CONFIG_URL, payload);
 }
 
+export function testPagBankConnection() {
+  return axios.post(`${PAYMENT_CONFIG_URL}/pagbank/test`);
+}
+
 export function serviceFeePercentToUi(percent) {
   const n = Number(percent);
   if (!Number.isFinite(n)) return 10;
@@ -212,6 +216,12 @@ export function toPaymentUi(dto = {}) {
     mercadoPagoAccessToken: '',
     mercadoPagoPublicKey: '',
     mercadoPagoWebhookSecret: '',
+    deliveryOnlineProvider: dto.deliveryOnlineProvider === 'PAGBANK' ? 'PAGBANK' : 'MERCADOPAGO',
+    pagbankEnvironment: dto.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox',
+    pagbankAccessTokenConfigured: Boolean(dto.pagbankAccessTokenConfigured),
+    pagbankCardPublicKeyConfigured: Boolean(dto.pagbankCardPublicKeyConfigured),
+    pagbankAccessTokenLength: Number(dto.pagbankAccessTokenLength) || 0,
+    pagbankAccessToken: '',
   };
 }
 
@@ -315,6 +325,8 @@ export function toPaymentPayload(ui) {
     onlinePixEnabled: Boolean(ui.onlinePixEnabled),
     onlineCardEnabled: Boolean(ui.onlineCardEnabled),
     mercadoPagoEnvironment: ui.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test',
+    deliveryOnlineProvider: ui.deliveryOnlineProvider === 'PAGBANK' ? 'PAGBANK' : 'MERCADOPAGO',
+    pagbankEnvironment: ui.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox',
   };
   if ([tablePaymentProvider, comandaPaymentProvider, counterPaymentProvider].includes('INFINITEPAY')) {
     payload.infinitePayHandle = ui.infinitePayHandle || '';
@@ -326,6 +338,8 @@ export function toPaymentPayload(ui) {
   if (accessToken !== undefined) payload.mercadoPagoAccessToken = accessToken;
   if (publicKey !== undefined) payload.mercadoPagoPublicKey = publicKey;
   if (webhookSecret !== undefined) payload.mercadoPagoWebhookSecret = webhookSecret;
+  const pagbankToken = secretPayload(ui.pagbankAccessToken);
+  if (pagbankToken !== undefined) payload.pagbankAccessToken = pagbankToken;
   return payload;
 }
 
@@ -344,6 +358,11 @@ const SAVED_SECRET_FIELDS = [
     valueKey: 'mercadoPagoWebhookSecret',
     lengthKey: 'mercadoPagoWebhookSecretLength',
     flags: ['mercadoPagoWebhookSecretConfigured'],
+  },
+  {
+    valueKey: 'pagbankAccessToken',
+    lengthKey: 'pagbankAccessTokenLength',
+    flags: ['pagbankAccessTokenConfigured'],
   },
 ];
 

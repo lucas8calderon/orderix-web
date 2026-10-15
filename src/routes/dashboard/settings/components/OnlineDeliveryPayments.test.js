@@ -278,4 +278,14 @@ describe('OnlineDeliveryPayments', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     expect(onSave).toHaveBeenCalledWith('onlinePayments');
   });
+
+  it('mostra o token do PagBank sem o segredo de webhook do Mercado Pago', () => {
+    renderSection({ deliveryOnlineProvider: 'PAGBANK' });
+    expect(screen.getByLabelText('Token da conta')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Testar conexão' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Webhook secret')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Pix online')).toBeDisabled();
+    expect(screen.getByLabelText('Cartão de crédito online')).toBeDisabled();
+  });
 });

@@ -1230,7 +1230,8 @@ export default function PublicDelivery() {
         slug={slug}
         orderId={cardOrder?.orderId}
         amount={cardOrder?.amount}
-        publicKey={catalog?.mercadoPagoPublicKey}
+        publicKey={catalog?.onlinePaymentProvider === 'PAGBANK' ? catalog?.pagbankPublicKey : catalog?.mercadoPagoPublicKey}
+        provider={catalog?.onlinePaymentProvider || 'MERCADOPAGO'}
         payerEmail={customer?.email}
         onClose={() => setCardOpen(false)}
         onApproved={() => {

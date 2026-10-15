@@ -141,6 +141,9 @@ export const settingsStorage = {
       mercadoPagoAccessToken,
       mercadoPagoPublicKey,
       mercadoPagoWebhookSecret,
+      deliveryOnlineProvider,
+      pagbankEnvironment,
+      pagbankAccessToken,
       ...rest
     } = newSettings || {};
     mockSettings = { ...mockSettings, ...rest };
@@ -170,6 +173,9 @@ export const settingsStorage = {
       mercadoPagoAccessToken,
       mercadoPagoPublicKey,
       mercadoPagoWebhookSecret,
+      deliveryOnlineProvider,
+      pagbankEnvironment,
+      pagbankAccessToken,
     });
     return { ...mockSettings, ...payment };
   },
@@ -201,6 +207,9 @@ export const settingsStorage = {
       'mercadoPagoAccessToken',
       'mercadoPagoPublicKey',
       'mercadoPagoWebhookSecret',
+      'deliveryOnlineProvider',
+      'pagbankEnvironment',
+      'pagbankAccessToken',
     ]);
     if (paymentKeys.has(key)) {
       const current = await this.getPaymentConfig();
