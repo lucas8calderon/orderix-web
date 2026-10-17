@@ -1228,7 +1228,7 @@
   padding: 8px 10px;
   border-radius: 12px;
   background: var(--color-primary-fixed);
-  color: var(--color-primary-dark);
+  color: #1D4ED8;
   font-size: 0.72rem;
   font-weight: 650;
   line-height: 1.25;
@@ -1255,6 +1255,7 @@
   margin-bottom: 12px;
   position: relative;
   overflow: hidden;
+  color: #0F172A;
 }
 
 .dt-status-card.tone-ready,
@@ -1289,20 +1290,24 @@
   display: grid;
   place-items: center;
   background: #fff;
-  border: 3px solid var(--color-primary);
-  color: var(--color-primary);
+  border: 3px solid #2563EB;
+  color: #2563EB;
   flex-shrink: 0;
   font-size: 1.45rem;
 }
 
+.dt-status-icon {
+  color: inherit;
+}
+
 .dt-status-card.tone-done .dt-status-ring {
-  border-color: var(--color-success);
-  color: var(--color-success);
+  border-color: #16A34A;
+  color: #16A34A;
 }
 
 .dt-status-card.tone-cancelled .dt-status-ring {
-  border-color: var(--color-error);
-  color: var(--color-error);
+  border-color: #B91C1C;
+  color: #B91C1C;
 }
 
 .dt-status-body {
@@ -1315,21 +1320,21 @@
   font-weight: 700 !important;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-secondary) !important;
+  color: #475569 !important;
 }
 
 .dt-status-title {
   font-size: 1.2rem !important;
   font-weight: 800 !important;
   line-height: 1.25 !important;
-  color: var(--color-text-primary) !important;
+  color: #0F172A !important;
   margin-top: 2px !important;
 }
 
 .dt-status-desc {
   margin-top: 4px !important;
   font-size: 0.875rem !important;
-  color: var(--color-text-secondary) !important;
+  color: #475569 !important;
   line-height: 1.4 !important;
 }
 
@@ -1610,7 +1615,7 @@
   padding: 14px;
   border-radius: 14px;
   background: var(--color-primary-fixed);
-  color: inherit;
+  color: #0F172A;
   text-decoration: none;
   text-align: left;
   font: inherit;
@@ -1627,23 +1632,41 @@
 }
 
 .dt-help-icon {
-  color: var(--color-primary) !important;
+  color: #1D4ED8 !important;
   font-size: 1.5rem !important;
 }
 
 .dt-help-title {
   font-size: 0.95rem !important;
   font-weight: 750 !important;
+  color: #0F172A !important;
 }
 
 .dt-help-desc {
   font-size: 0.8rem !important;
-  color: var(--color-text-secondary) !important;
+  color: #475569 !important;
 }
 
 .dt-help-chevron {
-  color: var(--color-primary) !important;
+  color: #1D4ED8 !important;
   margin-left: auto;
+}
+
+html[data-theme="dark"] .dt-help-card.is-disabled {
+  color: var(--color-text-primary);
+}
+
+html[data-theme="dark"] .dt-help-card.is-disabled .dt-help-title {
+  color: var(--color-text-primary) !important;
+}
+
+html[data-theme="dark"] .dt-help-card.is-disabled .dt-help-desc {
+  color: var(--color-text-secondary) !important;
+}
+
+html[data-theme="dark"] .dt-help-card.is-disabled .dt-help-icon,
+html[data-theme="dark"] .dt-help-card.is-disabled .dt-help-chevron {
+  color: var(--color-primary) !important;
 }
 
 .dt-footer {
