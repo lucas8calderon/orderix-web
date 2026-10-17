@@ -302,4 +302,36 @@ describe('useSettingsState delivery branding', () => {
     expect(result.current.toast.severity).toBe('error');
     expect(result.current.toast.message).toMatch(/whatsapp válido com ddd/i);
   });
+
+  it('mescla paymentOverrides no save de pagamentos antes do estado assíncrono', async () => {
+    settingsStorage.updatePaymentConfig.mockResolvedValue({
+      deliveryOnlineProvider: 'PAGBANK',
+      onlinePixEnabled: false,
+      pagbankAccessTokenConfigured: true,
+    });
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('onlinePayments', {
+        paymentOverrides: {
+          deliveryOnlineProvider: 'PAGBANK',
+          pagbankEnvironment: 'sandbox',
+          pagbankAccessToken: 'token-sandbox-loja-teste',
+          onlinePixEnabled: false,
+        },
+      });
+    });
+
+    expect(saved).toBe(true);
+    expect(settingsStorage.updatePaymentConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deliveryOnlineProvider: 'PAGBANK',
+        pagbankEnvironment: 'sandbox',
+        pagbankAccessToken: 'token-sandbox-loja-teste',
+        onlinePixEnabled: false,
+      })
+    );
+  });
 });

@@ -38,6 +38,57 @@ export function OnlineDeliveryPayments({
     : hasMercadoPagoPublicKey(settings, environment);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState('');
+  const [pixPausedForMissingToken, setPixPausedForMissingToken] = useState(false);
+  const pagbankTokenInputRef = useRef(null);
+  const tokenStored = Boolean(settings.pagbankAccessTokenConfigured);
+  const publicKeyStored = Boolean(settings.pagbankCardPublicKeyConfigured);
+
+  useEffect(() => {
+    if (!pagbank) {
+      setPixPausedForMissingToken(false);
+      return;
+    }
+    if (tokenStored) {
+      setPixPausedForMissingToken(false);
+    } else if (settings.onlinePixEnabled) {
+      onSettingChange('onlinePixEnabled', null, false);
+      setPixPausedForMissingToken(true);
+    }
+    if (!publicKeyStored && settings.onlineCardEnabled) {
+      onSettingChange('onlineCardEnabled', null, false);
+    }
+  }, [
+    pagbank,
+    tokenStored,
+    publicKeyStored,
+    settings.onlinePixEnabled,
+    settings.onlineCardEnabled,
+    onSettingChange,
+  ]);
+
+  const selectProvider = (nextProvider) => {
+    onSettingChange('deliveryOnlineProvider', null, nextProvider);
+    if (nextProvider === 'PAGBANK' && !tokenStored) {
+      if (settings.onlinePixEnabled) {
+        onSettingChange('onlinePixEnabled', null, false);
+        setPixPausedForMissingToken(true);
+      }
+      if (settings.onlineCardEnabled) {
+        onSettingChange('onlineCardEnabled', null, false);
+      }
+    }
+  };
+
+  const saveOnlinePayments = () => {
+    const typed = pagbankTokenInputRef.current?.value;
+    if (pagbank && hasTypedSecret(typed)) {
+      onSave('onlinePayments', {
+        paymentOverrides: { pagbankAccessToken: String(typed).trim() },
+      });
+      return;
+    }
+    onSave('onlinePayments');
+  };
 
   const testConnection = async () => {
     setTesting(true);
@@ -63,14 +114,14 @@ export function OnlineDeliveryPayments({
       title="Pagamentos online"
       description="Pix e cartão no delivery. O dinheiro cai na conta do provedor escolhido para esta loja. Mercado Pago e PagBank ficam separados."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
-      onAction={() => onSave('onlinePayments')}
+      onAction={saveOnlinePayments}
       actionDisabled={saving}
     >
       <TextField
         select
         label="Provedor online"
         value={provider}
-        onChange={(e) => onSettingChange('deliveryOnlineProvider', null, e.target.value)}
+        onChange={(e) => selectProvider(e.target.value)}
         className="setting-input"
         fullWidth
       >
@@ -103,6 +154,7 @@ export function OnlineDeliveryPayments({
             configuredLength={settings.pagbankAccessTokenLength}
             configured={Boolean(settings.pagbankAccessTokenConfigured) && isUnsetSecret(settings.pagbankAccessToken)}
             saving={saving}
+            inputRef={pagbankTokenInputRef}
             onChange={(value) => onSettingChange('pagbankAccessToken', null, value)}
           />
           <Button type="button" variant="outlined" onClick={testConnection} disabled={testing || saving}>
@@ -157,14 +209,18 @@ export function OnlineDeliveryPayments({
         control={(
           <Switch
             checked={Boolean(settings.onlinePixEnabled)}
-            disabled={!accessConfigured}
+            disabled={!accessConfigured && !settings.onlinePixEnabled}
             onChange={(e) => onSettingChange('onlinePixEnabled', null, e.target.checked)}
             sx={switchStyles}
           />
         )}
         label="Pix online"
       />
-      {!accessConfigured ? (
+      {pagbank && pixPausedForMissingToken ? (
+        <Typography className="setting-hint" variant="body2">
+          Salve o token primeiro e só depois ligue o Pix.
+        </Typography>
+      ) : !accessConfigured ? (
         <Typography className="setting-hint" variant="body2">
           {pagbank
             ? 'Digite o token da conta PagBank e clique em Salvar para ligar o Pix online.'
@@ -266,7 +322,7 @@ function hasMercadoPagoWebhookSecret(settings, environment = settings.mercadoPag
  * então backspace não a remove. Ao focar, o campo abre vazio para digitar outro segredo.
  * Limpar marca a remoção do valor gravado.
  */
-function SecretField({ label, value, configured, configuredLength, saving, onChange }) {
+function SecretField({ label, value, configured, configuredLength, saving, onChange, inputRef }) {
   const [editing, setEditing] = useState(false);
   const [markedClear, setMarkedClear] = useState(false);
   const wasSaving = useRef(false);
@@ -315,6 +371,7 @@ function SecretField({ label, value, configured, configuredLength, saving, onCha
       label={label}
       type="text"
       value={displayValue}
+      inputRef={inputRef}
       onFocus={openForEdit}
       onChange={handleChange}
       className="setting-input"

@@ -279,6 +279,66 @@ describe('OnlineDeliveryPayments', () => {
     expect(onSave).toHaveBeenCalledWith('onlinePayments');
   });
 
+  it('PagBank com Pix herdado desliga o Pix e pede para salvar o token antes', () => {
+    const onSettingChange = jest.fn();
+    renderSection({
+      deliveryOnlineProvider: 'PAGBANK',
+      pagbankAccessTokenConfigured: false,
+      pagbankCardPublicKeyConfigured: false,
+      onlinePixEnabled: true,
+      onlineCardEnabled: true,
+    }, onSettingChange);
+    expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
+    expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, false);
+    expect(screen.getByText('Salve o token primeiro e só depois ligue o Pix.')).toBeInTheDocument();
+  });
+
+  it('ao selecionar PagBank sem token gravado desliga Pix e cartão herdados', () => {
+    const onSettingChange = jest.fn();
+    renderSection({
+      deliveryOnlineProvider: 'MERCADOPAGO',
+      mercadoPagoConfigured: true,
+      pagbankAccessTokenConfigured: false,
+      onlinePixEnabled: true,
+      onlineCardEnabled: true,
+    }, onSettingChange);
+    const native = screen.getByLabelText('Provedor online').parentElement.querySelector('input');
+    fireEvent.change(native, { target: { value: 'PAGBANK' } });
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryOnlineProvider', null, 'PAGBANK');
+    expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
+    expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, false);
+  });
+
+  it('Pix ligado sem credencial PagBank pode ser desligado', () => {
+    const onSettingChange = jest.fn();
+    renderSection({
+      deliveryOnlineProvider: 'PAGBANK',
+      pagbankAccessTokenConfigured: false,
+      onlinePixEnabled: true,
+    }, onSettingChange);
+    const pix = screen.getByLabelText('Pix online');
+    expect(pix).not.toBeDisabled();
+    fireEvent.click(pix);
+    expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
+  });
+
+  it('salvar envia o token lido do input do PagBank', () => {
+    const onSave = jest.fn();
+    renderSection({
+      deliveryOnlineProvider: 'PAGBANK',
+      pagbankAccessTokenConfigured: false,
+      onlinePixEnabled: false,
+      pagbankAccessToken: '',
+    }, jest.fn(), onSave);
+    const input = screen.getByLabelText('Token da conta');
+    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    valueSetter.call(input, 'token-sandbox-loja-teste');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(onSave).toHaveBeenCalledWith('onlinePayments', {
+      paymentOverrides: { pagbankAccessToken: 'token-sandbox-loja-teste' },
+    });
+  });
+
   it('mostra o token do PagBank sem o segredo de webhook do Mercado Pago', () => {
     renderSection({ deliveryOnlineProvider: 'PAGBANK' });
     expect(screen.getByLabelText('Token da conta')).toBeInTheDocument();
