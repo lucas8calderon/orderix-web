@@ -298,8 +298,8 @@ export default function DeliveryCardCheckout({
 
   return (
     <Dialog open={open} onClose={phase === 'form' ? onClose : undefined} fullWidth maxWidth="sm" className="delivery-card-dialog">
-      <DialogTitle>
-        Cartão de crédito
+      <DialogTitle className="delivery-card-title">
+        <span>Cartão de crédito</span>
         <IconButton
           aria-label="Fechar"
           onClick={() => {
@@ -311,26 +311,31 @@ export default function DeliveryCardCheckout({
           }}
           size="small"
           disabled={processing}
-          sx={{ float: 'right' }}
         >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       <DialogContent className="delivery-card-content" inert={processing ? '' : undefined}>
-        <Typography className="delivery-card-total">Total {formatCurrency(amount)}</Typography>
+        <p className="delivery-card-amount">
+          <span className="delivery-card-amount-kicker">Total</span>
+          <span className="delivery-card-amount-value">{formatCurrency(amount)}</span>
+        </p>
         {error && phase !== 'approved' ? <Alert severity={phase === 'unknown' ? 'warning' : 'error'} sx={{ mb: 2 }}>{error}</Alert> : null}
         {phase === 'form' && pagbank ? (
-          <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick" aria-busy={processing}>
-            <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required disabled={processing} sx={{ mb: 1 }} />
-            <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required disabled={processing} inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} sx={{ mb: 1 }} />
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-              <TextField label="Mês" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 2 }} />
-              <TextField label="Ano" value={expYear} onChange={(e) => setExpYear(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 4 }} />
+          <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick delivery-card-form" aria-busy={processing}>
+            <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required disabled={processing} autoComplete="cc-name" />
+            <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required disabled={processing} inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} />
+            <Box className="delivery-card-fields">
+              <TextField label="Mês" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 2, autoComplete: 'cc-exp-month' }} />
+              <TextField label="Ano" value={expYear} onChange={(e) => setExpYear(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-exp-year' }} />
               <TextField label="CVV" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} required disabled={processing} type="password" inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-csc' }} />
             </Box>
-            <Button type="submit" variant="contained" disabled={!publicKey || processing}>
+            <Button className="delivery-card-pay" type="submit" variant="contained" fullWidth disabled={!publicKey || processing}>
               Pagar à vista
             </Button>
+            <Typography className="delivery-card-trust" component="p">
+              Dados do cartão criptografados antes de sair do aparelho.
+            </Typography>
           </Box>
         ) : null}
         {phase === 'form' && !pagbank ? (
@@ -342,6 +347,9 @@ export default function DeliveryCardCheckout({
               </Box>
             ) : null}
             <div id={containerId} className="delivery-card-brick" />
+            <Typography className="delivery-card-trust" component="p">
+              Dados do cartão criptografados antes de sair do aparelho.
+            </Typography>
           </>
         ) : null}
         {phase === 'approved' ? (

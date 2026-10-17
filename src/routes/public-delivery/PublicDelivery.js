@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Divider,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -78,6 +77,7 @@ import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodServ
 import { deliveryCoverageLabel, moneyCents } from './utils/neighborhoodPlace';
 import { clearServiceAddress, readServiceAddress, writeServiceAddress } from './utils/serviceAddress';
 import './PublicDelivery.css';
+import './components/DeliveryCheckout.css';
 
 const emptyCheckout = {
   customerName: '',
@@ -971,9 +971,12 @@ export default function PublicDelivery() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Checkout</DialogTitle>
-        <DialogContent>
+      <Dialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} fullWidth maxWidth="sm" className="delivery-checkout-dialog">
+        <DialogTitle className="delivery-checkout-title">
+          <span>Finalizar pedido</span>
+          <strong className="delivery-checkout-title-total">{formatCurrency(totals.total)}</strong>
+        </DialogTitle>
+        <DialogContent className="delivery-checkout-content">
           {checkoutError ? <Alert severity="error" sx={{ mb: 2 }}>{checkoutError}</Alert> : null}
           {!customer ? (
             <Alert
@@ -998,10 +1001,11 @@ export default function PublicDelivery() {
           {customer ? (
             <>
           {fulfillmentModes.length > 1 ? (
-            <FormControl sx={{ mb: 2 }}>
-              <Typography variant="subtitle2">Tipo do pedido</Typography>
+            <FormControl className="delivery-checkout-section">
+              <Typography variant="subtitle2" className="delivery-checkout-section-title">Como você recebe</Typography>
               <RadioGroup
                 row
+                className="delivery-checkout-modes"
                 value={checkout.fulfillment}
                 onChange={(e) => {
                   const fulfillment = e.target.value;
@@ -1013,10 +1017,10 @@ export default function PublicDelivery() {
                 }}
               >
                 {fulfillmentModes.includes('DELIVERY') ? (
-                  <FormControlLabel value="DELIVERY" control={<Radio />} label="Entrega" />
+                  <FormControlLabel className="delivery-choice" value="DELIVERY" control={<Radio />} label="Entrega" />
                 ) : null}
                 {fulfillmentModes.includes('PICKUP') ? (
-                  <FormControlLabel value="PICKUP" control={<Radio />} label="Retirada" />
+                  <FormControlLabel className="delivery-choice" value="PICKUP" control={<Radio />} label="Retirada" />
                 ) : null}
               </RadioGroup>
             </FormControl>
@@ -1027,6 +1031,7 @@ export default function PublicDelivery() {
               <Typography className="delivery-pickup-address-text">{catalog.storeAddress}</Typography>
             </Box>
           ) : null}
+          <Typography variant="subtitle2" className="delivery-checkout-section-title">Seus dados</Typography>
           <TextField fullWidth label="Nome" sx={{ mb: 1.5 }} value={checkout.customerName} onChange={(e) => setCheckout((prev) => ({ ...prev, customerName: e.target.value }))} />
           <TextField
             fullWidth
@@ -1062,6 +1067,7 @@ export default function PublicDelivery() {
                 <FormControl sx={{ mb: 1.5 }}>
                   <Typography variant="subtitle2">Endereço de entrega</Typography>
                   <RadioGroup
+                    className="delivery-checkout-addresses"
                     value={checkout.addressId || ''}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -1084,13 +1090,14 @@ export default function PublicDelivery() {
                   >
                     {addresses.map((address) => (
                       <FormControlLabel
+                        className="delivery-choice"
                         key={address.id}
                         value={String(address.id)}
                         control={<Radio />}
                         label={`${address.street}, ${address.number} — ${address.neighborhood}`}
                       />
                     ))}
-                    <FormControlLabel value="" control={<Radio />} label="Cadastrar outro endereço" />
+                    <FormControlLabel className="delivery-choice" value="" control={<Radio />} label="Cadastrar outro endereço" />
                   </RadioGroup>
                 </FormControl>
               ) : (
@@ -1137,12 +1144,12 @@ export default function PublicDelivery() {
                     }}
                   />
                   <TextField fullWidth label="Rua" sx={{ mb: 1.5 }} value={checkout.street} onChange={(e) => setCheckout((prev) => ({ ...prev, street: e.target.value, addressId: '' }))} />
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.5 }}>
+                  <Box className="delivery-checkout-split">
                     <TextField label="Número" value={checkout.number} onChange={(e) => setCheckout((prev) => ({ ...prev, number: e.target.value, addressId: '' }))} />
                     <TextField label="Complemento" value={checkout.complement} onChange={(e) => setCheckout((prev) => ({ ...prev, complement: e.target.value, addressId: '' }))} />
                   </Box>
                   <TextField fullWidth label="Bairro" sx={{ mb: 1.5 }} value={checkout.neighborhood} onChange={(e) => setCheckout((prev) => ({ ...prev, neighborhood: e.target.value, addressId: '' }))} />
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 1.5, mb: 1.5 }}>
+                  <Box className="delivery-checkout-split delivery-checkout-split--city">
                     <TextField label="Cidade" value={checkout.city} onChange={(e) => setCheckout((prev) => ({ ...prev, city: e.target.value, addressId: '' }))} />
                     <TextField
                       label="UF"
@@ -1182,18 +1189,23 @@ export default function PublicDelivery() {
             fulfillment={checkout.fulfillment}
             total={totals.total}
           />
-          <Divider sx={{ my: 2 }} />
-          <Box className="delivery-line"><span>Produtos</span><span>{formatCurrency(totals.subtotal)}</span></Box>
-          <Box className="delivery-line"><span>Entrega</span><span>{formatCurrency(totals.deliveryFee)}</span></Box>
-          <Box className="delivery-line"><strong>Total</strong><strong>{formatCurrency(totals.total)}</strong></Box>
+          <Box className="delivery-checkout-summary">
+            <Box className="delivery-line"><span>Produtos</span><span>{formatCurrency(totals.subtotal)}</span></Box>
+            <Box className="delivery-line"><span>Entrega</span><span>{formatCurrency(totals.deliveryFee)}</span></Box>
+            <Box className="delivery-checkout-total-main">
+              <span>Total</span>
+              <strong>{formatCurrency(totals.total)}</strong>
+            </Box>
+          </Box>
+          <Typography className="delivery-checkout-trust" component="p">Pagamento protegido.</Typography>
             </>
           ) : null}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCheckoutOpen(false)}>Voltar</Button>
-          <Button variant="contained" disabled={submitting || closed || !customer} onClick={submitOrder}>
+        <DialogActions className="delivery-checkout-actions">
+          <Button className="delivery-checkout-confirm" variant="contained" fullWidth disabled={submitting || closed || !customer} onClick={submitOrder}>
             {submitting ? 'Enviando...' : 'Confirmar pedido'}
           </Button>
+          <Button className="delivery-checkout-back" onClick={() => setCheckoutOpen(false)}>Voltar</Button>
         </DialogActions>
       </Dialog>
       <DeliveryPixCheckout

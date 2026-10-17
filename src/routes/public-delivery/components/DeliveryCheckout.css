@@ -1,0 +1,214 @@
+.delivery-checkout-dialog .MuiDialog-paper {
+  margin: 12px;
+  width: calc(100% - 24px);
+  max-width: min(480px, calc(100vw - 24px));
+  max-height: calc(100% - 24px);
+  overflow-x: hidden;
+  box-sizing: border-box;
+  border-radius: 20px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  background-image: none;
+}
+
+.delivery-checkout-title.MuiDialogTitle-root {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 8px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.delivery-checkout-title-total {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.delivery-checkout-content.MuiDialogContent-root {
+  overflow-x: hidden;
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.delivery-checkout-content .MuiFormControl-root,
+.delivery-checkout-content .MuiTextField-root,
+.delivery-checkout-content .MuiFormGroup-root {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.delivery-checkout-section {
+  display: block;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.delivery-checkout-section-title {
+  display: block;
+  margin: 4px 0 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary) !important;
+}
+
+.delivery-checkout-modes.MuiFormGroup-root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.delivery-choice {
+  margin: 0 !important;
+  min-width: 0;
+  min-height: 48px;
+  padding: 4px 8px 4px 2px;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.delivery-choice .MuiFormControlLabel-label {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.delivery-checkout-addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.delivery-choice .MuiRadio-root {
+  color: var(--color-text-secondary);
+}
+
+.delivery-choice .MuiRadio-root.Mui-checked {
+  color: #2563eb;
+}
+
+.delivery-choice:has(.Mui-checked) {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.16);
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.delivery-checkout-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.delivery-checkout-split--city {
+  grid-template-columns: minmax(0, 1fr) 88px;
+}
+
+.delivery-checkout-summary {
+  margin-top: 16px;
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  min-width: 0;
+}
+
+.delivery-checkout-summary .delivery-line {
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+}
+
+.delivery-checkout-total-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.delivery-checkout-total-main strong {
+  font-size: clamp(1.6rem, 6vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.delivery-checkout-trust {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.delivery-checkout-actions.MuiDialogActions-root {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 4px 20px 18px;
+}
+
+.delivery-checkout-actions .MuiButton-root {
+  margin-left: 0 !important;
+}
+
+.delivery-checkout-confirm.MuiButton-root {
+  min-height: 50px;
+  border-radius: 14px;
+  font-size: 1.02rem;
+  font-weight: 800;
+  background: #2563eb;
+  box-shadow: none;
+}
+
+.delivery-checkout-confirm.MuiButton-root:hover {
+  background: #1d4ed8;
+}
+
+.delivery-checkout-back.MuiButton-root {
+  min-height: 40px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .delivery-checkout-dialog .MuiDialog-paper {
+    margin: 8px;
+    width: calc(100% - 16px);
+    max-width: calc(100vw - 16px);
+  }
+
+  .delivery-checkout-title.MuiDialogTitle-root {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .delivery-checkout-split,
+  .delivery-checkout-split--city {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .delivery-checkout-modes.MuiFormGroup-root {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

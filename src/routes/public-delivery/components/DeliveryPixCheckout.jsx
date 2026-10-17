@@ -139,24 +139,26 @@ export default function DeliveryPixCheckout({
     }
   };
 
+  const expiredNow = timeExpired || status === 'EXPIRED';
   const waitLabel = paid
     ? 'Pagamento confirmado'
-    : timeExpired || status === 'EXPIRED'
+    : expiredNow
       ? 'Pix expirado — gere um novo código'
       : terminal
         ? statusLabel(status)
         : 'Aguardando pagamento';
+  const waitTone = paid ? 'is-paid' : expiredNow || terminal ? 'is-expired' : '';
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" className="delivery-pix-dialog">
       <DialogTitle className="delivery-pix-title">
-        Pix online
+        <span>Pague com Pix</span>
         <IconButton aria-label="Fechar" onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       <DialogContent className="delivery-pix-content">
-        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+        {error ? <Alert severity="error">{error}</Alert> : null}
         {creating && !hasCharge ? (
           <Box className="delivery-pix-loading">
             <CircularProgress size={28} />
@@ -165,11 +167,15 @@ export default function DeliveryPixCheckout({
         ) : null}
         {hasCharge ? (
           <>
-            <Typography className="delivery-pix-total">
-              Total {formatCurrency(payment.amount)}
-            </Typography>
+            <p className="delivery-pix-amount">
+              <span className="delivery-pix-amount-kicker">Total</span>
+              <span className="delivery-pix-amount-value">{formatCurrency(payment.amount)}</span>
+            </p>
+            {!paid && !expiredNow ? (
+              <p className="delivery-pix-hint">Abra o app do banco e aponte para o QR.</p>
+            ) : null}
             {qrSrc || showGeneratedQr ? (
-              <div className="delivery-pix-qr-frame">
+              <div className={`delivery-pix-qr-frame${expiredNow ? ' is-expired' : ''}`}>
                 {qrSrc ? (
                   <img
                     className="delivery-pix-qr"
@@ -181,7 +187,7 @@ export default function DeliveryPixCheckout({
                   <QRCodeSVG
                     className="delivery-pix-qr"
                     value={copyCode}
-                    size={196}
+                    size={220}
                     level="M"
                     marginSize={4}
                     bgColor="#ffffff"
@@ -193,12 +199,19 @@ export default function DeliveryPixCheckout({
             ) : null}
             {copyCode ? (
               <Box className="delivery-pix-copy">
+                <Button
+                  className={`delivery-pix-copy-btn${copied ? ' is-copied' : ''}`}
+                  variant="outlined"
+                  onClick={copy}
+                >
+                  {copied ? 'Copiado' : 'Copiar código'}
+                </Button>
                 <code className="delivery-pix-code">{copyCode}</code>
-                <Button variant="outlined" onClick={copy}>{copied ? 'Copiado' : 'Copiar código'}</Button>
               </Box>
             ) : null}
             {showMercadoPagoTicket ? (
               <Button
+                className="delivery-pix-ticket"
                 variant="text"
                 href={ticketUrl}
                 target="_blank"
@@ -217,13 +230,14 @@ export default function DeliveryPixCheckout({
             {!paid && (expiresAtMs != null || status === 'EXPIRED') ? (
               <PixExpiryBar progress={expiryProgress} />
             ) : null}
-            <Typography className="delivery-pix-wait" role="status">
+            <Typography className={`delivery-pix-wait${waitTone ? ` ${waitTone}` : ''}`} role="status">
               {waitLabel}
             </Typography>
+            <p className="delivery-pix-trust">Pagamento protegido.</p>
           </>
         ) : null}
         {showRetry ? (
-          <Button variant="contained" onClick={onRetry} sx={{ mt: 2 }} disabled={creating}>
+          <Button className="delivery-pix-retry" variant="contained" fullWidth onClick={onRetry} disabled={creating}>
             Gerar novo Pix
           </Button>
         ) : null}
