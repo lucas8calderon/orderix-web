@@ -26,11 +26,8 @@ jest.mock('../home/landingAssets', () => ({
   WHATSAPP_DISPLAY: '+55 11 92457-0853',
 }));
 
-function expectMoney(label, value) {
-  const expected = typeof value === 'number'
-    ? formatPrice(value).replace(/\s/g, ' ')
-    : String(value);
-  expect(screen.getByLabelText(label)).toHaveTextContent(expected);
+function moneyText(value) {
+  return formatPrice(value).replace(/\s/g, ' ');
 }
 
 function setup() {
@@ -68,11 +65,14 @@ describe('landing do programa de parceiros', () => {
   it('atualiza planos, quantidade, percentual, período, gráfico e barras', () => {
     setup();
     const initial = simulatePartnerEarnings({ monthlyPrice: 99.9, stores: 10, ratePercent: 10, months: 12 });
+    const result = () => screen.getByRole('group', { name: 'Resultado da simulação' });
     expect(screen.getByRole('radio', { name: /99,90/ })).toBeChecked();
     expect(screen.getByRole('radio', { name: '10%' })).toBeChecked();
     expect(screen.getByRole('radio', { name: '12 meses' })).toBeChecked();
-    expectMoney('Comissão mensal estimada', initial.monthlyCommission);
-    expectMoney('Comissão acumulada no período', initial.accumulatedCommission);
+    expect(result()).toHaveTextContent(moneyText(initial.monthlyCommission));
+    expect(result()).toHaveTextContent('Comissão acumulada em 12 meses');
+    expect(result()).toHaveTextContent(moneyText(initial.accumulatedCommission));
+    expect(screen.queryByText('Comissão estimada por estabelecimento/mês')).not.toBeInTheDocument();
     expect(within(screen.getByRole('table', { name: 'Comissão acumulada mês a mês' })).getAllByRole('row')).toHaveLength(13);
 
     const progress = screen.getByRole('list', { name: 'Ganhos acumulados por período' });
@@ -86,16 +86,13 @@ describe('landing do programa de parceiros', () => {
     fireEvent.click(screen.getByRole('radio', { name: '24 meses' }));
 
     const next = simulatePartnerEarnings({ monthlyPrice: 39.9, stores: 5, ratePercent: 15, months: 24 });
-    expectMoney('Comissão estimada por estabelecimento/mês', next.commissionPerStore);
-    expectMoney('Total de estabelecimentos', '5');
-    expectMoney('Receita mensal total das assinaturas simuladas', next.subscriptionRevenue);
-    expectMoney('Comissão mensal estimada', next.monthlyCommission);
-    expectMoney('Comissão acumulada no período', next.accumulatedCommission);
-    expectMoney('Projeção anual equivalente', next.annualEquivalent);
+    expect(result()).toHaveTextContent('Comissão acumulada em 24 meses');
+    expect(result()).toHaveTextContent(moneyText(next.monthlyCommission));
+    expect(result()).toHaveTextContent(moneyText(next.accumulatedCommission));
     expect(within(screen.getByRole('table', { name: 'Comissão acumulada mês a mês' })).getAllByRole('row')).toHaveLength(25);
     expect(within(screen.getByRole('list', { name: 'Ganhos acumulados por período' })).getByText('24 meses')).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Ganhos acumulados por período' })).queryByText('36 meses')).not.toBeInTheDocument();
-    expect(screen.getByText(/No mês 24, a projeção acumulada ilustrativa/)).toHaveTextContent(formatPrice(next.accumulatedCommission).replace(/\s/g, ' '));
+    expect(screen.getByText(/No mês 24, a projeção acumulada ilustrativa/)).toHaveTextContent(moneyText(next.accumulatedCommission));
   });
 
   it('calcula os exemplos com a taxa ilustrativa de 10% e o plano de referência', () => {
@@ -105,8 +102,8 @@ describe('landing do programa de parceiros', () => {
     const examples = screen.getByRole('region', { name: /Três jeitos de participar/ });
     expect(within(examples).getByRole('heading', { name: 'Parceiro iniciante' })).toBeInTheDocument();
     expect(within(examples).getByRole('heading', { name: 'Parceiro com rede de contatos' })).toBeInTheDocument();
-    expect(examples).toHaveTextContent(formatPrice(starter.monthlyCommission).replace(/\s/g, ' '));
-    expect(examples).toHaveTextContent(formatPrice(network.monthlyCommission).replace(/\s/g, ' '));
+    expect(examples).toHaveTextContent(moneyText(starter.monthlyCommission));
+    expect(examples).toHaveTextContent(moneyText(network.monthlyCommission));
     expect(screen.getByRole('link', { name: /Conhecer as funcionalidades/ })).toHaveAttribute('href', '/#solucoes');
   });
 });

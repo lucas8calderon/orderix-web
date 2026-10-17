@@ -213,7 +213,7 @@ export default function PartnersSimulator() {
           </form>
 
           <div className="wp-partners-output">
-            <div className="wp-partners-highlight">
+            <div className="wp-partners-highlight" role="group" aria-label="Resultado da simulação">
               <p>Comissão mensal estimada</p>
               <strong>{formatPrice(result.monthlyCommission)}</strong>
               <p className="wp-partners-accumulated">
@@ -221,21 +221,6 @@ export default function PartnersSimulator() {
                 <strong>{formatPrice(result.accumulatedCommission)}</strong>
               </p>
             </div>
-
-            <dl className="wp-partners-results">
-              <dt id="partner-result-per-store">Comissão estimada por estabelecimento/mês</dt>
-              <dd aria-labelledby="partner-result-per-store">{formatPrice(result.commissionPerStore)}</dd>
-              <dt id="partner-result-stores">Total de estabelecimentos</dt>
-              <dd aria-labelledby="partner-result-stores">{result.stores}</dd>
-              <dt id="partner-result-revenue">Receita mensal total das assinaturas simuladas</dt>
-              <dd aria-labelledby="partner-result-revenue">{formatPrice(result.subscriptionRevenue)}</dd>
-              <dt id="partner-result-monthly">Comissão mensal estimada</dt>
-              <dd aria-labelledby="partner-result-monthly">{formatPrice(result.monthlyCommission)}</dd>
-              <dt id="partner-result-accumulated">Comissão acumulada no período</dt>
-              <dd aria-labelledby="partner-result-accumulated">{formatPrice(result.accumulatedCommission)}</dd>
-              <dt id="partner-result-annual">Projeção anual equivalente</dt>
-              <dd aria-labelledby="partner-result-annual">{formatPrice(result.annualEquivalent)}</dd>
-            </dl>
 
             <figure className="wp-partners-figure">
               <div className="wp-partners-chart" aria-hidden="true">
