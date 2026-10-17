@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { formatCurrency } from '../../../services/accessControl';
+import { defaultMenuImage } from '../../dashboard/menu/utils/defaultMenuImage';
 import { formatProductPrice } from '../../dashboard/menu/utils/productVariations';
 import {
   productHighlightBadge,
@@ -7,12 +9,17 @@ import {
   resolveDeliveryImage,
 } from '../utils/resolveDeliveryImage';
 
-export default function DeliveryProductCard({ product, disabled, onOpen }) {
+export default function DeliveryProductCard({ product, disabled, onOpen, priority = false }) {
   const unavailable = product.isAvailable === false || product.sellable === false;
   const blocked = unavailable || disabled;
   const tags = productTags(product);
   const badge = productHighlightBadge(product);
-  const imageSrc = resolveDeliveryImage(product.image);
+  const resolvedImage = resolveDeliveryImage(product.image);
+  const [imageSrc, setImageSrc] = useState(resolvedImage);
+
+  useEffect(() => {
+    setImageSrc(resolvedImage);
+  }, [resolvedImage]);
 
   return (
     <article
@@ -30,8 +37,12 @@ export default function DeliveryProductCard({ product, disabled, onOpen }) {
             src={imageSrc}
             alt=""
             className="delivery-product-image"
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
             decoding="async"
+            fetchPriority={priority ? 'high' : 'auto'}
+            onError={() => {
+              setImageSrc((current) => (current === defaultMenuImage ? current : defaultMenuImage));
+            }}
           />
           {unavailable ? <span className="delivery-product-media-overlay" aria-hidden="true" /> : null}
           {badge ? <span className="delivery-product-badge">{badge}</span> : null}
