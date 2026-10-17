@@ -30,13 +30,6 @@ export const PARTNER_MAX_STORES = 100;
 export const PARTNER_DEFAULT_STORES = 10;
 export const PARTNER_PROGRESS_MONTHS = [3, 6, 12, 24, 36];
 
-export const PARTNER_AUDIENCE = [
-  'Pessoas',
-  'Influenciadores',
-  'Criadores de conteúdo',
-  'Empreendedores',
-];
-
 export const PARTNER_STEPS = [
   {
     id: 'join',

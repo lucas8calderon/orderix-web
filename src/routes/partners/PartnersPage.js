@@ -4,13 +4,11 @@ import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
-  Briefcase,
   CheckCircle2,
   ChevronDown,
   Handshake,
   Headphones,
   Layers,
-  Megaphone,
   Menu,
   MessageCircle,
   Printer,
@@ -19,7 +17,6 @@ import {
   Sparkles,
   Store,
   TrendingUp,
-  Users,
   X,
 } from 'lucide-react';
 import { getFeatureById } from '../../config/weperFeatures';
@@ -32,7 +29,6 @@ import PartnersSimulator from './PartnersSimulator';
 import { applyPartnerDocumentMeta } from './partnerSeo';
 import {
   PARTNER_ADVANTAGES,
-  PARTNER_AUDIENCE,
   PARTNER_DEFAULT_RATE,
   PARTNER_FAQS,
   PARTNER_SOLUTIONS,
@@ -58,8 +54,6 @@ const ADVANTAGE_ICONS = {
   clear: ShieldCheck,
   support: Headphones,
 };
-
-const AUDIENCE_ICONS = [Users, Megaphone, MessageCircle, Briefcase];
 
 const SOLUTIONS = PARTNER_SOLUTIONS.map((item) => {
   const feature = item.featureId ? getFeatureById(item.featureId) : null;
@@ -165,15 +159,6 @@ export default function PartnersPage() {
                 <span><CheckCircle2 size={15} aria-hidden="true" /> Indicação de estabelecimentos</span>
                 <span><CheckCircle2 size={15} aria-hidden="true" /> Comissão sobre assinaturas pagas</span>
               </div>
-            </div>
-          </div>
-          <div className="wp-container wp-audience">
-            <span>QUEM PODE PARTICIPAR</span>
-            <div>
-              {PARTNER_AUDIENCE.map((label, index) => {
-                const Icon = AUDIENCE_ICONS[index];
-                return <span key={label}><Icon aria-hidden="true" />{label}</span>;
-              })}
             </div>
           </div>
         </section>
