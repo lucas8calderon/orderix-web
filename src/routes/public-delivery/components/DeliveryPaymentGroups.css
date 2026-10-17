@@ -7,13 +7,27 @@
 
 .delivery-payment-group {
   padding: 12px 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
 }
 
 .delivery-payment-group-title {
   font-weight: 700;
   letter-spacing: 0.01em;
   margin-bottom: 4px;
+  color: var(--color-text-primary);
+}
+
+.delivery-payment-group .MuiFormControlLabel-label {
+  color: var(--color-text-primary);
+}
+
+.delivery-payment-group .MuiRadio-root {
+  color: var(--color-text-secondary);
+}
+
+.delivery-payment-group .MuiRadio-root.Mui-checked {
+  color: var(--color-primary);
 }

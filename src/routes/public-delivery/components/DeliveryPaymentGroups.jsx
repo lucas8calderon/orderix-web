@@ -13,6 +13,15 @@ const ON_DELIVERY_OPTIONS = [
 const PREPAY_NO_ONLINE_MSG =
   'Esta loja exige pagamento antecipado e nenhum meio online (Pix ou cartão) está disponível no momento.';
 
+const paymentLabelSx = {
+  '& .MuiFormControlLabel-label': { color: 'var(--color-text-primary)' },
+};
+
+const paymentRadioSx = {
+  color: 'var(--color-text-secondary)',
+  '&.Mui-checked': { color: 'var(--color-primary)' },
+};
+
 export default function DeliveryPaymentGroups({
   checkout,
   onChange,
@@ -46,7 +55,7 @@ export default function DeliveryPaymentGroups({
 
       {showOnline ? (
         <section className="delivery-payment-group" aria-labelledby="pay-online-title">
-          <Typography id="pay-online-title" className="delivery-payment-group-title" variant="subtitle2">
+          <Typography id="pay-online-title" className="delivery-payment-group-title" variant="subtitle2" sx={{ color: 'var(--color-text-primary)' }}>
             Pague online
           </Typography>
           <FormControl>
@@ -63,15 +72,17 @@ export default function DeliveryPaymentGroups({
               {onlinePixEnabled ? (
                 <FormControlLabel
                   value="PIX_ONLINE"
-                  control={<Radio />}
+                  control={<Radio sx={paymentRadioSx} />}
                   label="Pix — aprovação rápida"
+                  sx={paymentLabelSx}
                 />
               ) : null}
               {onlineCardEnabled ? (
                 <FormControlLabel
                   value="CARD_ONLINE"
-                  control={<Radio />}
+                  control={<Radio sx={paymentRadioSx} />}
                   label="Cartão de crédito — pague com segurança pelo Mercado Pago"
+                  sx={paymentLabelSx}
                 />
               ) : null}
             </RadioGroup>
@@ -81,7 +92,7 @@ export default function DeliveryPaymentGroups({
 
       {showOnFulfillment ? (
         <section className="delivery-payment-group" aria-labelledby="pay-on-delivery-title">
-          <Typography id="pay-on-delivery-title" className="delivery-payment-group-title" variant="subtitle2">
+          <Typography id="pay-on-delivery-title" className="delivery-payment-group-title" variant="subtitle2" sx={{ color: 'var(--color-text-primary)' }}>
             {onSpotTitle}
           </Typography>
           <RadioGroup
@@ -93,14 +104,21 @@ export default function DeliveryPaymentGroups({
             })}
           >
             {ON_DELIVERY_OPTIONS.map((option) => (
-              <FormControlLabel key={option.id} value={option.id} control={<Radio />} label={option.label} />
+              <FormControlLabel
+                key={option.id}
+                value={option.id}
+                control={<Radio sx={paymentRadioSx} />}
+                label={option.label}
+                sx={paymentLabelSx}
+              />
             ))}
           </RadioGroup>
           {!onlineSelected && checkout.paymentMethod === 'CASH' ? (
             <>
               <FormControlLabel
-                control={<Radio checked={checkout.needsChange} onClick={() => setField({ needsChange: !checkout.needsChange })} />}
+                control={<Radio sx={paymentRadioSx} checked={checkout.needsChange} onClick={() => setField({ needsChange: !checkout.needsChange })} />}
                 label="Precisa de troco?"
+                sx={paymentLabelSx}
               />
               {checkout.needsChange ? (
                 <TextField
