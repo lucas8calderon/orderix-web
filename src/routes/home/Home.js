@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Menu, X, Smartphone, LayoutDashboard, UtensilsCrossed, ShoppingBag, ChefHat, Monitor, MessageCircle, Layers, QrCode, CheckCircle2, Coffee, Pizza, Store, MoveRight } from 'lucide-react';
 import { WeperMark } from './components/WeperMark';
 import { PRICING_TIERS, formatPrice, getMinimumPrice, getMaximumPrice } from '../../config/pricingTiers';
+import { PATHS } from '../../services/accessControl';
 import { openWhatsApp, WHATSAPP_DISPLAY } from './landingAssets';
 import './styles/Rebrand.css';
 
@@ -72,6 +73,7 @@ export default function Home() {
       <button ref={menuButton} className="wp-menu-toggle" type="button" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="wp-navigation" onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X /> : <Menu />}</button>
       <nav id="wp-navigation" aria-label="Navegação principal" className={menuOpen ? 'wp-navigation is-open' : 'wp-navigation'}>
         {[['solucoes', 'Soluções'], ['demo', 'Demonstração'], ['plans', 'Preços'], ['faq', 'Dúvidas']].map(([id, label]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>{label}</a>)}
+        <Link to={PATHS.PARTNERS} onClick={() => setMenuOpen(false)}>Parceiros</Link>
         <Link to="/login" className="wp-mobile-login">Já sou cliente <ArrowUpRight size={15} /></Link>
       </nav>
       <div className="wp-header-actions"><Link to="/login">Entrar <ArrowUpRight size={15} /></Link><ContactButton /></div>
@@ -106,7 +108,7 @@ export default function Home() {
 
       <section className="wp-final"><div className="wp-container wp-final-inner"><span className="wp-kicker">SEU NEGÓCIO. SEU PRÓXIMO PASSO.</span><h2>Mais conectado.<br />Mais organizado.<br /><em>Mais Weper.</em></h2><p>Vamos simplificar a operação do seu estabelecimento?</p><ContactButton secondary>Quero conhecer a Weper</ContactButton><span className="wp-final-mark" aria-hidden="true">W</span></div></section>
     </main>
-    <footer className="wp-footer"><div className="wp-container"><div className="wp-footer-top"><div><a href="#home" className="wp-logo" aria-label="Weper, início"><WeperMark size={32} /></a><p>Tecnologia para conectar<br />seu negócio ao próximo passo.</p></div><nav aria-label="Links do rodapé"><div><strong>Conheça a Weper</strong><a href="#solucoes">Soluções</a><a href="#demo">Demonstração</a><a href="#plans">Preços</a></div><div><strong>Conte com a gente</strong><button onClick={() => openWhatsApp()} type="button">Fale com a equipe</button><Link to="/login">Acessar minha conta</Link><span>{WHATSAPP_DISPLAY}</span></div></nav></div><div className="wp-footer-bottom"><span>© {new Date().getFullYear()} Weper Solutions.</span><div><Link to="/privacy">Privacidade</Link><Link to="/terms">Termos de uso</Link></div></div></div></footer>
+    <footer className="wp-footer"><div className="wp-container"><div className="wp-footer-top"><div><a href="#home" className="wp-logo" aria-label="Weper, início"><WeperMark size={32} /></a><p>Tecnologia para conectar<br />seu negócio ao próximo passo.</p></div><nav aria-label="Links do rodapé"><div><strong>Conheça a Weper</strong><a href="#solucoes">Soluções</a><a href="#demo">Demonstração</a><a href="#plans">Preços</a><Link to={PATHS.PARTNERS}>Parceiros</Link></div><div><strong>Conte com a gente</strong><button onClick={() => openWhatsApp()} type="button">Fale com a equipe</button><Link to="/login">Acessar minha conta</Link><span>{WHATSAPP_DISPLAY}</span></div></nav></div><div className="wp-footer-bottom"><span>© {new Date().getFullYear()} Weper Solutions.</span><div><Link to="/privacy">Privacidade</Link><Link to="/terms">Termos de uso</Link></div></div></div></footer>
     <button className="wp-contact-float" type="button" aria-label="Falar com a Weper pelo WhatsApp" onClick={() => openWhatsApp()}><MessageCircle size={22} /></button>
   </div>;
 }

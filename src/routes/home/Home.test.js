@@ -25,6 +25,13 @@ test('solution tabs support keyboard navigation and update their accessible pane
   expect(screen.getByRole('tab', { name: 'Atendimento' })).toHaveAttribute('aria-selected', 'true');
 });
 
+test('institutional navigation links to the partners page', () => {
+  setup();
+  const links = screen.getAllByRole('link', { name: 'Parceiros' });
+  expect(links.length).toBeGreaterThan(0);
+  links.forEach((link) => expect(link).toHaveAttribute('href', '/parceiros'));
+});
+
 test('Escape closes the navigation and restores focus', () => {
   setup();
   fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));

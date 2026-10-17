@@ -74,6 +74,12 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/delivery')).toBe(true);
   });
 
+  it('trata /parceiros como rota pública', () => {
+    expect(isPublicPath(PATHS.PARTNERS)).toBe(true);
+    expect(isPublicPath('/parceiros')).toBe(true);
+    expect(isPublicPath('/parceiros/')).toBe(true);
+  });
+
   it('trata /demo e /demo/:slug como rotas públicas', () => {
     expect(isPublicPath(PATHS.DEMO)).toBe(true);
     expect(isPublicPath('/demo')).toBe(true);

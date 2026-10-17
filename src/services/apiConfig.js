@@ -44,7 +44,7 @@ axios.interceptors.response.use(
       clearSession();
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
-        const stayOnPage = [PATHS.LOGIN, PATHS.HOME, PATHS.PRIVACY, PATHS.FORGOT_PASSWORD, PATHS.TERMS];
+        const stayOnPage = [PATHS.LOGIN, PATHS.HOME, PATHS.PRIVACY, PATHS.FORGOT_PASSWORD, PATHS.TERMS, PATHS.PARTNERS];
         const isPublicMenu = path === PATHS.PUBLIC_MENU || path.startsWith(`${PATHS.PUBLIC_MENU}/`);
         const isPublicDelivery = path === PATHS.PUBLIC_DELIVERY || path.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
         if (!stayOnPage.includes(path) && !isPublicMenu && !isPublicDelivery) {

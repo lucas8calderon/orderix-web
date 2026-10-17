@@ -26,6 +26,7 @@ const PublicDelivery = lazy(() => import('./routes/public-delivery/PublicDeliver
 const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTracking'));
 const DeliveryOrdersPage = lazy(() => import('./routes/public-delivery/DeliveryOrdersPage'));
 const DeliveryAccountPage = lazy(() => import('./routes/public-delivery/DeliveryAccountPage'));
+const PartnersPage = lazy(() => import('./routes/partners/PartnersPage'));
 const DemoIndex = lazy(() => import('./routes/demo/DemoIndex'));
 const DemoStorePage = lazy(() => import('./routes/demo/DemoStorePage'));
 
@@ -94,6 +95,14 @@ function App() {
           <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={PATHS.PRIVACY} element={<PrivacyPolicy />} />
           <Route path={PATHS.TERMS} element={<TermsOfUse />} />
+          <Route
+            path={PATHS.PARTNERS}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <PartnersPage />
+              </Suspense>
+            )}
+          />
           <Route
             path={PATHS.DEMO}
             element={(

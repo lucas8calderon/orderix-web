@@ -73,6 +73,7 @@ export const PATHS = {
   PUBLIC_DELIVERY_ORDER: '/delivery/pedido/:publicToken',
   DEMO: '/demo',
   DEMO_SLUG: '/demo/:slug',
+  PARTNERS: '/parceiros',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -170,6 +171,7 @@ export const PUBLIC_PATHS = [
   PATHS.PRIVACY,
   PATHS.TERMS,
   PATHS.DEMO,
+  PATHS.PARTNERS,
 ];
 
 export function isPlatformAdmin(user) {
