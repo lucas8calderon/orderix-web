@@ -18,6 +18,7 @@ export const usePostProducts = () => {
       isAvailable: product?.isAvailable !== false,
       value: Number(product?.value),
       quantity: product?.quantity ?? 0,
+      variations: Array.isArray(product?.variations) ? product.variations : [],
     };
 
     if (!payload.categoryId) {

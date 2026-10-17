@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { formatProductPrice } from '../../dashboard/menu/utils/productVariations';
 
 function formatPrice(value) {
   const n = Number(value);
@@ -16,7 +17,7 @@ export default function PublicMenuProductCard({
   onDecrease,
   onRemove,
 }) {
-  const unavailable = product.isAvailable === false;
+  const unavailable = product.isAvailable === false || product.sellable === false;
   const name = product.name || 'Produto';
 
   return (
@@ -36,7 +37,7 @@ export default function PublicMenuProductCard({
       <div className="public-menu-product-body">
         <div className="public-menu-product-top">
           <p className="public-menu-product-name">{name}</p>
-          <p className="public-menu-product-price">{formatPrice(product.value)}</p>
+          <p className="public-menu-product-price">{formatProductPrice(product, formatPrice)}</p>
         </div>
         {product.portion ? (
           <p className="public-menu-product-meta">{product.portion}</p>

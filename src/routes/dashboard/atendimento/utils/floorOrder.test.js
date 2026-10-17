@@ -73,6 +73,40 @@ describe('buildFloorOrderBody', () => {
       selectedItemId: 11,
     }]);
   });
+
+  it('cobra o preço da variação escolhida', () => {
+    const marmita = {
+      id: 9,
+      name: 'Strogonoff de Frango',
+      categoryId: 2,
+      value: 14,
+      variations: [
+        { id: 1, name: 'Pequeno', price: 14, available: true },
+        { id: 2, name: 'Grande', price: 22, available: true },
+      ],
+      mandatoryGroups: [],
+      extras: [],
+    };
+    const missing = buildFloorOrderBody({
+      target: { kind: 'counter' },
+      customerName: 'Balcão',
+      waiterId: null,
+      lines: [{ product: marmita, quantity: 1, selections: {}, extraIds: [] }],
+    });
+    expect(missing.error).toMatch(/Strogonoff/);
+
+    const chosen = buildFloorOrderBody({
+      target: { kind: 'counter' },
+      customerName: 'Balcão',
+      waiterId: null,
+      lines: [{ product: marmita, quantity: 1, variationId: 2, selections: {}, extraIds: [] }],
+    });
+    expect(chosen.body.products[0]).toEqual(expect.objectContaining({
+      id: 9,
+      quantity: 1,
+      variationId: 2,
+    }));
+  });
 });
 
 describe('isSellableProduct', () => {

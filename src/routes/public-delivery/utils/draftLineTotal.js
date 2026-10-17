@@ -1,6 +1,11 @@
-export function draftLineTotal(product, qty, extrasMap = {}, selections = {}) {
+import { variationUnitPrice, activeVariations } from '../../dashboard/menu/utils/productVariations';
+
+export function draftLineTotal(product, qty, extrasMap = {}, selections = {}, variationId) {
   if (!product) return 0;
-  let unit = Number(product.value || 0);
+  const hasVariations = activeVariations(product).length > 0;
+  let unit = hasVariations
+    ? (variationId ? variationUnitPrice(product, variationId) : 0)
+    : Number(product.value || 0);
   (product.extras || []).forEach((extra) => {
     if (extrasMap[extra.id]) unit += Number(extra.price || 0);
   });

@@ -22,6 +22,7 @@ import { formatCurrency } from '../../../../services/accessControl';
 import { getAllProducts } from '../../menu/product/service/productService';
 import { createFloorOrder, resolveOperatorWaiterId } from '../service/accountService';
 import { buildFloorOrderBody, defaultCustomerName, isSellableProduct } from '../utils/floorOrder';
+import { activeVariations, formatProductPrice } from '../../menu/utils/productVariations';
 
 function newKey() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -53,6 +54,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
   const [customerName, setCustomerName] = useState('');
   const [observation, setObservation] = useState('');
   const [quantities, setQuantities] = useState({});
+  const [variationQuantities, setVariationQuantities] = useState({});
   const [selections, setSelections] = useState({});
   const [extras, setExtras] = useState({});
 
@@ -61,6 +63,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
     setCustomerName(defaultCustomerName(target));
     setObservation('');
     setQuantities({});
+    setVariationQuantities({});
     setSelections({});
     setExtras({});
     setQuery('');
@@ -98,17 +101,39 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
     });
   };
 
+  const variationKey = (productId, variationId) => `${productId}:${variationId}`;
+
+  const changeVariationQuantity = (productId, variationId, delta) => {
+    const key = variationKey(productId, variationId);
+    setVariationQuantities((current) => {
+      const next = Math.max(0, Number(current[key] || 0) + delta);
+      return { ...current, [key]: next };
+    });
+  };
+
   const submit = async () => {
     setSaving(true);
     setError('');
     try {
       const waiterId = target?.kind === 'counter' ? null : await resolveOperatorWaiterId();
-      const lines = products.map((product) => ({
-        product,
-        quantity: quantities[product.id] || 0,
-        selections: selections[product.id] || {},
-        extraIds: extras[product.id] || [],
-      }));
+      const lines = products.flatMap((product) => {
+        const variations = activeVariations(product);
+        if (!variations.length) {
+          return [{
+            product,
+            quantity: quantities[product.id] || 0,
+            selections: selections[product.id] || {},
+            extraIds: extras[product.id] || [],
+          }];
+        }
+        return variations.map((variation) => ({
+          product,
+          variationId: variation.id,
+          quantity: variationQuantities[variationKey(product.id, variation.id)] || 0,
+          selections: selections[product.id] || {},
+          extraIds: extras[product.id] || [],
+        }));
+      });
       const built = buildFloorOrderBody({
         target,
         customerName,
@@ -161,7 +186,10 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
         ) : null}
         <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
           {visible.map((product) => {
-            const quantity = quantities[product.id] || 0;
+            const variations = activeVariations(product);
+            const quantity = variations.length
+              ? variations.reduce((sum, variation) => sum + (variationQuantities[variationKey(product.id, variation.id)] || 0), 0)
+              : (quantities[product.id] || 0);
             const groups = product.mandatoryGroups || [];
             const productExtras = product.extras || [];
             return (
@@ -169,16 +197,38 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ flex: 1 }}>
                     <Typography fontWeight={700}>{product.name}</Typography>
-                    <Typography color="text.secondary">{formatCurrency(product.value)}</Typography>
+                    <Typography color="text.secondary">{formatProductPrice(product, formatCurrency)}</Typography>
                   </Box>
-                  <IconButton aria-label={`Diminuir ${product.name}`} onClick={() => changeQuantity(product.id, -1)} disabled={quantity === 0}>
-                    <RemoveIcon />
-                  </IconButton>
-                  <Typography aria-label={`Quantidade de ${product.name}`}>{quantity}</Typography>
-                  <IconButton aria-label={`Aumentar ${product.name}`} onClick={() => changeQuantity(product.id, 1)}>
-                    <AddIcon />
-                  </IconButton>
+                  {variations.length === 0 ? (
+                    <>
+                      <IconButton aria-label={`Diminuir ${product.name}`} onClick={() => changeQuantity(product.id, -1)} disabled={quantity === 0}>
+                        <RemoveIcon />
+                      </IconButton>
+                      <Typography aria-label={`Quantidade de ${product.name}`}>{quantity}</Typography>
+                      <IconButton aria-label={`Aumentar ${product.name}`} onClick={() => changeQuantity(product.id, 1)}>
+                        <AddIcon />
+                      </IconButton>
+                    </>
+                  ) : null}
                 </Box>
+                {variations.map((variation) => {
+                  const variationQuantity = variationQuantities[variationKey(product.id, variation.id)] || 0;
+                  return (
+                    <Box key={variation.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, pl: 1 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography>{variation.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">{formatCurrency(variation.price)}</Typography>
+                      </Box>
+                      <IconButton aria-label={`Diminuir ${product.name} ${variation.name}`} onClick={() => changeVariationQuantity(product.id, variation.id, -1)} disabled={variationQuantity === 0}>
+                        <RemoveIcon />
+                      </IconButton>
+                      <Typography aria-label={`Quantidade de ${product.name} ${variation.name}`}>{variationQuantity}</Typography>
+                      <IconButton aria-label={`Aumentar ${product.name} ${variation.name}`} onClick={() => changeVariationQuantity(product.id, variation.id, 1)}>
+                        <AddIcon />
+                      </IconButton>
+                    </Box>
+                  );
+                })}
                 {quantity > 0 && groups.map((group) => (
                   <Box key={group.id} sx={{ mt: 1 }}>
                     <Typography variant="body2" fontWeight={700}>{group.name}</Typography>

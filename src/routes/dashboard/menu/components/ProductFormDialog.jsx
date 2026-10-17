@@ -48,7 +48,24 @@ const emptyForm = {
   categoryId: '',
   isAvailable: true,
   image: '',
+  variations: [],
 };
+
+function newVariationKey() {
+  return `var-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function toVariationRows(variations) {
+  return (variations || []).map((variation) => ({
+    key: variation.id ? `var-${variation.id}` : newVariationKey(),
+    id: variation.id || null,
+    name: variation.name || '',
+    price: variation.price != null && !Number.isNaN(Number(variation.price))
+      ? Number(variation.price)
+      : '',
+    available: variation.available !== false,
+  }));
+}
 
 function formatPriceInput(value) {
   if (value === '' || value == null || Number.isNaN(Number(value))) return '';
@@ -123,6 +140,7 @@ export function ProductFormDialog({
         categoryId: product.categoryId != null ? String(product.categoryId) : '',
         isAvailable: product.isAvailable !== false,
         image: product.image || '',
+        variations: toVariationRows(product.variations),
       });
       setImagePreview(isUserProvidedImage(product.image) ? product.image : '');
     } else {
@@ -155,20 +173,47 @@ export function ProductFormDialog({
     }
   };
 
-  const numericValue = form.value === '' ? NaN : Number(form.value);
+  const variationRows = form.variations || [];
+  const usingVariations = variationRows.length > 0;
+  const variationPrices = variationRows
+    .map((row) => (row.price === '' ? NaN : Number(row.price)))
+    .filter((price) => !Number.isNaN(price) && price > 0);
+  const variationNames = variationRows.map((row) => row.name.trim().toLowerCase()).filter(Boolean);
+  const duplicateVariation = variationNames.length !== new Set(variationNames).size;
+  const variationsValid = variationRows.every((row) => {
+    const price = row.price === '' ? NaN : Number(row.price);
+    return row.name.trim().length > 0 && !Number.isNaN(price) && price > 0;
+  }) && !duplicateVariation;
+  const fromPrice = variationPrices.length ? Math.min(...variationPrices) : '';
+  const numericValue = usingVariations
+    ? (fromPrice === '' ? NaN : Number(fromPrice))
+    : (form.value === '' ? NaN : Number(form.value));
   const hasCategory = form.categoryId !== '' && form.categoryId != null;
   const canSave =
     form.name.trim().length > 0 &&
     hasCategory &&
-    !Number.isNaN(numericValue) &&
-    numericValue > 0 &&
+    (usingVariations ? variationsValid : !Number.isNaN(numericValue) && numericValue > 0) &&
     !saving;
+
+  const updateVariation = (key, patch) => {
+    setForm((prev) => ({
+      ...prev,
+      variations: (prev.variations || []).map((row) => (row.key === key ? { ...row, ...patch } : row)),
+    }));
+  };
 
   const handleSave = () => {
     onSave({
       ...form,
       categoryId: Number(form.categoryId),
       value: numericValue,
+      variations: variationRows.map((row, index) => ({
+        id: row.id || null,
+        name: row.name.trim(),
+        price: Number(row.price),
+        sortOrder: index,
+        available: row.available !== false,
+      })),
     });
   };
 
@@ -224,14 +269,16 @@ export function ProductFormDialog({
 <Typography component="h3" variant="subtitle2" sx={{ mt: 1, mb: 2 }}>Preço e categoria</Typography>
         <TextField
           fullWidth
-          label="Preço"
+          label={usingVariations ? 'A partir de' : 'Preço'}
           placeholder="0,00"
-          value={formatPriceInput(form.value)}
+          value={formatPriceInput(usingVariations ? fromPrice : form.value)}
           onChange={(e) =>
             setForm((prev) => ({ ...prev, value: parsePriceInput(e.target.value) }))
           }
+          disabled={usingVariations}
           inputMode="numeric"
           autoComplete="off"
+          helperText={usingVariations ? 'O menor preço das variações aparece no cardápio.' : 'Use um preço único quando o produto não muda de valor.'}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">R$</InputAdornment>
@@ -243,6 +290,56 @@ export function ProductFormDialog({
           }}
           sx={{ mb: 2 }}
         />
+
+        <Box sx={{ mb: 2 }}>
+          <Typography component="h3" variant="subtitle2">Variações de preço</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
+            O mesmo produto com valores diferentes. Exemplo: Strogonoff de Frango — Pequeno R$ 14,00 e Grande R$ 22,00. O cliente escolhe uma opção e paga o preço dela.
+          </Typography>
+          {variationRows.map((row) => (
+            <Box key={row.key} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'flex-start', flexDirection: { xs: 'column', sm: 'row' } }}>
+              <TextField
+                fullWidth
+                label="Variação"
+                placeholder="Pequeno"
+                value={row.name}
+                onChange={(e) => updateVariation(row.key, { name: e.target.value })}
+              />
+              <TextField
+                label="Preço"
+                placeholder="0,00"
+                value={formatPriceInput(row.price)}
+                onChange={(e) => updateVariation(row.key, { price: parsePriceInput(e.target.value) })}
+                inputMode="numeric"
+                sx={{ width: { xs: '100%', sm: 160 }, flexShrink: 0 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                }}
+              />
+              <Button
+                onClick={() => setForm((prev) => ({
+                  ...prev,
+                  variations: (prev.variations || []).filter((item) => item.key !== row.key),
+                }))}
+                sx={{ minHeight: 56, flexShrink: 0 }}
+              >
+                Remover
+              </Button>
+            </Box>
+          ))}
+          {duplicateVariation ? (
+            <FormHelperText error sx={{ mb: 1 }}>Cada variação precisa de um nome diferente.</FormHelperText>
+          ) : null}
+          <Button
+            variant="outlined"
+            onClick={() => setForm((prev) => ({
+              ...prev,
+              variations: [...(prev.variations || []), { key: newVariationKey(), id: null, name: '', price: '', available: true }],
+            }))}
+          >
+            Adicionar variação
+          </Button>
+        </Box>
 
         <FormControl fullWidth sx={{ mb: 2 }} required>
           <InputLabel id="product-category-label" shrink>

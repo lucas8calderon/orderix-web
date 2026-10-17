@@ -35,7 +35,7 @@ export function itemKey(item) {
     .map((selection) => `${selection.mandatoryGroupId}:${selection.selectedItemId}`)
     .sort()
     .join(',');
-  return [item.productId, item.observation || '', extras, selections].join('|');
+  return [item.productId, item.variationId || '', item.observation || '', extras, selections].join('|');
 }
 
 export function addCartItem(cart, incoming) {

@@ -37,6 +37,7 @@ import {
   categoryPathLabel,
   collectCategoryAndDescendantIds,
 } from '../utils/categoryTree';
+import { formatProductPrice, variationSummary } from '../utils/productVariations';
 
 function formatPrice(value) {
   const number = Number(value);
@@ -288,6 +289,11 @@ export function ProductContainer({
                             {product.observation}
                           </Typography>
                         ) : null}
+                        {variationSummary(product, formatPrice) ? (
+                          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: { sm: 320 }, wordBreak: 'break-word' }}>
+                            {variationSummary(product, formatPrice)}
+                          </Typography>
+                        ) : null}
                       </Box>
                     </Box>
                   </TableCell>
@@ -299,7 +305,7 @@ export function ProductContainer({
                         ) || product.categoryName || '—'
                       : '—'}
                   </TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{formatPrice(product.value)}</TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{formatProductPrice(product, formatPrice)}</TableCell>
                   <TableCell>
                     <StatusBadge label={product.isAvailable !== false ? 'Ativo' : 'Inativo'} tone={product.isAvailable !== false ? 'success' : 'neutral'} />
                   </TableCell>
@@ -356,8 +362,13 @@ export function ProductContainer({
                   {product.observation}
                 </Typography>
               ) : null}
+              {variationSummary(product, formatPrice) ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, wordBreak: 'break-word' }}>
+                  {variationSummary(product, formatPrice)}
+                </Typography>
+              ) : null}
               <Box className="product-mobile-card-footer">
-                <Typography fontWeight={700}>{formatPrice(product.value)}</Typography>
+                <Typography fontWeight={700}>{formatProductPrice(product, formatPrice)}</Typography>
                 <Box>
                   <RowActions name={product.name} onEdit={() => openEdit(product)} onDelete={() => setDeleteTarget(product)} />
                 </Box>

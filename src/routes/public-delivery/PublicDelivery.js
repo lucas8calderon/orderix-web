@@ -61,6 +61,7 @@ import DeliveryPaymentGroups from './components/DeliveryPaymentGroups';
 import DeliveryPixCheckout from './components/DeliveryPixCheckout';
 import { collectFeaturedProducts, collectPromoBanners } from './utils/catalogHighlights';
 import { draftLineTotal } from './utils/draftLineTotal';
+import { activeVariations, formatProductPrice } from '../dashboard/menu/utils/productVariations';
 import {
   defaultFulfillment,
   offersDelivery,
@@ -116,6 +117,7 @@ export default function PublicDelivery() {
   const [draftObs, setDraftObs] = useState('');
   const [draftExtras, setDraftExtras] = useState({});
   const [draftSelections, setDraftSelections] = useState({});
+  const [draftVariationId, setDraftVariationId] = useState('');
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkout, setCheckout] = useState(emptyCheckout);
@@ -376,17 +378,22 @@ export default function PublicDelivery() {
     fulfillment: checkout.fulfillment,
   });
   const closed = catalog && (!catalog.acceptingOrders || !catalog.open);
-  const selectedTotal = selected ? draftLineTotal(selected, draftQty, draftExtras, draftSelections) : 0;
+  const selectedVariations = selected ? activeVariations(selected) : [];
+  const selectedTotal = selected
+    ? draftLineTotal(selected, draftQty, draftExtras, draftSelections, draftVariationId)
+    : 0;
   const storePrimary = catalog?.primaryColor || catalog?.themeColor;
   const deliverySelected = checkout.fulfillment === 'DELIVERY' && offersDelivery(fulfillmentModes);
 
   const openProduct = (product) => {
-    if (product.isAvailable === false || closed) return;
+    if (product.isAvailable === false || product.sellable === false || closed) return;
     setSelected(product);
     setDraftQty(1);
     setDraftObs('');
     setDraftExtras({});
     setDraftSelections({});
+    const variations = activeVariations(product);
+    setDraftVariationId(variations.length === 1 ? String(variations[0].id) : '');
   };
 
   const addSelected = () => {
@@ -414,10 +421,14 @@ export default function PublicDelivery() {
     if ((selected.mandatoryGroups || []).length && mandatorySelections.length !== selected.mandatoryGroups.length) {
       return;
     }
+    const variations = activeVariations(selected);
+    const chosen = variations.find((variation) => String(variation.id) === String(draftVariationId));
+    if (variations.length && !chosen) return;
     const item = {
       productId: selected.id,
-      name: selected.name,
-      unitPrice: selected.value,
+      variationId: chosen?.id || null,
+      name: chosen ? `${selected.name} — ${chosen.name}` : selected.name,
+      unitPrice: chosen ? Number(chosen.price) : selected.value,
       quantity: draftQty,
       observation: draftObs.trim(),
       extras,
@@ -599,6 +610,7 @@ export default function PublicDelivery() {
         saveAddress: Boolean(customer) && deliverySelected && !checkout.addressId && checkout.saveAddress,
         items: cart.items.map((item) => ({
           productId: item.productId,
+          variationId: item.variationId || null,
           quantity: item.quantity,
           observation: item.observation,
           extras: (item.extras || []).map((extra) => ({
@@ -890,7 +902,29 @@ export default function PublicDelivery() {
                   ))}
                 </div>
               ) : null}
-              <Typography className="delivery-sheet-price">{formatCurrency(selected.value)}</Typography>
+              <Typography className="delivery-sheet-price">
+                {selectedVariations.some((variation) => String(variation.id) === String(draftVariationId))
+                  ? formatCurrency(selectedVariations.find((variation) => String(variation.id) === String(draftVariationId)).price)
+                  : formatProductPrice(selected, formatCurrency)}
+              </Typography>
+              {selectedVariations.length > 0 ? (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="subtitle2">Escolha uma opção</Typography>
+                  <RadioGroup
+                    value={draftVariationId}
+                    onChange={(event) => setDraftVariationId(event.target.value)}
+                  >
+                    {selectedVariations.map((variation) => (
+                      <FormControlLabel
+                        key={variation.id}
+                        value={String(variation.id)}
+                        control={<Radio />}
+                        label={`${variation.name} — ${formatCurrency(variation.price)}`}
+                      />
+                    ))}
+                  </RadioGroup>
+                </Box>
+              ) : null}
               {(selected.mandatoryGroups || []).map((group) => (
                 <Box key={group.id} sx={{ mb: 1.5 }}>
                   <Typography variant="subtitle2">{group.name}</Typography>
@@ -945,7 +979,11 @@ export default function PublicDelivery() {
             </DialogContent>
             <DialogActions className="delivery-sheet-actions">
               <Button onClick={() => setSelected(null)}>Cancelar</Button>
-              <Button variant="contained" onClick={addSelected}>
+              <Button
+                variant="contained"
+                onClick={addSelected}
+                disabled={selectedVariations.length > 0 && !draftVariationId}
+              >
                 Adicionar ao carrinho
                 {' · '}
                 {formatCurrency(selectedTotal)}

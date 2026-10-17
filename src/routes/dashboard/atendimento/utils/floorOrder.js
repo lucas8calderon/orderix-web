@@ -47,10 +47,16 @@ export function buildFloorOrderBody({
       productExtraId,
       quantity: 1,
     }));
+    const variations = line.product?.variations || [];
+    const sellableVariations = variations.filter((variation) => variation?.available !== false);
+    if (sellableVariations.length > 0 && !line.variationId) {
+      return { error: `Escolha uma variação de ${line.product?.name || 'o produto'}.` };
+    }
     products.push({
       id: line.product.id,
       quantity: Number(line.quantity),
       categoryId: line.product.categoryId,
+      variationId: line.variationId || null,
       mandatorySelections: selections,
       extras,
     });

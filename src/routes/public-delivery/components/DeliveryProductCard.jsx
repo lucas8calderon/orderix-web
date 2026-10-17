@@ -1,5 +1,6 @@
 import AddIcon from '@mui/icons-material/Add';
 import { formatCurrency } from '../../../services/accessControl';
+import { formatProductPrice } from '../../dashboard/menu/utils/productVariations';
 import {
   productHighlightBadge,
   productTags,
@@ -7,7 +8,7 @@ import {
 } from '../utils/resolveDeliveryImage';
 
 export default function DeliveryProductCard({ product, disabled, onOpen }) {
-  const unavailable = product.isAvailable === false;
+  const unavailable = product.isAvailable === false || product.sellable === false;
   const blocked = unavailable || disabled;
   const tags = productTags(product);
   const badge = productHighlightBadge(product);
@@ -51,7 +52,7 @@ export default function DeliveryProductCard({ product, disabled, onOpen }) {
           {unavailable ? (
             <span className="delivery-product-unavailable">Indisponível</span>
           ) : null}
-          <p className="delivery-product-price">{formatCurrency(product.value)}</p>
+          <p className="delivery-product-price">{formatProductPrice(product, formatCurrency)}</p>
         </div>
       </button>
 
