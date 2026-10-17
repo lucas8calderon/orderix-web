@@ -265,17 +265,18 @@ export default function PublicMenu() {
               : 'Nenhum item disponível no momento.'}
           </Typography>
         ) : (
-          visibleCategories.map((category) => (
+          visibleCategories.map((category, categoryIndex) => (
             <section key={category.id} className="public-menu-section">
               <Typography component="h2" className="public-menu-category-title">
                 {category.name}
               </Typography>
               <Box className="public-menu-product-list">
-                {(category.products || []).map((product) => (
+                {(category.products || []).map((product, productIndex) => (
                   <PublicMenuProductCard
                     key={product.id}
                     product={product}
                     imageSrc={resolvePublicImage(product.image)}
+                    priority={categoryIndex === 0 && productIndex < 3}
                     selected={selection.isSelected(product.id)}
                     quantity={selection.quantityOf(product.id)}
                     onSelect={selection.selectProduct}

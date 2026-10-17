@@ -794,7 +794,7 @@ export default function PublicDelivery() {
                   </Typography>
                 </div>
               ) : (
-                filteredCategories.map((category) => (
+                filteredCategories.map((category, categoryIndex) => (
                   <section
                     key={category.id}
                     id={`delivery-cat-${category.id}`}
@@ -810,12 +810,13 @@ export default function PublicDelivery() {
                       </span>
                     </div>
                     <div className="delivery-product-grid">
-                      {category.products.map((product) => (
+                      {category.products.map((product, productIndex) => (
                         <DeliveryProductCard
                           key={product.id}
                           product={product}
                           disabled={Boolean(closed)}
                           onOpen={openProduct}
+                          priority={categoryIndex === 0 && productIndex < 3}
                         />
                       ))}
                     </div>

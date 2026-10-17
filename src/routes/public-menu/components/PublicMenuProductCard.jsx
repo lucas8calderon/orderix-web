@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
+import { defaultMenuImage } from '../../dashboard/menu/utils/defaultMenuImage';
 import { formatProductPrice } from '../../dashboard/menu/utils/productVariations';
 
 function formatPrice(value) {
@@ -16,9 +18,15 @@ export default function PublicMenuProductCard({
   onIncrease,
   onDecrease,
   onRemove,
+  priority = false,
 }) {
   const unavailable = product.isAvailable === false || product.sellable === false;
   const name = product.name || 'Produto';
+  const [photoSrc, setPhotoSrc] = useState(imageSrc);
+
+  useEffect(() => {
+    setPhotoSrc(imageSrc);
+  }, [imageSrc]);
 
   return (
     <article
@@ -28,12 +36,19 @@ export default function PublicMenuProductCard({
         selected ? 'is-selected' : '',
       ].filter(Boolean).join(' ')}
     >
-      <img
-        src={imageSrc}
-        alt=""
-        className="public-menu-product-image"
-        loading="lazy"
-      />
+      <div className="public-menu-product-media">
+        <img
+          src={photoSrc}
+          alt=""
+          className="public-menu-product-image"
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
+          onError={() => {
+            setPhotoSrc((current) => (current === defaultMenuImage ? current : defaultMenuImage));
+          }}
+        />
+      </div>
       <div className="public-menu-product-body">
         <div className="public-menu-product-top">
           <p className="public-menu-product-name">{name}</p>
