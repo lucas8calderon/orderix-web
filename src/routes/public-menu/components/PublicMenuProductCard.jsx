@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { defaultMenuImage } from '../../dashboard/menu/utils/defaultMenuImage';
-import { formatProductPrice } from '../../dashboard/menu/utils/productVariations';
+import { activeVariations, formatProductPrice } from '../../dashboard/menu/utils/productVariations';
+import { fromPrice, highestPrices } from '../../dashboard/menu/utils/mandatoryChoices';
 
 function formatPrice(value) {
   const n = Number(value);
@@ -18,10 +19,19 @@ export default function PublicMenuProductCard({
   onIncrease,
   onDecrease,
   onRemove,
+  variationQuantity,
+  onSelectVariation,
+  onIncreaseVariation,
+  onDecreaseVariation,
+  onRemoveVariation,
+  onConfigure,
   priority = false,
 }) {
   const unavailable = product.isAvailable === false || product.sellable === false;
   const name = product.name || 'Produto';
+  const variations = activeVariations(product);
+  const groups = product.mandatoryGroups || [];
+  const pricedFrom = highestPrices(product).length ? fromPrice(product) : null;
   const [photoSrc, setPhotoSrc] = useState(imageSrc);
 
   useEffect(() => {
@@ -52,7 +62,9 @@ export default function PublicMenuProductCard({
       <div className="public-menu-product-body">
         <div className="public-menu-product-top">
           <p className="public-menu-product-name">{name}</p>
-          <p className="public-menu-product-price">{formatProductPrice(product, formatPrice)}</p>
+          <p className="public-menu-product-price">
+            {pricedFrom != null ? `A partir de ${formatPrice(pricedFrom)}` : formatProductPrice(product, formatPrice)}
+          </p>
         </div>
         {product.portion ? (
           <p className="public-menu-product-meta">{product.portion}</p>
@@ -65,7 +77,77 @@ export default function PublicMenuProductCard({
         ) : null}
 
         <div className="public-menu-product-actions">
-          {!selected ? (
+          {groups.length > 0 && variations.length === 0 ? (
+            <button
+              type="button"
+              className="public-menu-select-btn"
+              onClick={() => onConfigure?.(product)}
+              disabled={unavailable}
+              aria-label={`Escolher ${name}`}
+            >
+              <span className="public-menu-select-circle" aria-hidden="true" />
+              <span>Escolher</span>
+            </button>
+          ) : variations.length > 0 ? (
+            <div className="public-menu-variations" role="group" aria-label={`Variações de ${name}`}>
+              {variations.map((variation) => {
+                const qty = variationQuantity?.(variation.id) || 0;
+                const chosen = qty > 0;
+                const label = `${variation.name} de ${name}`;
+                return (
+                  <div key={variation.id} className="public-menu-variation">
+                    <div className="public-menu-variation-copy">
+                      <span className="public-menu-variation-name">{variation.name}</span>
+                      <span className="public-menu-variation-price">{formatPrice(variation.price)}</span>
+                    </div>
+                    {!chosen ? (
+                      <button
+                        type="button"
+                        className="public-menu-select-btn"
+                        onClick={() => onSelectVariation?.(variation.id)}
+                        disabled={unavailable}
+                        aria-label={`Escolher ${label}`}
+                      >
+                        <span className="public-menu-select-circle" aria-hidden="true" />
+                        <span>Escolher</span>
+                      </button>
+                    ) : (
+                      <div className="public-menu-selected-controls">
+                        <div className="public-menu-qty" role="group" aria-label={`Quantidade de ${label}`}>
+                          <button
+                            type="button"
+                            className="public-menu-qty-btn"
+                            onClick={() => onDecreaseVariation?.(variation.id)}
+                            aria-label={`Diminuir quantidade de ${label}`}
+                          >
+                            −
+                          </button>
+                          <span className="public-menu-qty-value" aria-live="polite">{qty}</span>
+                          <button
+                            type="button"
+                            className="public-menu-qty-btn"
+                            onClick={() => onIncreaseVariation?.(variation.id)}
+                            aria-label={`Aumentar quantidade de ${label}`}
+                            disabled={unavailable}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          className="public-menu-selection-remove"
+                          onClick={() => onRemoveVariation?.(variation.id)}
+                          aria-label={`Remover ${label} da seleção`}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : !selected ? (
             <button
               type="button"
               className="public-menu-select-btn"

@@ -24,7 +24,9 @@ import PublicMenuProductCard from './components/PublicMenuProductCard';
 import SelectionStateFilter from './components/SelectionStateFilter';
 import SelectionBottomBar from './components/SelectionBottomBar';
 import MySelectionPanel from './components/MySelectionPanel';
+import ProductChoiceDialog from './components/ProductChoiceDialog';
 import { useMenuSelection } from './selection/useMenuSelection';
+import { groupMenuCategories } from './utils/categoryGroups';
 import { DIGITAL_MENU_EVENTS, trackDigitalMenuEvent } from './selection/menuSelectionAnalytics';
 import { WEPER_COMMERCIAL_URL } from '../../config/weperSite';
 import './PublicMenu.css';
@@ -48,7 +50,9 @@ export default function PublicMenu() {
   const [menu, setMenu] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeCategoryId, setActiveCategoryId] = useState(null);
+  const [choiceProduct, setChoiceProduct] = useState(null);
+  const [activeRootId, setActiveRootId] = useState(null);
+  const [activeChildId, setActiveChildId] = useState(null);
   const [viewMode, setViewMode] = useState('all'); // 'all' | 'selected' — filtro de estado, NÃO categoria
   const [searchQuery, setSearchQuery] = useState('');
   const [selectionOpen, setSelectionOpen] = useState(false);
@@ -74,7 +78,8 @@ export default function PublicMenu() {
     setLoading(true);
     setNotFound(false);
     setMenu(null);
-    setActiveCategoryId(null);
+    setActiveRootId(null);
+    setActiveChildId(null);
     setViewMode('all');
     setSearchQuery('');
     setSelectionOpen(false);
@@ -87,8 +92,10 @@ export default function PublicMenu() {
           return;
         }
         setMenu(response.data);
-        const firstId = response.data.categories?.[0]?.id ?? null;
-        setActiveCategoryId(firstId);
+        const groups = groupMenuCategories(response.data.categories || []);
+        const first = groups[0];
+        setActiveRootId(first?.id ?? null);
+        setActiveChildId(first?.children?.[0]?.id ?? null);
         if (response.data.storeName) {
           document.title = `${response.data.storeName} · Cardápio`;
         }
@@ -111,6 +118,14 @@ export default function PublicMenu() {
   }, [slug]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  const categoryGroups = useMemo(
+    () => groupMenuCategories(menu?.categories || []),
+    [menu]
+  );
+  const activeRoot = categoryGroups.find((group) => group.id === activeRootId) || categoryGroups[0] || null;
+  const activeChild = activeRoot?.children?.find((child) => child.id === activeChildId)
+    || activeRoot?.children?.[0]
+    || null;
 
   const visibleCategories = useMemo(() => {
     if (!menu?.categories?.length) return [];
@@ -133,17 +148,11 @@ export default function PublicMenu() {
         .filter((category) => category.products.length > 0);
     }
 
-    const source = activeCategoryId
-      ? menu.categories.filter((c) => c.id === activeCategoryId)
-      : menu.categories;
-
-    return source
-      .map((category) => ({
-        ...category,
-        products: (category.products || []).filter(matchSearch),
-      }))
-      .filter((category) => category.products.length > 0);
-  }, [menu, activeCategoryId, viewMode, normalizedQuery, selection.items]);
+    const current = activeChild || activeRoot;
+    if (!current) return [];
+    const products = (current.products || []).filter(matchSearch);
+    return products.length ? [{ ...current, products }] : [];
+  }, [menu, activeRoot, activeChild, viewMode, normalizedQuery, selection.items]);
 
   const isOpen = Boolean(menu?.open);
   const scheduleRows = scheduleForDisplay(menu?.schedule);
@@ -157,12 +166,19 @@ export default function PublicMenu() {
     });
   };
 
-  const handleIncrease = (productId) => {
+  const handleIncrease = (productId, variationId = null, selections = null) => {
     const product = selection.productById.get(String(productId))
       ?? selection.productById.get(productId);
     selection.increaseQuantity(productId, {
       available: product?.isAvailable !== false,
+      variationId,
+      selections,
     });
+  };
+
+  const selectRoot = (root) => {
+    setActiveRootId(root.id);
+    setActiveChildId(root.children?.[0]?.id ?? null);
   };
 
   if (loading) {
@@ -238,20 +254,35 @@ export default function PublicMenu() {
         />
       </Container>
 
-      {viewMode === 'all' && menu.categories?.length > 0 ? (
+      {viewMode === 'all' && categoryGroups.length > 0 ? (
         <Box className="public-menu-chips" role="navigation" aria-label="Categorias">
           <Container maxWidth="sm" className="public-menu-chips-inner">
-            {menu.categories.map((category) => (
+            {categoryGroups.map((category) => (
               <Chip
                 key={category.id}
                 label={category.name}
                 clickable
-                color={category.id === activeCategoryId ? 'primary' : 'default'}
-                onClick={() => setActiveCategoryId(category.id)}
+                color={category.id === activeRoot?.id ? 'primary' : 'default'}
+                onClick={() => selectRoot(category)}
                 className="public-menu-chip"
               />
             ))}
           </Container>
+          {activeRoot?.children?.length > 0 ? (
+            <Container maxWidth="sm" className="public-menu-chips-inner public-menu-subchips">
+              {activeRoot.children.map((category) => (
+                <Chip
+                  key={category.id}
+                  label={category.name}
+                  clickable
+                  variant={category.id === activeChild?.id ? 'filled' : 'outlined'}
+                  color={category.id === activeChild?.id ? 'primary' : 'default'}
+                  onClick={() => setActiveChildId(category.id)}
+                  className="public-menu-chip"
+                />
+              ))}
+            </Container>
+          ) : null}
         </Box>
       ) : null}
 
@@ -283,6 +314,12 @@ export default function PublicMenu() {
                     onIncrease={handleIncrease}
                     onDecrease={selection.decreaseQuantity}
                     onRemove={selection.removeProduct}
+                    variationQuantity={(variationId) => selection.quantityOf(product.id, variationId)}
+                    onSelectVariation={(variationId) => selection.selectProduct(product.id, variationId)}
+                    onIncreaseVariation={(variationId) => handleIncrease(product.id, variationId)}
+                    onDecreaseVariation={(variationId) => selection.decreaseQuantity(product.id, variationId)}
+                    onRemoveVariation={(variationId) => selection.removeProduct(product.id, variationId)}
+                    onConfigure={setChoiceProduct}
                   />
                 ))}
               </Box>
@@ -308,6 +345,15 @@ export default function PublicMenu() {
         onOpen={openSelection}
       />
 
+      <ProductChoiceDialog
+        product={choiceProduct}
+        open={Boolean(choiceProduct)}
+        onClose={() => setChoiceProduct(null)}
+        onConfirm={(choices, quantity) => {
+          selection.selectProduct(choiceProduct.id, null, choices, quantity);
+          setChoiceProduct(null);
+        }}
+      />
       <MySelectionPanel
         open={selectionOpen}
         onClose={() => setSelectionOpen(false)}

@@ -8,6 +8,41 @@ function typePrice(field, cents) {
 }
 
 describe('ProductFormDialog variations', () => {
+  it('grava a pizza de dois sabores com mínimo 2', () => {
+    const onSave = jest.fn();
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={onSave}
+        product={{ categoryId: 1 }}
+        categories={categories}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Nome do produto'), {
+      target: { value: 'Pizza dois sabores' },
+    });
+    typePrice(screen.getByLabelText('Preço em reais'), '4500');
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar escolha' }));
+    fireEvent.click(screen.getByRole('button', { name: '2 sabores' }));
+    fireEvent.change(screen.getByLabelText('Opção'), { target: { value: 'Calabresa' } });
+    typePrice(screen.getByLabelText('Preço da opção'), '4500');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Pizza dois sabores',
+      mandatoryGroups: [
+        expect.objectContaining({
+          minSelections: 2,
+          maxSelections: 2,
+          priceMode: 'HIGHEST',
+        }),
+      ],
+    }));
+  });
+
   it('salva o mesmo produto com preços diferentes por variação', () => {
     const onSave = jest.fn();
     render(

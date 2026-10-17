@@ -1,4 +1,5 @@
 import { variationUnitPrice, activeVariations } from '../../dashboard/menu/utils/productVariations';
+import { selectionAdjustment } from '../../dashboard/menu/utils/mandatoryChoices';
 
 export function draftLineTotal(product, qty, extrasMap = {}, selections = {}, variationId) {
   if (!product) return 0;
@@ -9,10 +10,12 @@ export function draftLineTotal(product, qty, extrasMap = {}, selections = {}, va
   (product.extras || []).forEach((extra) => {
     if (extrasMap[extra.id]) unit += Number(extra.price || 0);
   });
-  (product.mandatoryGroups || []).forEach((group) => {
-    const selectedId = selections[group.id];
-    const item = (group.items || []).find((entry) => String(entry.id) === String(selectedId));
-    if (item) unit += Number(item.price || 0);
-  });
+  unit += selectionAdjustment(unit - extraSum(product, extrasMap), product.mandatoryGroups, selections);
   return unit * Number(qty || 1);
+}
+
+function extraSum(product, extrasMap) {
+  return (product.extras || []).reduce((sum, extra) => (
+    extrasMap[extra.id] ? sum + Number(extra.price || 0) : sum
+  ), 0);
 }

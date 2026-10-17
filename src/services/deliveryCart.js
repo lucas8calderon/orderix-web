@@ -1,3 +1,5 @@
+import { selectionAdjustment } from '../routes/dashboard/menu/utils/mandatoryChoices';
+
 const storageKey = (slug) => `weper.delivery.cart.${slug || 'unknown'}`;
 
 export function emptyCart() {
@@ -82,8 +84,26 @@ export function lineTotal(item) {
   const extras = (item.extras || []).reduce((sum, extra) => {
     return sum + Number(extra.price || 0) * Number(extra.quantity || 1);
   }, 0);
-  const selections = (item.mandatorySelections || []).reduce((sum, selection) => {
-    return sum + Number(selection.price || 0);
-  }, 0);
-  return (Number(item.unitPrice || 0) + extras + selections) * qty;
+  const unit = Number(item.unitPrice || 0);
+  const groups = new Map();
+  (item.mandatorySelections || []).forEach((selection) => {
+    const groupId = selection.mandatoryGroupId;
+    if (!groups.has(groupId)) {
+      groups.set(groupId, {
+        id: groupId,
+        priceMode: selection.priceMode,
+        items: [],
+      });
+    }
+    groups.get(groupId).items.push({
+      id: selection.selectedItemId,
+      price: selection.price,
+    });
+  });
+  const selections = {};
+  groups.forEach((group) => {
+    selections[group.id] = group.items.map((entry) => entry.id);
+  });
+  const adjustment = selectionAdjustment(unit, [...groups.values()], selections);
+  return (unit + extras + adjustment) * qty;
 }

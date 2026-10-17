@@ -87,6 +87,31 @@ describe('selectionModel', () => {
       incomplete
     )).toBeNull();
   });
+
+  it('trata cada variação como uma linha e usa o preço escolhido', () => {
+    let items = selectProduct([], 8, 1);
+    items = selectProduct(items, 8, 2);
+    items = increaseQuantity(items, 8, 2);
+    expect(items).toEqual([
+      { productId: 8, variationId: 1, quantity: 1 },
+      { productId: 8, variationId: 2, quantity: 2 },
+    ]);
+    expect(isSelected(items, 8)).toBe(true);
+    expect(isSelected(items, 8, 1)).toBe(true);
+
+    const byId = new Map([['8', {
+      id: 8,
+      value: 18,
+      variations: [
+        { id: 1, name: 'Pequena', price: 18, available: true },
+        { id: 2, name: 'Grande', price: 26, available: true },
+      ],
+    }]]);
+    expect(computeEstimatedTotal(items, byId)).toBe(70);
+
+    items = removeProduct(items, 8, 1);
+    expect(items).toHaveLength(1);
+  });
 });
 
 describe('selectionStorage', () => {

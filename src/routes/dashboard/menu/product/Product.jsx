@@ -275,7 +275,7 @@ export function ProductContainer({
                         sx={{
                           width: 40,
                           height: 40,
-                          objectFit: 'contain',
+                          objectFit: 'cover',
                           borderRadius: '8px',
                           border: '1px solid var(--color-border)',
                           backgroundColor: '#fff',
@@ -334,7 +334,7 @@ export function ProductContainer({
                     sx={{
                       width: 40,
                       height: 40,
-                      objectFit: 'contain',
+                      objectFit: 'cover',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       backgroundColor: '#fff',
