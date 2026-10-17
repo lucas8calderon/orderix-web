@@ -40,6 +40,7 @@
   display: block;
   width: 100%;
   height: auto;
+  max-width: 196px;
   background: #fff;
 }
 

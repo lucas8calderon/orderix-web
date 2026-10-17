@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DeliveryPixCheckout, { mergePixCharge } from './DeliveryPixCheckout';
 
@@ -268,7 +268,7 @@ describe('DeliveryPixCheckout', () => {
     expect(screen.queryByRole('link', { name: /Mercado Pago/i })).not.toBeInTheDocument();
   });
 
-  it('sem imagem de QR não desenha faixa vazia e mantém o copia-e-cola', () => {
+  it('sem imagem de QR desenha o código a partir do copia-e-cola', () => {
     render(
       <DeliveryPixCheckout
         open
@@ -287,10 +287,66 @@ describe('DeliveryPixCheckout', () => {
       />
     );
 
-    expect(screen.queryByRole('img', { name: 'QR Code do Pix' })).not.toBeInTheDocument();
+    const qr = screen.getByRole('img', { name: 'QR Code do Pix' });
+    expect(qr.tagName).toBe('svg');
+    expect(qr.closest('.delivery-pix-qr-frame')).not.toBeNull();
+    expect(qr.querySelector('path[fill="#000000"]')?.getAttribute('d')).toBeTruthy();
     expect(screen.getByText('000201pix')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Copiar código/i })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Aguardando pagamento');
     expect(screen.queryByRole('link', { name: /Mercado Pago/i })).not.toBeInTheDocument();
+  });
+
+  it('usa a imagem PNG do PagBank mesmo quando a URL termina em /png', () => {
+    render(
+      <DeliveryPixCheckout
+        open
+        provider="PAGBANK"
+        payment={{
+          ...basePayment,
+          qrCode: '000201pix',
+          qrCodeBase64: 'https://api.pagseguro.com/qrcode/charge/base64',
+          ticketUrl: 'https://api.pagseguro.com/qrcode/charge/png',
+        }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('img', { name: 'QR Code do Pix' })).toHaveAttribute(
+      'src',
+      'https://api.pagseguro.com/qrcode/charge/png',
+    );
+  });
+
+  it('se a imagem do QR falha, desenha o código a partir do copia-e-cola', () => {
+    render(
+      <DeliveryPixCheckout
+        open
+        provider="PAGBANK"
+        payment={{
+          ...basePayment,
+          qrCode: '000201pix',
+          qrCodeBase64: '',
+          ticketUrl: 'https://api.pagseguro.com/qrcode/charge/png',
+        }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    fireEvent.error(screen.getByRole('img', { name: 'QR Code do Pix' }));
+
+    const qr = screen.getByRole('img', { name: 'QR Code do Pix' });
+    expect(qr.tagName).toBe('svg');
+    expect(screen.getByRole('button', { name: /Copiar código/i })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Aguardando pagamento');
   });
 
   it('no Mercado Pago mantém o link da cobrança', () => {

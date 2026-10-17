@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { QRCodeSVG } from 'qrcode.react';
 import { formatCurrency } from '../../../services/accessControl';
 import {
   PIX_POLL_INTERVAL_MS,
@@ -73,6 +74,7 @@ export default function DeliveryPixCheckout({
   }, [qrCandidate]);
 
   const qrSrc = qrFailed ? '' : qrCandidate;
+  const showGeneratedQr = Boolean(copyCode) && !qrSrc;
 
   useEffect(() => {
     setLive(payment);
@@ -166,14 +168,27 @@ export default function DeliveryPixCheckout({
             <Typography className="delivery-pix-total">
               Total {formatCurrency(payment.amount)}
             </Typography>
-            {qrSrc ? (
+            {qrSrc || showGeneratedQr ? (
               <div className="delivery-pix-qr-frame">
-                <img
-                  className="delivery-pix-qr"
-                  src={qrSrc}
-                  alt="QR Code do Pix"
-                  onError={() => setQrFailed(true)}
-                />
+                {qrSrc ? (
+                  <img
+                    className="delivery-pix-qr"
+                    src={qrSrc}
+                    alt="QR Code do Pix"
+                    onError={() => setQrFailed(true)}
+                  />
+                ) : (
+                  <QRCodeSVG
+                    className="delivery-pix-qr"
+                    value={copyCode}
+                    size={196}
+                    level="M"
+                    marginSize={4}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    title="QR Code do Pix"
+                  />
+                )}
               </div>
             ) : null}
             {copyCode ? (
@@ -375,7 +390,8 @@ function qrImageSource(raw) {
 
 function looksLikeRasterImage(url) {
   const path = url.split(/[?#]/)[0].toLowerCase();
-  return /\.(png|jpe?g|gif|webp)$/.test(path);
+  // PagBank devolve o PNG em .../png, sem extensão de arquivo.
+  return /\.(png|jpe?g|gif|webp)$/.test(path) || /\/png$/.test(path);
 }
 
 export function formatRemainingMs(ms) {
