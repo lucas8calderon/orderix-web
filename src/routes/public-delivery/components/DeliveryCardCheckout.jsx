@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
   Alert,
   Box,
@@ -18,6 +19,19 @@ import './DeliveryCardCheckout.css';
 
 const SDK_URL = 'https://sdk.mercadopago.com/js/v2';
 const PAGBANK_SDK_URL = 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js';
+
+function paintThenContinue() {
+  return new Promise((resolve) => {
+    const afterPaint = () => {
+      window.setTimeout(resolve, 0);
+    };
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(afterPaint);
+      return;
+    }
+    afterPaint();
+  });
+}
 
 function newKey() {
   if (window.crypto && window.crypto.randomUUID) {
@@ -88,6 +102,7 @@ export default function DeliveryCardCheckout({
   const [error, setError] = useState('');
   const [payment, setPayment] = useState(null);
   const [loadingBrick, setLoadingBrick] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [holder, setHolder] = useState('');
   const [number, setNumber] = useState('');
   const [expMonth, setExpMonth] = useState('');
@@ -103,6 +118,7 @@ export default function DeliveryCardCheckout({
     setPhase('form');
     setError('');
     setPayment(null);
+    setProcessing(false);
     keyRef.current = newKey();
   }, [open, orderId]);
 
@@ -229,7 +245,14 @@ export default function DeliveryCardCheckout({
 
   const submitPagBank = async (event) => {
     event.preventDefault();
-    setError('');
+    if (processing) {
+      return;
+    }
+    flushSync(() => {
+      setError('');
+      setProcessing(true);
+    });
+    await paintThenContinue();
     let sent = false;
     try {
       const pagseguro = await loadPagBank();
@@ -260,6 +283,8 @@ export default function DeliveryCardCheckout({
       if (!sent) {
         setError('Não foi possível carregar o PagBank.');
       }
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -283,15 +308,23 @@ export default function DeliveryCardCheckout({
         <Typography className="delivery-card-total">Total {formatCurrency(amount)}</Typography>
         {error && phase !== 'approved' ? <Alert severity={phase === 'unknown' ? 'warning' : 'error'} sx={{ mb: 2 }}>{error}</Alert> : null}
         {phase === 'form' && pagbank ? (
-          <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick">
-            <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required sx={{ mb: 1 }} />
-            <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} sx={{ mb: 1 }} />
+          <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick" aria-busy={processing}>
+            {processing ? (
+              <Box role="status" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <CircularProgress size={22} />
+                <Typography>Processando...</Typography>
+              </Box>
+            ) : null}
+            <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required disabled={processing} sx={{ mb: 1 }} />
+            <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required disabled={processing} inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} sx={{ mb: 1 }} />
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-              <TextField label="Mês" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} required inputProps={{ inputMode: 'numeric', maxLength: 2 }} />
-              <TextField label="Ano" value={expYear} onChange={(e) => setExpYear(e.target.value)} required inputProps={{ inputMode: 'numeric', maxLength: 4 }} />
-              <TextField label="CVV" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} required type="password" inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-csc' }} />
+              <TextField label="Mês" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 2 }} />
+              <TextField label="Ano" value={expYear} onChange={(e) => setExpYear(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 4 }} />
+              <TextField label="CVV" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} required disabled={processing} type="password" inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-csc' }} />
             </Box>
-            <Button type="submit" variant="contained" disabled={!publicKey}>Pagar à vista</Button>
+            <Button type="submit" variant="contained" disabled={!publicKey || processing}>
+              {processing ? 'Processando...' : 'Pagar à vista'}
+            </Button>
           </Box>
         ) : null}
         {phase === 'form' && !pagbank ? (

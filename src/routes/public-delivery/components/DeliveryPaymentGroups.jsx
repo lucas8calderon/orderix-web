@@ -13,6 +13,13 @@ const ON_DELIVERY_OPTIONS = [
 const PREPAY_NO_ONLINE_MSG =
   'Esta loja exige pagamento antecipado e nenhum meio online (Pix ou cartão) está disponível no momento.';
 
+export function cardOnlineLabel(provider) {
+  if (provider === 'PAGBANK') {
+    return 'Cartão de crédito — pague com segurança pelo PagBank';
+  }
+  return 'Cartão de crédito — pague com segurança pelo Mercado Pago';
+}
+
 const paymentLabelSx = {
   '& .MuiFormControlLabel-label': { color: 'var(--color-text-primary)' },
 };
@@ -27,6 +34,7 @@ export default function DeliveryPaymentGroups({
   onChange,
   onlinePixEnabled,
   onlineCardEnabled,
+  onlinePaymentProvider = 'MERCADOPAGO',
   acceptPayOnFulfillment = true,
   acceptPrepaid = true,
   fulfillment = 'DELIVERY',
@@ -81,7 +89,7 @@ export default function DeliveryPaymentGroups({
                 <FormControlLabel
                   value="CARD_ONLINE"
                   control={<Radio sx={paymentRadioSx} />}
-                  label="Cartão de crédito — pague com segurança pelo Mercado Pago"
+                  label={cardOnlineLabel(onlinePaymentProvider)}
                   sx={paymentLabelSx}
                 />
               ) : null}

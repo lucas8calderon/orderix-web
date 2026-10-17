@@ -1176,6 +1176,7 @@ export default function PublicDelivery() {
             onChange={setCheckout}
             onlinePixEnabled={Boolean(catalog?.onlinePixEnabled)}
             onlineCardEnabled={Boolean(catalog?.onlineCardEnabled)}
+            onlinePaymentProvider={catalog?.onlinePaymentProvider || 'MERCADOPAGO'}
             acceptPayOnFulfillment={channelPaymentOptions(catalog, checkout.fulfillment).showPayOnFulfillment}
             acceptPrepaid={channelPaymentOptions(catalog, checkout.fulfillment).prepaid}
             fulfillment={checkout.fulfillment}
