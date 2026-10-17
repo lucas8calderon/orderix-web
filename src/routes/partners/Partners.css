@@ -1,22 +1,8 @@
 .wp-partners{overflow-x:clip}
 .wp-partners .wp-hero h1{font-size:clamp(34px,4.4vw,58px);letter-spacing:-2.2px;max-width:640px}
 .wp-partners .wp-hero-copy>p{max-width:540px}
-.wp-partners .wp-hero-grid{min-height:0}
+.wp-partners .wp-hero-grid{grid-template-columns:1fr;min-height:0}
 .wp-partners .wp-navigation a[aria-current=page]{color:var(--wp-blue)}
-
-.wp-partners-stage{position:relative;min-width:0;padding:28px 4px 64px}
-.wp-partners-board{position:relative;background:#fff;border:1px solid #dce5f5;border-radius:14px;box-shadow:0 28px 70px #18366a1f;overflow:hidden}
-.wp-partners-board-body{padding:22px 22px 18px}
-.wp-partners-board-body>p{font-size:11px;font-weight:750;letter-spacing:1.3px;text-transform:uppercase;color:#2563eb}
-.wp-partners-board-body>strong{display:block;margin:6px 0 16px;font-size:22px;letter-spacing:-.6px;color:var(--wp-ink)}
-.wp-partners-board-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.wp-partners-board-metrics div{border:1px solid #e3eaf5;border-radius:8px;padding:12px;background:#fff}
-.wp-partners-board-metrics span{display:block;font-size:11px;color:#75859b}
-.wp-partners-board-metrics b{display:block;margin-top:4px;font-size:13px;font-weight:650;color:var(--wp-ink)}
-.wp-partners-board-bars{display:flex;align-items:flex-end;gap:8px;height:128px;margin:18px 0 10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,#f8fbff,#eef4ff)}
-.wp-partners-board-bars span{flex:1;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#93c5fd,#2563eb);min-height:8px}
-.wp-partners-board-bars span:last-child{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}
-.wp-partners-board-body>small{color:#7e8b9e;font-size:11px}
 
 .wp-partners-steps{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin:8px 0 0;padding:18px 0 0;position:relative}
 .wp-partners-steps:before{content:"";position:absolute;top:30px;left:8%;right:8%;height:2px;background:linear-gradient(90deg,#93c5fd,#2563eb)}
@@ -117,8 +103,6 @@
 @media(max-width:600px){
   .wp-partners .wp-hero h1{font-size:40px;letter-spacing:-1.6px}
   .wp-partners .wp-actions .wp-button{width:100%}
-  .wp-partners-stage{padding:8px 0 72px}
-  .wp-partners-stage .wp-floating-note{left:8px;right:8px;bottom:8px;width:auto}
   .wp-partners-steps,.wp-partners-advantages,.wp-partners-solutions,.wp-partners-examples,.wp-partners-rates{grid-template-columns:1fr}
   .wp-partners-results{grid-template-columns:minmax(0,1fr) auto}
   .wp-partners-periods{grid-template-columns:1fr}

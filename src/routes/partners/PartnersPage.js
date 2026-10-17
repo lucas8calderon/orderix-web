@@ -166,38 +166,6 @@ export default function PartnersPage() {
                 <span><CheckCircle2 size={15} aria-hidden="true" /> Comissão sobre assinaturas pagas</span>
               </div>
             </div>
-            <div className="wp-partners-stage" aria-hidden="true">
-              <div className="wp-stage-orbit" />
-              <div className="wp-partners-board">
-                <div className="wp-window-bar">
-                  <div className="wp-window-dots"><i /><i /><i /></div>
-                  <span>Crescimento da parceria</span>
-                  <span className="wp-window-lock"><Layers size={13} /> Weper</span>
-                </div>
-                <div className="wp-partners-board-body">
-                  <p>Receita recorrente</p>
-                  <strong>Indicações que continuam ativas</strong>
-                  <div className="wp-partners-board-metrics">
-                    <div><span>Indicar</span><b>Apresente</b></div>
-                    <div><span>Assinar</span><b>Cliente paga</b></div>
-                    <div><span>Receber</span><b>Todo mês</b></div>
-                  </div>
-                  <div className="wp-partners-board-bars">
-                    {[42, 56, 48, 70, 63, 84, 76, 96].map((height) => (
-                      <span key={height} style={{ height: `${height}%` }} />
-                    ))}
-                  </div>
-                  <small>Visualização ilustrativa</small>
-                </div>
-              </div>
-              <div className="wp-floating-note">
-                <span><TrendingUp size={18} /></span>
-                <div>
-                  <strong>Parceria em crescimento</strong>
-                  <small>A comissão acompanha a mensalidade.</small>
-                </div>
-              </div>
-            </div>
           </div>
           <div className="wp-container wp-audience">
             <span>QUEM PODE PARTICIPAR</span>
