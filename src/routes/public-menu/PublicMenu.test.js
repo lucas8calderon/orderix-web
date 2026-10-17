@@ -156,6 +156,68 @@ describe('PublicMenu — Minha seleção', () => {
     expect(screen.queryByRole('button', { name: /Ver seleção/i })).not.toBeInTheDocument();
     expect(screen.queryByText('3 itens selecionados')).not.toBeInTheDocument();
   });
+
+  it('mostra subcategorias e exige a variação de tamanho', async () => {
+    getPublicMenuBySlug.mockResolvedValue({
+      status: 200,
+      data: {
+        ...menuPayload,
+        categories: [
+          { id: 1, name: 'Bebidas', parentId: null, products: [] },
+          {
+            id: 3,
+            name: 'Sucos',
+            parentId: 1,
+            products: [{ id: 30, name: 'Laranja', value: 8, isAvailable: true }],
+          },
+          {
+            id: 2,
+            name: 'Refrigerantes',
+            parentId: 1,
+            products: [{ id: 21, name: 'Coca-Cola', value: 7.9, isAvailable: true }],
+          },
+          {
+            id: 4,
+            name: 'Pizzas salgadas',
+            parentId: 5,
+            products: [{
+              id: 40,
+              name: 'Calabresa',
+              value: 41.9,
+              isAvailable: true,
+              variations: [
+                { id: 401, name: '25 cm', price: 41.9, available: true },
+                { id: 402, name: '35 cm', price: 64.9, available: true },
+              ],
+            }],
+          },
+          { id: 5, name: 'Pizzas', parentId: null, products: [] },
+        ],
+      },
+    });
+
+    renderMenu();
+    expect(await screen.findByRole('button', { name: 'Refrigerantes' })).toBeInTheDocument();
+    expect(screen.getByText('Coca-Cola')).toBeInTheDocument();
+    expect(screen.queryByText('Laranja')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sucos' }));
+    expect(screen.getByText('Laranja')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pizzas' }));
+    expect(screen.getByText('Calabresa')).toBeInTheDocument();
+    expect(screen.getAllByText(/41[,.]90/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/64[,.]90/).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Selecionar Calabresa' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Escolher 35 cm de Calabresa' }));
+    expect(screen.getByText('1 item selecionado')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Ver seleção/i }));
+    const panel = screen.getByRole('dialog');
+    expect(within(panel).getByText('Calabresa · 35 cm')).toBeInTheDocument();
+    expect(within(panel).getAllByText(/64[,.]90/).length).toBeGreaterThan(0);
+  });
 });
 
 describe('PublicMenu — assinatura Weper', () => {

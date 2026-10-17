@@ -1,3 +1,5 @@
+import { selectionAdjustment } from '../../menu/utils/mandatoryChoices';
+
 export function resolveMandatorySelections(product) {
   const groups = product?.mandatoryGroups || [];
   return (product?.mandatorySelections || [])
@@ -28,9 +30,21 @@ export function productLineTotal(product) {
     total += (Number(extra.price) || 0) * extraQty * quantity;
   });
 
-  resolveMandatorySelections(product).forEach((selection) => {
-    total += (Number(selection.price) || 0) * quantity;
-  });
+  const groups = product?.mandatoryGroups || [];
+  if (groups.length) {
+    const selections = {};
+    (product?.mandatorySelections || []).forEach((selection) => {
+      const groupId = selection.mandatoryGroupId || selection.groupId;
+      const itemId = selection.selectedItemId || selection.itemId;
+      if (groupId == null || itemId == null) return;
+      selections[groupId] = [...(selections[groupId] || []), itemId];
+    });
+    total += selectionAdjustment(Number(product?.value) || 0, groups, selections) * quantity;
+  } else {
+    resolveMandatorySelections(product).forEach((selection) => {
+      total += (Number(selection.price) || 0) * quantity;
+    });
+  }
 
   return total;
 }

@@ -33,14 +33,22 @@ export function buildFloorOrderBody({
     const groups = line.product?.mandatoryGroups || [];
     const selections = [];
     for (const group of groups) {
-      const itemId = line.selections?.[group.id];
-      if (!itemId) {
+      const raw = line.selections?.[group.id];
+      const ids = Array.isArray(raw) ? raw.filter(Boolean) : (raw ? [raw] : []);
+      const min = group.minSelections == null ? 1 : Number(group.minSelections);
+      const max = group.maxSelections == null ? Math.max(min, 1) : Number(group.maxSelections);
+      if (ids.length < min) {
         return { error: `Escolha ${group.name} em ${line.product?.name || 'o produto'}.` };
       }
-      selections.push({
-        productId: line.product.id,
-        mandatoryGroupId: group.id,
-        selectedItemId: itemId,
+      if (ids.length > max) {
+        return { error: `Escolha no máximo ${max} em ${group.name}.` };
+      }
+      ids.forEach((itemId) => {
+        selections.push({
+          productId: line.product.id,
+          mandatoryGroupId: group.id,
+          selectedItemId: itemId,
+        });
       });
     }
     const extras = (line.extraIds || []).map((productExtraId) => ({

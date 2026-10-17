@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
+import { chargeableUnit } from '../../dashboard/menu/utils/mandatoryChoices';
 
 function formatPrice(value) {
   const n = Number(value);
@@ -86,18 +87,29 @@ export default function MySelectionPanel({
           </Typography>
         ) : (
           <ul className="public-menu-selection-list">
-            {selectedItems.map(({ product, quantity }) => {
+            {selectedItems.map(({ product, quantity, variationId, selections }) => {
               const unavailable = product.isAvailable === false;
-              const name = product.name || 'Produto';
+              const variation = (product.variations || []).find(
+                (entry) => variationId != null && String(entry.id) === String(variationId)
+              );
+              const flavorNames = Object.entries(selections || {}).flatMap(([groupId, ids]) => {
+                const group = (product.mandatoryGroups || []).find((entry) => String(entry.id) === String(groupId));
+                const list = Array.isArray(ids) ? ids : [ids];
+                return list.map((id) => group?.items?.find((item) => String(item.id) === String(id))?.name).filter(Boolean);
+              });
+              const baseName = product.name || 'Produto';
+              const name = [baseName, variation?.name, flavorNames.join(' / ')].filter(Boolean).join(' · ');
+              const basePrice = variation ? variation.price : product.value;
+              const price = chargeableUnit(basePrice, product, selections);
               return (
-                <li key={product.id} className="public-menu-selection-line">
+                <li key={`${product.id}-${variationId || 'unico'}`} className="public-menu-selection-line">
                   <div className="public-menu-selection-line-main">
                     <div>
                       <Typography className="public-menu-selection-line-name">
                         {name}
                       </Typography>
                       <Typography className="public-menu-selection-line-price">
-                        {formatPrice(product.value)}
+                        {formatPrice(price)}
                         {unavailable ? ' · Indisponível' : ''}
                       </Typography>
                     </div>
@@ -105,7 +117,7 @@ export default function MySelectionPanel({
                       <button
                         type="button"
                         className="public-menu-qty-btn"
-                        onClick={() => onDecrease(product.id)}
+                        onClick={() => onDecrease(product.id, variationId || null, selections || null)}
                         aria-label={`Diminuir quantidade de ${name}`}
                       >
                         −
@@ -114,7 +126,7 @@ export default function MySelectionPanel({
                       <button
                         type="button"
                         className="public-menu-qty-btn"
-                        onClick={() => onIncrease(product.id)}
+                        onClick={() => onIncrease(product.id, variationId || null, selections || null)}
                         aria-label={`Aumentar quantidade de ${name}`}
                         disabled={unavailable}
                       >
@@ -125,7 +137,7 @@ export default function MySelectionPanel({
                   <button
                     type="button"
                     className="public-menu-selection-remove"
-                    onClick={() => onRemove(product.id)}
+                    onClick={() => onRemove(product.id, variationId || null, selections || null)}
                     aria-label={`Remover ${name} da seleção`}
                   >
                     Remover

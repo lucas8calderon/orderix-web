@@ -83,51 +83,50 @@ export function useMenuSelection(storeId, categories, { catalogReady = false } =
   const count = countSelected(items);
   const estimatedTotal = computeEstimatedTotal(items, productById);
 
-  const selectProduct = useCallback((productId) => {
+  const selectProduct = useCallback((productId, variationId = null, selections = null, quantity = 1) => {
     setItems((prev) => {
-      if (itemIsSelected(prev, productId)) return prev;
-      queueMicrotask(() => {
-        trackDigitalMenuEvent(DIGITAL_MENU_EVENTS.PRODUCT_SELECTED, {
-          storeId,
-          productId,
+      const exists = (prev || []).some((item) => (
+        String(item.productId) === String(productId)
+        && String(item.variationId || '') === String(variationId || '')
+        && JSON.stringify(item.selections || null) === JSON.stringify(selections || null)
+      ));
+      if (!exists) {
+        queueMicrotask(() => {
+          trackDigitalMenuEvent(DIGITAL_MENU_EVENTS.PRODUCT_SELECTED, {
+            storeId,
+            productId,
+            variationId,
+          });
         });
-      });
-      return selectItem(prev, productId);
+      }
+      return selectItem(prev, productId, variationId, selections, quantity);
     });
   }, [storeId]);
 
-  const removeProduct = useCallback((productId) => {
+  const removeProduct = useCallback((productId, variationId = null, selections = null) => {
     setItems((prev) => {
-      if (!itemIsSelected(prev, productId)) return prev;
-      queueMicrotask(() => {
-        trackDigitalMenuEvent(DIGITAL_MENU_EVENTS.PRODUCT_UNSELECTED, {
-          storeId,
-          productId,
-        });
-      });
-      return removeItem(prev, productId);
-    });
-  }, [storeId]);
-
-  const increaseQuantity = useCallback((productId, { available = true } = {}) => {
-    if (available === false) return;
-    setItems((prev) => increaseItem(prev, productId));
-  }, []);
-
-  const decreaseQuantity = useCallback((productId) => {
-    setItems((prev) => {
-      const next = decreaseItem(prev, productId);
-      if (itemIsSelected(prev, productId) && !itemIsSelected(next, productId)) {
+      const next = removeItem(prev, productId, variationId, selections);
+      if (next.length !== prev.length) {
         queueMicrotask(() => {
           trackDigitalMenuEvent(DIGITAL_MENU_EVENTS.PRODUCT_UNSELECTED, {
             storeId,
             productId,
+            variationId,
           });
         });
       }
       return next;
     });
   }, [storeId]);
+
+  const increaseQuantity = useCallback((productId, { available = true, variationId = null, selections = null } = {}) => {
+    if (available === false) return;
+    setItems((prev) => increaseItem(prev, productId, variationId, selections));
+  }, []);
+
+  const decreaseQuantity = useCallback((productId, variationId = null, selections = null) => {
+    setItems((prev) => decreaseItem(prev, productId, variationId, selections));
+  }, []);
 
   const clearSelection = useCallback(() => {
     setItems(clearSelectionItems());
@@ -141,7 +140,7 @@ export function useMenuSelection(storeId, categories, { catalogReady = false } =
   );
 
   const quantityOf = useCallback(
-    (productId) => getQuantity(items, productId),
+    (productId, variationId = null, selections = null) => getQuantity(items, productId, variationId, selections),
     [items]
   );
 

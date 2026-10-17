@@ -53,6 +53,8 @@ import DeliveryFeaturedRow from './components/DeliveryFeaturedRow';
 import DeliveryMenuSearch from './components/DeliveryMenuSearch';
 import DeliveryMenuSkeleton from './components/DeliveryMenuSkeleton';
 import DeliveryProductCard from './components/DeliveryProductCard';
+import MandatoryChoiceList from '../dashboard/menu/components/MandatoryChoiceList';
+import { fromPrice, highestPrices, mandatoryReady, selectionRecords } from '../dashboard/menu/utils/mandatoryChoices';
 import DeliveryPromoBanners from './components/DeliveryPromoBanners';
 import DeliveryStoreHeader from './components/DeliveryStoreHeader';
 import DeliveryAccountBar from './components/DeliveryAccountBar';
@@ -405,22 +407,8 @@ export default function PublicDelivery() {
         price: extra.price,
         quantity: 1,
       }));
-    const mandatorySelections = (selected.mandatoryGroups || [])
-      .map((group) => {
-        const selectedItemId = draftSelections[group.id];
-        const item = (group.items || []).find((entry) => String(entry.id) === String(selectedItemId));
-        if (!item) return null;
-        return {
-          productId: selected.id,
-          mandatoryGroupId: group.id,
-          selectedItemId: item.id,
-          price: item.price,
-        };
-      })
-      .filter(Boolean);
-    if ((selected.mandatoryGroups || []).length && mandatorySelections.length !== selected.mandatoryGroups.length) {
-      return;
-    }
+    const mandatorySelections = selectionRecords(selected, draftSelections);
+    if (!mandatoryReady(selected, draftSelections)) return;
     const variations = activeVariations(selected);
     const chosen = variations.find((variation) => String(variation.id) === String(draftVariationId));
     if (variations.length && !chosen) return;
@@ -802,7 +790,9 @@ export default function PublicDelivery() {
                     className="delivery-menu-section"
                   >
                     <div className="delivery-section-head">
-                      <h2 className="delivery-section-title">{category.name}</h2>
+                      <h2 className="delivery-section-title">
+                        {category.parentName ? `${category.parentName} · ${category.name}` : category.name}
+                      </h2>
                       <span className="delivery-section-count">
                         {category.products.length}
                         {' '}
@@ -906,11 +896,16 @@ export default function PublicDelivery() {
               <Typography className="delivery-sheet-price">
                 {selectedVariations.some((variation) => String(variation.id) === String(draftVariationId))
                   ? formatCurrency(selectedVariations.find((variation) => String(variation.id) === String(draftVariationId)).price)
-                  : formatProductPrice(selected, formatCurrency)}
+                  : highestPrices(selected).length
+                    ? `A partir de ${formatCurrency(fromPrice(selected))}`
+                    : formatProductPrice(selected, formatCurrency)}
               </Typography>
               {selectedVariations.length > 0 ? (
                 <Box sx={{ mb: 1.5 }}>
-                  <Typography variant="subtitle2">Escolha uma opção</Typography>
+                  <Typography variant="subtitle2">Escolha uma variação</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    A escolha é obrigatória para pedir.
+                  </Typography>
                   <RadioGroup
                     value={draftVariationId}
                     onChange={(event) => setDraftVariationId(event.target.value)}
@@ -926,24 +921,12 @@ export default function PublicDelivery() {
                   </RadioGroup>
                 </Box>
               ) : null}
-              {(selected.mandatoryGroups || []).map((group) => (
-                <Box key={group.id} sx={{ mb: 1.5 }}>
-                  <Typography variant="subtitle2">{group.name}</Typography>
-                  <RadioGroup
-                    value={draftSelections[group.id] || ''}
-                    onChange={(e) => setDraftSelections((prev) => ({ ...prev, [group.id]: e.target.value }))}
-                  >
-                    {(group.items || []).map((item) => (
-                      <FormControlLabel
-                        key={item.id}
-                        value={String(item.id)}
-                        control={<Radio />}
-                        label={`${item.name}${item.price ? ` (+${formatCurrency(item.price)})` : ''}`}
-                      />
-                    ))}
-                  </RadioGroup>
-                </Box>
-              ))}
+              <MandatoryChoiceList
+                groups={selected.mandatoryGroups || []}
+                selections={draftSelections}
+                onChange={(groupId, ids) => setDraftSelections((prev) => ({ ...prev, [groupId]: ids }))}
+                formatCurrency={formatCurrency}
+              />
               {(selected.extras || []).length > 0 ? (
                 <Box sx={{ mb: 1 }}>
                   <Typography variant="subtitle2">Adicionais</Typography>
@@ -983,7 +966,7 @@ export default function PublicDelivery() {
               <Button
                 variant="contained"
                 onClick={addSelected}
-                disabled={selectedVariations.length > 0 && !draftVariationId}
+                disabled={(selectedVariations.length > 0 && !draftVariationId) || !mandatoryReady(selected, draftSelections)}
               >
                 Adicionar ao carrinho
                 {' · '}

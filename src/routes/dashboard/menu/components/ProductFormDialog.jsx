@@ -49,6 +49,7 @@ const emptyForm = {
   isAvailable: true,
   image: '',
   variations: [],
+  choiceGroups: [],
 };
 
 function newVariationKey() {
@@ -64,6 +65,29 @@ function toVariationRows(variations) {
       ? Number(variation.price)
       : '',
     available: variation.available !== false,
+  }));
+}
+
+function newChoiceKey() {
+  return `choice-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function toChoiceRows(groups) {
+  return (groups || []).map((group) => ({
+    key: group.id ? `choice-${group.id}` : newChoiceKey(),
+    id: group.id || null,
+    name: group.name || '',
+    description: group.description || '',
+    minSelections: group.minSelections ?? 1,
+    maxSelections: group.maxSelections ?? 1,
+    priceMode: group.priceMode === 'HIGHEST' ? 'HIGHEST' : 'SUM',
+    items: (group.items || []).map((item) => ({
+      key: item.id ? `item-${item.id}` : newChoiceKey(),
+      id: item.id || null,
+      name: item.name || '',
+      description: item.description || '',
+      price: item.price != null && !Number.isNaN(Number(item.price)) ? Number(item.price) : '',
+    })),
   }));
 }
 
@@ -141,6 +165,7 @@ export function ProductFormDialog({
         isAvailable: product.isAvailable !== false,
         image: product.image || '',
         variations: toVariationRows(product.variations),
+        choiceGroups: toChoiceRows(product.mandatoryGroups),
       });
       setImagePreview(isUserProvidedImage(product.image) ? product.image : '');
     } else {
@@ -188,12 +213,31 @@ export function ProductFormDialog({
   const numericValue = usingVariations
     ? (fromPrice === '' ? NaN : Number(fromPrice))
     : (form.value === '' ? NaN : Number(form.value));
+  const choiceGroups = form.choiceGroups || [];
+  const choicePrices = choiceGroups
+    .filter((group) => group.priceMode === 'HIGHEST')
+    .flatMap((group) => group.items || [])
+    .map((item) => Number(item.price))
+    .filter((price) => Number.isFinite(price) && price > 0);
+  const choicesValid = choiceGroups.every((group) => {
+    const min = Number(group.minSelections);
+    const max = Number(group.maxSelections);
+    const items = (group.items || []).filter((item) => item.name.trim());
+    return group.name.trim()
+      && Number.isFinite(min) && Number.isFinite(max) && min >= 0 && max >= min && max >= 1
+      && items.length > 0
+      && items.every((item) => {
+        const price = Number(item.price);
+        return Number.isFinite(price) && (group.priceMode === 'HIGHEST' ? price > 0 : price >= 0);
+      });
+  });
   const hasCategory = form.categoryId !== '' && form.categoryId != null;
-  const canSave =
-    form.name.trim().length > 0 &&
-    hasCategory &&
-    (usingVariations ? variationsValid : !Number.isNaN(numericValue) && numericValue > 0) &&
-    !saving;
+  const priceReady = usingVariations
+    ? variationsValid
+    : choicePrices.length
+      ? true
+      : !Number.isNaN(numericValue) && numericValue > 0;
+  const canSave = form.name.trim().length > 0 && hasCategory && priceReady && choicesValid && !saving;
 
   const updateVariation = (key, patch) => {
     setForm((prev) => ({
@@ -207,12 +251,27 @@ export function ProductFormDialog({
       ...form,
       categoryId: Number(form.categoryId),
       value: numericValue,
+      value: !usingVariations && choicePrices.length ? Math.min(...choicePrices) : numericValue,
       variations: variationRows.map((row, index) => ({
         id: row.id || null,
         name: row.name.trim(),
         price: Number(row.price),
         sortOrder: index,
         available: row.available !== false,
+      })),
+      mandatoryGroups: choiceGroups.filter((group) => group.name.trim()).map((group) => ({
+        id: group.id || null,
+        name: group.name.trim(),
+        description: group.description.trim(),
+        minSelections: Number(group.minSelections),
+        maxSelections: Number(group.maxSelections),
+        priceMode: group.priceMode,
+        items: (group.items || []).filter((item) => item.name.trim()).map((item) => ({
+          id: item.id || null,
+          name: item.name.trim(),
+          description: item.description.trim(),
+          price: Number(item.price) || 0,
+        })),
       })),
     });
   };
@@ -294,7 +353,7 @@ export function ProductFormDialog({
         <Box sx={{ mb: 2 }}>
           <Typography component="h3" variant="subtitle2">Variações de preço</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
-            O mesmo produto com valores diferentes. Exemplo: Strogonoff de Frango — Pequeno R$ 14,00 e Grande R$ 22,00. O cliente escolhe uma opção e paga o preço dela.
+            O mesmo produto com valores diferentes. Exemplo: Marmita — Pequena R$ 18,00 e Grande R$ 26,00. O cliente precisa escolher uma variação antes de pedir e paga o preço dela.
           </Typography>
           {variationRows.map((row) => (
             <Box key={row.key} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'flex-start', flexDirection: { xs: 'column', sm: 'row' } }}>
@@ -338,6 +397,192 @@ export function ProductFormDialog({
             }))}
           >
             Adicionar variação
+          </Button>
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <Typography component="h3" variant="subtitle2">Escolhas do cliente</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
+            Pizza de um sabor: mínimo 1. Pizza de dois sabores: mínimo 2. O cardápio mostra 0/2 e o pedido só segue depois dessa quantidade.
+          </Typography>
+          {choiceGroups.map((group) => (
+            <Box key={group.key} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5, mb: 1.5 }}>
+              <TextField
+                fullWidth
+                label="Nome da escolha"
+                placeholder="Sabores"
+                value={group.name}
+                onChange={(event) => setForm((prev) => ({
+                  ...prev,
+                  choiceGroups: prev.choiceGroups.map((entry) => (
+                    entry.key === group.key ? { ...entry, name: event.target.value } : entry
+                  )),
+                }))}
+                sx={{ mb: 1 }}
+              />
+              <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                <Button
+                  size="small"
+                  variant={Number(group.minSelections) === 1 && Number(group.maxSelections) === 1 ? 'contained' : 'outlined'}
+                  onClick={() => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key
+                        ? { ...entry, name: entry.name || 'Sabor', minSelections: 1, maxSelections: 1, priceMode: 'HIGHEST' }
+                        : entry
+                    )),
+                  }))}
+                >
+                  1 sabor
+                </Button>
+                <Button
+                  size="small"
+                  variant={Number(group.minSelections) === 2 && Number(group.maxSelections) === 2 ? 'contained' : 'outlined'}
+                  onClick={() => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key
+                        ? { ...entry, name: entry.name || 'Sabores', minSelections: 2, maxSelections: 2, priceMode: 'HIGHEST' }
+                        : entry
+                    )),
+                  }))}
+                >
+                  2 sabores
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                <TextField
+                  label="Mínimo para pedir"
+                  type="number"
+                  value={group.minSelections}
+                  onChange={(event) => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key ? { ...entry, minSelections: event.target.value } : entry
+                    )),
+                  }))}
+                  inputProps={{ min: 0, max: 20 }}
+                  sx={{ width: 110 }}
+                />
+                <TextField
+                  label="Máximo"
+                  type="number"
+                  value={group.maxSelections}
+                  onChange={(event) => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key ? { ...entry, maxSelections: event.target.value } : entry
+                    )),
+                  }))}
+                  inputProps={{ min: 1, max: 20 }}
+                  sx={{ width: 110 }}
+                />
+                <TextField
+                  select
+                  label="Preço"
+                  value={group.priceMode}
+                  onChange={(event) => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key ? { ...entry, priceMode: event.target.value } : entry
+                    )),
+                  }))}
+                  sx={{ minWidth: 180, flex: 1 }}
+                >
+                  <MenuItem value="HIGHEST">Maior valor</MenuItem>
+                  <MenuItem value="SUM">Somar ao preço</MenuItem>
+                </TextField>
+              </Box>
+              <FormHelperText sx={{ mb: 1 }}>
+                {`O cliente vê ${0}/${Number(group.minSelections) || 0}. Com mínimo 2, um sabor só não envia o pedido.`}
+              </FormHelperText>
+              {(group.items || []).map((item) => (
+                <Box key={item.key} sx={{ display: 'flex', gap: 1, mb: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+                  <TextField
+                    fullWidth
+                    label="Opção"
+                    placeholder="Calabresa"
+                    value={item.name}
+                    onChange={(event) => setForm((prev) => ({
+                      ...prev,
+                      choiceGroups: prev.choiceGroups.map((entry) => (
+                        entry.key === group.key
+                          ? { ...entry, items: entry.items.map((row) => (row.key === item.key ? { ...row, name: event.target.value } : row)) }
+                          : entry
+                      )),
+                    }))}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Descrição"
+                    value={item.description}
+                    onChange={(event) => setForm((prev) => ({
+                      ...prev,
+                      choiceGroups: prev.choiceGroups.map((entry) => (
+                        entry.key === group.key
+                          ? { ...entry, items: entry.items.map((row) => (row.key === item.key ? { ...row, description: event.target.value } : row)) }
+                          : entry
+                      )),
+                    }))}
+                  />
+                  <TextField
+                    label="Preço da opção"
+                    value={formatPriceInput(item.price)}
+                    onChange={(event) => setForm((prev) => ({
+                      ...prev,
+                      choiceGroups: prev.choiceGroups.map((entry) => (
+                        entry.key === group.key
+                          ? { ...entry, items: entry.items.map((row) => (row.key === item.key ? { ...row, price: parsePriceInput(event.target.value) } : row)) }
+                          : entry
+                      )),
+                    }))}
+                    sx={{ width: { xs: '100%', sm: 150 } }}
+                  />
+                </Box>
+              ))}
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  variant="text"
+                  onClick={() => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key
+                        ? { ...entry, items: [...entry.items, { key: newChoiceKey(), id: null, name: '', description: '', price: '' }] }
+                        : entry
+                    )),
+                  }))}
+                >
+                  Adicionar opção
+                </Button>
+                <Button
+                  color="inherit"
+                  onClick={() => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.filter((entry) => entry.key !== group.key),
+                  }))}
+                >
+                  Remover escolha
+                </Button>
+              </Box>
+            </Box>
+          ))}
+          <Button
+            variant="outlined"
+            onClick={() => setForm((prev) => ({
+              ...prev,
+              choiceGroups: [...(prev.choiceGroups || []), {
+                key: newChoiceKey(),
+                id: null,
+                name: '',
+                description: '',
+                minSelections: 1,
+                maxSelections: 2,
+                priceMode: 'HIGHEST',
+                items: [{ key: newChoiceKey(), id: null, name: '', description: '', price: '' }],
+              }],
+            }))}
+          >
+            Adicionar escolha
           </Button>
         </Box>
 
