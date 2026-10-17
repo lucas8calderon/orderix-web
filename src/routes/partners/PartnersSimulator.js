@@ -216,7 +216,10 @@ export default function PartnersSimulator() {
             <div className="wp-partners-highlight">
               <p>Comissão mensal estimada</p>
               <strong>{formatPrice(result.monthlyCommission)}</strong>
-              <span>Comissão acumulada em {result.months} meses: {formatPrice(result.accumulatedCommission)}</span>
+              <p className="wp-partners-accumulated">
+                Comissão acumulada em {result.months} meses
+                <strong>{formatPrice(result.accumulatedCommission)}</strong>
+              </p>
             </div>
 
             <dl className="wp-partners-results">
