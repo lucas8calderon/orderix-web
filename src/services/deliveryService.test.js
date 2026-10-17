@@ -1,4 +1,5 @@
 import {
+  brandingValueForSave,
   buildDeliveryUrl,
   CLEARED_BRANDING_IMAGE,
   toDeliverySettingsPayload,
@@ -100,6 +101,31 @@ describe('deliveryService helpers', () => {
       logoUrl: '',
       coverUrl: '',
     }));
+  });
+
+  it('não reenvia logo nem banner que não mudaram', () => {
+    const logo = 'data:image/png;base64,' + 'a'.repeat(80);
+    const cover = 'https://cdn.example.com/cover.jpg';
+    expect(brandingValueForSave(logo, logo)).toBe('');
+    expect(brandingValueForSave(cover, cover)).toBe('');
+    expect(brandingValueForSave(`  ${cover}  `, cover)).toBe('');
+    const payload = toDeliverySettingsPayload({
+      deliveryEnabled: true,
+      deliveryLogoUrl: brandingValueForSave(logo, logo),
+      deliveryCoverUrl: brandingValueForSave(cover, cover),
+    });
+    expect(payload.logoUrl).toBeNull();
+    expect(payload.coverUrl).toBeNull();
+  });
+
+  it('reenvia só a imagem nova e ainda apaga quando o usuário remove', () => {
+    const saved = 'https://cdn.example.com/logo.png';
+    const next = 'data:image/png;base64,novo';
+    expect(brandingValueForSave(next, saved)).toBe(next);
+    expect(brandingValueForSave(CLEARED_BRANDING_IMAGE, saved)).toBe(CLEARED_BRANDING_IMAGE);
+    expect(toDeliverySettingsPayload({
+      deliveryLogoUrl: brandingValueForSave(CLEARED_BRANDING_IMAGE, saved),
+    }).logoUrl).toBe('');
   });
 
   it('inclui data URL curta de logo e capa no payload PUT', () => {

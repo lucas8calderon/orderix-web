@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL, SETTINGS_SAVE_TIMEOUT_MS } from './apiConfig';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../utils/phoneInput';
 
 const SETTINGS_URL = `${API_BASE_URL}/stores/me/delivery`;
@@ -9,8 +9,7 @@ export function getDeliverySettings() {
 }
 
 export function updateDeliverySettings(payload) {
-  // Data URLs de logo+banner podem ser grandes; evita timeout falso de 15s.
-  return axios.put(SETTINGS_URL, payload, { timeout: 60000 });
+  return axios.put(SETTINGS_URL, payload, { timeout: SETTINGS_SAVE_TIMEOUT_MS });
 }
 
 export function getDeliveryCatalog(slug) {
@@ -89,6 +88,18 @@ function brandingField(value) {
   if (value === CLEARED_BRANDING_IMAGE) return '';
   const trimmed = String(value || '').trim();
   return trimmed || null;
+}
+
+/**
+ * Logo/banner iguais aos que já estão no servidor não entram no PUT.
+ * String vazia vira null (mantém). A marca de remoção continua apagando.
+ */
+export function brandingValueForSave(current, saved) {
+  if (current === CLEARED_BRANDING_IMAGE) return CLEARED_BRANDING_IMAGE;
+  const next = String(current ?? '').trim();
+  const previous = String(saved ?? '').trim();
+  if (next === previous) return '';
+  return current;
 }
 
 export function toDeliverySettingsPayload(ui = {}) {

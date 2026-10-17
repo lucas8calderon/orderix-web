@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL, SETTINGS_SAVE_TIMEOUT_MS } from './apiConfig';
 
 const PUBLIC_MENU_SETTINGS_URL = `${API_BASE_URL}/stores/me/public-menu`;
 
@@ -8,7 +8,7 @@ export function getPublicMenuSettings() {
 }
 
 export function updatePublicMenuSettings(payload) {
-  return axios.put(PUBLIC_MENU_SETTINGS_URL, payload);
+  return axios.put(PUBLIC_MENU_SETTINGS_URL, payload, { timeout: SETTINGS_SAVE_TIMEOUT_MS });
 }
 
 export function getPublicMenuBySlug(slug, { etag } = {}) {

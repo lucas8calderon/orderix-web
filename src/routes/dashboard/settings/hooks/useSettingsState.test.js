@@ -303,6 +303,89 @@ describe('useSettingsState delivery branding', () => {
     expect(result.current.toast.message).toMatch(/whatsapp válido com ddd/i);
   });
 
+  it('não manda de novo o logo em base64 quando o save só muda um interruptor', async () => {
+    const logo = 'data:image/png;base64,' + 'abc'.repeat(40);
+    const cover = 'data:image/jpeg;base64,' + 'xyz'.repeat(40);
+    settingsStorage.getDeliveryConfig.mockResolvedValue({
+      deliveryEnabled: false,
+      deliveryFee: 5,
+      deliveryMinOrder: 0,
+      deliveryEstimatedMinutes: 40,
+      storeAddress: '',
+      deliveryLogoUrl: logo,
+      deliveryCoverUrl: cover,
+    });
+    settingsStorage.updateDeliveryConfig.mockImplementation(async (ui) => ({
+      ...ui,
+      deliveryEnabled: true,
+      deliveryLogoUrl: logo,
+      deliveryCoverUrl: cover,
+    }));
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.settings.deliveryLogoUrl).toBe(logo));
+
+    act(() => {
+      result.current.updateSetting('deliveryEnabled', null, true);
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('delivery');
+    });
+
+    expect(saved).toBe(true);
+    const sent = settingsStorage.updateDeliveryConfig.mock.calls[0][0];
+    expect(sent.deliveryEnabled).toBe(true);
+    expect(sent.deliveryLogoUrl).toBe('');
+    expect(sent.deliveryCoverUrl).toBe('');
+    expect(toDeliverySettingsPayload(sent).logoUrl).toBeNull();
+    expect(toDeliverySettingsPayload(sent).coverUrl).toBeNull();
+    expect(result.current.settings.deliveryLogoUrl).toBe(logo);
+  });
+
+  it('explica timeout de gravação sem culpar imagem e reserva imagem para corpo grande', async () => {
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const timeout = new Error('timeout of 15000ms exceeded');
+    timeout.code = 'ECONNABORTED';
+    settingsStorage.updateDeliveryConfig.mockRejectedValueOnce(timeout);
+
+    await act(async () => {
+      await result.current.saveSettings('delivery');
+    });
+
+    expect(result.current.toast.severity).toBe('error');
+    expect(result.current.toast.message).toBe('A gravação demorou demais. Tente de novo.');
+    expect(result.current.toast.message).not.toMatch(/imagens/i);
+
+    settingsStorage.updateDeliveryConfig.mockRejectedValueOnce({
+      response: { status: 503, data: { message: 'Service Unavailable' } },
+    });
+    await act(async () => {
+      await result.current.saveSettings('delivery');
+    });
+    expect(result.current.toast.message).toBe('A gravação demorou demais. Tente de novo.');
+
+    settingsStorage.updateDeliveryConfig.mockRejectedValueOnce({
+      response: { status: 413, data: {} },
+    });
+    await act(async () => {
+      await result.current.saveSettings('delivery');
+    });
+    expect(result.current.toast.message).toMatch(/imagens são grandes demais/i);
+
+    settingsStorage.updateDeliveryConfig.mockRejectedValueOnce({
+      message: 'Request failed with status code 413',
+      response: { status: 413, data: { message: 'Payload Too Large' } },
+    });
+    await act(async () => {
+      await result.current.saveSettings('delivery');
+    });
+    expect(result.current.toast.message).toMatch(/imagens são grandes demais/i);
+  });
+
   it('mescla paymentOverrides no save de pagamentos antes do estado assíncrono', async () => {
     settingsStorage.updatePaymentConfig.mockResolvedValue({
       deliveryOnlineProvider: 'PAGBANK',

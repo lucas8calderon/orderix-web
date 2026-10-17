@@ -3,6 +3,7 @@ import { PAYMENT_METHOD_LABELS } from '../../../../services/paymentConfigService
 import { isValidStoreWhatsApp } from '../../../public-delivery/utils/neighborhoodWhatsApp';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../../../../utils/phoneInput';
 import { settingsStorage } from '../utils/settingsStorage';
+import { brandingValueForSave } from '../../../../services/deliveryService';
 
 const MOCK_PERMISSIONS = {
   admin: {
@@ -170,7 +171,7 @@ function confirmSavedStorePhone(sent, received) {
   return { ok: true, delivery: received };
 }
 
-function deliveryPayloadFrom(current) {
+function deliveryPayloadFrom(current, savedImages = {}) {
   return {
     deliveryEnabled: current.deliveryEnabled,
     offersDelivery: current.offersDelivery !== false,
@@ -185,22 +186,47 @@ function deliveryPayloadFrom(current) {
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
     storeAddress: current.storeAddress,
     storePhone: current.storePhone,
-    deliveryLogoUrl: current.deliveryLogoUrl,
-    deliveryCoverUrl: current.deliveryCoverUrl,
+    deliveryLogoUrl: brandingValueForSave(current.deliveryLogoUrl, savedImages.logo),
+    deliveryCoverUrl: brandingValueForSave(current.deliveryCoverUrl, savedImages.cover),
   };
 }
 
-function apiErrorMessage(error, fallback) {
-  const apiMessage = error?.response?.data?.message;
-  if (typeof apiMessage === 'string' && apiMessage.trim()) {
-    return apiMessage;
-  }
+function slowSaveMessage(saving) {
+  return saving
+    ? 'A gravação demorou demais. Tente de novo.'
+    : 'A resposta demorou demais. Tente de novo.';
+}
+
+function isPayloadTooLarge(error) {
   const status = error?.response?.status;
-  if (status === 413) {
+  const apiMessage = typeof error?.response?.data?.message === 'string'
+    ? error.response.data.message
+    : '';
+  return status === 413 || /payload too large|entity too large|request entity too large/i.test(
+    `${apiMessage} ${error?.message || ''}`
+  );
+}
+
+function apiErrorMessage(error, fallback, { saving = false } = {}) {
+  const apiMessage = error?.response?.data?.message;
+  const hasApiMessage = typeof apiMessage === 'string' && apiMessage.trim();
+  if (isPayloadTooLarge(error)) {
+    if (hasApiMessage && !/payload too large|entity too large|request entity too large/i.test(apiMessage)) {
+      return apiMessage.trim();
+    }
     return 'As imagens são grandes demais para enviar. Use arquivos menores ou reinicie o backend atualizado.';
   }
-  if (error?.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '')) {
-    return 'Tempo esgotado ao salvar. Tente imagens menores.';
+  const status = error?.response?.status;
+  if (
+    error?.code === 'ECONNABORTED'
+    || status === 502
+    || status === 503
+    || /timeout/i.test(error?.message || '')
+  ) {
+    return slowSaveMessage(saving);
+  }
+  if (hasApiMessage) {
+    return apiMessage.trim();
   }
   if (status === 401 || status === 403) {
     return error?.message || fallback;
@@ -221,7 +247,15 @@ export const useSettingsState = () => {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const settingsRef = useRef(settings);
+  const serverImagesRef = useRef({ logo: '', cover: '' });
   settingsRef.current = settings;
+
+  const rememberServerImages = useCallback((delivery) => {
+    serverImagesRef.current = {
+      logo: delivery?.deliveryLogoUrl || '',
+      cover: delivery?.deliveryCoverUrl || '',
+    };
+  }, []);
 
   const showToast = useCallback((message, severity = 'success') => {
     setToast({ open: true, message, severity });
@@ -237,6 +271,7 @@ export const useSettingsState = () => {
     ])
       .then(([payment, publicMenu, hours, delivery]) => {
         if (cancelled) return;
+        rememberServerImages(delivery);
         setSettings((prev) => ({ ...prev, ...payment, ...publicMenu, ...hours, ...delivery }));
       })
       .catch((error) => {
@@ -252,7 +287,7 @@ export const useSettingsState = () => {
     return () => {
       cancelled = true;
     };
-  }, [showToast]);
+  }, [rememberServerImages, showToast]);
 
   const updateSetting = useCallback((section, key, value) => {
     setSettings((prev) => {
@@ -305,8 +340,9 @@ export const useSettingsState = () => {
     if (section === 'companyInfo') {
       setSaving(true);
       try {
-        const deliveryPayload = deliveryPayloadFrom(current);
+        const deliveryPayload = deliveryPayloadFrom(current, serverImagesRef.current);
         const delivery = await settingsStorage.updateDeliveryConfig(deliveryPayload);
+        rememberServerImages(delivery);
         const sentLogo = Boolean((deliveryPayload.deliveryLogoUrl || '').trim());
         const gotLogo = Boolean((delivery.deliveryLogoUrl || '').trim());
         if (sentLogo && !gotLogo) {
@@ -326,7 +362,7 @@ export const useSettingsState = () => {
         showToast('Logotipo salvo com sucesso.');
         return true;
       } catch (error) {
-        showToast(apiErrorMessage(error, 'Não foi possível salvar o logotipo.'), 'error');
+        showToast(apiErrorMessage(error, 'Não foi possível salvar o logotipo.', { saving: true }), 'error');
         return false;
       } finally {
         setSaving(false);
@@ -356,8 +392,9 @@ export const useSettingsState = () => {
       }
 
       if (section === 'delivery') {
-        const deliveryPayload = deliveryPayloadFrom(current);
+        const deliveryPayload = deliveryPayloadFrom(current, serverImagesRef.current);
         const delivery = await settingsStorage.updateDeliveryConfig(deliveryPayload);
+        rememberServerImages(delivery);
         const sentLogo = Boolean((deliveryPayload.deliveryLogoUrl || '').trim());
         const sentCover = Boolean((deliveryPayload.deliveryCoverUrl || '').trim());
         const gotLogo = Boolean((delivery.deliveryLogoUrl || '').trim());
@@ -434,7 +471,7 @@ export const useSettingsState = () => {
           : section === 'serviceFee'
             ? 'Não foi possível salvar a taxa de serviço.'
             : 'Não foi possível salvar a cobrança da loja.';
-      showToast(apiErrorMessage(error, fallback), 'error');
+      showToast(apiErrorMessage(error, fallback, { saving: true }), 'error');
       return false;
     } finally {
       setSaving(false);

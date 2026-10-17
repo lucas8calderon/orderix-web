@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL, SETTINGS_SAVE_TIMEOUT_MS } from './apiConfig';
 
 export const PAYMENT_METHOD_ORDER = ['PIX', 'DEBIT', 'CREDIT', 'CASH', 'VOUCHER', 'OTHER'];
 
@@ -139,7 +139,7 @@ export function getStorePaymentConfig() {
 }
 
 export function updateStorePaymentConfig(payload) {
-  return axios.put(PAYMENT_CONFIG_URL, payload);
+  return axios.put(PAYMENT_CONFIG_URL, payload, { timeout: SETTINGS_SAVE_TIMEOUT_MS });
 }
 
 export function testPagBankConnection() {

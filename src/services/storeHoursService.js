@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL, SETTINGS_SAVE_TIMEOUT_MS } from './apiConfig';
 
 export const STORE_HOURS_TIMEZONE = 'America/Sao_Paulo';
 
@@ -23,7 +23,7 @@ export function getStoreHours() {
 }
 
 export function updateStoreHours(payload) {
-  return axios.put(STORE_HOURS_URL, payload);
+  return axios.put(STORE_HOURS_URL, payload, { timeout: SETTINGS_SAVE_TIMEOUT_MS });
 }
 
 export function normalizeTime(value, fallback = DEFAULT_OPEN) {

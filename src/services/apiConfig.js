@@ -8,6 +8,9 @@ export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localh
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.timeout = 15000;
 
+/** Só o save de configurações. O restante continua no timeout de 15s. */
+export const SETTINGS_SAVE_TIMEOUT_MS = 60000;
+
 function isPublicDeliveryApi(config) {
   const url = `${config?.baseURL || ''}${config?.url || ''}`;
   return url.includes('/api/public/delivery');
