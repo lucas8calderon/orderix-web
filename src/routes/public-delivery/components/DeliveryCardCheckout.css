@@ -1,9 +1,36 @@
 .delivery-card-dialog .MuiDialog-paper {
+  position: relative;
   margin: 12px;
   width: calc(100% - 24px);
   max-width: 480px;
   max-height: calc(100% - 24px);
   overflow-x: hidden;
+}
+
+.delivery-card-processing {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 24px;
+  background: #121a2b;
+  color: #f8fafc;
+  pointer-events: auto;
+  border-radius: inherit;
+}
+
+.delivery-card-processing .MuiCircularProgress-root {
+  color: #93c5fd;
+}
+
+.delivery-card-processing .MuiTypography-root {
+  color: #f8fafc;
+  font-weight: 600;
 }
 
 .delivery-card-content {

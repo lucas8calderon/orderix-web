@@ -300,21 +300,27 @@ export default function DeliveryCardCheckout({
     <Dialog open={open} onClose={phase === 'form' ? onClose : undefined} fullWidth maxWidth="sm" className="delivery-card-dialog">
       <DialogTitle>
         Cartão de crédito
-        <IconButton aria-label="Fechar" onClick={onClose} size="small" sx={{ float: 'right' }}>
+        <IconButton
+          aria-label="Fechar"
+          onClick={() => {
+            if (phase === 'approved') {
+              onApproved(payment);
+              return;
+            }
+            onClose();
+          }}
+          size="small"
+          disabled={processing}
+          sx={{ float: 'right' }}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent className="delivery-card-content">
+      <DialogContent className="delivery-card-content" inert={processing ? '' : undefined}>
         <Typography className="delivery-card-total">Total {formatCurrency(amount)}</Typography>
         {error && phase !== 'approved' ? <Alert severity={phase === 'unknown' ? 'warning' : 'error'} sx={{ mb: 2 }}>{error}</Alert> : null}
         {phase === 'form' && pagbank ? (
           <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick" aria-busy={processing}>
-            {processing ? (
-              <Box role="status" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <CircularProgress size={22} />
-                <Typography>Processando...</Typography>
-              </Box>
-            ) : null}
             <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required disabled={processing} sx={{ mb: 1 }} />
             <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required disabled={processing} inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} sx={{ mb: 1 }} />
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -323,7 +329,7 @@ export default function DeliveryCardCheckout({
               <TextField label="CVV" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} required disabled={processing} type="password" inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-csc' }} />
             </Box>
             <Button type="submit" variant="contained" disabled={!publicKey || processing}>
-              {processing ? 'Processando...' : 'Pagar à vista'}
+              Pagar à vista
             </Button>
           </Box>
         ) : null}
@@ -364,6 +370,12 @@ export default function DeliveryCardCheckout({
           </Box>
         ) : null}
       </DialogContent>
+      {processing ? (
+        <Box className="delivery-card-processing" role="status" aria-live="polite">
+          <CircularProgress size={28} />
+          <Typography component="p">Processando...</Typography>
+        </Box>
+      ) : null}
     </Dialog>
   );
 }

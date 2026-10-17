@@ -1,8 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import axios from 'axios';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import PublicDelivery from './PublicDelivery';
-import { getDeliveryCatalog } from '../../services/deliveryService';
+import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
+import { readCart } from '../../services/deliveryCart';
 import { listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
 import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodService';
 import { lookupCep } from '../../services/viaCepService';
@@ -398,6 +400,178 @@ describe('PublicDelivery', () => {
     await openCheckoutFromMenu();
     expect(await screen.findByText('Retirada na loja')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
+  });
+});
+
+const pickupBase = {
+  ...closedCatalog,
+  open: true,
+  acceptingOrders: true,
+  fulfillmentModes: ['PICKUP'],
+};
+
+function installInstantPaint() {
+  const previous = window.requestAnimationFrame;
+  window.requestAnimationFrame = (callback) => {
+    callback();
+    return 0;
+  };
+  return () => {
+    window.requestAnimationFrame = previous;
+  };
+}
+
+async function confirmPickupCheckout() {
+  await openCheckoutFromMenu();
+  expect(await screen.findByDisplayValue('Ana Cliente')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: /confirmar pedido/i }));
+}
+
+describe('carrinho no pagamento online', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    lookupCep.mockReset();
+    listDeliveryCustomerAddresses.mockReset();
+    listDeliveryCustomerAddresses.mockResolvedValue({ data: [] });
+    createDeliveryOrder.mockReset();
+    axios.post.mockReset();
+    window.HTMLElement.prototype.scrollTo = jest.fn();
+    class MockIntersectionObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+    window.IntersectionObserver = MockIntersectionObserver;
+    seedCustomerSession();
+  });
+
+  afterEach(() => {
+    delete window.PagSeguro;
+    axios.post.mockReset();
+  });
+
+  it('não limpa o carrinho nem o checkout quando o cartão é recusado ou a criptografia falha', async () => {
+    const restorePaint = installInstantPaint();
+    createDeliveryOrder.mockResolvedValue({
+      data: { id: 77, publicToken: 'tok-77', total: 1.5 },
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...pickupBase,
+        onlineCardEnabled: true,
+        onlinePaymentProvider: 'PAGBANK',
+        pagbankPublicKey: 'chave-publica',
+      },
+    });
+    window.PagSeguro = {
+      encryptCard: () => {
+        throw new Error('criptografia');
+      },
+    };
+
+    try {
+      renderDelivery();
+      await confirmPickupCheckout();
+      expect(await screen.findByLabelText(/Nome impresso no cartão/i)).toBeInTheDocument();
+      expect(readCart('padaria').items).toHaveLength(1);
+
+      fireEvent.change(screen.getByLabelText(/Nome impresso no cartão/i), { target: { value: 'Cliente' } });
+      fireEvent.change(screen.getByLabelText(/Número do cartão/i), { target: { value: '0000' } });
+      fireEvent.change(screen.getByLabelText(/Mês/i), { target: { value: '12' } });
+      fireEvent.change(screen.getByLabelText(/Ano/i), { target: { value: '2030' } });
+      fireEvent.change(screen.getByLabelText(/CVV/i), { target: { value: '000' } });
+      fireEvent.submit(screen.getByRole('button', { name: 'Pagar à vista' }).closest('form'));
+
+      expect(await screen.findByText('Não foi possível carregar o PagBank.')).toBeInTheDocument();
+      expect(readCart('padaria').items).toHaveLength(1);
+
+      window.PagSeguro = {
+        encryptCard: () => ({ encryptedCard: 'tok-recusado', hasErrors: false }),
+      };
+      axios.post.mockResolvedValue({ data: { status: 'DECLINED', statusMessage: 'Recusado' } });
+      fireEvent.submit(screen.getByRole('button', { name: 'Pagar à vista' }).closest('form'));
+
+      expect(await screen.findByRole('heading', { name: 'Pagamento não aprovado' })).toBeInTheDocument();
+      expect(readCart('padaria').items).toHaveLength(1);
+      expect(readCart('padaria').items[0].productId).toBe(10);
+
+      await userEvent.click(screen.getByRole('button', { name: /escolher outra forma de pagamento/i }));
+      expect(await screen.findByLabelText(/^Nome/i)).toHaveValue('Ana Cliente');
+      expect(screen.getByLabelText(/^Telefone/i)).toHaveValue('(11) 98888-8888');
+      expect(screen.getByText('Retirada na loja')).toBeInTheDocument();
+    } finally {
+      restorePaint();
+    }
+  });
+
+  it('limpa o carrinho só depois que o cartão é aprovado', async () => {
+    const restorePaint = installInstantPaint();
+    createDeliveryOrder.mockResolvedValue({
+      data: { id: 78, publicToken: 'tok-78', total: 1.5 },
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...pickupBase,
+        onlineCardEnabled: true,
+        onlinePaymentProvider: 'PAGBANK',
+        pagbankPublicKey: 'chave-publica',
+      },
+    });
+    window.PagSeguro = {
+      encryptCard: () => ({ encryptedCard: 'tok-ok', hasErrors: false }),
+    };
+    axios.post.mockResolvedValue({ data: { status: 'APPROVED', id: 1 } });
+
+    try {
+      renderDelivery();
+      await confirmPickupCheckout();
+      expect(await screen.findByLabelText(/Nome impresso no cartão/i)).toBeInTheDocument();
+      expect(readCart('padaria').items).toHaveLength(1);
+
+      fireEvent.change(screen.getByLabelText(/Nome impresso no cartão/i), { target: { value: 'Cliente' } });
+      fireEvent.change(screen.getByLabelText(/Número do cartão/i), { target: { value: '0000' } });
+      fireEvent.change(screen.getByLabelText(/Mês/i), { target: { value: '12' } });
+      fireEvent.change(screen.getByLabelText(/Ano/i), { target: { value: '2030' } });
+      fireEvent.change(screen.getByLabelText(/CVV/i), { target: { value: '000' } });
+      fireEvent.submit(screen.getByRole('button', { name: 'Pagar à vista' }).closest('form'));
+
+      expect(await screen.findByRole('heading', { name: 'Pagamento aprovado' })).toBeInTheDocument();
+      expect(readCart('padaria').items).toHaveLength(1);
+
+      await userEvent.click(screen.getByRole('button', { name: /acompanhar pedido/i }));
+      expect(readCart('padaria').items).toEqual([]);
+    } finally {
+      restorePaint();
+    }
+  });
+
+  it('não limpa o carrinho se o Pix falha ou ainda está aguardando', async () => {
+    createDeliveryOrder.mockResolvedValue({
+      data: { id: 79, publicToken: 'tok-79', total: 1.5 },
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...pickupBase,
+        onlinePixEnabled: true,
+      },
+    });
+    axios.post.mockRejectedValueOnce({ response: { data: { message: 'Não foi possível gerar o Pix.' } } });
+
+    renderDelivery();
+    await confirmPickupCheckout();
+
+    expect(await screen.findByText('Não foi possível gerar o Pix.')).toBeInTheDocument();
+    expect(readCart('padaria').items).toHaveLength(1);
+    expect(readCart('padaria').items[0].productId).toBe(10);
+
+    axios.post.mockResolvedValueOnce({
+      data: { id: 3, status: 'PENDING', qrCode: '000201pix', amount: 1.5 },
+    });
+    await userEvent.click(screen.getByRole('button', { name: /gerar novo pix/i }));
+
+    expect(await screen.findByText('000201pix')).toBeInTheDocument();
+    expect(readCart('padaria').items).toHaveLength(1);
   });
 });
 

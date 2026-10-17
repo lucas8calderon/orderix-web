@@ -625,8 +625,6 @@ export default function PublicDelivery() {
         });
         setLastOrder(readLastOrder(slug));
       }
-      clearCart(slug);
-      setCart({ items: [] });
       setCheckoutOpen(false);
       setCartOpen(false);
       const onlineCard = Boolean(catalog?.onlineCardEnabled && checkout.onlinePayment && checkout.paymentMethod === 'CREDIT');
@@ -658,6 +656,8 @@ export default function PublicDelivery() {
         }
         return;
       }
+      clearCart(slug);
+      setCart({ items: [] });
       navigate(`/delivery/pedido/${publicToken}`, { state: { order: response.data, slug } });
     } catch (err) {
       setCheckoutError(err?.response?.data?.message || 'Não foi possível enviar o pedido.');
@@ -1204,6 +1204,8 @@ export default function PublicDelivery() {
         provider={catalog?.onlinePaymentProvider || 'MERCADOPAGO'}
         onClose={() => setPixOpen(false)}
         onPaid={(paid) => {
+          clearCart(slug);
+          setCart({ items: [] });
           setPixOpen(false);
           const token = paid?.publicToken || pixPayment?.publicToken;
           if (token) {
@@ -1237,6 +1239,8 @@ export default function PublicDelivery() {
         payerEmail={customer?.email}
         onClose={() => setCardOpen(false)}
         onApproved={() => {
+          clearCart(slug);
+          setCart({ items: [] });
           setCardOpen(false);
           if (cardOrder?.publicToken) {
             navigate(`/delivery/pedido/${cardOrder.publicToken}`, { state: { slug } });

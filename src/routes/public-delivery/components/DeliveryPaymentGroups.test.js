@@ -88,21 +88,24 @@ describe('DeliveryPaymentGroups', () => {
     expect(screen.queryByText('Pague na entrega')).not.toBeInTheDocument();
   });
 
-  it('mostra Mercado Pago no cartão só quando o provedor é Mercado Pago', () => {
+  it('mostra só Cartão de crédito quando o provedor é Mercado Pago', () => {
     render(
       <DeliveryPaymentGroups
         checkout={baseCheckout}
         onChange={jest.fn()}
+        onlinePixEnabled
         onlineCardEnabled
         onlinePaymentProvider="MERCADOPAGO"
         total={20}
       />
     );
-    expect(screen.getByText('Cartão de crédito — pague com segurança pelo Mercado Pago')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Cartão de crédito' })).toBeInTheDocument();
+    expect(screen.queryByText(/Mercado Pago/)).not.toBeInTheDocument();
     expect(screen.queryByText(/PagBank/)).not.toBeInTheDocument();
+    expect(screen.getByText('Pix — aprovação rápida')).toBeInTheDocument();
   });
 
-  it('mostra PagBank no cartão quando o provedor é PagBank', () => {
+  it('mostra só Cartão de crédito quando o provedor é PagBank', () => {
     render(
       <DeliveryPaymentGroups
         checkout={baseCheckout}
@@ -112,7 +115,8 @@ describe('DeliveryPaymentGroups', () => {
         total={20}
       />
     );
-    expect(screen.getByText('Cartão de crédito — pague com segurança pelo PagBank')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Cartão de crédito' })).toBeInTheDocument();
+    expect(screen.queryByText(/PagBank/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Mercado Pago/)).not.toBeInTheDocument();
   });
 });

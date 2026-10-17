@@ -32,9 +32,12 @@ test('PagBank mostra Processando e desabilita o pagamento antes de criptografar'
   };
   window.PagSeguro = {
     encryptCard: () => {
-      const button = screen.getByRole('button', { name: 'Processando...' });
-      sawProcessing = button.disabled;
-      expect(screen.getByRole('status')).toHaveTextContent('Processando...');
+      const status = screen.getByRole('status');
+      expect(status).toHaveTextContent('Processando...');
+      expect(status).toHaveClass('delivery-card-processing');
+      expect(screen.getByLabelText(/Nome impresso no cartão/i, { hidden: true })).toBeDisabled();
+      expect(screen.getByLabelText(/Número do cartão/i, { hidden: true })).toBeDisabled();
+      sawProcessing = true;
       return { encryptedCard: 'tok-teste', hasErrors: false };
     },
   };
