@@ -240,4 +240,155 @@ describe('DeliveryPixCheckout', () => {
 
     expect(screen.getByText(/Tempo restante:\s*29:55/i)).toBeInTheDocument();
   });
+
+  it('no PagBank mostra o código legível e o PNG do QR, sem link do Mercado Pago', () => {
+    render(
+      <DeliveryPixCheckout
+        open
+        provider="PAGBANK"
+        payment={{
+          ...basePayment,
+          qrCode: '000201pix',
+          qrCodeBase64: 'https://api.pagseguro.com/qr/charge.b64',
+          ticketUrl: 'https://api.pagseguro.com/qr/charge.png',
+        }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('000201pix')).toHaveClass('delivery-pix-code');
+    expect(screen.getByRole('img', { name: 'QR Code do Pix' })).toHaveAttribute(
+      'src',
+      'https://api.pagseguro.com/qr/charge.png',
+    );
+    expect(screen.queryByRole('link', { name: /Mercado Pago/i })).not.toBeInTheDocument();
+  });
+
+  it('sem imagem de QR não desenha faixa vazia e mantém o copia-e-cola', () => {
+    render(
+      <DeliveryPixCheckout
+        open
+        provider="PAGBANK"
+        payment={{
+          ...basePayment,
+          qrCode: '000201pix',
+          qrCodeBase64: '',
+          ticketUrl: 'https://api.pagseguro.com/charges/1',
+        }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('img', { name: 'QR Code do Pix' })).not.toBeInTheDocument();
+    expect(screen.getByText('000201pix')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Copiar código/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Mercado Pago/i })).not.toBeInTheDocument();
+  });
+
+  it('no Mercado Pago mantém o link da cobrança', () => {
+    render(
+      <DeliveryPixCheckout
+        open
+        provider="MERCADOPAGO"
+        payment={{
+          ...basePayment,
+          ticketUrl: 'https://www.mercadopago.com.br/payments/1/ticket',
+        }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /Abrir cobrança no Mercado Pago/i })).toHaveAttribute(
+      'href',
+      'https://www.mercadopago.com.br/payments/1/ticket',
+    );
+    expect(screen.getByRole('img', { name: 'QR Code do Pix' })).toHaveAttribute(
+      'src',
+      'data:image/png;base64,abc',
+    );
+  });
+
+  it('não marca expirado quando a data vem ausente, inválida ou em segundos', () => {
+    const view = render(
+      <DeliveryPixCheckout
+        open
+        payment={basePayment}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/Código expirado/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Calculando prazo/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Aguardando pagamento');
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+
+    view.rerender(
+      <DeliveryPixCheckout
+        open
+        payment={{ ...basePayment, expiresAt: 'nao-e-data' }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+    expect(screen.queryByText(/Código expirado/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Aguardando pagamento');
+
+    view.rerender(
+      <DeliveryPixCheckout
+        open
+        payment={{ ...basePayment, expiresAt: 1800 }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+    expect(screen.queryByText(/Código expirado/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Gerar novo Pix/i })).not.toBeInTheDocument();
+  });
+
+  it('lê expiração ISO com fuso sem marcar o código novo como expirado', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-09-22T15:00:00Z'));
+
+    render(
+      <DeliveryPixCheckout
+        open
+        payment={{
+          ...basePayment,
+          expiresAt: '2026-09-22T15:29:42Z',
+          createdAt: '2026-09-22T15:00:00Z',
+        }}
+        error=""
+        creating={false}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Tempo restante:\s*29:42/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Código expirado/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Aguardando pagamento');
+  });
 });

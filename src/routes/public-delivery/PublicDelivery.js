@@ -1200,6 +1200,7 @@ export default function PublicDelivery() {
         payment={pixPayment}
         error={pixError}
         creating={pixCreating}
+        provider={catalog?.onlinePaymentProvider || 'MERCADOPAGO'}
         onClose={() => setPixOpen(false)}
         onPaid={(paid) => {
           setPixOpen(false);

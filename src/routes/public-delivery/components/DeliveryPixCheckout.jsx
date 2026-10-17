@@ -30,14 +30,16 @@ export default function DeliveryPixCheckout({
   onClose,
   onPaid,
   onRetry,
+  provider,
 }) {
   const [copied, setCopied] = useState(false);
+  const [qrFailed, setQrFailed] = useState(false);
   const [live, setLive] = useState(payment);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const status = live?.status || payment?.status;
   const paid = isPixPaid(status);
   const terminal = isPixTerminal(status);
-  const hasCharge = Boolean(payment?.qrCode || payment?.qrCodeBase64 || payment?.id);
+  const hasCharge = Boolean(payment?.qrCode || payment?.qrCodeBase64 || payment?.ticketUrl || payment?.id);
   const expiresAtRaw = live?.expiresAt ?? payment?.expiresAt;
   const expiresAtMs = useStableExpiresAtMs(payment?.id, expiresAtRaw);
   const windowStartMs = usePaymentWindowStart(payment?.id, expiresAtMs, live?.createdAt ?? payment?.createdAt);
@@ -47,15 +49,15 @@ export default function DeliveryPixCheckout({
   const canRetry = Boolean(payment?.orderId) && typeof onRetry === 'function';
   const showRetry = canRetry && !creating && !paid
     && (Boolean(error) || timeExpired || status === 'EXPIRED' || status === 'FAILED');
-  const qrSrc = useMemo(() => {
-    const raw = live?.qrCodeBase64 || payment?.qrCodeBase64;
-    if (!raw) return '';
-    return raw.startsWith('data:') || raw.startsWith('https://') || raw.startsWith('http://')
-      ? raw
-      : `data:image/png;base64,${raw}`;
-  }, [live?.qrCodeBase64, payment?.qrCodeBase64]);
   const copyCode = live?.qrCode || payment?.qrCode || '';
   const ticketUrl = live?.ticketUrl || payment?.ticketUrl || '';
+  const showMercadoPagoTicket = isMercadoPagoTicket(provider, ticketUrl);
+  const qrCandidate = useMemo(() => {
+    const fromCode = qrImageSource(live?.qrCodeBase64 || payment?.qrCodeBase64);
+    if (fromCode) return fromCode;
+    if (showMercadoPagoTicket) return '';
+    return qrImageSource(ticketUrl);
+  }, [live?.qrCodeBase64, payment?.qrCodeBase64, showMercadoPagoTicket, ticketUrl]);
   const expiryProgress = useMemo(
     () => computeExpiryProgress({
       expiresAtMs,
@@ -65,6 +67,12 @@ export default function DeliveryPixCheckout({
     }),
     [expiresAtMs, windowStartMs, nowMs, timeExpired, status]
   );
+
+  useEffect(() => {
+    setQrFailed(false);
+  }, [qrCandidate]);
+
+  const qrSrc = qrFailed ? '' : qrCandidate;
 
   useEffect(() => {
     setLive(payment);
@@ -159,15 +167,22 @@ export default function DeliveryPixCheckout({
               Total {formatCurrency(payment.amount)}
             </Typography>
             {qrSrc ? (
-              <img className="delivery-pix-qr" src={qrSrc} alt="QR Code do Pix" />
+              <div className="delivery-pix-qr-frame">
+                <img
+                  className="delivery-pix-qr"
+                  src={qrSrc}
+                  alt="QR Code do Pix"
+                  onError={() => setQrFailed(true)}
+                />
+              </div>
             ) : null}
             {copyCode ? (
               <Box className="delivery-pix-copy">
-                <Typography variant="body2" className="delivery-pix-code">{copyCode}</Typography>
+                <code className="delivery-pix-code">{copyCode}</code>
                 <Button variant="outlined" onClick={copy}>{copied ? 'Copiado' : 'Copiar código'}</Button>
               </Box>
             ) : null}
-            {ticketUrl ? (
+            {showMercadoPagoTicket ? (
               <Button
                 variant="text"
                 href={ticketUrl}
@@ -177,13 +192,14 @@ export default function DeliveryPixCheckout({
                 Abrir cobrança no Mercado Pago
               </Button>
             ) : null}
-            {!qrSrc && !copyCode && !ticketUrl ? (
+            {!qrSrc && !copyCode && !showMercadoPagoTicket ? (
               <Alert severity="warning">
-                O Mercado Pago não devolveu o código desta cobrança. Gere um novo Pix.
-                Se continuar vazio, cadastre uma chave Pix na conta que emitiu a cobrança.
+                {String(provider || '').toUpperCase() === 'PAGBANK'
+                  ? 'O PagBank não devolveu o código desta cobrança. Gere um novo Pix.'
+                  : 'O Mercado Pago não devolveu o código desta cobrança. Gere um novo Pix. Se continuar vazio, cadastre uma chave Pix na conta que emitiu a cobrança.'}
               </Alert>
             ) : null}
-            {!paid ? (
+            {!paid && (expiresAtMs != null || status === 'EXPIRED') ? (
               <PixExpiryBar progress={expiryProgress} />
             ) : null}
             <Typography className="delivery-pix-wait" role="status">
@@ -294,19 +310,72 @@ function usePaymentWindowStart(paymentId, expiresAtMs, createdAtRaw) {
   }, [paymentId, expiresAtMs, createdAtRaw]);
 }
 
+const MIN_PIX_EXPIRY_MS = Date.UTC(2020, 0, 1);
+
 export function parseExpiresAtMs(value) {
   if (value == null || value === '') return null;
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return normalizeEpoch(value);
+  }
   if (value instanceof Date) {
     const ms = value.getTime();
-    return Number.isNaN(ms) ? null : ms;
+    return Number.isNaN(ms) ? null : validPixInstant(ms);
   }
   const raw = String(value).trim();
   if (!raw) return null;
-  // Backend envia LocalDateTime sem fuso (yyyy-MM-dd'T'HH:mm:ss) — interpreta como horário local.
+  if (/^\d+(\.\d+)?$/.test(raw)) {
+    return normalizeEpoch(Number(raw));
+  }
+  // Sem fuso (yyyy-MM-dd'T'HH:mm:ss) vale o horário local. Com Z ou offset, o instante absoluto.
   const normalized = /Z$|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : raw.replace(' ', 'T');
   const ms = Date.parse(normalized);
-  return Number.isNaN(ms) ? null : ms;
+  return Number.isNaN(ms) ? null : validPixInstant(ms);
+}
+
+function normalizeEpoch(value) {
+  if (!Number.isFinite(value) || value <= 0) return null;
+  // 13 dígitos: milissegundos. 10 dígitos: unix em segundos. Duração curta (ex.: 1800) não é instante.
+  if (value >= 1e12) return validPixInstant(value);
+  if (value >= 1e9) return validPixInstant(value * 1000);
+  return null;
+}
+
+function validPixInstant(ms) {
+  return ms >= MIN_PIX_EXPIRY_MS ? ms : null;
+}
+
+export function isMercadoPagoTicket(provider, ticketUrl) {
+  if (!ticketUrl) return false;
+  const name = String(provider || '').toUpperCase();
+  if (name === 'PAGBANK') return false;
+  if (name === 'MERCADOPAGO') return true;
+  return isMercadoPagoHost(ticketUrl);
+}
+
+function isMercadoPagoHost(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'mpago.la' || host.endsWith('.mpago.la') || host.includes('mercadopago.');
+  } catch {
+    return false;
+  }
+}
+
+function qrImageSource(raw) {
+  if (raw == null) return '';
+  const value = String(raw).trim();
+  if (!value) return '';
+  if (value.startsWith('data:image/')) return value;
+  if (/^https?:\/\//i.test(value)) {
+    return looksLikeRasterImage(value) ? value : '';
+  }
+  if (/^data:/i.test(value)) return '';
+  return `data:image/png;base64,${value}`;
+}
+
+function looksLikeRasterImage(url) {
+  const path = url.split(/[?#]/)[0].toLowerCase();
+  return /\.(png|jpe?g|gif|webp)$/.test(path);
 }
 
 export function formatRemainingMs(ms) {
