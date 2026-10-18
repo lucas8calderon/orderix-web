@@ -37,8 +37,6 @@ import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
 import { logout } from '../../services/authService';
 import {
-  ALL_PLANS,
-  LEGACY_PLANS,
   PATHS,
   PLANS,
   SUBSCRIPTION_STATUS_LABELS,
@@ -63,8 +61,8 @@ const emptyForm = {
   email: '',
   adminEmail: '',
   adminPassword: '',
-  plan: 'I',
-  price: PLANS.I.price,
+  plan: 'PLAN_01',
+  price: PLANS.PLAN_01.price,
   subscriptionStatus: 'ACTIVE',
   startDate: '',
   expiresAt: '',
@@ -84,8 +82,8 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
         email: initialValues.email || '',
         adminEmail: initialValues.adminEmail || '',
         adminPassword: '',
-        plan: initialValues.plan || 'I',
-        price: initialValues.price ?? ALL_PLANS[initialValues.plan || 'I']?.price ?? PLANS.I.price,
+        plan: initialValues.plan || 'PLAN_01',
+        price: initialValues.price ?? PLANS[initialValues.plan || 'PLAN_01']?.price ?? PLANS.PLAN_01.price,
         subscriptionStatus: initialValues.subscriptionStatus || 'ACTIVE',
         startDate: toDateInputValue(initialValues.startDate),
         expiresAt: toDateInputValue(initialValues.expiresAt),
@@ -106,8 +104,8 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
     const value = event.target.value;
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      if (field === 'plan' && ALL_PLANS[value]) {
-        next.price = ALL_PLANS[value].price;
+      if (field === 'plan' && PLANS[value]) {
+        next.price = PLANS[value].price;
       }
       return next;
     });
@@ -180,11 +178,6 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
                     {plan.label} — {plan.volumeLabel} — {formatCurrency(plan.price)}
                   </MenuItem>
                 ))}
-                {LEGACY_PLANS[form.plan] && (
-                  <MenuItem value={form.plan}>
-                    {LEGACY_PLANS[form.plan].label} — {formatCurrency(LEGACY_PLANS[form.plan].price)} (anterior)
-                  </MenuItem>
-                )}
               </Select>
             </FormControl>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>

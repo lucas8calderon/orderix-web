@@ -162,11 +162,11 @@ describe('roles auxiliares', () => {
 
 describe('faixas comerciais', () => {
   it('expõe as cinco faixas internas com o preço do site', () => {
-    expect(Object.keys(PLANS)).toEqual(['I', 'II', 'III', 'IV', 'V']);
+    expect(Object.keys(PLANS)).toEqual(['PLAN_01', 'PLAN_02', 'PLAN_03', 'PLAN_04', 'PLAN_05']);
     expect(Object.values(PLANS).map((plan) => plan.price)).toEqual([39.9, 69.9, 89.9, 99.9, 149.9]);
-    expect(formatPlanSummary('I')).toBe('Plano I · Até R$ 1.000');
-    expect(formatPlanSummary('V')).toBe('Plano V · Acima de R$ 7.000');
-    expect(formatPlanSummary('PRO')).toBe('Profissional');
+    expect(formatPlanSummary('PLAN_01')).toBe('Plano 1 · Até R$ 1.000');
+    expect(formatPlanSummary('PLAN_05')).toBe('Plano 5 · Acima de R$ 7.000');
+    expect(formatPlanSummary('BASIC')).toBe('BASIC');
   });
 });
 

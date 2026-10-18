@@ -27,38 +27,27 @@ export const SUBSCRIPTION_STATUS_LABELS = {
 };
 
 /**
- * Faixas comerciais atuais (I–V). O código é interno do admin master.
+ * Planos 1 a 5. O código coincide com SubscriptionPlan no backend.
  * Preço e volume vêm das mesmas faixas do site; o cliente vê só o valor.
- * Códigos e preços devem coincidir com SubscriptionPlan no backend.
  */
 export const PLANS = Object.fromEntries(
   PRICING_TIERS.map((tier) => [
     tier.code,
     {
       id: tier.code,
-      label: `Plano ${tier.code}`,
+      label: `Plano ${tier.number}`,
       price: tier.monthlyPrice,
       volumeLabel: tier.label,
-      legacy: false,
     },
   ])
 );
 
-/** Nomenclatura anterior. Continua legível nas assinaturas já gravadas. */
-export const LEGACY_PLANS = {
-  BASIC: { id: 'BASIC', label: 'Básico', price: 49.9, volumeLabel: '', legacy: true },
-  PRO: { id: 'PRO', label: 'Profissional', price: 79.9, volumeLabel: '', legacy: true },
-  PREMIUM: { id: 'PREMIUM', label: 'Premium', price: 119.9, volumeLabel: '', legacy: true },
-};
-
-export const ALL_PLANS = { ...PLANS, ...LEGACY_PLANS };
-
 export const PLAN_LABELS = Object.fromEntries(
-  Object.values(ALL_PLANS).map((plan) => [plan.id, plan.label])
+  Object.values(PLANS).map((plan) => [plan.id, plan.label])
 );
 
 export function getPlan(planId) {
-  return ALL_PLANS[planId] || null;
+  return PLANS[planId] || null;
 }
 
 /** Nome interno da faixa, com o volume quando for uma faixa atual. */

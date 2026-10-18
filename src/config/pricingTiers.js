@@ -13,8 +13,9 @@
 export const PRICING_TIERS = [
   {
     id: 'tier-1',
-    /** Código interno do admin (SubscriptionPlan). Não exibir no site. */
-    code: 'I',
+    /** Código persistido em SubscriptionPlan. O site mostra a faixa, não o código. */
+    code: 'PLAN_01',
+    number: 1,
     minRevenue: 0,
     maxRevenue: 1000,
     monthlyPrice: 39.90,
@@ -23,7 +24,8 @@ export const PRICING_TIERS = [
   },
   {
     id: 'tier-2',
-    code: 'II',
+    code: 'PLAN_02',
+    number: 2,
     minRevenue: 1000.01,
     maxRevenue: 2000,
     monthlyPrice: 69.90,
@@ -32,7 +34,8 @@ export const PRICING_TIERS = [
   },
   {
     id: 'tier-3',
-    code: 'III',
+    code: 'PLAN_03',
+    number: 3,
     minRevenue: 2000.01,
     maxRevenue: 4000,
     monthlyPrice: 89.90,
@@ -41,7 +44,8 @@ export const PRICING_TIERS = [
   },
   {
     id: 'tier-4',
-    code: 'IV',
+    code: 'PLAN_04',
+    number: 4,
     minRevenue: 4000.01,
     maxRevenue: 7000,
     monthlyPrice: 99.90,
@@ -50,7 +54,8 @@ export const PRICING_TIERS = [
   },
   {
     id: 'tier-5',
-    code: 'V',
+    code: 'PLAN_05',
+    number: 5,
     minRevenue: 7000.01,
     maxRevenue: Infinity,
     monthlyPrice: 149.90,
