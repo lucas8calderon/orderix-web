@@ -2,6 +2,7 @@ import {
   chargeableUnit,
   choiceHint,
   groupSatisfied,
+  mandatoryReady,
   toggleChoice,
 } from './mandatoryChoices';
 
@@ -44,6 +45,32 @@ describe('mandatoryChoices', () => {
     expect(groupSatisfied(twoFlavors, {})).toBe(false);
     expect(groupSatisfied(twoFlavors, { 4: ['1'] })).toBe(false);
     expect(groupSatisfied(twoFlavors, { 4: ['1', '2'] })).toBe(true);
+  });
+
+  it('só libera o seletor quando uma opção está escolhida', () => {
+    const doneness = {
+      id: 7,
+      name: 'Ponto da carne',
+      minSelections: 1,
+      maxSelections: 1,
+      priceMode: 'SUM',
+      items: [
+        { id: 1, name: 'Ao ponto', price: 0 },
+        { id: 2, name: 'Mal passada', price: 0 },
+        { id: 3, name: 'Bem passada', price: 2 },
+      ],
+    };
+    const burger = { id: 11, value: 28, mandatoryGroups: [doneness] };
+
+    expect(choiceHint(doneness)).toBe('Escolha 1 opção');
+    expect(groupSatisfied(doneness, {})).toBe(false);
+    expect(mandatoryReady(burger, {})).toBe(false);
+    expect(groupSatisfied(doneness, { 7: ['1', '2'] })).toBe(false);
+    expect(groupSatisfied(doneness, { 7: ['1'] })).toBe(true);
+    expect(mandatoryReady(burger, { 7: ['1'] })).toBe(true);
+    expect(toggleChoice(doneness, { 7: ['1'] }, 2)).toEqual(['2']);
+    expect(chargeableUnit(28, burger, { 7: ['1'] })).toBe(28);
+    expect(chargeableUnit(28, burger, { 7: ['3'] })).toBe(30);
   });
 
   it('cobra o sabor mais caro e limita a duas opções', () => {
