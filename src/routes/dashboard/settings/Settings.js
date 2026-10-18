@@ -24,6 +24,7 @@ import { OnlineDeliveryPayments } from './components/OnlineDeliveryPayments';
 import { FeesSection } from './components/FeesSection';
 import { PermissionsSection } from './components/PermissionsSection';
 import { CompanySection } from './components/CompanySection';
+import { SubscriptionRenewalCard } from './components/SubscriptionRenewalCard';
 import { SettingsSectionCard } from './components/SettingsSectionCard';
 import './Settings.css';
 import { SettingsFinder } from './components/SettingsFinder';
@@ -276,7 +277,12 @@ export function Settings() {
       sectionContent = permissionsSection;
       break;
     case 'empresa':
-      sectionContent = companySection;
+      sectionContent = (
+        <div className="settings-section-stack">
+          <SubscriptionRenewalCard />
+          {companySection}
+        </div>
+      );
       break;
     case 'aparencia':
       sectionContent = (

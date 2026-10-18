@@ -81,6 +81,7 @@ export const SETTINGS_SEARCH = [
   { id: 'estoque', title: 'Disponibilidade de produtos', hint: 'Ative ou desative produtos no catálogo', section: 'cardapio', terms: ['estoque', 'indisponivel', 'indisponível'] },
   { id: 'equipe', title: 'Equipe e permissões', hint: 'Perfis Admin, garçom, cozinha e caixa', section: 'permissoes', terms: ['garcom', 'garçom', 'permiss', 'equipe', 'caixa', 'cozinha', 'admin'] },
   { id: 'empresa', title: 'Dados da empresa', hint: 'Nome, CNPJ, telefone e logo', section: 'empresa', terms: ['cnpj', 'empresa', 'telefone', 'logo', 'logotipo'] },
+  { id: 'assinatura', title: 'Assinatura da loja', hint: 'Cancelar a renovação mantendo o ciclo pago', section: 'empresa', terms: ['assinatura', 'renovação', 'renovacao', 'cancelar mensalidade', 'mensalidade'] },
   { id: 'aparencia', title: 'Aparência', hint: 'Logo e banner na Visão Geral', section: 'geral', terms: ['banner', 'aparencia', 'aparência', 'capa', 'logo'] },
 ];
 
