@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Typography } from '@mui/material';
 import axios from 'axios';
 import '../../../../services/apiConfig';
@@ -19,7 +19,30 @@ export function SubscriptionRenewalCard() {
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [known, setKnown] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!STORE_ADMIN_ROLES.has(role)) {
+      return undefined;
+    }
+    let active = true;
+    axios.get('/api/auth/me')
+      .then((response) => {
+        if (active && response?.data?.subscriptionStatus === 'CANCELED') {
+          setDone(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) {
+          setKnown(true);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [role]);
 
   if (!STORE_ADMIN_ROLES.has(role)) {
     return null;
@@ -48,20 +71,20 @@ export function SubscriptionRenewalCard() {
         </Typography>
         {done ? (
           <Alert severity="success" sx={{ mt: 2 }}>
-            Renovação encerrada. O acesso segue até o fim do ciclo pago.
+            A renovação já foi encerrada. O acesso segue até o fim do ciclo pago.
           </Alert>
         ) : null}
         {error ? (
           <Alert severity="error" role="alert" sx={{ mt: 2 }}>{error}</Alert>
         ) : null}
-        {!done && !confirming ? (
+        {known && !done && !confirming ? (
           <Box sx={{ mt: 2 }}>
             <Button variant="outlined" onClick={() => setConfirming(true)}>
               Cancelar renovação
             </Button>
           </Box>
         ) : null}
-        {!done && confirming ? (
+        {known && !done && confirming ? (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2">
               A renovação para agora. O acesso continua até o fim do ciclo pago. Esta ação não suspende a loja.
