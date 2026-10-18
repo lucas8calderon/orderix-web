@@ -58,6 +58,13 @@ test('returning to the page keeps the canceled state', async () => {
   expect(axios.post).not.toHaveBeenCalled();
 });
 
+test('date sent as a list is shown as a day', async () => {
+  getCurrentUser.mockReturnValue({ role: 'STORE_ADMIN' });
+  axios.get.mockResolvedValue({ data: { ...ACTIVE, expiresAt: [2026, 11, 18] } });
+  render(<SubscriptionRenewalCard />);
+  expect(await screen.findByText(/Próxima cobrança: 18\/11\/2026/)).toBeInTheDocument();
+});
+
 test('grace and the eighth day explain the access without offering boleto', async () => {
   getCurrentUser.mockReturnValue({ role: 'STORE_ADMIN' });
   axios.get.mockResolvedValue({

@@ -25,10 +25,10 @@ function planLabel(code) {
 }
 
 function formatDay(value) {
-  if (!value) return '—';
-  const [year, month, day] = String(value).split('-');
-  if (!year || !month || !day) return value;
-  return `${day}/${month}/${year}`;
+  const parts = Array.isArray(value) ? value : String(value || '').split('-');
+  if (parts.length < 3) return '—';
+  const [year, month, day] = parts;
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
 }
 
 function errorMessage(error) {
