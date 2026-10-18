@@ -12,8 +12,18 @@ test('selected price and contact context follow the central pricing configuratio
   const tier = PRICING_TIERS[4];
   fireEvent.change(screen.getByLabelText('Quanto sua loja processa por mês?'), { target: { value: tier.id } });
   expect(document.querySelector('.wp-price-value')).toHaveTextContent(formatPrice(tier.monthlyPrice).replace(/\s/g, ' '));
-  fireEvent.click(screen.getByRole('button', { name: 'Quero assinar a Weper' }));
-  expect(openWhatsApp).toHaveBeenCalledWith(expect.stringContaining(tier.label));
+  expect(screen.getByRole('link', { name: 'Quero assinar a Weper' })).toHaveAttribute('href', `/contratar?plan=${tier.code}`);
+  expect(openWhatsApp).not.toHaveBeenCalled();
+});
+
+test('other contact points stay on WhatsApp', () => {
+  setup();
+  fireEvent.click(screen.getByRole('button', { name: 'Falar com a Weper pelo WhatsApp' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Fale com a equipe' }));
+  expect(openWhatsApp).toHaveBeenCalled();
+  screen.getAllByRole('link', { name: 'Quero começar' }).forEach((link) => {
+    expect(link).toHaveAttribute('href', '/contratar');
+  });
 });
 
 test('solution tabs support keyboard navigation and update their accessible panel', () => {

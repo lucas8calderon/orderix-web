@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Home from './routes/home/Home';
+import SignupPage from './routes/billing/SignupPage';
 import Login from './routes/login/Login';
 import ForgotPassword from './routes/login/ForgotPassword';
 import PrivacyPolicy from './routes/privacy/PrivacyPolicy';
@@ -91,6 +92,7 @@ function App() {
       <Router>
         <Routes>
           <Route path={PATHS.HOME} element={<Home />} />
+          <Route path="/contratar" element={<SignupPage />} />
           <Route path={PATHS.LOGIN} element={<Login />} />
           <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={PATHS.PRIVACY} element={<PrivacyPolicy />} />
