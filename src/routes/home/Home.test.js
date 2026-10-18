@@ -25,6 +25,18 @@ test('solution tabs support keyboard navigation and update their accessible pane
   expect(screen.getByRole('tab', { name: 'Atendimento' })).toHaveAttribute('aria-selected', 'true');
 });
 
+test('public pricing table shows the amount without the internal plan code', () => {
+  setup();
+  fireEvent.click(screen.getByText(/Ver todas as faixas de preço/i));
+  const table = screen.getByRole('table', { name: 'Mensalidade por volume processado' });
+  expect(table).toHaveTextContent('Até R$ 1.000');
+  expect(table).toHaveTextContent('R$ 39,90');
+  expect(table).toHaveTextContent('Acima de R$ 7.000');
+  expect(table).toHaveTextContent('R$ 149,90');
+  expect(table).not.toHaveTextContent('Plano I');
+  expect(table).not.toHaveTextContent('Plano V');
+});
+
 test('institutional navigation links to the partners page', () => {
   setup();
   const links = screen.getAllByRole('link', { name: 'Parceiros' });

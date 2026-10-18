@@ -1,6 +1,8 @@
 import {
   PATHS,
+  PLANS,
   ROLES,
+  formatPlanSummary,
   canAccessRoute,
   formatDate,
   getDefaultRouteByRole,
@@ -155,6 +157,16 @@ describe('roles auxiliares', () => {
     expect(hasPermission(user({ role: ROLES.CASHIER }), 'store.catalog')).toBe(false);
     expect(hasPermission(user({ role: ROLES.MASTER, storeId: null }), 'crm.manage')).toBe(true);
     expect(hasPermission(user({ role: ROLES.ADMIN }), 'crm.manage')).toBe(false);
+  });
+});
+
+describe('faixas comerciais', () => {
+  it('expõe as cinco faixas internas com o preço do site', () => {
+    expect(Object.keys(PLANS)).toEqual(['I', 'II', 'III', 'IV', 'V']);
+    expect(Object.values(PLANS).map((plan) => plan.price)).toEqual([39.9, 69.9, 89.9, 99.9, 149.9]);
+    expect(formatPlanSummary('I')).toBe('Plano I · Até R$ 1.000');
+    expect(formatPlanSummary('V')).toBe('Plano V · Acima de R$ 7.000');
+    expect(formatPlanSummary('PRO')).toBe('Profissional');
   });
 });
 

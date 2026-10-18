@@ -37,12 +37,14 @@ import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
 import { logout } from '../../services/authService';
 import {
+  ALL_PLANS,
+  LEGACY_PLANS,
   PATHS,
-  PLAN_LABELS,
   PLANS,
   SUBSCRIPTION_STATUS_LABELS,
   formatCurrency,
   formatDate,
+  formatPlanSummary,
   getPostLoginPath,
   toDateInputValue,
 } from '../../services/accessControl';
@@ -61,8 +63,8 @@ const emptyForm = {
   email: '',
   adminEmail: '',
   adminPassword: '',
-  plan: 'PRO',
-  price: PLANS.PRO.price,
+  plan: 'I',
+  price: PLANS.I.price,
   subscriptionStatus: 'ACTIVE',
   startDate: '',
   expiresAt: '',
@@ -82,8 +84,8 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
         email: initialValues.email || '',
         adminEmail: initialValues.adminEmail || '',
         adminPassword: '',
-        plan: initialValues.plan || 'BASIC',
-        price: initialValues.price ?? PLANS[initialValues.plan || 'BASIC']?.price ?? 49.9,
+        plan: initialValues.plan || 'I',
+        price: initialValues.price ?? ALL_PLANS[initialValues.plan || 'I']?.price ?? PLANS.I.price,
         subscriptionStatus: initialValues.subscriptionStatus || 'ACTIVE',
         startDate: toDateInputValue(initialValues.startDate),
         expiresAt: toDateInputValue(initialValues.expiresAt),
@@ -104,8 +106,8 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
     const value = event.target.value;
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      if (field === 'plan' && PLANS[value]) {
-        next.price = PLANS[value].price;
+      if (field === 'plan' && ALL_PLANS[value]) {
+        next.price = ALL_PLANS[value].price;
       }
       return next;
     });
@@ -171,15 +173,23 @@ function StoreFormDialog({ open, onClose, initialValues, onSubmit, saving }) {
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
-              <InputLabel id="plan-label">Plano</InputLabel>
-              <Select labelId="plan-label" label="Plano" value={form.plan} onChange={handleChange('plan')}>
+              <InputLabel id="plan-label">Faixa</InputLabel>
+              <Select labelId="plan-label" label="Faixa" value={form.plan} onChange={handleChange('plan')}>
                 {Object.values(PLANS).map((plan) => (
                   <MenuItem key={plan.id} value={plan.id}>
-                    {plan.label} — {formatCurrency(plan.price)}
+                    {plan.label} — {plan.volumeLabel} — {formatCurrency(plan.price)}
                   </MenuItem>
                 ))}
+                {LEGACY_PLANS[form.plan] && (
+                  <MenuItem value={form.plan}>
+                    {LEGACY_PLANS[form.plan].label} — {formatCurrency(LEGACY_PLANS[form.plan].price)} (anterior)
+                  </MenuItem>
+                )}
               </Select>
             </FormControl>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
+              Faixa do faturamento informado. No site o cliente vê apenas o valor.
+            </Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -433,7 +443,7 @@ export default function MasterDashboard() {
                     <TableRow key={store.id} hover>
                       <TableCell sx={{ wordBreak: 'break-word' }}>{store.name}</TableCell>
                       <TableCell sx={{ wordBreak: 'break-word' }}>{store.responsibleName || store.adminName || '—'}</TableCell>
-                      <TableCell>{PLAN_LABELS[store.plan] || store.plan || '—'}</TableCell>
+                      <TableCell>{formatPlanSummary(store.plan)}</TableCell>
                       <TableCell>{formatCurrency(store.price)}</TableCell>
                       <TableCell>
                         <Chip
@@ -496,7 +506,7 @@ export default function MasterDashboard() {
                         {store.responsibleName || store.adminName || '—'}
                       </Typography>
                       <Typography variant="body2">
-                        {PLAN_LABELS[store.plan] || store.plan || '—'} · {formatCurrency(store.price)}
+                        {formatPlanSummary(store.plan)} · {formatCurrency(store.price)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         Vencimento: {formatDate(store.expiresAt)}

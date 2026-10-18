@@ -29,11 +29,11 @@ import {
   Legend,
 } from 'recharts';
 import {
-  PLAN_LABELS,
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_STATUS_LABELS,
   formatCurrency,
   formatDate,
+  formatPlanSummary,
 } from '../../../services/accessControl';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import { EmptyState } from '../../../commons/components/EmptyState';
@@ -358,7 +358,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
                       {store.name}
                     </Typography>
                   </TableCell>
-                  <TableCell>{PLAN_LABELS[store.plan] || store.plan || '—'}</TableCell>
+                  <TableCell>{formatPlanSummary(store.plan)}</TableCell>
                   <TableCell>
                     <Chip
                       size="small"
@@ -402,7 +402,7 @@ export function MasterOverview({ summary, stores, onViewAllStores }) {
                 />
               </Stack>
               <Typography variant="body2" sx={{ mt: 0.5 }}>
-                {PLAN_LABELS[store.plan] || store.plan || '—'} · {formatCurrency(store.price)}
+                {formatPlanSummary(store.plan)} · {formatCurrency(store.price)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Vencimento: {formatDate(store.expiresAt)}

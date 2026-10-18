@@ -1,3 +1,5 @@
+import { PRICING_TIERS } from '../config/pricingTiers';
+
 export const ROLES = {
   MASTER: 'MASTER',
   SUPER_ADMIN: 'SUPER_ADMIN',
@@ -24,18 +26,47 @@ export const SUBSCRIPTION_STATUS_LABELS = {
   CANCELED: 'Cancelada',
 };
 
-/** Preços iguais a SubscriptionPlan no backend (49,90 / 79,90 / 119,90). */
-export const PLANS = {
-  BASIC: { id: 'BASIC', label: 'Básico', price: 49.9 },
-  PRO: { id: 'PRO', label: 'Profissional', price: 79.9 },
-  PREMIUM: { id: 'PREMIUM', label: 'Premium', price: 119.9 },
+/**
+ * Faixas comerciais atuais (I–V). O código é interno do admin master.
+ * Preço e volume vêm das mesmas faixas do site; o cliente vê só o valor.
+ * Códigos e preços devem coincidir com SubscriptionPlan no backend.
+ */
+export const PLANS = Object.fromEntries(
+  PRICING_TIERS.map((tier) => [
+    tier.code,
+    {
+      id: tier.code,
+      label: `Plano ${tier.code}`,
+      price: tier.monthlyPrice,
+      volumeLabel: tier.label,
+      legacy: false,
+    },
+  ])
+);
+
+/** Nomenclatura anterior. Continua legível nas assinaturas já gravadas. */
+export const LEGACY_PLANS = {
+  BASIC: { id: 'BASIC', label: 'Básico', price: 49.9, volumeLabel: '', legacy: true },
+  PRO: { id: 'PRO', label: 'Profissional', price: 79.9, volumeLabel: '', legacy: true },
+  PREMIUM: { id: 'PREMIUM', label: 'Premium', price: 119.9, volumeLabel: '', legacy: true },
 };
 
-export const PLAN_LABELS = {
-  BASIC: 'Básico',
-  PRO: 'Profissional',
-  PREMIUM: 'Premium',
-};
+export const ALL_PLANS = { ...PLANS, ...LEGACY_PLANS };
+
+export const PLAN_LABELS = Object.fromEntries(
+  Object.values(ALL_PLANS).map((plan) => [plan.id, plan.label])
+);
+
+export function getPlan(planId) {
+  return ALL_PLANS[planId] || null;
+}
+
+/** Nome interno da faixa, com o volume quando for uma faixa atual. */
+export function formatPlanSummary(planId) {
+  const plan = getPlan(planId);
+  if (!plan) return planId || '—';
+  return plan.volumeLabel ? `${plan.label} · ${plan.volumeLabel}` : plan.label;
+}
 
 /** Rotas canônicas da aplicação. storeId do backend = restaurantId conceitual. */
 export const PATHS = {
