@@ -359,6 +359,50 @@ describe('PublicDelivery', () => {
     expect(screen.queryByText('Pague na entrega')).not.toBeInTheDocument();
   });
 
+  it('mostra o endereço da loja quando o cliente escolhe retirada', async () => {
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        usesNeighborhoodPricing: true,
+        fulfillmentModes: ['DELIVERY', 'PICKUP'],
+        storeAddress: 'Rua das Flores, 100\nCentro, São Paulo',
+      },
+    });
+
+    renderDelivery();
+    expect(await screen.findByText(/informe o endereço para saber se entregamos/i)).toBeInTheDocument();
+    expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: /^retirada$/i }));
+
+    expect(screen.getByText(/retire neste endereço/i)).toBeInTheDocument();
+    expect(screen.getByText(/rua das flores, 100/i)).toBeInTheDocument();
+    expect(screen.getByText(/centro, são paulo/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: /^entrega$/i }));
+    expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
+  });
+
+  it('mantém o aviso de retirada quando a loja não cadastrou endereço', async () => {
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        usesNeighborhoodPricing: true,
+        fulfillmentModes: ['DELIVERY', 'PICKUP'],
+        storeAddress: '   ',
+      },
+    });
+
+    renderDelivery();
+    await userEvent.click(await screen.findByRole('radio', { name: /^retirada$/i }));
+    expect(screen.getByText(/retirada no local não precisa de bairro/i)).toBeInTheDocument();
+    expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
+  });
+
   it('pede o endereço antes do primeiro item quando a loja entrega por bairro', async () => {
     listPublicNeighborhoods.mockResolvedValue({
       data: [{ id: 4, name: 'Centro', city: 'São Paulo', state: 'SP', effectiveFee: 8.5 }],

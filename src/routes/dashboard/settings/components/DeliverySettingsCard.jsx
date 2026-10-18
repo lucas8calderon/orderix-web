@@ -280,7 +280,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
             multiline
             minRows={2}
             placeholder="Rua, número, bairro, cidade"
-            helperText="Exibido no acompanhamento quando o cliente escolhe retirada."
+            helperText="Exibido no cardápio quando o cliente escolhe retirada e no acompanhamento do pedido."
           />
         </Box>
 

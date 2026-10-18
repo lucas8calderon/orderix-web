@@ -689,6 +689,7 @@ export default function PublicDelivery() {
     'has-bottom-nav',
     totals.itemCount > 0 && !isDesktop ? 'has-cart-bar' : '',
   ].filter(Boolean).join(' ');
+  const pickupAddress = String(catalog.storeAddress || '').trim();
   const goToOrders = () => {
     if (customer) {
       navigate(`/delivery/${encodeURIComponent(slug)}/conta/pedidos`);
@@ -737,7 +738,16 @@ export default function PublicDelivery() {
                   </RadioGroup>
                 ) : null}
                 {checkout.fulfillment === 'PICKUP' ? (
-                  <Alert severity="info">Retirada no local não precisa de bairro.</Alert>
+                  <Alert severity="info">
+                    {pickupAddress ? (
+                      <>
+                        Retire neste endereço
+                        <span className="delivery-pickup-menu-address">{pickupAddress}</span>
+                      </>
+                    ) : (
+                      'Retirada no local não precisa de bairro.'
+                    )}
+                  </Alert>
                 ) : serviceAddress?.neighborhood ? (
                   <Alert
                     severity="success"

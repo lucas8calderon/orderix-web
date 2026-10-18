@@ -999,6 +999,14 @@
   font-size: 0.95rem !important;
   line-height: 1.4 !important;
   color: var(--color-text-secondary) !important;
+  white-space: pre-line;
+}
+
+.delivery-pickup-menu-address {
+  display: block;
+  margin-top: 4px;
+  font-weight: 700;
+  white-space: pre-line;
 }
 
 .delivery-pickup-copy {
