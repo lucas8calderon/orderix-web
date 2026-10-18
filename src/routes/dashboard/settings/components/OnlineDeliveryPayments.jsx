@@ -18,6 +18,7 @@ import {
   testPagBankConnection,
 } from '../../../../services/paymentConfigService';
 import { SettingsSectionCard } from './SettingsSectionCard';
+import { PagBankSetupTutorials } from './PagBankSetupTutorials';
 
 export function OnlineDeliveryPayments({
   settings,
@@ -117,6 +118,7 @@ export function OnlineDeliveryPayments({
       onAction={saveOnlinePayments}
       actionDisabled={saving}
     >
+      <PagBankSetupTutorials />
       <TextField
         select
         label="Provedor online"

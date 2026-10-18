@@ -71,6 +71,7 @@ export const DEFAULT_SETTINGS_SECTION = 'geral';
 export const SETTINGS_SEARCH = [
   { id: 'pix', title: 'Formas de pagamento', hint: 'Pix, débito, crédito e dinheiro', section: 'vendas', terms: ['pix', 'pagamento', 'dinheiro', 'cartao', 'cartão', 'debito', 'débito', 'credito', 'crédito', 'vale'] },
   { id: 'mp', title: 'Mercado Pago', hint: 'Pix e cartão online do Delivery', section: 'delivery', terms: ['mercado pago', 'mercadopago', 'webhook', 'access token', 'pix online', 'cartão online', 'cartao online'] },
+  { id: 'pagbank', title: 'PagBank', hint: 'Token da conta no Delivery', section: 'delivery', terms: ['pagbank', 'pagseguro', 'token', 'pix online', 'cartão online', 'cartao online'] },
   { id: 'infinite', title: 'InfinitePay', hint: 'Pagamento integrado no salão', section: 'vendas', terms: ['infinitepay', 'infinite', 'maquininha'] },
   { id: 'horarios', title: 'Horários de funcionamento', hint: 'Dias e turnos da loja', section: 'horarios', terms: ['horario', 'horário', 'aberto', 'fechado', 'turno'] },
   { id: 'cobranca', title: 'Regras de cobrança', hint: 'Balcão, mesa e comanda', section: 'vendas', terms: ['balcao', 'balcão', 'mesa', 'comanda', 'cozinha', 'cobranca', 'cobrança'] },
