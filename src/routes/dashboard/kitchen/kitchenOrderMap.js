@@ -20,6 +20,17 @@ export function orderTypeLabel(orderType) {
   return salesChannelLabel(orderType);
 }
 
+export function canRefundOnlinePayment(order) {
+  if (!order) {
+    return false;
+  }
+  if (order.onlinePayment === true) {
+    return true;
+  }
+  const method = String(order.paymentMethod || '').toUpperCase();
+  return order.orderType === 'delivery' && (method === 'PIX' || method === 'CREDIT');
+}
+
 export function mapKitchenOrder(order) {
   const products = order.products || [];
   const items = products.map((product) => {
