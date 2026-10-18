@@ -31,6 +31,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../commons/components/AppShell';
@@ -50,6 +51,7 @@ import { useMasterStores } from './hook/useMasterStores';
 import { createStore, updateStore } from './service/storesService';
 import { MasterOverview, statusColor } from './components/MasterOverview';
 import { MasterPlans } from './components/MasterPlans';
+import { MasterSubscriptions } from './components/MasterSubscriptions';
 import { CrmBoard } from './crm/CrmBoard';
 import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
 import { getCurrentUser } from '../../services/session';
@@ -254,6 +256,7 @@ const ADMIN_SECTIONS = {
   dashboard: PATHS.ADMIN_DASHBOARD,
   estabelecimentos: PATHS.ADMIN_ESTABELECIMENTOS,
   planos: PATHS.ADMIN_PLANOS,
+  assinaturas: PATHS.ADMIN_ASSINATURAS,
   crm: PATHS.ADMIN_CRM,
 };
 
@@ -261,6 +264,7 @@ const ADMIN_TITLES = {
   dashboard: 'Dashboard',
   estabelecimentos: 'Estabelecimentos',
   planos: 'Planos',
+  assinaturas: 'Assinaturas',
   crm: 'CRM',
 };
 
@@ -353,6 +357,7 @@ export default function MasterDashboard() {
       items: [
         { key: 'estabelecimentos', title: 'Estabelecimentos', icon: <StorefrontOutlinedIcon />, to: PATHS.ADMIN_ESTABELECIMENTOS, selected: section === 'estabelecimentos' },
         { key: 'planos', title: 'Planos', icon: <SellOutlinedIcon />, to: PATHS.ADMIN_PLANOS, selected: section === 'planos' },
+        { key: 'assinaturas', title: 'Assinaturas', icon: <ReceiptLongOutlinedIcon />, to: PATHS.ADMIN_ASSINATURAS, selected: section === 'assinaturas' },
       ],
     },
     {
@@ -361,7 +366,7 @@ export default function MasterDashboard() {
     },
   ];
 
-  if (section === 'restaurantes' || section === 'assinaturas') {
+  if (section === 'restaurantes') {
     return <Navigate to={PATHS.ADMIN_ESTABELECIMENTOS} replace />;
   }
 
@@ -386,7 +391,7 @@ export default function MasterDashboard() {
           </Box>
         ) : (
           <>
-        {loading && (
+        {loading && section !== 'assinaturas' && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress sx={{ color: 'var(--color-primary)' }} />
           </Box>
@@ -408,6 +413,10 @@ export default function MasterDashboard() {
 
         {!loading && !error && section === 'planos' && (
           <MasterPlans stores={stores} />
+        )}
+
+        {section === 'assinaturas' && (
+          <MasterSubscriptions />
         )}
 
         {!loading && !error && section === 'estabelecimentos' && (
