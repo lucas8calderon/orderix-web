@@ -42,7 +42,7 @@ import { styled } from '@mui/material/styles';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
 import { getKitchenOrders, refundOnlinePayment, updateKitchenOrderStatus } from './kitchenService';
-import { mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
+import { canRefundOnlinePayment, mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import {
     SALES_CHANNEL_FILTERS,
@@ -775,7 +775,7 @@ export function Kitchen({ initialFilter }) {
                             ) : null}
                         </DialogContent>
                         <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
-                            {selectedOrder.onlinePayment ? (
+                            {canRefundOnlinePayment(selectedOrder) ? (
                             <Button
                                 variant="outlined"
                                 color="warning"

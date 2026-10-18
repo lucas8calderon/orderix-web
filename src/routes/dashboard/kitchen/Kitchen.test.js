@@ -2,7 +2,7 @@ jest.mock('../atendimento/utils/accountTotals', () => ({
   resolveMandatorySelections: () => [],
 }));
 
-import { mapKitchenOrder } from './kitchenOrderMap';
+import { canRefundOnlinePayment, mapKitchenOrder } from './kitchenOrderMap';
 import { SALES_CHANNEL_FILTERS } from '../../../services/salesChannel';
 
 describe('Kitchen channel filters', () => {
@@ -40,5 +40,31 @@ describe('Kitchen channel filters', () => {
       kitchenStatus: 'NEW',
       products: [],
     }).orderType).toBe('delivery');
+  });
+
+  it('mostra estorno para Pix e cartão do delivery mesmo sem a marca online', () => {
+    const pix = mapKitchenOrder({
+      id: 28,
+      orderSource: 'PICKUP',
+      paymentMethod: 'PIX',
+      kitchenStatus: 'NEW',
+      products: [],
+    });
+    expect(canRefundOnlinePayment(pix)).toBe(true);
+    expect(canRefundOnlinePayment(mapKitchenOrder({
+      id: 26,
+      orderSource: 'DELIVERY',
+      paymentMethod: 'CREDIT',
+      onlinePayment: true,
+      kitchenStatus: 'NEW',
+      products: [],
+    }))).toBe(true);
+    expect(canRefundOnlinePayment(mapKitchenOrder({
+      id: 4,
+      orderSource: 'WAITER',
+      paymentMethod: 'CASH',
+      kitchenStatus: 'NEW',
+      products: [],
+    }))).toBe(false);
   });
 });
