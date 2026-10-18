@@ -10,3 +10,7 @@ export function updateKitchenOrderStatus(orderId, kitchenStatus) {
     kitchenStatus,
   });
 }
+
+export function refundOnlinePayment(orderId) {
+  return axios.post(`${API_BASE_URL}/payments/orders/${orderId}/refund`);
+}

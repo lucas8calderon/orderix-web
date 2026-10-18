@@ -41,7 +41,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
-import { getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
+import { getKitchenOrders, refundOnlinePayment, updateKitchenOrderStatus } from './kitchenService';
 import { mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import {
@@ -310,6 +310,8 @@ export function Kitchen({ initialFilter }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [toastSeverity, setToastSeverity] = useState('success');
+    const [refunding, setRefunding] = useState(false);
     const [filterType, setFilterType] = useState(initialFilter || 'todos');
     const [showFinalized, setShowFinalized] = useState(readShowFinalizedPref);
     const orderDialogProps = useDialogResponsiveProps({
@@ -376,10 +378,39 @@ export function Kitchen({ initialFilter }) {
         }
     };
 
-    const showToastMessage = (message) => {
+    const showToastMessage = (message, severity = 'success') => {
+        setToastSeverity(severity);
         setToastMessage(message);
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        setTimeout(() => setShowToast(false), 4000);
+    };
+
+    const handleRefund = (order) => {
+        if (!order || refunding) {
+            return;
+        }
+        const confirmed = window.confirm(
+            `Estornar o pagamento online do pedido ${order.orderNumber}? O valor volta para a conta PagBank da loja.`
+        );
+        if (!confirmed) {
+            return;
+        }
+        setRefunding(true);
+        refundOnlinePayment(order.id)
+            .then(() => {
+                showToastMessage(`Estorno do pedido ${order.orderNumber} enviado ao PagBank.`);
+                handleCloseModal();
+            })
+            .catch((error) => {
+                const message = error?.response?.data?.message;
+                showToastMessage(
+                    typeof message === 'string' && message
+                        ? message
+                        : 'Não foi possível estornar o pagamento.',
+                    'error'
+                );
+            })
+            .finally(() => setRefunding(false));
     };
 
     const loadOrders = () => {
@@ -744,6 +775,16 @@ export function Kitchen({ initialFilter }) {
                             ) : null}
                         </DialogContent>
                         <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+                            {selectedOrder.onlinePayment ? (
+                            <Button
+                                variant="outlined"
+                                color="warning"
+                                disabled={refunding}
+                                onClick={() => handleRefund(selectedOrder)}
+                            >
+                                {refunding ? 'Estornando...' : 'Estornar pagamento'}
+                            </Button>
+                            ) : null}
                             <Button
                                 variant="outlined"
                                 onClick={handleCloseModal}
@@ -792,7 +833,7 @@ export function Kitchen({ initialFilter }) {
             >
                 <Alert 
                     onClose={() => setShowToast(false)} 
-                    severity="success" 
+                    severity={toastSeverity} 
                     sx={{ width: '100%' }}
                 >
                     {toastMessage}

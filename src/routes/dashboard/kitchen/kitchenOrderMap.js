@@ -67,5 +67,7 @@ export function mapKitchenOrder(order) {
     notes: [(order.observation || '').trim(), deliveryNotes].filter(Boolean).join('\n'),
     orderType,
     orderStatus: order.status || 'ACTIVE',
+    onlinePayment: order.onlinePayment === true,
+    paymentMethod: order.paymentMethod || '',
   };
 }
