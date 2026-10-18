@@ -130,6 +130,11 @@ describe('PublicDelivery', () => {
     expect(screen.getByText('Pão francês')).toBeInTheDocument();
     expect(screen.getByText('Indisponível')).toBeInTheDocument();
     expect(screen.getByText('40 min')).toBeInTheDocument();
+    expect(screen.getByRole('heading', {
+      name: /Seu estabelecimento também pode ter pedidos online/i,
+    })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Conhecer a Weper/i })).toHaveAttribute('href', 'https://weper.com.br');
+    expect(screen.getByText(/Os pedidos são atendidos pelo estabelecimento/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /loja fechada/i }));
     expect(screen.getByText('Segunda-feira')).toBeInTheDocument();

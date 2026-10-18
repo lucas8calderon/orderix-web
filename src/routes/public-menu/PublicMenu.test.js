@@ -220,8 +220,8 @@ describe('PublicMenu — Minha seleção', () => {
   });
 });
 
-describe('PublicMenu — assinatura Weper', () => {
-  it('mostra a assinatura depois dos produtos e só o nome da marca é link', async () => {
+describe('PublicMenu — chamada Weper', () => {
+  it('mostra o card da Weper depois dos produtos, com link da landing', async () => {
     getPublicMenuBySlug.mockResolvedValue({
       status: 200,
       data: menuPayload,
@@ -229,15 +229,18 @@ describe('PublicMenu — assinatura Weper', () => {
     renderMenu();
     expect(await screen.findByText('X-Bacon')).toBeInTheDocument();
 
-    const prefix = screen.getByText('Cardápio digital por');
-    expect(prefix.closest('a')).toBeNull();
+    const promoTitle = screen.getByRole('heading', {
+      name: /Seu estabelecimento também pode ter pedidos online/i,
+    });
+    const link = screen.getByRole('link', { name: /Conhecer a Weper/i });
 
-    const link = screen.getByRole('link', { name: /weper/i });
+    expect(screen.getByText('Delivery próprio, cardápio digital e gestão em um só lugar.')).toBeInTheDocument();
+    expect(screen.getByText(/Este cardápio é do estabelecimento/i)).toBeInTheDocument();
+    expect(screen.queryByText('Cardápio digital por')).not.toBeInTheDocument();
     expect(link).toHaveAttribute('href', WEPER_COMMERCIAL_URL);
-    expect(WEPER_COMMERCIAL_URL).toBe('https://weper.com.br');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(link).toHaveTextContent('↗');
+    expect(screen.getByText('X-Bacon').compareDocumentPosition(promoTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 

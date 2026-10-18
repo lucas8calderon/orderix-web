@@ -79,6 +79,7 @@ import DeliveryAddressGate from './components/DeliveryAddressGate';
 import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodService';
 import { deliveryCoverageLabel, moneyCents } from './utils/neighborhoodPlace';
 import { clearServiceAddress, readServiceAddress, writeServiceAddress } from './utils/serviceAddress';
+import WeperPlatformPromo, { WEPER_PLATFORM_NOTE_DELIVERY } from '../../components/WeperPlatformPromo';
 import './PublicDelivery.css';
 import './components/DeliveryCheckout.css';
 
@@ -824,6 +825,7 @@ export default function PublicDelivery() {
                 ))
               )}
             </main>
+            <WeperPlatformPromo note={WEPER_PLATFORM_NOTE_DELIVERY} spaced />
           </div>
 
           {isDesktop ? (
