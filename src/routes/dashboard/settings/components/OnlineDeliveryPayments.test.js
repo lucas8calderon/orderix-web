@@ -15,6 +15,18 @@ function renderSection(settings = {}, onSettingChange = jest.fn(), onSave = jest
 }
 
 describe('OnlineDeliveryPayments', () => {
+  it('mostra o tutorial de cadastro do PagBank', () => {
+    renderSection();
+    expect(screen.getByRole('tab', { name: 'Na Weper' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Entre na loja')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));
+    expect(screen.getByText('Abra Configurações')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'No PagBank' }));
+    expect(screen.getByText('Use a conta que recebe')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));
+    expect(screen.getByText('Gere o token de produção')).toBeInTheDocument();
+  });
+
   it('mostra campos vazios e desliga Pix online sem credencial', () => {
     renderSection();
     expect(screen.getByText('Pagamentos online')).toBeInTheDocument();

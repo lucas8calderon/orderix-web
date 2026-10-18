@@ -1,6 +1,6 @@
 # PagBank no delivery — rascunho
 
-Este texto descreve o que já está no código e o que ainda depende de uma conta sandbox. Não contém token, chave, segredo nem URL assinada.
+O guia para o administrador da loja está em [pagbank-configuracao.md](pagbank-configuracao.md). O texto abaixo descreve o desenho da integração. Não contém token, chave, segredo nem URL assinada.
 
 ## O que o cliente vê
 
