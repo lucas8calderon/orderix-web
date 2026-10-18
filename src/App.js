@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Home from './routes/home/Home';
 import SignupPage from './routes/billing/SignupPage';
+import AcceptInvitePage from './routes/billing/AcceptInvitePage';
 import Login from './routes/login/Login';
 import ForgotPassword from './routes/login/ForgotPassword';
 import PrivacyPolicy from './routes/privacy/PrivacyPolicy';
@@ -93,6 +94,7 @@ function App() {
         <Routes>
           <Route path={PATHS.HOME} element={<Home />} />
           <Route path="/contratar" element={<SignupPage />} />
+          <Route path="/convite" element={<AcceptInvitePage />} />
           <Route path={PATHS.LOGIN} element={<Login />} />
           <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={PATHS.PRIVACY} element={<PrivacyPolicy />} />
