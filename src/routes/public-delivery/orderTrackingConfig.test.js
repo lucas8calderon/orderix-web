@@ -88,6 +88,10 @@ describe('orderTrackingConfig', () => {
     expect(getTrackingSteps(order)).toEqual([]);
     const card = getCurrentStatusCard(order);
     expect(card.title).toBe('Pedido cancelado');
+    expect(getCurrentStatusCard({
+      ...order,
+      cancelReason: 'Acabou o ingrediente',
+    }).description).toBe('Acabou o ingrediente');
     expect(isFinalTrackingStatus('CANCELLED')).toBe(true);
   });
 

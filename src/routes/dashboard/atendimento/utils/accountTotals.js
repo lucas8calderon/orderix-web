@@ -49,8 +49,12 @@ export function productLineTotal(product) {
   return total;
 }
 
+function isCancelledOrder(order) {
+  return String(order?.status || '').toUpperCase() === 'CANCELLED';
+}
+
 export function accountSubtotal(account) {
-  const orders = account?.orders || [];
+  const orders = (account?.orders || []).filter((order) => !isCancelledOrder(order));
   const fromItems = orders.reduce((sum, order) => {
     return (
       sum +

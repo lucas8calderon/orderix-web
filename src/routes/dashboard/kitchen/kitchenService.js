@@ -11,6 +11,6 @@ export function updateKitchenOrderStatus(orderId, kitchenStatus) {
   });
 }
 
-export function refundOnlinePayment(orderId) {
-  return axios.post(`${API_BASE_URL}/payments/orders/${orderId}/refund`);
+export function cancelKitchenOrder(orderId, reason) {
+  return axios.post(`${API_BASE_URL}/kitchen/orders/${orderId}/cancel`, { reason });
 }

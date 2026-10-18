@@ -18,6 +18,7 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    TextField,
     Snackbar,
     Alert,
     LinearProgress,
@@ -41,8 +42,8 @@ import {
 import { styled } from '@mui/material/styles';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
-import { getKitchenOrders, refundOnlinePayment, updateKitchenOrderStatus } from './kitchenService';
-import { canRefundOnlinePayment, mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
+import { cancelKitchenOrder, getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
+import { mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import {
     SALES_CHANNEL_FILTERS,
@@ -311,7 +312,9 @@ export function Kitchen({ initialFilter }) {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastSeverity, setToastSeverity] = useState('success');
-    const [refunding, setRefunding] = useState(false);
+    const [cancelTarget, setCancelTarget] = useState(null);
+    const [cancelReason, setCancelReason] = useState('');
+    const [cancelling, setCancelling] = useState(false);
     const [filterType, setFilterType] = useState(initialFilter || 'todos');
     const [showFinalized, setShowFinalized] = useState(readShowFinalizedPref);
     const orderDialogProps = useDialogResponsiveProps({
@@ -385,32 +388,39 @@ export function Kitchen({ initialFilter }) {
         setTimeout(() => setShowToast(false), 4000);
     };
 
-    const handleRefund = (order) => {
-        if (!order || refunding) {
+    const openCancelDialog = (order) => {
+        setCancelTarget(order);
+        setCancelReason('');
+    };
+
+    const handleCancelOrder = () => {
+        if (!cancelTarget || cancelling) {
             return;
         }
-        const confirmed = window.confirm(
-            `Estornar o pagamento online do pedido ${order.orderNumber}? O valor volta para a conta PagBank da loja.`
-        );
-        if (!confirmed) {
+        const reason = cancelReason.trim();
+        if (!reason) {
+            showToastMessage('Informe o motivo do cancelamento.', 'error');
             return;
         }
-        setRefunding(true);
-        refundOnlinePayment(order.id)
+        setCancelling(true);
+        cancelKitchenOrder(cancelTarget.id, reason)
             .then(() => {
-                showToastMessage(`Estorno do pedido ${order.orderNumber} enviado ao PagBank.`);
+                showToastMessage(`Pedido ${cancelTarget.orderNumber} cancelado.`);
+                setCancelTarget(null);
+                setCancelReason('');
                 handleCloseModal();
+                return loadOrders();
             })
             .catch((error) => {
                 const message = error?.response?.data?.message;
                 showToastMessage(
                     typeof message === 'string' && message
                         ? message
-                        : 'Não foi possível estornar o pagamento.',
+                        : 'Não foi possível cancelar o pedido.',
                     'error'
                 );
             })
-            .finally(() => setRefunding(false));
+            .finally(() => setCancelling(false));
     };
 
     const loadOrders = () => {
@@ -775,14 +785,14 @@ export function Kitchen({ initialFilter }) {
                             ) : null}
                         </DialogContent>
                         <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
-                            {canRefundOnlinePayment(selectedOrder) ? (
+                            {selectedOrder.orderStatus !== 'CLOSED' && selectedOrder.orderStatus !== 'CANCELLED' ? (
                             <Button
                                 variant="outlined"
                                 color="warning"
-                                disabled={refunding}
-                                onClick={() => handleRefund(selectedOrder)}
+                                disabled={cancelling}
+                                onClick={() => openCancelDialog(selectedOrder)}
                             >
-                                {refunding ? 'Estornando...' : 'Estornar pagamento'}
+                                Cancelar pedido
                             </Button>
                             ) : null}
                             <Button
@@ -822,6 +832,36 @@ export function Kitchen({ initialFilter }) {
                         </DialogActions>
                     </>
                 )}
+            </Dialog>
+
+            <Dialog
+                open={Boolean(cancelTarget)}
+                onClose={() => { if (!cancelling) setCancelTarget(null); }}
+                fullWidth
+                maxWidth="xs"
+            >
+                <DialogTitle>Cancelar {cancelTarget?.orderNumber}</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        O motivo aparece no acompanhamento do cliente e nos pedidos em aberto.
+                    </Typography>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        multiline
+                        minRows={3}
+                        label="Motivo"
+                        value={cancelReason}
+                        onChange={(event) => setCancelReason(event.target.value)}
+                        inputProps={{ maxLength: 240 }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setCancelTarget(null)} disabled={cancelling}>Voltar</Button>
+                    <Button color="warning" variant="contained" onClick={handleCancelOrder} disabled={cancelling}>
+                        {cancelling ? 'Cancelando...' : 'Confirmar cancelamento'}
+                    </Button>
+                </DialogActions>
             </Dialog>
 
             {/* Toast de Confirmação */}
