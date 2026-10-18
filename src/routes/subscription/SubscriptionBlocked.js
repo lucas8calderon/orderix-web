@@ -1,12 +1,35 @@
 import React from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { logout } from '../../services/authService';
-import { PATHS } from '../../services/accessControl';
+import { Link, useNavigate } from 'react-router-dom';
+import { logout, getCurrentUser } from '../../services/authService';
+import { isLimitedSubscription, isStoreAdmin, PATHS, ROLES } from '../../services/accessControl';
 import { ThemeToggleButton } from '../../commons/components/ThemeToggleButton';
+
+function limitedLinks(user) {
+  if (isStoreAdmin(user)) {
+    return [
+      { to: PATHS.APP_DASHBOARD, label: 'Consultar a loja' },
+      { to: `${PATHS.APP_CONFIGURACOES}/empresa`, label: 'Regularizar a mensalidade' },
+      { to: PATHS.APP_ATENDIMENTO, label: 'Concluir pedidos em andamento' },
+    ];
+  }
+  if (user?.role === ROLES.KITCHEN) {
+    return [{ to: PATHS.APP_COZINHA, label: 'Consultar e concluir pedidos em andamento' }];
+  }
+  if (user?.role === ROLES.CASHIER) {
+    return [{ to: PATHS.APP_ATENDIMENTO, label: 'Consultar e concluir pedidos em andamento' }];
+  }
+  if (user?.role === ROLES.WAITER) {
+    return [{ to: PATHS.APP_GARCOM, label: 'Consultar e concluir pedidos em andamento' }];
+  }
+  return [];
+}
 
 export default function SubscriptionBlocked() {
   const navigate = useNavigate();
+  const user = getCurrentUser();
+  const limited = isLimitedSubscription(user);
+  const links = limited ? limitedLinks(user) : [];
 
   const handleLogout = () => {
     logout();
@@ -31,7 +54,7 @@ export default function SubscriptionBlocked() {
       <Paper
         elevation={0}
         sx={{
-          maxWidth: 480,
+          maxWidth: 520,
           width: '100%',
           p: { xs: 3, sm: 5 },
           borderRadius: 3,
@@ -40,20 +63,39 @@ export default function SubscriptionBlocked() {
         }}
       >
         <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 2, color: 'var(--color-text-primary)' }}>
-          Assinatura indisponível
+          {limited ? 'Assinatura suspensa' : 'Assinatura indisponível'}
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Entre em contato com o administrador para regularizar sua assinatura.
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          {limited
+            ? 'A partir do 8º dia a operação nova fica suspensa. A loja continua para consulta, regularização e para concluir o que já estava em andamento.'
+            : 'Entre em contato com o administrador para regularizar sua assinatura.'}
         </Typography>
+        {limited && !isStoreAdmin(user) ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            A regularização da mensalidade fica com o administrador da loja.
+          </Typography>
+        ) : null}
+        <Box sx={{ display: 'grid', gap: 1.5, mb: links.length ? 2 : 0 }}>
+          {links.map((link) => (
+            <Button
+              key={link.to}
+              component={Link}
+              to={link.to}
+              variant="contained"
+              sx={{
+                backgroundColor: 'var(--color-primary)',
+                '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
+                textTransform: 'none',
+              }}
+            >
+              {link.label}
+            </Button>
+          ))}
+        </Box>
         <Button
-          variant="contained"
+          variant="text"
           onClick={handleLogout}
-          sx={{
-            backgroundColor: 'var(--color-primary)',
-            '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
-            textTransform: 'none',
-            px: 4,
-          }}
+          sx={{ textTransform: 'none', mt: 1 }}
         >
           Sair
         </Button>

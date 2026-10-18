@@ -4,6 +4,8 @@ import {
   ROLES,
   formatPlanSummary,
   canAccessRoute,
+  isLimitedSubscription,
+  limitedSubscriptionPaths,
   formatDate,
   getDefaultRouteByRole,
   getPostLoginPath,
@@ -58,6 +60,8 @@ describe('getPostLoginPath / getDefaultRouteByRole', () => {
 
   it('assinatura inativa bloqueia a loja', () => {
     expect(getPostLoginPath(user({ subscriptionActive: false, subscriptionStatus: 'BLOCKED' })))
+      .toBe(PATHS.SUBSCRIPTION_BLOCKED);
+    expect(getPostLoginPath(user({ subscriptionActive: false, subscriptionStatus: 'PENDING' })))
       .toBe(PATHS.SUBSCRIPTION_BLOCKED);
   });
 });
@@ -136,6 +140,31 @@ describe('canAccessRoute', () => {
   it('rotas incompletas /app e /admin não são acessíveis (redirect para o default)', () => {
     expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.APP)).toBe(false);
     expect(canAccessRoute(user({ role: ROLES.MASTER, storeId: null }), PATHS.ADMIN)).toBe(false);
+  });
+
+  it('no 8º dia a loja consulta, regulariza e conclui pedido já aberto', () => {
+    const admin = user({ subscriptionActive: false, subscriptionStatus: 'BLOCKED' });
+    expect(isLimitedSubscription(admin)).toBe(true);
+    expect(limitedSubscriptionPaths(admin)).toEqual([
+      PATHS.APP_DASHBOARD,
+      PATHS.APP_CONFIGURACOES,
+      PATHS.APP_ATENDIMENTO,
+      PATHS.APP_COZINHA,
+    ]);
+    expect(canAccessRoute(admin, PATHS.APP_DASHBOARD)).toBe(true);
+    expect(canAccessRoute(admin, `${PATHS.APP_CONFIGURACOES}/empresa`)).toBe(true);
+    expect(canAccessRoute(admin, PATHS.APP_ATENDIMENTO)).toBe(true);
+    expect(canAccessRoute(admin, PATHS.APP_PRODUTOS)).toBe(false);
+    expect(canAccessRoute(admin, PATHS.SUBSCRIPTION_BLOCKED)).toBe(true);
+
+    const pending = user({ subscriptionActive: false, subscriptionStatus: 'PENDING' });
+    expect(isLimitedSubscription(pending)).toBe(false);
+    expect(canAccessRoute(pending, PATHS.APP_DASHBOARD)).toBe(false);
+
+    const kitchen = user({ role: ROLES.KITCHEN, subscriptionActive: false, subscriptionStatus: 'BLOCKED' });
+    expect(canAccessRoute(kitchen, PATHS.APP_COZINHA)).toBe(true);
+    expect(canAccessRoute(kitchen, PATHS.APP_CONFIGURACOES)).toBe(false);
+    expect(canAccessRoute(kitchen, PATHS.APP_DASHBOARD)).toBe(false);
   });
 
   it('loja sem storeId não acessa rotas de restaurante', () => {

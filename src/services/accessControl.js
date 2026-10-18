@@ -219,6 +219,44 @@ export function isSubscriptionActive(user) {
   return user?.subscriptionStatus === SUBSCRIPTION_STATUS.ACTIVE;
 }
 
+const LIMITED_STATUSES = new Set([
+  SUBSCRIPTION_STATUS.BLOCKED,
+  SUBSCRIPTION_STATUS.CANCELED,
+  SUBSCRIPTION_STATUS.OVERDUE,
+]);
+
+/** 8º dia ou suspensão: a loja consulta, regulariza e conclui pedido já aberto. */
+export function isLimitedSubscription(user) {
+  if (!user || isPlatformAdmin(user) || isSubscriptionActive(user)) {
+    return false;
+  }
+  return LIMITED_STATUSES.has(user.subscriptionStatus);
+}
+
+export function limitedSubscriptionPaths(user) {
+  if (!isLimitedSubscription(user)) {
+    return [];
+  }
+  if (isStoreAdmin(user)) {
+    return [
+      PATHS.APP_DASHBOARD,
+      PATHS.APP_CONFIGURACOES,
+      PATHS.APP_ATENDIMENTO,
+      PATHS.APP_COZINHA,
+    ];
+  }
+  if (user.role === ROLES.KITCHEN) {
+    return [PATHS.APP_COZINHA];
+  }
+  if (user.role === ROLES.CASHIER) {
+    return [PATHS.APP_ATENDIMENTO];
+  }
+  if (user.role === ROLES.WAITER) {
+    return [PATHS.APP_GARCOM];
+  }
+  return [];
+}
+
 export function canManageFloor(user) {
   return isPlatformAdmin(user) || isStoreAdmin(user);
 }
@@ -301,7 +339,12 @@ export function canAccessRoute(user, path) {
   }
 
   if (!isPlatformAdmin(user) && !isSubscriptionActive(user)) {
-    return false;
+    if (!isLimitedSubscription(user) || !hasStoreContext(user)) {
+      return false;
+    }
+    return limitedSubscriptionPaths(user).some(
+      (route) => normalized === route || normalized.startsWith(`${route}/`)
+    );
   }
 
   if (!isPlatformAdmin(user) && !hasStoreContext(user)) {

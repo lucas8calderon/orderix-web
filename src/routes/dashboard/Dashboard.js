@@ -10,7 +10,7 @@ import { WaiterHome } from './WaiterHome';
 import { Settings } from './settings/Settings';
 import InventoryPanel from './inventory/Inventory';
 import { getCurrentUser, logout } from '../../services/authService';
-import { getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
+import { canAccessRoute, getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
 import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
 import './Workspace.css';
@@ -25,7 +25,8 @@ const GROUPS = [
 
 export default function Dashboard() {
   const user = getCurrentUser();
-  const visibleItems = getVisibleDashboardItems(user, dashboardItems);
+  const visibleItems = getVisibleDashboardItems(user, dashboardItems)
+    .filter((item) => canAccessRoute(user, item.path));
   const navigate = useNavigate();
   const { section } = useParams();
   const [navIntent, setNavIntent] = React.useState(null);
