@@ -43,6 +43,57 @@ describe('ProductFormDialog variations', () => {
     }));
   });
 
+  it('grava o ponto da carne como seletor obrigatório', () => {
+    const onSave = jest.fn();
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={onSave}
+        product={{ categoryId: 1 }}
+        categories={categories}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Nome do produto'), {
+      target: { value: 'Hambúrguer artesanal' },
+    });
+    typePrice(screen.getByLabelText('Preço em reais'), '2800');
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar escolha' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Seletor' }));
+    fireEvent.change(screen.getByLabelText('Nome da escolha'), {
+      target: { value: 'Ponto da carne' },
+    });
+
+    const options = ['Ao ponto', 'Mal passada', 'Bem passada'];
+    options.forEach((name, index) => {
+      if (index > 0) {
+        fireEvent.click(screen.getByRole('button', { name: 'Adicionar opção' }));
+      }
+      const fields = screen.getAllByLabelText('Opção');
+      fireEvent.change(fields[index], { target: { value: name } });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Hambúrguer artesanal',
+      mandatoryGroups: [
+        expect.objectContaining({
+          name: 'Ponto da carne',
+          minSelections: 1,
+          maxSelections: 1,
+          priceMode: 'SUM',
+          items: [
+            expect.objectContaining({ name: 'Ao ponto', price: 0 }),
+            expect.objectContaining({ name: 'Mal passada', price: 0 }),
+            expect.objectContaining({ name: 'Bem passada', price: 0 }),
+          ],
+        }),
+      ],
+    }));
+  });
+
   it('salva o mesmo produto com preços diferentes por variação', () => {
     const onSave = jest.fn();
     render(

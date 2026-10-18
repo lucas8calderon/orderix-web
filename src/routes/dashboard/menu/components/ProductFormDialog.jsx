@@ -403,7 +403,7 @@ export function ProductFormDialog({
         <Box sx={{ mb: 2 }}>
           <Typography component="h3" variant="subtitle2">Escolhas do cliente</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
-            Pizza de um sabor: mínimo 1. Pizza de dois sabores: mínimo 2. O cardápio mostra 0/2 e o pedido só segue depois dessa quantidade.
+            Pizza de um sabor: mínimo 1. Pizza de dois sabores: mínimo 2. O cardápio mostra 0/2 e o pedido só segue depois dessa quantidade. Seletor: escolha única obrigatória, como o ponto da carne do hambúrguer (ao ponto, mal passada ou bem passada). O cliente precisa escolher uma opção para o pedido seguir. Preço 0 não muda o valor do produto.
           </Typography>
           {choiceGroups.map((group) => (
             <Box key={group.key} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5, mb: 1.5 }}>
@@ -423,7 +423,7 @@ export function ProductFormDialog({
               <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
                 <Button
                   size="small"
-                  variant={Number(group.minSelections) === 1 && Number(group.maxSelections) === 1 ? 'contained' : 'outlined'}
+                  variant={Number(group.minSelections) === 1 && Number(group.maxSelections) === 1 && group.priceMode === 'HIGHEST' ? 'contained' : 'outlined'}
                   onClick={() => setForm((prev) => ({
                     ...prev,
                     choiceGroups: prev.choiceGroups.map((entry) => (
@@ -437,7 +437,7 @@ export function ProductFormDialog({
                 </Button>
                 <Button
                   size="small"
-                  variant={Number(group.minSelections) === 2 && Number(group.maxSelections) === 2 ? 'contained' : 'outlined'}
+                  variant={Number(group.minSelections) === 2 && Number(group.maxSelections) === 2 && group.priceMode === 'HIGHEST' ? 'contained' : 'outlined'}
                   onClick={() => setForm((prev) => ({
                     ...prev,
                     choiceGroups: prev.choiceGroups.map((entry) => (
@@ -448,6 +448,20 @@ export function ProductFormDialog({
                   }))}
                 >
                   2 sabores
+                </Button>
+                <Button
+                  size="small"
+                  variant={Number(group.minSelections) === 1 && Number(group.maxSelections) === 1 && group.priceMode === 'SUM' ? 'contained' : 'outlined'}
+                  onClick={() => setForm((prev) => ({
+                    ...prev,
+                    choiceGroups: prev.choiceGroups.map((entry) => (
+                      entry.key === group.key
+                        ? { ...entry, name: entry.name || 'Ponto da carne', minSelections: 1, maxSelections: 1, priceMode: 'SUM' }
+                        : entry
+                    )),
+                  }))}
+                >
+                  Seletor
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
@@ -494,7 +508,9 @@ export function ProductFormDialog({
                 </TextField>
               </Box>
               <FormHelperText sx={{ mb: 1 }}>
-                {`O cliente vê ${0}/${Number(group.minSelections) || 0}. Com mínimo 2, um sabor só não envia o pedido.`}
+                {Number(group.minSelections) === 1 && Number(group.maxSelections) === 1 && group.priceMode === 'SUM'
+                  ? 'O cliente vê 0/1. Hambúrguer, ponto da carne: ao ponto, mal passada ou bem passada. O cliente precisa escolher uma opção para o pedido seguir. Preço 0 não muda o valor do produto.'
+                  : `O cliente vê ${0}/${Number(group.minSelections) || 0}. Com mínimo 2, um sabor só não envia o pedido.`}
               </FormHelperText>
               {(group.items || []).map((item) => (
                 <Box key={item.key} sx={{ display: 'flex', gap: 1, mb: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
