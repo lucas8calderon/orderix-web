@@ -475,6 +475,11 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                         Observação do pedido: {order.observation}
                       </Typography>
                     )}
+                    {String(order.status || '').toUpperCase() === 'CANCELLED' ? (
+                      <Typography className="checkout-item-obs" variant="body2" sx={{ mt: 0.5 }}>
+                        Cancelado{order.cancelReason ? `: ${order.cancelReason}` : ''}
+                      </Typography>
+                    ) : null}
                   </Box>
                 ))}
               </Box>

@@ -9,7 +9,11 @@ import { accountSubtotal, countAccountItems } from '../utils/accountTotals';
 
 export function isOpenCounterOrder(order) {
   const status = String(order?.status || 'ACTIVE').toUpperCase();
-  return status !== 'CLOSED' && status !== 'CANCELLED';
+  if (status === 'CLOSED') return false;
+  if (status !== 'CANCELLED') return true;
+  const cancelledAt = order?.cancelledAt ? new Date(order.cancelledAt) : null;
+  if (!cancelledAt || Number.isNaN(cancelledAt.getTime())) return true;
+  return Date.now() - cancelledAt.getTime() < 24 * 60 * 60 * 1000;
 }
 
 export function CounterSales({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
@@ -69,14 +73,17 @@ export function CounterSales({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) 
       ) : null}
       <Grid container spacing={2}>
         {orders.map((order) => {
+          const cancelled = String(order.status || '').toUpperCase() === 'CANCELLED';
           const total = accountSubtotal({ orders: [order] });
           const items = countAccountItems({ orders: [order] });
           return (
             <Grid item key={order.id} xs={12} sm={6} md={4} lg={3}>
               <Card>
                 <CardActionArea
-                  onClick={() => onOpenAccount?.({ kind: 'counter', id: order.id, number: order.id })}
-                  aria-label={`Abrir pedido ${order.id}`}
+                  onClick={() => {
+                    if (!cancelled) onOpenAccount?.({ kind: 'counter', id: order.id, number: order.id });
+                  }}
+                  aria-label={cancelled ? `Pedido ${order.id} cancelado` : `Abrir pedido ${order.id}`}
                 >
                   <CardContent>
                     <Typography variant="h6">Pedido {order.id}</Typography>
@@ -84,8 +91,13 @@ export function CounterSales({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) 
                       {order.customerName || 'Balcão'}
                     </Typography>
                     <Typography sx={{ mt: 1 }}>
-                      {items} {items === 1 ? 'item' : 'itens'} · {formatCurrency(total)}
+                      {cancelled ? 'Cancelado' : `${items} ${items === 1 ? 'item' : 'itens'} · ${formatCurrency(total)}`}
                     </Typography>
+                    {cancelled && order.cancelReason ? (
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        {order.cancelReason}
+                      </Typography>
+                    ) : null}
                   </CardContent>
                 </CardActionArea>
               </Card>
