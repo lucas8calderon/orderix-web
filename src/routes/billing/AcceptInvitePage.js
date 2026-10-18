@@ -33,10 +33,13 @@ export default function AcceptInvitePage() {
       await axios.post('/api/auth/invite/accept', {
         token: token.trim(),
         password: password.trim(),
-      });
+      }, { timeout: 60000 });
       setDone(true);
     } catch (requestError) {
-      const message = requestError?.response?.data?.message || 'Não foi possível definir a senha.';
+      const timedOut = requestError?.code === 'ECONNABORTED' || !requestError?.response;
+      const message = timedOut
+        ? 'O servidor demorou para responder. Aguarde um instante e tente de novo.'
+        : (requestError?.response?.data?.message || 'Não foi possível definir a senha.');
       setError(message);
     } finally {
       setPending(false);
@@ -57,7 +60,7 @@ export default function AcceptInvitePage() {
               <Link to="/login">Entrar</Link>
             </div>
           ) : (
-            <form onSubmit={submit}>
+            <form className="wp-invite-form" onSubmit={submit}>
               <label htmlFor="token">Código do convite</label>
               <input id="token" value={token} onChange={(event) => setToken(event.target.value)} required />
               <label htmlFor="password">Senha</label>

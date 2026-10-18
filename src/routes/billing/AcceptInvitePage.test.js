@@ -23,7 +23,7 @@ test('link token is sent with the new password', async () => {
   await waitFor(() => expect(axios.post).toHaveBeenCalledWith('/api/auth/invite/accept', {
     token: 'token-unico',
     password: 'senha123',
-  }));
+  }, { timeout: 60000 }));
   expect(await screen.findByText('Senha definida')).toBeInTheDocument();
 });
 
@@ -35,6 +35,15 @@ test('mismatched confirmation does not call the api', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Definir senha' }));
   expect(screen.getByRole('alert')).toHaveTextContent('não confere');
   expect(axios.post).not.toHaveBeenCalled();
+});
+
+test('slow server asks to try again', async () => {
+  axios.post.mockRejectedValue({ code: 'ECONNABORTED' });
+  setup();
+  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'senha123' } });
+  fireEvent.change(screen.getByLabelText('Confirmar senha'), { target: { value: 'senha123' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Definir senha' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('demorou para responder');
 });
 
 test('api error stays on the form', async () => {
