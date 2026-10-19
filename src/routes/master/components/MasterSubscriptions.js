@@ -26,6 +26,13 @@ const ACTION_LABEL = {
   ADMIN_CANCEL: 'Cancelamento administrativo',
 };
 
+function pendingLabel(row) {
+  const parts = [];
+  if (row.inviteMailPending) parts.push('Convite pendente');
+  if (row.dueNoticePending) parts.push('Aviso de vencimento pendente');
+  return parts.length ? parts.join(' · ') : '—';
+}
+
 function message(error, fallback) {
   const text = error?.response?.data?.message;
   return typeof text === 'string' && text.trim() ? text : fallback;
@@ -120,7 +127,7 @@ export function MasterSubscriptions() {
                 <TableCell>{row.price == null ? '—' : formatCurrency(row.price)}</TableCell>
                 <TableCell>{SUBSCRIPTION_STATUS_LABELS[row.status] || row.status}</TableCell>
                 <TableCell>{formatDate(row.expiresAt)}</TableCell>
-                <TableCell>{row.inviteMailPending ? 'Convite pendente' : '—'}</TableCell>
+                <TableCell>{pendingLabel(row)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -132,6 +139,7 @@ export function MasterSubscriptions() {
           <Typography variant="body2">Contratante: {selected.contractorName || '—'} · {selected.contractorEmail || '—'}</Typography>
           <Typography variant="body2">Asaas: {selected.asaasSubscriptionId || '—'} · Isenta: {selected.exempt ? 'sim' : 'não'}</Typography>
           {selected.inviteMailPending ? <Alert severity="warning" sx={{ mt: 1 }}>O convite ainda não foi entregue.</Alert> : null}
+          {selected.dueNoticePending ? <Alert severity="warning" sx={{ mt: 1 }}>O aviso de vencimento ainda não foi entregue. O job diário tenta de novo.</Alert> : null}
           {selected.storeId ? (
             <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
               <TextField size="small" label="Motivo" value={reason} onChange={(event) => setReason(event.target.value)} />

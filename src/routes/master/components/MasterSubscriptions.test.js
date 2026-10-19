@@ -17,6 +17,7 @@ const ROW = {
   expiresAt: '2026-11-18',
   asaasSubscriptionId: 'sub_1',
   inviteMailPending: true,
+  dueNoticePending: true,
   exempt: false,
   renewalCanceled: false,
   audits: [],
@@ -36,7 +37,7 @@ test('lists the contractor apart from the store and keeps the invite pending vis
   render(<MasterSubscriptions />);
   expect(await screen.findByText('Padaria')).toBeInTheDocument();
   expect(screen.getByText('Contratante Teste')).toBeInTheDocument();
-  expect(screen.getByText('Convite pendente')).toBeInTheDocument();
+  expect(screen.getByText('Convite pendente · Aviso de vencimento pendente')).toBeInTheDocument();
   expect(screen.queryByText(/cpf|cnpj|api key/i)).not.toBeInTheDocument();
 });
 
