@@ -66,6 +66,39 @@ export const PRICING_TIERS = [
 ];
 
 /**
+ * Homologação Asaas SaaS (R$ 1). Fora de PRICING_TIERS — não entra na oferta comercial.
+ * Uso: deep link /contratar?plan=PLAN_TEST ou dropdown só em staging.
+ * @see docs/asaas/PLAN_TEST.md no backend
+ */
+export const TEST_PLAN = {
+  id: 'tier-test',
+  code: 'PLAN_TEST',
+  number: 0,
+  minRevenue: 0,
+  maxRevenue: Infinity,
+  monthlyPrice: 1.0,
+  label: 'Homologação (teste Asaas)',
+  description: 'Plano interno R$ 1,00 para validar Pix/cartão',
+  isTestPlan: true,
+};
+
+/** Resolve faixa comercial ou PLAN_TEST. */
+export function getPlanTier(code) {
+  if (!code) return null;
+  if (code === TEST_PLAN.code) return TEST_PLAN;
+  return PRICING_TIERS.find((tier) => tier.code === code) || null;
+}
+
+/**
+ * Opções do select em /contratar.
+ * @param {{ includeTest?: boolean }} options — staging ou deep link ?plan=PLAN_TEST
+ */
+export function getSignupPlanOptions({ includeTest = false } = {}) {
+  if (!includeTest) return [...PRICING_TIERS];
+  return [...PRICING_TIERS, TEST_PLAN];
+}
+
+/**
  * Calcula a mensalidade com base no volume mensal processado.
  * @param {number} revenue - Volume mensal em reais
  * @returns {number} Valor da mensalidade

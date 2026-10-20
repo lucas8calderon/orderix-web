@@ -86,3 +86,24 @@ test('shows commercial comparison outside the checkout form', () => {
   const form = screen.getByRole('button', { name: /Continuar para o pagamento/i }).closest('form');
   expect(form).not.toHaveTextContent('iFood');
 });
+
+test('commercial dropdown omits PLAN_TEST without deep link', () => {
+  setup('/contratar');
+  expect(screen.queryByRole('option', { name: /Homologação/i })).not.toBeInTheDocument();
+});
+
+test('deep link PLAN_TEST preselects homologation plan and can submit', async () => {
+  axios.post.mockResolvedValue({
+    data: { pixPayload: '000201', invoiceUrl: 'https://sandbox.asaas.com/i/test', storeActive: false },
+  });
+  setup('/contratar?plan=PLAN_TEST');
+  expect(screen.getByLabelText(/Plano selecionado|faturamento mensal/i)).toHaveValue('PLAN_TEST');
+  expect(screen.getByText(/Plano de homologação Asaas/i)).toBeInTheDocument();
+  expect(screen.getByRole('option', { name: /Homologação/i })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Lucas Homologação' } });
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  await waitFor(() => expect(axios.post).toHaveBeenCalled());
+  expect(axios.post.mock.calls[0][1].planCode).toBe('PLAN_TEST');
+});

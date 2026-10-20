@@ -53,6 +53,9 @@ export function getPlan(planId) {
 
 /** Nome interno da faixa, com o volume quando for uma faixa atual. */
 export function formatPlanSummary(planId) {
+  if (planId === 'PLAN_TEST') {
+    return 'Plano teste · Homologação R$ 1,00';
+  }
   const plan = getPlan(planId);
   if (!plan) return planId || '—';
   return plan.volumeLabel ? `${plan.label} · ${plan.volumeLabel}` : plan.label;

@@ -22,7 +22,7 @@ import {
   WalletCards,
   X,
 } from 'lucide-react';
-import { PRICING_TIERS, formatPrice } from '../../config/pricingTiers';
+import { formatPrice, getPlanTier, getSignupPlanOptions, TEST_PLAN } from '../../config/pricingTiers';
 import { capturePartnerRef, getStoredPartnerRef } from '../../services/partnerReferral';
 import { PATHS } from '../../services/accessControl';
 import WeperMark from '../home/components/WeperMark';
@@ -30,6 +30,11 @@ import ecosystemDevicesWebp from '../../assets/images/landing/ecosystem-devices.
 import ecosystemDevicesJpg from '../../assets/images/landing/ecosystem-devices.jpg';
 import '../home/styles/Rebrand.css';
 import './SignupPage.css';
+
+function isStagingHost() {
+  if (typeof window === 'undefined') return false;
+  return String(window.location.hostname || '').toLowerCase().includes('staging');
+}
 
 const EMPTY = {
   person: 'FISICA',
@@ -172,10 +177,21 @@ export default function SignupPage() {
     capturePartnerRef(params.toString() ? `?${params.toString()}` : window.location.search);
   }, [params]);
 
+  const requestedPlan = params.get('plan');
+  const testPlanRequested = requestedPlan === TEST_PLAN.code;
+  const includeTestPlan = testPlanRequested || isStagingHost();
+
+  const signupPlans = useMemo(
+    () => getSignupPlanOptions({ includeTest: includeTestPlan }),
+    [includeTestPlan],
+  );
+
   const initialPlan = useMemo(() => {
-    const requested = params.get('plan');
-    return PRICING_TIERS.some((tier) => tier.code === requested) ? requested : '';
-  }, [params]);
+    if (!requestedPlan) return '';
+    return getPlanTier(requestedPlan) && (requestedPlan !== TEST_PLAN.code || includeTestPlan)
+      ? requestedPlan
+      : '';
+  }, [requestedPlan, includeTestPlan]);
 
   const [planCode, setPlanCode] = useState(initialPlan);
   const [billingType, setBillingType] = useState('PIX');
@@ -185,8 +201,9 @@ export default function SignupPage() {
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const plan = PRICING_TIERS.find((tier) => tier.code === planCode) || null;
-  const planSelected = Boolean(plan);
+  const plan = getPlanTier(planCode);
+  const planSelected = Boolean(plan) && signupPlans.some((tier) => tier.code === planCode);
+  const isTestPlan = plan?.code === TEST_PLAN.code;
   const card = billingType === 'CREDIT_CARD';
   const isPj = form.person === 'JURIDICA';
 
@@ -378,11 +395,20 @@ export default function SignupPage() {
                   <p className="ct-card-lead">
                     Escolha seu plano e preencha seus dados para ativar sua assinatura. Sua loja será liberada após a confirmação do pagamento.
                   </p>
+                  {isTestPlan ? (
+                    <p className="ct-alert" role="status">
+                      Plano de homologação Asaas (R$ 1,00). Não é oferta comercial.
+                    </p>
+                  ) : null}
 
                   <form className="ct-form" onSubmit={submit}>
                     <div className="ct-field">
                       <div className="ct-field-label-row">
-                        <label htmlFor="plan">Qual é o faturamento mensal do seu estabelecimento?</label>
+                        <label htmlFor="plan">
+                          {isTestPlan
+                            ? 'Plano selecionado'
+                            : 'Qual é o faturamento mensal do seu estabelecimento?'}
+                        </label>
                         <span
                           className="ct-hint"
                           title="O faturamento mensal determina a faixa de mensalidade da sua assinatura."
@@ -404,7 +430,7 @@ export default function SignupPage() {
                         <option value="" disabled>
                           Selecione a faixa de faturamento
                         </option>
-                        {PRICING_TIERS.map((tier) => (
+                        {signupPlans.map((tier) => (
                           <option key={tier.code} value={tier.code}>
                             {tier.label} — {formatPrice(tier.monthlyPrice)}/mês
                           </option>
@@ -418,7 +444,7 @@ export default function SignupPage() {
                     >
                       <div className="ct-plan-summary-top">
                         <div>
-                          <span>Seu plano Weper</span>
+                          <span>{isTestPlan ? 'Plano de teste' : 'Seu plano Weper'}</span>
                           {planSelected ? (
                             <strong>
                               {formatPrice(plan.monthlyPrice)}
@@ -428,14 +454,26 @@ export default function SignupPage() {
                             <strong className="ct-plan-summary-placeholder">Selecione um plano</strong>
                           )}
                         </div>
-                        {planSelected ? <span className="ct-plan-badge">Plano completo</span> : null}
+                        {planSelected ? (
+                          <span className="ct-plan-badge">{isTestPlan ? 'Homologação' : 'Plano completo'}</span>
+                        ) : null}
                       </div>
                       {planSelected ? (
                         <ul>
-                          <li><Check size={15} aria-hidden="true" /> Funcionalidades incluídas no plano.</li>
-                          <li><Check size={15} aria-hidden="true" /> Sem comissões da Weper por venda.</li>
-                          <li><Check size={15} aria-hidden="true" /> Suporte conforme o plano.</li>
-                          <li><Check size={15} aria-hidden="true" /> Atualizações da plataforma.</li>
+                          {isTestPlan ? (
+                            <>
+                              <li><Check size={15} aria-hidden="true" /> Validação do fluxo Asaas (Pix ou cartão).</li>
+                              <li><Check size={15} aria-hidden="true" /> Cobrança de R$ 1,00 — sandbox ou conta Weper.</li>
+                              <li><Check size={15} aria-hidden="true" /> Loja liberada após confirmação do pagamento.</li>
+                            </>
+                          ) : (
+                            <>
+                              <li><Check size={15} aria-hidden="true" /> Funcionalidades incluídas no plano.</li>
+                              <li><Check size={15} aria-hidden="true" /> Sem comissões da Weper por venda.</li>
+                              <li><Check size={15} aria-hidden="true" /> Suporte conforme o plano.</li>
+                              <li><Check size={15} aria-hidden="true" /> Atualizações da plataforma.</li>
+                            </>
+                          )}
                         </ul>
                       ) : null}
                     </div>
