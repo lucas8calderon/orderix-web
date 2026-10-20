@@ -38,6 +38,13 @@ function message(error, fallback) {
   return typeof text === 'string' && text.trim() ? text : fallback;
 }
 
+/** Botão só em hosts de staging — confirmação Asaas sandbox, sem Pix real. */
+function isStagingHost() {
+  if (typeof window === 'undefined') return false;
+  const host = String(window.location.hostname || '').toLowerCase();
+  return host.includes('staging') || host === 'localhost' || host === '127.0.0.1';
+}
+
 export function MasterSubscriptions() {
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -97,6 +104,21 @@ export function MasterSubscriptions() {
     }
   }
 
+  async function sandboxConfirm() {
+    if (!selected?.signupId || !isStagingHost()) return;
+    setError('');
+    try {
+      await axios.post(`/api/billing/signups/${selected.signupId}/sandbox-confirm`);
+      setNotice('Pagamento simulado no sandbox. Aguarde o webhook para liberar a loja e o convite.');
+      await load();
+      const pending = (await axios.get('/api/billing/subscriptions')).data || [];
+      const refreshed = pending.find((row) => row.signupId === selected.signupId) || selected;
+      setSelected(refreshed);
+    } catch (failure) {
+      setError(message(failure, 'Não foi possível simular o pagamento no sandbox.'));
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -150,7 +172,19 @@ export function MasterSubscriptions() {
               <Button variant="text" onClick={resend}>Reenviar convite</Button>
             </Stack>
           ) : (
-            <Typography variant="body2" sx={{ mt: 1 }}>A loja ainda não existe. O pagamento confirmado é que a cria.</Typography>
+            <Stack spacing={1} sx={{ mt: 1 }}>
+              <Typography variant="body2">A loja ainda não existe. O pagamento confirmado é que a cria.</Typography>
+              {isStagingHost() && selected.signupId && String(selected.status || '').toUpperCase() === 'PENDING' ? (
+                <Box>
+                  <Button variant="contained" color="secondary" onClick={sandboxConfirm}>
+                    Simular pagamento Pix (sandbox)
+                  </Button>
+                  <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'text.secondary' }}>
+                    Só staging + Asaas sandbox. Não movimenta dinheiro real.
+                  </Typography>
+                </Box>
+              ) : null}
+            </Stack>
           )}
           {(selected.audits || []).length > 0 ? (
             <Box sx={{ mt: 2 }}>
