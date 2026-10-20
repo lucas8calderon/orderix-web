@@ -46,7 +46,10 @@ export function CrmWhatsAppPanel() {
   };
   return <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
     <Typography variant="h6">Mensagem de primeiro contato no WhatsApp</Typography>
-    <Typography variant="body2">Abra o WhatsApp pelo card, envie a mensagem e volte ao quadro para registrar o contato ou atualizar o status.</Typography>
+    <Typography variant="body2">
+      Use {'{{estabelecimento}}'} e {'{{segmento}}'} para personalizar. Abra o WhatsApp pelo card (envio manual)
+      ou enfileire contatos autorizados na fila automática abaixo.
+    </Typography>
     {error && <Alert severity="error">{error}</Alert>}
     {notice && <Alert severity="success">{notice}</Alert>}
     <TextField fullWidth multiline minRows={3} label="Mensagem de primeiro contato" value={message} inputProps={{ maxLength: 2000 }} onChange={e => setMessage(e.target.value)} sx={{ my: 2 }} />

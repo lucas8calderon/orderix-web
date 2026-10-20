@@ -1,4 +1,5 @@
 import { CrmWhatsAppPanel } from './components/CrmWhatsAppPanel';
+import { CrmOutreachPanel } from './components/CrmOutreachPanel';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import React, { useCallback, useState } from 'react';
 import {
@@ -268,6 +269,7 @@ export function CrmBoard() {
             {crm.view === 'dashboard' ? (
               <Box sx={{ overflow: 'auto', minHeight: 0, flex: 1 }}>
                 <CrmWhatsAppPanel />
+                <CrmOutreachPanel />
                 <CrmStatusChart metrics={crm.metrics} />
               </Box>
             ) : crm.view === 'list' ? (

@@ -1,7 +1,15 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../../../services/apiConfig';
 /** Template centralizado da primeira mensagem. O envio continua manual no WhatsApp. */
-export const DEFAULT_WHATSAPP_MESSAGE = "Olá! Somos a Weper. Estamos oferecendo uma parceria gratuita, com todos os módulos e benefícios, para você conhecer nossa solução de gestão. Podemos conversar? Se preferir não receber contatos, é só avisar.";
+export const DEFAULT_WHATSAPP_MESSAGE = `Olá! Tudo bem? 👋
+
+Somos da Weper, uma plataforma que ajuda estabelecimentos a organizar pedidos, comandas, estoque, delivery próprio e cardápio digital.
+
+Estamos buscando empreendedores para conhecer nossas soluções e possíveis parcerias.
+
+Posso te apresentar rapidamente como funciona?
+
+Se preferir não receber mensagens, é só me avisar.`;
 
 export function whatsAppDigits(phone) {
   if (!phone) return '';
