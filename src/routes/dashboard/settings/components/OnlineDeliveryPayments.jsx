@@ -168,15 +168,17 @@ export function OnlineDeliveryPayments({
         } else {
           onSettingChange('pagbankCardPublicKeyConfigured', null, true);
         }
-        setTestMessage('Conexão ok. A chave de cartão ficou guardada nesta loja.');
+        setTestMessage(asaas
+          ? 'Conexão ok. A tokenização de cartão ficou liberada nesta loja.'
+          : 'Conexão ok. A chave de cartão ficou guardada nesta loja.');
       } else {
         setTestMessage(asaas
-          ? 'Não foi possível consultar a chave com a API key salva.'
+          ? 'Não foi possível validar a API key salva.'
           : 'Não foi possível consultar a chave com o token salvo.');
       }
     } catch {
       setTestMessage(asaas
-        ? 'Não foi possível consultar a chave com a API key salva.'
+        ? 'Não foi possível validar a API key salva.'
         : 'Não foi possível consultar a chave com o token salvo.');
     } finally {
       setTesting(false);
@@ -280,7 +282,7 @@ export function OnlineDeliveryPayments({
             {testing ? 'Testando...' : 'Testar conexão'}
           </Button>
           <Typography className="setting-hint" variant="body2">
-            Salve a API key antes de testar. O teste consulta a chave pública de cartão no Asaas e não mostra a API key.
+            Salve a API key antes de testar. O Asaas não tem chave pública separada: o teste valida a API key e libera a tokenização no navegador, sem mostrar o segredo.
           </Typography>
           {testMessage ? <Typography className="setting-hint" variant="body2">{testMessage}</Typography> : null}
           <SecretField
