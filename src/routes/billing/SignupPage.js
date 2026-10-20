@@ -52,6 +52,27 @@ export function isPublicAsaasInvoiceUrl(url) {
   }
 }
 
+/** Aceita data URL ou base64 puro do Asaas (encodedImage). */
+export function pixQrImageSrc(encodedImage) {
+  if (encodedImage == null) return '';
+  const value = String(encodedImage).trim();
+  if (!value) return '';
+  if (value.startsWith('data:image/')) return value;
+  if (/^https?:\/\//i.test(value)) return '';
+  if (/^data:/i.test(value)) return '';
+  return `data:image/png;base64,${value}`;
+}
+
+export function normalizeSignupPix(data) {
+  if (!data || typeof data !== 'object') {
+    return { pixPayload: '', pixEncodedImage: '', invoiceUrl: '' };
+  }
+  const pixPayload = String(data.pixPayload || data.pixCopyPaste || data.payload || '').trim();
+  const pixEncodedImage = String(data.pixEncodedImage || data.encodedImage || '').trim();
+  const invoiceUrl = String(data.invoiceUrl || '').trim();
+  return { pixPayload, pixEncodedImage, invoiceUrl };
+}
+
 function readStoredSignupResult() {
   if (typeof window === 'undefined') return null;
   try {
@@ -184,13 +205,13 @@ function maskCardNumber(value) {
   return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
 }
 
-function CheckoutSteps({ phase }) {
+function CheckoutSteps({ phase, paymentConfirmed }) {
   const steps = [
     { id: 'dados', label: 'Seus dados' },
     { id: 'pagamento', label: 'Pagamento' },
     { id: 'confirmacao', label: 'Confirmação' },
   ];
-  const activeIndex = phase === 'result' ? 2 : 0;
+  const activeIndex = phase === 'result' ? (paymentConfirmed ? 2 : 1) : 0;
 
   return (
     <div className="ct-steps" aria-label="Etapas da contratação">
@@ -243,6 +264,7 @@ export default function SignupPage() {
   const [result, setResult] = useState(() => readStoredSignupResult());
   const [copied, setCopied] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(() => Boolean(readStoredSignupResult()?.paid));
+  const [qrImageFailed, setQrImageFailed] = useState(false);
   const pollRef = useRef(null);
 
   const plan = getPlanTier(planCode);
@@ -250,9 +272,18 @@ export default function SignupPage() {
   const isTestPlan = plan?.code === TEST_PLAN.code;
   const card = billingType === 'CREDIT_CARD';
   const isPj = form.person === 'JURIDICA';
-  const showPublicInvoice = Boolean(result?.invoiceUrl)
-    && !result?.pixPayload
-    && isPublicAsaasInvoiceUrl(result.invoiceUrl);
+  const pixFields = normalizeSignupPix(result);
+  const pixQrSrc = pixQrImageSrc(pixFields.pixEncodedImage);
+  const showGeneratedQr = Boolean(pixFields.pixPayload) && (!pixQrSrc || qrImageFailed);
+  const showPixBox = Boolean(pixFields.pixPayload) || Boolean(pixQrSrc && !qrImageFailed);
+  const showPublicInvoice = Boolean(pixFields.invoiceUrl)
+    && !pixFields.pixPayload
+    && !pixQrSrc
+    && isPublicAsaasInvoiceUrl(pixFields.invoiceUrl);
+
+  useEffect(() => {
+    setQrImageFailed(false);
+  }, [pixFields.pixEncodedImage]);
 
   useEffect(() => {
     persistSignupResult(result ? { ...result, paid: paymentConfirmed } : null);
@@ -267,9 +298,26 @@ export default function SignupPage() {
       try {
         const response = await axios.get(`/api/public/billing/signup/${result.signupId}/status`);
         if (cancelled) return;
+        const statusPix = normalizeSignupPix(response.data);
+        setResult((current) => {
+          if (!current) return current;
+          const next = { ...current };
+          if (response.data?.storeActive != null) {
+            next.storeActive = Boolean(response.data.storeActive);
+          }
+          if (statusPix.pixPayload && !normalizeSignupPix(current).pixPayload) {
+            next.pixPayload = statusPix.pixPayload;
+          }
+          if (statusPix.pixEncodedImage && !normalizeSignupPix(current).pixEncodedImage) {
+            next.pixEncodedImage = statusPix.pixEncodedImage;
+          }
+          if (statusPix.invoiceUrl && !normalizeSignupPix(current).invoiceUrl) {
+            next.invoiceUrl = statusPix.invoiceUrl;
+          }
+          return next;
+        });
         if (response.data?.paid) {
           setPaymentConfirmed(true);
-          setResult((current) => (current ? { ...current, storeActive: Boolean(response.data.storeActive) } : current));
         }
       } catch {
         // Mantém a tela de Pix; webhook/reconciliação continua no servidor.
@@ -346,7 +394,13 @@ export default function SignupPage() {
     try {
       const response = await axios.post('/api/public/billing/signup', payload);
       setPaymentConfirmed(false);
-      setResult(response.data);
+      const pix = normalizeSignupPix(response.data);
+      setResult({
+        ...response.data,
+        pixPayload: pix.pixPayload || response.data?.pixPayload || '',
+        pixEncodedImage: pix.pixEncodedImage || response.data?.pixEncodedImage || '',
+        invoiceUrl: pix.invoiceUrl || response.data?.invoiceUrl || '',
+      });
       setForm((current) => ({ ...current, number: '', ccv: '' }));
     } catch (requestError) {
       const message = requestError?.response?.data?.message || 'Não foi possível iniciar a contratação.';
@@ -357,9 +411,9 @@ export default function SignupPage() {
   }
 
   async function copyPix() {
-    if (!result?.pixPayload) return;
+    if (!pixFields.pixPayload) return;
     try {
-      await navigator.clipboard.writeText(result.pixPayload);
+      await navigator.clipboard.writeText(pixFields.pixPayload);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -441,7 +495,7 @@ export default function SignupPage() {
 
           <section className="ct-checkout" aria-labelledby="ct-checkout-title">
             <div className="ct-card">
-              <CheckoutSteps phase={result ? 'result' : 'form'} />
+              <CheckoutSteps phase={result ? 'result' : 'form'} paymentConfirmed={paymentConfirmed} />
 
               {result ? (
                 <div className="ct-result">
@@ -472,18 +526,44 @@ export default function SignupPage() {
                         Escaneie o QR ou copie o código no app do banco. Fique nesta página até a confirmação.
                         O convite e o login só ficam disponíveis depois do pagamento.
                       </p>
-                      {result.pixPayload ? (
+                      {showPixBox ? (
                         <div className="ct-pix-box">
-                          <QRCodeSVG value={result.pixPayload} size={180} level="M" includeMargin />
-                          <p className="ct-pix-code" data-testid="pix-payload">{result.pixPayload}</p>
-                          <button type="button" className="ct-copy-btn" onClick={copyPix}>
-                            {copied ? 'Código copiado' : 'Copiar código Pix'}
-                          </button>
+                          {pixQrSrc && !qrImageFailed ? (
+                            <img
+                              className="ct-pix-qr-img"
+                              src={pixQrSrc}
+                              alt="QR Code do Pix"
+                              width={180}
+                              height={180}
+                              onError={() => setQrImageFailed(true)}
+                            />
+                          ) : null}
+                          {showGeneratedQr ? (
+                            <QRCodeSVG
+                              value={pixFields.pixPayload}
+                              size={180}
+                              level="M"
+                              includeMargin
+                              title="QR Code do Pix"
+                            />
+                          ) : null}
+                          {pixFields.pixPayload ? (
+                            <>
+                              <p className="ct-pix-code" data-testid="pix-payload">{pixFields.pixPayload}</p>
+                              <button type="button" className="ct-copy-btn" onClick={copyPix}>
+                                {copied ? 'Código copiado' : 'Copiar código Pix'}
+                              </button>
+                            </>
+                          ) : null}
                         </div>
-                      ) : null}
+                      ) : (
+                        <p className="ct-alert" role="status" data-testid="pix-missing">
+                          Ainda não recebemos o código Pix. Aguarde alguns segundos ou tente novamente.
+                        </p>
+                      )}
                       {showPublicInvoice ? (
                         <p>
-                          <a className="ct-invoice-link" href={result.invoiceUrl} target="_blank" rel="noreferrer">
+                          <a className="ct-invoice-link" href={pixFields.invoiceUrl} target="_blank" rel="noreferrer">
                             Abrir fatura pública
                             <ArrowRight size={16} aria-hidden="true" />
                           </a>

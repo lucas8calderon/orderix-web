@@ -1,7 +1,11 @@
 ﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
-import SignupPage, { isPublicAsaasInvoiceUrl } from './SignupPage';
+import SignupPage, {
+  isPublicAsaasInvoiceUrl,
+  normalizeSignupPix,
+  pixQrImageSrc,
+} from './SignupPage';
 
 jest.mock('axios', () => ({
   post: jest.fn(),
@@ -77,6 +81,55 @@ test('public Asaas invoice urls are recognized; portal login is rejected', () =>
   expect(isPublicAsaasInvoiceUrl('https://www.asaas.com/i/abc')).toBe(true);
   expect(isPublicAsaasInvoiceUrl('https://www.asaas.com/login/auth')).toBe(false);
   expect(isPublicAsaasInvoiceUrl('https://evil.example/i/1')).toBe(false);
+});
+
+test('normalizeSignupPix accepts payload aliases and builds qr image src', () => {
+  expect(normalizeSignupPix({ payload: '000201', encodedImage: 'abc' })).toEqual({
+    pixPayload: '000201',
+    pixEncodedImage: 'abc',
+    invoiceUrl: '',
+  });
+  expect(pixQrImageSrc('abc')).toBe('data:image/png;base64,abc');
+  expect(pixQrImageSrc('data:image/png;base64,xyz')).toBe('data:image/png;base64,xyz');
+});
+
+test('generates QR from pix payload when Asaas omits encodedImage', async () => {
+  axios.post.mockResolvedValue({
+    data: {
+      signupId: 55,
+      pixPayload: '0002012655',
+      storeActive: false,
+    },
+  });
+  setup('/contratar?plan=PLAN_TEST');
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Lucas' } });
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  expect(await screen.findByTestId('pix-payload')).toHaveTextContent('0002012655');
+  expect(screen.getByRole('button', { name: /Copiar código Pix/i })).toBeInTheDocument();
+  expect(document.querySelector('svg')).toBeTruthy();
+});
+
+test('status poll fills missing pix payload', async () => {
+  axios.post.mockResolvedValue({
+    data: { signupId: 56, storeActive: false },
+  });
+  axios.get.mockResolvedValue({
+    data: {
+      signupId: 56,
+      paid: false,
+      storeActive: false,
+      pixPayload: '000201STATUS',
+    },
+  });
+  setup('/contratar?plan=PLAN_TEST');
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Lucas' } });
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  expect(await screen.findByTestId('pix-missing')).toBeInTheDocument();
+  expect(await screen.findByTestId('pix-payload')).toHaveTextContent('000201STATUS');
 });
 
 test('card without postal code stays on the form', () => {

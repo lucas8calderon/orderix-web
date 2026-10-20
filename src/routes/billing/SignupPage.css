@@ -931,9 +931,19 @@
 }
 
 .ct-pix-box canvas,
-.ct-pix-box svg {
+.ct-pix-box svg,
+.ct-pix-qr-img {
   max-width: 180px;
   height: auto;
+}
+
+.ct-pix-qr-img {
+  display: block;
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
 }
 
 .ct-pix-code {
