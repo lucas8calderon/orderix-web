@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getToken, clearSession, getCurrentUser, saveSession } from './session';
 import { PATHS, isPartnerAreaPath, isPublicPath, normalizePath } from './accessControl';
 import { clearDeliveryCustomerSession, getDeliveryCustomerToken } from './deliveryCustomerSession';
+import { publishSubscriptionNotice } from './subscriptionNotice';
 
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
 
@@ -50,8 +51,33 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
+function isStoreApi(config) {
+  const url = String(config?.url || '');
+  return url.startsWith('/api/') && !url.includes('/api/public/');
+}
+
+function subscriptionDenialKind(message) {
+  if (typeof message !== 'string') {
+    return null;
+  }
+  const text = message.toLowerCase();
+  if (text.includes('mensalidade')) {
+    return 'limited';
+  }
+  if (text.includes('assinatura')) {
+    return 'blocked';
+  }
+  return null;
+}
+
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (isStoreApi(response?.config)) {
+      const header = response.headers?.['x-subscription-notice'];
+      publishSubscriptionNotice(typeof header === 'string' ? header : '');
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       if (isPublicPartnerApi(error.config || {}) || isPublicBillingApi(error.config || {})) {
@@ -70,19 +96,17 @@ axios.interceptors.response.use(
         }
       }
     }
-    if (
-      error.response
-      && error.response.status === 403
-      && typeof error.response.data?.message === 'string'
-      && error.response.data.message.toLowerCase().includes('assinatura')
-    ) {
+    const denial = error.response?.status === 403
+      ? subscriptionDenialKind(error.response.data?.message)
+      : null;
+    if (denial) {
       const token = getToken();
       const user = getCurrentUser();
       if (token && user) {
         saveSession(token, {
           ...user,
           subscriptionActive: false,
-          subscriptionStatus: user.subscriptionStatus || 'BLOCKED',
+          subscriptionStatus: denial === 'limited' ? 'BLOCKED' : (user.subscriptionStatus || 'BLOCKED'),
         });
       }
       if (typeof window !== 'undefined' && window.location.pathname !== PATHS.SUBSCRIPTION_BLOCKED) {

@@ -70,8 +70,16 @@ test('grace and the eighth day explain the access without offering boleto', asyn
   axios.get.mockResolvedValue({
     data: { ...ACTIVE, access: 'GRACE', billingType: null, status: 'OVERDUE' },
   });
-  render(<SubscriptionRenewalCard />);
+  const grace = render(<SubscriptionRenewalCard />);
   expect(await screen.findByText(/até 7 dias/i)).toBeInTheDocument();
+  expect(screen.queryByText(/Boleto/)).not.toBeInTheDocument();
+  grace.unmount();
+
+  axios.get.mockResolvedValue({
+    data: { ...ACTIVE, access: 'LIMITED', billingType: null, status: 'BLOCKED' },
+  });
+  render(<SubscriptionRenewalCard />);
+  expect(await screen.findByText(/a partir do 8º dia/i)).toBeInTheDocument();
   expect(screen.queryByText(/Boleto/)).not.toBeInTheDocument();
 });
 
