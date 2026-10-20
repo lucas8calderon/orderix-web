@@ -40,8 +40,25 @@ export async function createAdminPartnerPayoutBatch(id) {
   return response.data;
 }
 
+export async function listAdminPartnerPayoutBatches(id, { page = 0, size = 20 } = {}) {
+  const response = await axios.get(`${PARTNERS_URL}/${id}/payout-batches`, { params: { page, size } });
+  return response.data;
+}
+
+export async function getAdminPayoutTransferConfig() {
+  const response = await axios.get(`${PARTNERS_URL}/payout-transfers/config`);
+  return response.data;
+}
+
 export async function approveAdminPayoutBatch(batchId) {
   const response = await axios.post(`${PARTNERS_URL}/payout-batches/${batchId}/approve`);
+  return response.data;
+}
+
+export async function rejectAdminPayoutBatch(batchId, { notes } = {}) {
+  const response = await axios.post(`${PARTNERS_URL}/payout-batches/${batchId}/reject`, {
+    notes: notes?.trim() || undefined,
+  });
   return response.data;
 }
 

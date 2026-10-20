@@ -43,8 +43,13 @@ import {
   listAdminPartnerPayouts,
   listAdminPartnerReferrals,
   listAdminPartners,
+  approveAdminPayoutBatch,
   createAdminPartnerPayoutBatch,
+  getAdminPayoutTransferConfig,
+  listAdminPartnerPayoutBatches,
+  rejectAdminPayoutBatch,
   reviewAdminPartnerPayoutData,
+  transferAdminPayoutBatch,
   updateAdminPartnerStatus,
 } from '../service/partnersAdminService';
 
@@ -116,6 +121,23 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [recovery, setRecovery] = useState(null);
+  const [batches, setBatches] = useState([]);
+  const [transferConfig, setTransferConfig] = useState({ transfersEnabled: false, flag: 'asaas.partner-pix-transfer.enabled' });
+  const [confirmAction, setConfirmAction] = useState(null);
+
+  const reloadBatches = useCallback(async () => {
+    if (!partnerId) return;
+    try {
+      const [page, config] = await Promise.all([
+        listAdminPartnerPayoutBatches(partnerId, { page: 0, size: 20 }),
+        getAdminPayoutTransferConfig().catch(() => ({ transfersEnabled: false, flag: 'asaas.partner-pix-transfer.enabled' })),
+      ]);
+      setBatches(page?.items || []);
+      setTransferConfig(config || { transfersEnabled: false });
+    } catch {
+      setBatches([]);
+    }
+  }, [partnerId]);
 
   useEffect(() => {
     if (!partnerId) return undefined;
@@ -125,17 +147,44 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
     setTab('summary');
     setReason('');
     setRecovery(null);
+    setBatches([]);
+    setConfirmAction(null);
     setLoading(true);
     getAdminPartner(partnerId)
       .then((data) => { if (active) setPartner(data); })
       .catch((failure) => { if (active) setError(getApiErrorMessage(failure, 'Não foi possível carregar o parceiro.')); })
       .finally(() => { if (active) setLoading(false); });
+    reloadBatches();
     return () => { active = false; };
-  }, [partnerId]);
+  }, [partnerId, reloadBatches]);
 
   const fetchReferrals = useCallback((params) => listAdminPartnerReferrals(partnerId, params), [partnerId]);
   const fetchCommissions = useCallback((params) => listAdminPartnerCommissions(partnerId, params), [partnerId]);
   const fetchPayouts = useCallback((params) => listAdminPartnerPayouts(partnerId, params), [partnerId]);
+
+  const runConfirmedBatchAction = async () => {
+    if (!confirmAction || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      if (confirmAction.type === 'approve') {
+        await approveAdminPayoutBatch(confirmAction.batchId);
+        notify(`Lote #${confirmAction.batchId} aprovado.`);
+      } else if (confirmAction.type === 'reject') {
+        await rejectAdminPayoutBatch(confirmAction.batchId, { notes: reason || 'Lote rejeitado na revisão administrativa.' });
+        notify(`Lote #${confirmAction.batchId} rejeitado.`);
+      } else if (confirmAction.type === 'transfer') {
+        const result = await transferAdminPayoutBatch(confirmAction.batchId);
+        notify(`Transferência do lote #${confirmAction.batchId}: ${result.status}.`);
+      }
+      setConfirmAction(null);
+      await reloadBatches();
+    } catch (failure) {
+      setError(getApiErrorMessage(failure, 'Não foi possível concluir a ação no lote.'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const changeStatus = async (status) => {
     if (busy || !partner) return;
@@ -276,7 +325,8 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
                         setError('');
                         try {
                           const batch = await createAdminPartnerPayoutBatch(partner.id);
-                          notify(`Lote #${batch.id} criado (${batch.status}). Aprove e transfira com flag desligada em prod.`);
+                          notify(`Lote #${batch.id} criado (${batch.status}).`);
+                          await reloadBatches();
                         } catch (failure) {
                           setError(getApiErrorMessage(failure, 'Não foi possível criar o lote.'));
                         } finally {
@@ -292,9 +342,68 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
                       {partner.payoutDataNotes}
                     </Typography>
                   )}
-                  <Alert severity="info" sx={{ mt: 1.5 }}>
-                    Transferência Pix real exige aprovação do lote + flag `asaas.partner-pix-transfer.enabled`. Sem auto-agendamento em produção.
+                  <Alert severity={transferConfig.transfersEnabled ? 'warning' : 'info'} sx={{ mt: 1.5 }}>
+                    Transferências Pix: {transferConfig.transfersEnabled ? 'LIGADAS' : 'DESLIGADAS'}
+                    {' '}(`{transferConfig.flag || 'asaas.partner-pix-transfer.enabled'}`).
+                    Sem auto-agendamento em produção.
                   </Alert>
+
+                  {batches.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Lotes Pix</Typography>
+                      <Stack spacing={1.5}>
+                        {batches.map((batch) => (
+                          <Paper key={batch.id} variant="outlined" sx={{ p: 1.5 }}>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1}>
+                              <Box>
+                                <Typography fontWeight={700}>
+                                  Lote #{batch.id} · {formatCurrency(batch.amount)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  {batch.commissionCount ?? 0} comissão(ões) · {batch.status}
+                                  {batch.failureReason ? ` · ${batch.failureReason}` : ''}
+                                </Typography>
+                              </Box>
+                              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                {batch.status === 'PENDING_APPROVAL' && (
+                                  <>
+                                    <Button
+                                      size="small"
+                                      variant="contained"
+                                      disabled={busy}
+                                      onClick={() => setConfirmAction({ type: 'approve', batchId: batch.id })}
+                                    >
+                                      Aprovar
+                                    </Button>
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      color="inherit"
+                                      disabled={busy}
+                                      onClick={() => setConfirmAction({ type: 'reject', batchId: batch.id })}
+                                    >
+                                      Rejeitar
+                                    </Button>
+                                  </>
+                                )}
+                                {(batch.status === 'APPROVED' || batch.status === 'FAILED' || batch.status === 'TRANSFER_PENDING') && (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="warning"
+                                    disabled={busy}
+                                    onClick={() => setConfirmAction({ type: 'transfer', batchId: batch.id })}
+                                  >
+                                    {transferConfig.transfersEnabled ? 'Executar Pix' : 'Tentar transferir'}
+                                  </Button>
+                                )}
+                              </Stack>
+                            </Stack>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
                 </Box>
 
                 <Box>
@@ -428,6 +537,49 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
       <DialogActions sx={{ px: 3, py: 1.5 }}>
         <Button onClick={onClose}>Fechar</Button>
       </DialogActions>
+
+      <Dialog
+        open={Boolean(confirmAction)}
+        onClose={() => !busy && setConfirmAction(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          {confirmAction?.type === 'approve' && `Aprovar lote #${confirmAction.batchId}?`}
+          {confirmAction?.type === 'reject' && `Rejeitar lote #${confirmAction.batchId}?`}
+          {confirmAction?.type === 'transfer' && `Executar transferência do lote #${confirmAction.batchId}?`}
+        </DialogTitle>
+        <DialogContent>
+          {confirmAction?.type === 'approve' && (
+            <Typography variant="body2">
+              As comissões permanecem RESERVED até a transferência Pix ser confirmada (TRANSFER_DONE).
+            </Typography>
+          )}
+          {confirmAction?.type === 'reject' && (
+            <Typography variant="body2">
+              As comissões do lote voltam para AVAILABLE. Use o campo Motivo acima se quiser registrar a razão.
+            </Typography>
+          )}
+          {confirmAction?.type === 'transfer' && (
+            <Alert severity={transferConfig.transfersEnabled ? 'warning' : 'info'} sx={{ mt: 0.5 }}>
+              {transferConfig.transfersEnabled
+                ? 'A flag de transferência está LIGADA neste ambiente. Confirme que deseja movimentar saldo Pix real.'
+                : 'A flag está DESLIGADA: a API recusará Pix real e apenas reportará o estado. Não há transferência Asaas.'}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmAction(null)} disabled={busy}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color={confirmAction?.type === 'transfer' ? 'warning' : 'primary'}
+            disabled={busy}
+            onClick={runConfirmedBatchAction}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

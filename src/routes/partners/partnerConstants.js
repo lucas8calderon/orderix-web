@@ -11,16 +11,26 @@ export const REFERRAL_STATUS_META = {
 export const COMMISSION_STATUS_META = {
   ESTIMATED: { label: 'Prevista', tone: 'info' },
   PENDING: { label: 'Pendente', tone: 'warning' },
+  AVAILABLE: { label: 'Disponível', tone: 'info' },
+  RESERVED: { label: 'Reservada', tone: 'warning' },
   APPROVED: { label: 'Aprovada', tone: 'info' },
+  PROCESSING: { label: 'Em processamento', tone: 'warning' },
   PAID: { label: 'Paga', tone: 'success' },
   CANCELED: { label: 'Cancelada', tone: 'danger' },
+  REVERSED: { label: 'Estornada', tone: 'danger' },
+  FAILED: { label: 'Falhou', tone: 'danger' },
 };
 
 export const PAYOUT_STATUS_META = {
   SCHEDULED: { label: 'Agendado', tone: 'info' },
+  DRAFT: { label: 'Rascunho', tone: 'neutral' },
+  PENDING_APPROVAL: { label: 'Aguardando aprovação', tone: 'warning' },
+  APPROVED: { label: 'Aprovado', tone: 'info' },
+  TRANSFER_PENDING: { label: 'Transferência pendente', tone: 'warning' },
   PROCESSING: { label: 'Em processamento', tone: 'warning' },
   PAID: { label: 'Pago', tone: 'success' },
   FAILED: { label: 'Falhou', tone: 'danger' },
+  REJECTED: { label: 'Rejeitado', tone: 'danger' },
   CANCELED: { label: 'Cancelado', tone: 'neutral' },
 };
 
