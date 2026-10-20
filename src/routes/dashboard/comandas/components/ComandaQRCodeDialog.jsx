@@ -5,7 +5,6 @@ import {
   DialogTitle,
   Typography,
   Box,
-  Button,
   IconButton,
   CircularProgress,
 } from "@mui/material";
@@ -13,6 +12,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Download, X } from "lucide-react";
 import axios from "axios";
 import { useIsMobile, useDialogResponsiveProps } from "../../../../commons/hooks/useResponsive";
+import { QrDownloadControls } from "../../../../commons/qr/QrDownloadControls";
 
 export function ComandaQRCodeDialog({ open, onClose, comanda }) {
   const [loading, setLoading] = useState(false);
@@ -50,24 +50,6 @@ export function ComandaQRCodeDialog({ open, onClose, comanda }) {
     };
   }, [open, comanda?.id, comanda?.number]);
 
-  const handleDownload = async () => {
-    if (!payload) return;
-    try {
-      const QRCode = await import("qrcode");
-      const url = await QRCode.toDataURL(payload, {
-        width: 512,
-        margin: 2,
-        color: { dark: "#000000", light: "#ffffff" },
-      });
-      const link = document.createElement("a");
-      link.download = `comanda-${comandaNumber || comanda?.number}.png`;
-      link.href = url;
-      link.click();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" {...dialogProps}>
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -93,9 +75,14 @@ export function ComandaQRCodeDialog({ open, onClose, comanda }) {
               <Typography variant="caption" sx={{ wordBreak: "break-all" }}>
                 {payload}
               </Typography>
-              <Button variant="contained" startIcon={<Download size={16} />} onClick={handleDownload}>
-                Baixar PNG
-              </Button>
+              <QrDownloadControls
+                value={payload}
+                fileName={`comanda-${comandaNumber || comanda?.number}`}
+                buttonLabel="Baixar PNG"
+                buttonVariant="contained"
+                fullWidth={isMobile}
+                startIcon={<Download size={16} />}
+              />
             </>
           )}
         </Box>

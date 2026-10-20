@@ -12,10 +12,10 @@ import {
 import {
   QrCode2Outlined as QrCodeIcon,
   ContentCopy as CopyIcon,
-  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { QRCodeSVG } from 'qrcode.react';
 import { buildPublicMenuUrl } from '../../../../services/publicMenuService';
+import { QrDownloadControls } from '../../../../commons/qr/QrDownloadControls';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
 export const DigitalMenuCard = React.memo(function DigitalMenuCard({
@@ -27,7 +27,6 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
   saving,
 }) {
   const [copyHint, setCopyHint] = useState('');
-  const [downloading, setDownloading] = useState(false);
 
   const publicUrl = useMemo(
     () => buildPublicMenuUrl(settings?.slug),
@@ -45,31 +44,6 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
       onToast?.('Não foi possível copiar o link do cardápio.', 'error');
     }
     setTimeout(() => setCopyHint(''), 2000);
-  };
-
-  const handleDownload = async () => {
-    if (!publicUrl) return;
-    setDownloading(true);
-    try {
-      const QRCode = await import('qrcode');
-      const dataUrl = await QRCode.toDataURL(publicUrl, {
-        width: 512,
-        margin: 2,
-        color: { dark: '#000000', light: '#ffffff' },
-      });
-      const link = document.createElement('a');
-      link.download = `cardapio-${settings.slug || 'loja'}.png`;
-      link.href = dataUrl;
-      link.click();
-      onToast?.('QR Code baixado com sucesso.', 'success');
-    } catch (error) {
-      onToast?.(
-        error?.message || 'Não foi possível gerar o QR Code.',
-        'error'
-      );
-    } finally {
-      setDownloading(false);
-    }
   };
 
   return (
@@ -146,17 +120,17 @@ export const DigitalMenuCard = React.memo(function DigitalMenuCard({
           </Box>
           <Box className="digital-menu-qr__meta">
             <Typography variant="body2" color="text.secondary">
-              Imprima ou compartilhe o QR Code nas mesas e no balcão. O link usa o slug da loja.
+              Imprima ou compartilhe o QR Code nas mesas e no balcão. Escolha o tamanho ao baixar.
             </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              onClick={handleDownload}
-              disabled={downloading}
-              sx={{ mt: 1.5, minHeight: 44 }}
-            >
-              {downloading ? 'Baixando...' : 'Baixar QR Code'}
-            </Button>
+            <QrDownloadControls
+              value={publicUrl}
+              fileName={`cardapio-${settings.slug || 'loja'}`}
+              level="M"
+              onSuccess={() => onToast?.('QR Code baixado com sucesso.', 'success')}
+              onError={(error) =>
+                onToast?.(error?.message || 'Não foi possível gerar o QR Code.', 'error')
+              }
+            />
           </Box>
         </Box>
       ) : null}

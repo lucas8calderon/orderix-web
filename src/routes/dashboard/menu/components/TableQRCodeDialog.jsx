@@ -1,56 +1,29 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   Typography,
   Box,
-  Button,
   IconButton,
 } from "@mui/material";
 import { QRCodeSVG } from "qrcode.react";
 import { Download, X } from "lucide-react";
 import { useIsMobile, useDialogResponsiveProps } from "../../../../commons/hooks/useResponsive";
+import { QrDownloadControls } from "../../../../commons/qr/QrDownloadControls";
 
 export function TableQRCodeDialog({ open, onClose, table }) {
-  const [downloading, setDownloading] = useState(false);
   const isMobile = useIsMobile();
   const dialogProps = useDialogResponsiveProps({
     fullScreenOnMobile: false,
   });
   const qrSize = isMobile ? 200 : 256;
 
-  // Gerar dados da mesa para o QR Code (JSON com id e número da mesa)
   const tableData = table ? JSON.stringify({
     tableId: table.id,
     tableNumber: table.number,
     capacity: table.capacity
   }) : "";
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      const QRCode = await import('qrcode');
-      const url = await QRCode.toDataURL(tableData, {
-        width: 512,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      });
-      
-      // Criar link de download
-      const link = document.createElement('a');
-      link.download = `mesa-${table.number}.png`;
-      link.href = url;
-      link.click();
-    } catch (error) {
-      console.error('Erro ao gerar QR Code:', error);
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   return (
     <Dialog 
@@ -98,27 +71,24 @@ export function TableQRCodeDialog({ open, onClose, table }) {
             Mesa {table?.number} - Capacidade: {table?.capacity} {table?.capacity === 1 ? 'pessoa' : 'pessoas'}
           </Typography>
 
-          <Button
-            variant="contained"
-            startIcon={<Download />}
-            onClick={handleDownload}
-            disabled={downloading}
-            sx={{
+          <QrDownloadControls
+            value={tableData}
+            fileName={`mesa-${table?.number}`}
+            level="H"
+            buttonVariant="contained"
+            fullWidth={isMobile}
+            startIcon={<Download size={18} />}
+            buttonSx={{
               backgroundColor: "var(--color-primary)",
               color: "var(--color-white)",
-              minHeight: 44,
-              width: { xs: '100%', sm: 'auto' },
               ":hover": {
                 backgroundColor: "var(--color-secondary)",
                 color: "var(--color-black)",
               },
             }}
-          >
-            {downloading ? 'Baixando...' : 'Baixar QR Code'}
-          </Button>
+          />
         </Box>
       </DialogContent>
     </Dialog>
   );
 }
-
