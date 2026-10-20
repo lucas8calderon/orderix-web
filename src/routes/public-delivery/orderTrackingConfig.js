@@ -170,6 +170,18 @@ export function getCurrentStatusCard(order) {
     };
   }
 
+  if (status === TRACKING_STATUS.WAITING_PAYMENT) {
+    return {
+      status,
+      eyebrow: 'STATUS ATUAL',
+      title: 'Aguardando pagamento',
+      description: 'O pagamento ainda não foi confirmado. O estabelecimento só recebe o pedido depois disso.',
+      tone: 'default',
+      icon: 'received',
+      emphasize: false,
+    };
+  }
+
   const map = {
     [TRACKING_STATUS.RECEIVED]: {
       title: 'Pedido recebido',

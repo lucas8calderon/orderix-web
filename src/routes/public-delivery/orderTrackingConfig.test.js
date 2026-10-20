@@ -83,6 +83,14 @@ describe('orderTrackingConfig', () => {
     });
   });
 
+  it('WAITING_PAYMENT permanece aguardando pagamento', () => {
+    const card = getCurrentStatusCard({ fulfillment: 'DELIVERY', trackingStatus: 'WAITING_PAYMENT' });
+    expect(card.title).toBe('Aguardando pagamento');
+    expect(card.description).toMatch(/pagamento ainda não foi confirmado/i);
+    const steps = getTrackingSteps({ fulfillment: 'DELIVERY', trackingStatus: 'WAITING_PAYMENT' });
+    expect(steps.every((step) => step.state === STEP_STATE.PENDING)).toBe(true);
+  });
+
   it('CANCELLED não monta timeline e usa card específico', () => {
     const order = { fulfillment: 'PICKUP', trackingStatus: 'CANCELLED' };
     expect(getTrackingSteps(order)).toEqual([]);

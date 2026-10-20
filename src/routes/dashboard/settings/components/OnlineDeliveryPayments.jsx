@@ -265,7 +265,7 @@ export function OnlineDeliveryPayments({
             fullWidth
             required
             placeholder="$sua-loja"
-            helperText="Nome de usuário no app InfinitePay. Pode digitar com ou sem $."
+            helperText="Nome de usuário no app InfinitePay. Pode digitar com ou sem $. No app, ative o Checkout Integrado em Vendas, Checkout e Configurações."
           />
           <Typography className="setting-hint" variant="body2">
             Status da integração: {INFINITEPAY_STATUS_LABEL[settings.infinitePayIntegrationStatus] || INFINITEPAY_STATUS_LABEL.NOT_CONFIGURED}.
