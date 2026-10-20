@@ -35,6 +35,12 @@ export async function reviewAdminPartnerPayoutData(id, { status, notes }) {
   return response.data;
 }
 
+/** Consulta titularidade Pix no Asaas (sob demanda; rate-limited). */
+export async function lookupAdminPartnerPixKey(id) {
+  const response = await axios.get(`${PARTNERS_URL}/${id}/payout-data/pix-lookup`);
+  return response.data;
+}
+
 export async function createAdminPartnerPayoutBatch(id) {
   const response = await axios.post(`${PARTNERS_URL}/${id}/payout-batches`);
   return response.data;

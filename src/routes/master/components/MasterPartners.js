@@ -48,6 +48,7 @@ import {
   getAdminPayoutTransferConfig,
   listAdminPartnerPayoutBatches,
   rejectAdminPayoutBatch,
+  lookupAdminPartnerPixKey,
   reviewAdminPartnerPayoutData,
   transferAdminPayoutBatch,
   updateAdminPartnerStatus,
@@ -124,6 +125,8 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
   const [batches, setBatches] = useState([]);
   const [transferConfig, setTransferConfig] = useState({ transfersEnabled: false, flag: 'asaas.partner-pix-transfer.enabled' });
   const [confirmAction, setConfirmAction] = useState(null);
+  const [pixLookup, setPixLookup] = useState(null);
+  const [pixLookupBusy, setPixLookupBusy] = useState(false);
 
   const reloadBatches = useCallback(async () => {
     if (!partnerId) return;
@@ -149,6 +152,7 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
     setRecovery(null);
     setBatches([]);
     setConfirmAction(null);
+    setPixLookup(null);
     setLoading(true);
     getAdminPartner(partnerId)
       .then((data) => { if (active) setPartner(data); })
@@ -277,6 +281,25 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>Dados de recebimento (Pix)</Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
                     <Button
+                      variant="outlined"
+                      disabled={busy || pixLookupBusy || !partner.pixKeyType}
+                      onClick={async () => {
+                        setPixLookupBusy(true);
+                        setError('');
+                        try {
+                          setPixLookup(await lookupAdminPartnerPixKey(partner.id));
+                          notify('Consulta de titularidade Pix concluída.');
+                        } catch (failure) {
+                          setPixLookup(null);
+                          setError(getApiErrorMessage(failure, 'Não foi possível consultar a titularidade Pix no Asaas.'));
+                        } finally {
+                          setPixLookupBusy(false);
+                        }
+                      }}
+                    >
+                      {pixLookupBusy ? 'Consultando…' : 'Consultar titularidade'}
+                    </Button>
+                    <Button
                       variant="contained"
                       disabled={busy || partner.payoutDataStatus === 'READY'}
                       onClick={async () => {
@@ -341,6 +364,31 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                       {partner.payoutDataNotes}
                     </Typography>
+                  )}
+                  {pixLookup && (
+                    <Alert
+                      severity={pixLookup.documentMatches ? (pixLookup.nameMatches ? 'success' : 'warning') : 'warning'}
+                      sx={{ mt: 1.5 }}
+                    >
+                      <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
+                        Titularidade Asaas
+                      </Typography>
+                      <Typography variant="body2">
+                        Asaas: {pixLookup.asaasHolderName || '—'} · doc {pixLookup.asaasDocument || '—'}
+                      </Typography>
+                      <Typography variant="body2">
+                        Cadastro: {pixLookup.registeredHolderName || '—'} · doc {pixLookup.registeredDocument || '—'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        Documento {pixLookup.documentMatches ? 'confere' : 'diverge'} · nome{' '}
+                        {pixLookup.nameMatches ? 'compatível' : 'diverge'}.
+                      </Typography>
+                      {pixLookup.guidance && (
+                        <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                          {pixLookup.guidance}
+                        </Typography>
+                      )}
+                    </Alert>
                   )}
                   <Alert severity={transferConfig.transfersEnabled ? 'warning' : 'info'} sx={{ mt: 1.5 }}>
                     Transferências Pix: {transferConfig.transfersEnabled ? 'LIGADAS' : 'DESLIGADAS'}
