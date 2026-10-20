@@ -21,6 +21,10 @@ import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsiv
 import { formatCurrency } from '../../../../services/accessControl';
 import { getAllProducts } from '../../menu/product/service/productService';
 import { createFloorOrder, resolveOperatorWaiterId } from '../service/accountService';
+import {
+  addCustomerOrderItems,
+  createCustomerOrder,
+} from '../service/customerOrderService';
 import { buildFloorOrderBody, defaultCustomerName, isSellableProduct } from '../utils/floorOrder';
 import { activeVariations, formatProductPrice } from '../../menu/utils/productVariations';
 
@@ -32,6 +36,10 @@ function newKey() {
 }
 
 function destinationLabel(target) {
+  if (target?.kind === 'customer') {
+    if (target.customerName) return `Cliente ${target.customerName}`;
+    return 'Pedido por Cliente';
+  }
   if (target?.kind === 'counter') return 'Balcão';
   if (target?.kind === 'comanda') return `Comanda ${target.number ?? ''}`;
   return `Mesa ${target?.number ?? ''}`;
@@ -115,7 +123,9 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
     setSaving(true);
     setError('');
     try {
-      const waiterId = target?.kind === 'counter' ? null : await resolveOperatorWaiterId();
+      const waiterId = target?.kind === 'counter' || target?.kind === 'customer'
+        ? null
+        : await resolveOperatorWaiterId();
       const lines = products.flatMap((product) => {
         const variations = activeVariations(product);
         if (!variations.length) {
@@ -145,7 +155,17 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
         setError(built.error);
         return;
       }
-      await createFloorOrder(built.tableId, built.body, newKey());
+      const key = newKey();
+      if (built.mode === 'customer-create') {
+        await createCustomerOrder(built.body, key);
+      } else if (built.mode === 'customer-items') {
+        await addCustomerOrderItems(built.orderId, {
+          products: built.body.products,
+          observation: built.body.observation,
+        }, key);
+      } else {
+        await createFloorOrder(built.tableId, built.body, key);
+      }
       onPlaced?.();
     } catch (err) {
       setError(err?.response?.data?.message || 'Não foi possível lançar o pedido.');

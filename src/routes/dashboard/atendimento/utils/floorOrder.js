@@ -1,6 +1,7 @@
 export const COUNTER_SENTINEL_ID = 999;
 
 export function defaultCustomerName(target) {
+  if (target?.kind === 'customer') return target.customerName || '';
   if (target?.kind === 'counter') return 'Balcão';
   if (target?.kind === 'comanda') return `Comanda ${target.number ?? ''}`.trim();
   return `Mesa ${target?.number ?? ''}`.trim();
@@ -70,10 +71,24 @@ export function buildFloorOrderBody({
     });
   }
 
+  const customer = target?.kind === 'customer';
   const counter = target?.kind === 'counter';
   const comanda = target?.kind === 'comanda';
-  if (!counter && !waiterId) {
+  if (!counter && !customer && !waiterId) {
     return { error: 'Este login não lança pedido em mesa ou comanda. Entre com o usuário de caixa.' };
+  }
+
+  if (customer) {
+    return {
+      mode: target?.id ? 'customer-items' : 'customer-create',
+      orderId: target?.id || null,
+      body: {
+        customerName: name,
+        customerIdentificationNote: String(target?.customerIdentificationNote || '').trim() || null,
+        observation: String(observation || '').trim() || null,
+        products,
+      },
+    };
   }
 
   const body = {
@@ -86,5 +101,5 @@ export function buildFloorOrderBody({
   if (comanda) {
     body.comandaId = target.id;
   }
-  return { body, tableId: body.tableId };
+  return { mode: 'floor', body, tableId: body.tableId };
 }

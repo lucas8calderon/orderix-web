@@ -252,7 +252,7 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
 
                             <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
                                 <Typography variant="body2" sx={{ color: 'var(--color-primary)' }} fontWeight="bold">
-                                    Mesa {order.tableNumber}
+                                    {order.locationLabel || order.tableNumber}
                                 </Typography>
                                 <Box display="flex" gap={1}>
                                     <Tooltip title="Ver detalhes">
@@ -728,10 +728,10 @@ export function Kitchen({ initialFilter }) {
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                        Mesa
+                                        Local
                                     </Typography>
                                     <Typography variant="body1" sx={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
-                                        Mesa {selectedOrder.tableNumber}
+                                        {selectedOrder.locationLabel || selectedOrder.tableNumber}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>

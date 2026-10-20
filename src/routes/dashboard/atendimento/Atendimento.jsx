@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Tables } from '../tables/Tables';
 import { Comandas } from '../comandas/Comandas';
 import { CounterSales } from './components/CounterSales';
+import { CustomerOrders } from './components/CustomerOrders';
 import { CheckoutDialog } from './components/CheckoutDialog';
 import { PlaceOrderDialog } from './components/PlaceOrderDialog';
 import './Atendimento.css';
@@ -41,7 +42,7 @@ export function Atendimento() {
   return (
     <Box className="atendimento-container">
       <Container maxWidth="xl" className="atendimento-content">
-        <PageHeader title="Atendimento" description="Lance produtos e feche a conta de mesas, comandas e balcão." actions={<Button
+        <PageHeader title="Atendimento" description="Lance produtos e feche a conta de mesas, comandas, balcão e pedidos por cliente." actions={<Button
             startIcon={<RefreshIcon className={isRefreshing ? 'atendimento-refresh-icon' : ''} />}
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -63,7 +64,18 @@ export function Atendimento() {
           >
             {isRefreshing ? 'Atualizando...' : 'Atualizar'}
           </Button>} />
-        <PageTabs id="service" label="Tipo de atendimento" value={tab} onChange={setTab} tabs={[{ value: 'tables', label: 'Mesas' }, { value: 'tabs', label: 'Comandas' }, { value: 'counter', label: 'Balcão' }]} />
+        <PageTabs
+          id="service"
+          label="Tipo de atendimento"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { value: 'tables', label: 'Mesas' },
+            { value: 'tabs', label: 'Comandas' },
+            { value: 'counter', label: 'Balcão' },
+            { value: 'customer', label: 'Cliente' },
+          ]}
+        />
 
         <div role="tabpanel" id="service-panel-tables" aria-labelledby="service-tab-tables" hidden={tab !== 'tables'} className="atendimento-section">
           <Tables onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
@@ -76,6 +88,10 @@ export function Atendimento() {
         <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section">
           <CounterSales onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
         </div>
+
+        <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">
+          <CustomerOrders onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
+        </div>
       </Container>
 
       <CheckoutDialog
@@ -84,7 +100,18 @@ export function Atendimento() {
         refreshKey={accountRefresh}
         onClose={() => setAccountTarget(null)}
         onPaid={handlePaid}
-        onAddProducts={(target) => setOrderTarget(target.kind === 'counter' ? { kind: 'counter' } : target)}
+        onAddProducts={(target) => setOrderTarget(
+          target.kind === 'counter'
+            ? { kind: 'counter' }
+            : target.kind === 'customer'
+              ? {
+                kind: 'customer',
+                id: target.id,
+                number: target.number,
+                customerName: target.customerName,
+              }
+              : target,
+        )}
       />
       <PlaceOrderDialog
         open={Boolean(orderTarget)}

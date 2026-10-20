@@ -4,6 +4,7 @@ export const SALES_CHANNELS = [
   { id: 'mesa', label: 'Mesas' },
   { id: 'comanda', label: 'Comandas' },
   { id: 'balcao', label: 'Balcão' },
+  { id: 'pedido_cliente', label: 'Pedido por Cliente' },
 ];
 
 export const SALES_CHANNEL_FILTERS = [
@@ -36,6 +37,9 @@ export function resolveSalesChannel(order) {
     return order.orderType;
   }
   const source = order.orderSource;
+  if (source === 'CUSTOMER_ORDER') {
+    return 'pedido_cliente';
+  }
   if (source === 'DELIVERY' || source === 'PICKUP') {
     return 'delivery';
   }
@@ -51,4 +55,38 @@ export function resolveSalesChannel(order) {
     return 'mesa';
   }
   return 'balcao';
+}
+
+export function formatOrderDisplayCode(order) {
+  if (order?.displayCode) {
+    return String(order.displayCode);
+  }
+  const id = Number(order?.id);
+  if (!Number.isFinite(id)) {
+    return '';
+  }
+  if (id >= 0 && id < 10000) {
+    return String(id).padStart(4, '0');
+  }
+  return String(id);
+}
+
+export function kitchenLocationLabel(order) {
+  const channel = resolveSalesChannel(order);
+  if (channel === 'pedido_cliente') {
+    const code = formatOrderDisplayCode(order);
+    return code ? `#${code}` : 'Cliente';
+  }
+  if (channel === 'delivery') {
+    return 'Delivery';
+  }
+  if (channel === 'comanda') {
+    const number = order?.comandaNumber ?? order?.tableNumber;
+    return number != null && number !== '' ? `Comanda ${number}` : 'Comanda';
+  }
+  if (channel === 'balcao') {
+    return order?.id != null ? `Pedido ${order.id}` : 'Balcão';
+  }
+  const number = order?.tableNumber;
+  return number != null && number !== '' ? `Mesa ${number}` : 'Mesa';
 }

@@ -33,6 +33,10 @@ import {
   paymentMethodsFromConfig,
 } from '../../../../services/paymentConfigService';
 import {
+  closeCustomerOrder,
+  getCustomerOrder,
+} from '../service/customerOrderService';
+import {
   closeComandaAccount,
   closeCounterOrder,
   closeTableAccount,
@@ -89,11 +93,18 @@ const confirmPaperSx = {
 
 export function getCloseAccountConfirmCopy(target, options = {}) {
   const isComanda = target?.kind === 'comanda';
-  const isCounter = target?.kind === 'counter';
+  const isCounter = target?.kind === 'counter' || target?.kind === 'customer';
+  const isCustomer = target?.kind === 'customer';
   const number = target?.number != null && String(target.number).trim() !== ''
     ? String(target.number).trim()
     : '';
-  const noun = isCounter ? 'pedido de balcão' : isComanda ? 'comanda' : 'mesa';
+  const noun = isCustomer
+    ? 'pedido por cliente'
+    : isCounter
+      ? 'pedido de balcão'
+      : isComanda
+        ? 'comanda'
+        : 'mesa';
   const subject = number ? `${noun} ${number}` : noun;
   const article = isCounter ? 'o' : 'a';
   const mode = options.paymentMode || 'MANUAL_CONFIRMATION';
@@ -108,7 +119,13 @@ export function getCloseAccountConfirmCopy(target, options = {}) {
   }
   if (mode === 'INTEGRATED_PAYMENT') {
     return {
-      title: isCounter ? 'Fechar pedido de balcão?' : isComanda ? 'Fechar comanda?' : 'Fechar mesa?',
+      title: isCustomer
+        ? 'Fechar pedido por cliente?'
+        : isCounter
+          ? 'Fechar pedido de balcão?'
+          : isComanda
+            ? 'Fechar comanda?'
+            : 'Fechar mesa?',
       description: `Só feche se o pagamento já foi aprovado no terminal. ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb} e os dados desta conta serão limpos.`,
     };
   }
@@ -148,8 +165,16 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     fullScreenOnMobile: false,
     paperSx: confirmPaperSx,
   });
-  const kindLabel = target?.kind === 'comanda' ? 'Comanda' : target?.kind === 'counter' ? 'Pedido' : 'Mesa';
-  const title = target ? `${kindLabel} ${target.number ?? ''}` : '';
+  const kindLabel = target?.kind === 'comanda'
+    ? 'Comanda'
+    : target?.kind === 'customer'
+      ? `#${target.number ?? ''} — ${target.customerName || 'Cliente'}`
+      : target?.kind === 'counter'
+        ? 'Pedido'
+        : 'Mesa';
+  const title = target?.kind === 'customer'
+    ? kindLabel
+    : (target ? `${kindLabel} ${target.number ?? ''}` : '');
 
   useEffect(() => {
     if (!open || !target?.id) {
@@ -168,11 +193,25 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     const request =
       target.kind === 'comanda'
         ? getComandaAccount(target.id)
-        : getTableAccount(target.kind === 'counter' ? 999 : target.id);
+        : target.kind === 'customer'
+          ? getCustomerOrder(target.id)
+          : getTableAccount(target.kind === 'counter' ? 999 : target.id);
 
     request
       .then((response) => {
         if (cancelled) return;
+        if (target.kind === 'customer') {
+          const order = response.data || {};
+          const closed = String(order.status || '').toUpperCase() === 'CLOSED';
+          const data = { orders: closed ? [] : [order], groupOrderId: null, status: order.status };
+          if (closed || !order.id) {
+            setEmpty(true);
+            setAccount(data);
+            return;
+          }
+          setAccount(data);
+          return;
+        }
         const data = response.data || {};
         const orders = target.kind === 'counter'
           ? (data.orders || []).filter((order) => Number(order.id) === Number(target.id) && String(order.status || 'ACTIVE').toUpperCase() !== 'CLOSED')
@@ -235,7 +274,11 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
         ));
         const rate = Number(dto.serviceFeePercent);
         setServiceFeeRate(Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0.1);
-        const channel = target?.kind === 'comanda' ? 'comanda' : target?.kind === 'counter' ? 'counter' : 'table';
+        const channel = target?.kind === 'comanda'
+          ? 'comanda'
+          : (target?.kind === 'counter' || target?.kind === 'customer')
+            ? 'counter'
+            : 'table';
         setPaymentMode(channelPaymentMode(dto, channel));
       })
       .catch(() => {
@@ -295,6 +338,9 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
       }
       if (target.kind === 'counter') {
         return closeCounterOrder(target.id, payload, closeKey);
+      }
+      if (target.kind === 'customer') {
+        return closeCustomerOrder(target.id, payload, closeKey);
       }
       return closeTableAccount(target.id, payload, closeKey);
     };

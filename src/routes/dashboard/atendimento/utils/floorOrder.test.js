@@ -43,9 +43,20 @@ describe('buildFloorOrderBody', () => {
       waiterId: null,
       lines: [{ product: cafe, quantity: 1, selections: {}, extraIds: [] }],
     });
+    expect(counter.mode).toBe('floor');
     expect(counter.body.tableId).toBe(999);
     expect(counter.body.waiterId).toBe(999);
     expect(counter.body.comandaId).toBeUndefined();
+
+    const customer = buildFloorOrderBody({
+      target: { kind: 'customer' },
+      customerName: 'Rafael',
+      waiterId: null,
+      lines: [{ product: cafe, quantity: 2, selections: {}, extraIds: [] }],
+    });
+    expect(customer.mode).toBe('customer-create');
+    expect(customer.body.customerName).toBe('Rafael');
+    expect(customer.body.products).toHaveLength(1);
   });
 
   it('exige a escolha obrigatória', () => {

@@ -1,5 +1,10 @@
 import { resolveMandatorySelections } from '../atendimento/utils/accountTotals';
-import { resolveSalesChannel, salesChannelLabel } from '../../../services/salesChannel';
+import {
+  formatOrderDisplayCode,
+  kitchenLocationLabel,
+  resolveSalesChannel,
+  salesChannelLabel,
+} from '../../../services/salesChannel';
 
 const KITCHEN_TO_UI = {
   NEW: 'novo',
@@ -55,19 +60,26 @@ export function mapKitchenOrder(order) {
     order.paymentMethod ? `Pagamento: ${order.paymentMethod}` : '',
     order.deliveryChangeFor ? `Troco para R$ ${Number(order.deliveryChangeFor).toFixed(2)}` : '',
   ].filter(Boolean).join(' · ');
+  const identification = (order.customerIdentificationNote || '').trim();
+  const baseNotes = [(order.observation || '').trim(), identification ? `ID: ${identification}` : '', deliveryNotes]
+    .filter(Boolean)
+    .join('\n');
+  const displayCode = formatOrderDisplayCode(order);
   return {
     id: order.id,
-    orderNumber: `#${order.id}`,
+    orderNumber: displayCode ? `#${displayCode}` : `#${order.id}`,
     customerName: order.customerName || 'Cliente',
     items,
     status: resolveUiStatus(order),
     createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
-    tableNumber: order.tableNumber || order.comandaNumber || (orderType === 'delivery' ? 'Delivery' : '—'),
+    tableNumber: kitchenLocationLabel(order),
+    locationLabel: kitchenLocationLabel(order),
     waiter: order.waiterName || '—',
-    notes: [(order.observation || '').trim(), deliveryNotes].filter(Boolean).join('\n'),
+    notes: baseNotes,
     orderType,
     orderStatus: order.status || 'ACTIVE',
     onlinePayment: order.onlinePayment === true,
     paymentMethod: order.paymentMethod || '',
+    customerIdentificationNote: identification,
   };
 }
