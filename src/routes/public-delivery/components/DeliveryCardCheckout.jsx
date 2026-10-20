@@ -139,7 +139,7 @@ export default function DeliveryCardCheckout({
   amount,
   publicKey,
   provider = 'MERCADOPAGO',
-  asaasEnvironment = 'sandbox',
+  asaasEnvironment = 'prod',
   payerEmail,
   onClose,
   onApproved,

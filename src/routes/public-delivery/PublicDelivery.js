@@ -1288,7 +1288,7 @@ export default function PublicDelivery() {
               : catalog?.mercadoPagoPublicKey
         }
         provider={catalog?.onlinePaymentProvider || 'MERCADOPAGO'}
-        asaasEnvironment={catalog?.asaasEnvironment || 'sandbox'}
+        asaasEnvironment={catalog?.asaasEnvironment || 'prod'}
         payerEmail={customer?.email}
         onClose={() => setCardOpen(false)}
         onApproved={() => {

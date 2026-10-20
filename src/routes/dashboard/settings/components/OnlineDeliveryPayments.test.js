@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { OnlineDeliveryPayments } from './OnlineDeliveryPayments';
 import { CLEAR_STORED_SECRET, secretInputMask } from '../../../../services/paymentConfigService';
+import { getCurrentUser } from '../../../../services/authService';
+
+jest.mock('../../../../services/authService', () => ({ getCurrentUser: jest.fn() }));
 
 function renderSection(settings = {}, onSettingChange = jest.fn(), onSave = jest.fn()) {
   return render(
@@ -15,6 +18,10 @@ function renderSection(settings = {}, onSettingChange = jest.fn(), onSave = jest
 }
 
 describe('OnlineDeliveryPayments', () => {
+  beforeEach(() => {
+    getCurrentUser.mockReturnValue({ role: 'STORE_ADMIN' });
+  });
+
   it('mostra o tutorial de cadastro do PagBank', () => {
     renderSection();
     expect(screen.getByRole('tab', { name: 'Na Weper' })).toHaveAttribute('aria-selected', 'true');
@@ -25,6 +32,18 @@ describe('OnlineDeliveryPayments', () => {
     expect(screen.getByText('Use a conta que recebe')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));
     expect(screen.getByText('Gere o token de produção')).toBeInTheDocument();
+  });
+
+  it('loja não vê seletor de ambiente de teste', () => {
+    renderSection({ deliveryOnlineProvider: 'ASAAS' });
+    expect(screen.queryByLabelText('Ambiente')).not.toBeInTheDocument();
+    expect(screen.getByText(/Asaas · produção · não configurado/i)).toBeInTheDocument();
+  });
+
+  it('master vê seletor de ambiente', () => {
+    getCurrentUser.mockReturnValue({ role: 'MASTER' });
+    renderSection({ deliveryOnlineProvider: 'ASAAS', asaasEnvironment: 'sandbox' });
+    expect(screen.getByLabelText('Ambiente')).toBeInTheDocument();
   });
 
   it('mostra campos vazios e desliga Pix online sem credencial', () => {
@@ -187,7 +206,9 @@ describe('OnlineDeliveryPayments', () => {
 
   it('permite ligar cartão quando o servidor já tem Public Key configurada', () => {
     renderSection({
+      mercadoPagoEnvironment: 'prod',
       mercadoPagoConfigured: true,
+      mercadoPagoStoreAccessTokenConfigured: true,
       mercadoPagoAccessTokenConfigured: true,
       mercadoPagoPublicKeyConfigured: true,
     });
@@ -195,6 +216,7 @@ describe('OnlineDeliveryPayments', () => {
   });
 
   it('ao selecionar Teste com credencial do servidor marca configurado sem preencher inputs', () => {
+    getCurrentUser.mockReturnValue({ role: 'MASTER' });
     const onSettingChange = jest.fn();
     renderSection({
       mercadoPagoEnvironment: 'prod',
@@ -317,6 +339,7 @@ describe('OnlineDeliveryPayments', () => {
     const native = screen.getByLabelText('Provedor online').parentElement.querySelector('input');
     fireEvent.change(native, { target: { value: 'PAGBANK' } });
     expect(onSettingChange).toHaveBeenCalledWith('deliveryOnlineProvider', null, 'PAGBANK');
+    expect(onSettingChange).toHaveBeenCalledWith('pagbankEnvironment', null, 'prod');
     expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
     expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, false);
   });
@@ -383,6 +406,7 @@ describe('OnlineDeliveryPayments', () => {
     const native = screen.getByLabelText('Provedor online').parentElement.querySelector('input');
     fireEvent.change(native, { target: { value: 'ASAAS' } });
     expect(onSettingChange).toHaveBeenCalledWith('deliveryOnlineProvider', null, 'ASAAS');
+    expect(onSettingChange).toHaveBeenCalledWith('asaasEnvironment', null, 'prod');
     expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
     expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, false);
   });

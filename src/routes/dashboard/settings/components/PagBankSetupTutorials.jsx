@@ -28,8 +28,8 @@ const TUTORIALS = [
       },
       {
         title: 'Cole o token e salve',
-        body: 'Escolha Sandbox só para teste, ou Produção para cobrança real. Cole o token no campo Token da conta e clique em Salvar. O valor não volta para a tela.',
-        example: ['Ambiente: Produção', 'Token da conta', 'Salvar'],
+        body: 'A loja usa produção. Cole o token no campo Token da conta e clique em Salvar. O valor não volta para a tela. Sandbox fica só na homologação Weper ou no perfil master.',
+        example: ['Token da conta', 'Salvar'],
       },
       {
         title: 'Teste e ligue o Pix',

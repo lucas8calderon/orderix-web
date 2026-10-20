@@ -17,6 +17,12 @@ import {
   secretInputMask,
   testPagBankConnection,
 } from '../../../../services/paymentConfigService';
+import {
+  canChoosePaymentTestEnvironment,
+  defaultAsaasEnvironment,
+  defaultMercadoPagoEnvironment,
+  defaultPagBankEnvironment,
+} from '../../../../services/paymentTestEnvironment';
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { PagBankSetupTutorials } from './PagBankSetupTutorials';
 
@@ -36,9 +42,10 @@ export function OnlineDeliveryPayments({
   const pagbank = provider === 'PAGBANK';
   const asaas = provider === 'ASAAS';
   const mercadoPago = provider === 'MERCADOPAGO';
-  const environment = settings.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test';
-  const pagbankEnvironment = settings.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox';
-  const asaasEnvironment = settings.asaasEnvironment === 'prod' ? 'prod' : 'sandbox';
+  const showTestEnvironment = canChoosePaymentTestEnvironment();
+  const environment = settings.mercadoPagoEnvironment === 'test' ? 'test' : 'prod';
+  const pagbankEnvironment = settings.pagbankEnvironment === 'sandbox' ? 'sandbox' : 'prod';
+  const asaasEnvironment = settings.asaasEnvironment === 'sandbox' ? 'sandbox' : 'prod';
   const accessConfigured = pagbank
     ? hasTypedSecret(settings.pagbankAccessToken) || Boolean(settings.pagbankAccessTokenConfigured)
     : asaas
@@ -98,6 +105,15 @@ export function OnlineDeliveryPayments({
 
   const selectProvider = (nextProvider) => {
     onSettingChange('deliveryOnlineProvider', null, nextProvider);
+    if (!showTestEnvironment) {
+      if (nextProvider === 'PAGBANK') {
+        onSettingChange('pagbankEnvironment', null, defaultPagBankEnvironment());
+      } else if (nextProvider === 'ASAAS') {
+        onSettingChange('asaasEnvironment', null, defaultAsaasEnvironment());
+      } else {
+        onSettingChange('mercadoPagoEnvironment', null, defaultMercadoPagoEnvironment());
+      }
+    }
     if (nextProvider === 'PAGBANK' && !tokenStored) {
       if (settings.onlinePixEnabled) {
         onSettingChange('onlinePixEnabled', null, false);
@@ -196,17 +212,19 @@ export function OnlineDeliveryPayments({
       </Typography>
       {pagbank ? (
         <Box className="payment-provider-fields">
-          <TextField
-            select
-            label="Ambiente"
-            value={pagbankEnvironment}
-            onChange={(e) => onSettingChange('pagbankEnvironment', null, e.target.value === 'prod' ? 'prod' : 'sandbox')}
-            className="setting-input"
-            fullWidth
-          >
-            <MenuItem value="sandbox">Sandbox</MenuItem>
-            <MenuItem value="prod">Produção</MenuItem>
-          </TextField>
+          {showTestEnvironment ? (
+            <TextField
+              select
+              label="Ambiente"
+              value={pagbankEnvironment}
+              onChange={(e) => onSettingChange('pagbankEnvironment', null, e.target.value === 'prod' ? 'prod' : 'sandbox')}
+              className="setting-input"
+              fullWidth
+            >
+              <MenuItem value="sandbox">Sandbox</MenuItem>
+              <MenuItem value="prod">Produção</MenuItem>
+            </TextField>
+          ) : null}
           <SecretField
             label="Token da conta"
             value={settings.pagbankAccessToken}
@@ -227,17 +245,19 @@ export function OnlineDeliveryPayments({
       ) : null}
       {asaas ? (
         <Box className="payment-provider-fields">
-          <TextField
-            select
-            label="Ambiente"
-            value={asaasEnvironment}
-            onChange={(e) => onSettingChange('asaasEnvironment', null, e.target.value === 'prod' ? 'prod' : 'sandbox')}
-            className="setting-input"
-            fullWidth
-          >
-            <MenuItem value="sandbox">Sandbox</MenuItem>
-            <MenuItem value="prod">Produção</MenuItem>
-          </TextField>
+          {showTestEnvironment ? (
+            <TextField
+              select
+              label="Ambiente"
+              value={asaasEnvironment}
+              onChange={(e) => onSettingChange('asaasEnvironment', null, e.target.value === 'prod' ? 'prod' : 'sandbox')}
+              className="setting-input"
+              fullWidth
+            >
+              <MenuItem value="sandbox">Sandbox</MenuItem>
+              <MenuItem value="prod">Produção</MenuItem>
+            </TextField>
+          ) : null}
           <SecretField
             label="API key da loja"
             value={settings.asaasApiKey}
@@ -271,17 +291,19 @@ export function OnlineDeliveryPayments({
       ) : null}
       {mercadoPago ? (
         <Box className="payment-provider-fields">
-          <TextField
-            select
-            label="Ambiente"
-            value={environment}
-            onChange={(e) => onEnvironmentChange(e.target.value, settings, onSettingChange)}
-            className="setting-input"
-            fullWidth
-          >
-            <MenuItem value="test">Teste</MenuItem>
-            <MenuItem value="prod">Produção</MenuItem>
-          </TextField>
+          {showTestEnvironment ? (
+            <TextField
+              select
+              label="Ambiente"
+              value={environment}
+              onChange={(e) => onEnvironmentChange(e.target.value, settings, onSettingChange)}
+              className="setting-input"
+              fullWidth
+            >
+              <MenuItem value="test">Teste</MenuItem>
+              <MenuItem value="prod">Produção</MenuItem>
+            </TextField>
+          ) : null}
           <SecretField
             label="Access Token"
             value={settings.mercadoPagoAccessToken}
