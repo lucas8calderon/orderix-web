@@ -9,22 +9,26 @@ import {
   Typography,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import PrintIcon from '@mui/icons-material/Print';
 import {
   DEFAULT_QR_DOWNLOAD_SIZE_ID,
   QR_DOWNLOAD_SIZES,
   downloadQrPng,
+  downloadQrPrintPdf,
   getQrDownloadSize,
+  printQrOnA4,
 } from './qrDownloadSizes';
 
 /**
- * Seletor de tamanho + botão de download para QR codes destinados à impressão.
- * A pré-visualização na tela permanece inalterada; só o PNG exportado muda.
+ * Seletor de tamanho + download/impressão para QR codes.
+ * PNG mantém pixels + pHYs; PDF/Imprimir preservam o tamanho físico em cm no A4.
  */
 export function QrDownloadControls({
   value,
   fileName,
   level = 'M',
-  buttonLabel = 'Baixar QR Code',
+  buttonLabel = 'Baixar PNG',
   downloadingLabel = 'Baixando...',
   buttonVariant = 'outlined',
   buttonSx,
@@ -35,26 +39,63 @@ export function QrDownloadControls({
   fullWidth = false,
 }) {
   const [sizeId, setSizeId] = useState(DEFAULT_QR_DOWNLOAD_SIZE_ID);
-  const [downloading, setDownloading] = useState(false);
+  const [busy, setBusy] = useState(null);
   const selected = getQrDownloadSize(sizeId);
+  const isBusy = Boolean(busy);
 
-  const handleDownload = async () => {
-    if (!value || downloading) return;
-    setDownloading(true);
+  const runAction = async (actionKey, action, successPayload) => {
+    if (!value || isBusy) return;
+    setBusy(actionKey);
     try {
-      await downloadQrPng({
-        value,
-        fileName,
-        width: selected.width,
-        level,
-      });
-      onSuccess?.(selected);
+      await action();
+      onSuccess?.(successPayload ?? selected);
     } catch (error) {
       onError?.(error);
     } finally {
-      setDownloading(false);
+      setBusy(null);
     }
   };
+
+  const handleDownloadPng = () =>
+    runAction('png', () =>
+      downloadQrPng({
+        value,
+        fileName,
+        width: selected.width,
+        sizeCm: selected.sizeCm,
+        level,
+      })
+    );
+
+  const handleDownloadPdf = () =>
+    runAction(
+      'pdf',
+      () =>
+        downloadQrPrintPdf({
+          value,
+          fileName,
+          width: selected.width,
+          sizeCm: selected.sizeCm,
+          level,
+        }),
+      { ...selected, format: 'pdf' }
+    );
+
+  const handlePrint = () =>
+    runAction(
+      'print',
+      () =>
+        printQrOnA4({
+          value,
+          width: selected.width,
+          sizeCm: selected.sizeCm,
+          level,
+          title: fileName || 'QR Code',
+        }),
+      { ...selected, format: 'print' }
+    );
+
+  const buttonWidthSx = { minHeight: 44, width: fullWidth ? '100%' : undefined, ...buttonSx };
 
   return (
     <Box
@@ -75,7 +116,7 @@ export function QrDownloadControls({
           value={sizeId}
           label="Tamanho para imprimir"
           onChange={(event) => setSizeId(event.target.value)}
-          disabled={disabled || downloading}
+          disabled={disabled || isBusy}
         >
           {QR_DOWNLOAD_SIZES.map((size) => (
             <MenuItem key={size.id} value={size.id}>
@@ -85,17 +126,45 @@ export function QrDownloadControls({
         </Select>
       </FormControl>
       <Typography variant="caption" color="text.secondary">
-        O arquivo PNG sai em {selected.width}×{selected.width} px ({selected.hint} a ~300 dpi).
+        PNG: {selected.width}×{selected.width} px ({selected.hint} a ~300 dpi). Para o tamanho
+        físico na folha A4 (sem esticar no Windows), use PDF ou Imprimir.
       </Typography>
-      <Button
-        variant={buttonVariant}
-        startIcon={startIcon ?? <DownloadIcon />}
-        onClick={handleDownload}
-        disabled={disabled || downloading || !value}
-        sx={{ minHeight: 44, width: fullWidth ? '100%' : undefined, ...buttonSx }}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          width: fullWidth ? '100%' : 'auto',
+        }}
       >
-        {downloading ? downloadingLabel : buttonLabel}
-      </Button>
+        <Button
+          variant={buttonVariant}
+          startIcon={startIcon ?? <DownloadIcon />}
+          onClick={handleDownloadPng}
+          disabled={disabled || isBusy || !value}
+          sx={buttonWidthSx}
+        >
+          {busy === 'png' ? downloadingLabel : buttonLabel}
+        </Button>
+        <Button
+          variant={buttonVariant}
+          startIcon={<PictureAsPdfIcon />}
+          onClick={handleDownloadPdf}
+          disabled={disabled || isBusy || !value}
+          sx={buttonWidthSx}
+        >
+          {busy === 'pdf' ? 'Gerando PDF...' : 'Baixar PDF para impressão'}
+        </Button>
+        <Button
+          variant={buttonVariant}
+          startIcon={<PrintIcon />}
+          onClick={handlePrint}
+          disabled={disabled || isBusy || !value}
+          sx={buttonWidthSx}
+        >
+          {busy === 'print' ? 'Abrindo impressão...' : 'Imprimir em A4'}
+        </Button>
+      </Box>
     </Box>
   );
 }
