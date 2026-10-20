@@ -13,17 +13,17 @@ import {
   getPartnerDashboard,
   getPartnerEarnings,
 } from '../../services/partnerService';
+import { buildPublicReferralLink } from '../../services/partnerReferral';
 import PartnerEarningsChart from './PartnerEarningsChart';
 import PartnerReferralDialog from './PartnerReferralDialog';
 import PartnerReferralsPanel from './PartnerReferralsPanel';
 import PartnerShell from './PartnerShell';
 
 function buildReferralLink(dashboard) {
-  if (dashboard?.referralLink) return dashboard.referralLink;
   if (dashboard?.referralCode && typeof window !== 'undefined') {
-    return `${window.location.origin}/?ref=${encodeURIComponent(dashboard.referralCode)}`;
+    return buildPublicReferralLink(dashboard.referralCode, window.location.origin);
   }
-  return '';
+  return dashboard?.referralLink || '';
 }
 
 async function copyText(text) {

@@ -1,6 +1,7 @@
 import {
   PARTNER_REF_COOKIE,
   PARTNER_REF_STORAGE_KEY,
+  buildPublicReferralLink,
   capturePartnerRef,
   clearStoredPartnerRef,
   getStoredPartnerRef,
@@ -23,6 +24,17 @@ describe('partnerReferral', () => {
   it('usa a chave weper.partnerRef', () => {
     expect(PARTNER_REF_STORAGE_KEY).toBe('weper.partnerRef');
     expect(PARTNER_REF_COOKIE).toBe('weper_partner_ref');
+  });
+
+  it('monta link de indicação no origin do ambiente (staging ou prod)', () => {
+    expect(buildPublicReferralLink('WPR-BK9ASD', 'https://weper-staging-web.onrender.com')).toBe(
+      'https://weper-staging-web.onrender.com/?ref=WPR-BK9ASD',
+    );
+    expect(buildPublicReferralLink('wpr-bk9asd', 'https://www.weper.com.br/')).toBe(
+      'https://www.weper.com.br/?ref=WPR-BK9ASD',
+    );
+    expect(buildPublicReferralLink('ab', 'https://weper-staging-web.onrender.com')).toBe('');
+    expect(buildPublicReferralLink('WPR-BK9ASD', '')).toBe('');
   });
 
   it('salva o ref válido em maiúsculas (session + cookie)', () => {

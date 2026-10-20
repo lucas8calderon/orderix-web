@@ -104,3 +104,14 @@ export function clearStoredPartnerRef() {
   }
   clearPartnerRefCookie();
 }
+
+/**
+ * Link público de indicação no host atual (staging → staging, prod → prod).
+ * Preferir origin do browser no portal; não reutilizar URL hardcodada do backend.
+ */
+export function buildPublicReferralLink(code, origin = typeof window !== 'undefined' ? window.location.origin : '') {
+  const normalized = normalizePartnerRef(code);
+  const base = typeof origin === 'string' ? origin.trim().replace(/\/$/, '') : '';
+  if (!normalized || !base) return '';
+  return `${base}/?ref=${encodeURIComponent(normalized)}`;
+}
