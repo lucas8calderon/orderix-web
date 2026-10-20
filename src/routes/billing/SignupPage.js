@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
@@ -31,9 +31,51 @@ import ecosystemDevicesJpg from '../../assets/images/landing/ecosystem-devices.j
 import '../home/styles/Rebrand.css';
 import './SignupPage.css';
 
+export const SIGNUP_PIX_POLL_MS = 5000;
+const SIGNUP_RESULT_STORAGE_KEY = 'weper.signupResult';
+
 function isStagingHost() {
   if (typeof window === 'undefined') return false;
   return String(window.location.hostname || '').toLowerCase().includes('staging');
+}
+
+/** Só fatura pública Asaas (/i/…). Evita cair no login do portal Asaas. */
+export function isPublicAsaasInvoiceUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    if (!host.endsWith('asaas.com')) return false;
+    return parsed.pathname.includes('/i/');
+  } catch {
+    return false;
+  }
+}
+
+function readStoredSignupResult() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(SIGNUP_RESULT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !parsed.signupId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function persistSignupResult(value) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!value) {
+      window.sessionStorage.removeItem(SIGNUP_RESULT_STORAGE_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(SIGNUP_RESULT_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // sessionStorage indisponível: segue só em memória.
+  }
 }
 
 const EMPTY = {
@@ -198,14 +240,52 @@ export default function SignupPage() {
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() => readStoredSignupResult());
   const [copied, setCopied] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(() => Boolean(readStoredSignupResult()?.paid));
+  const pollRef = useRef(null);
 
   const plan = getPlanTier(planCode);
   const planSelected = Boolean(plan) && signupPlans.some((tier) => tier.code === planCode);
   const isTestPlan = plan?.code === TEST_PLAN.code;
   const card = billingType === 'CREDIT_CARD';
   const isPj = form.person === 'JURIDICA';
+  const showPublicInvoice = Boolean(result?.invoiceUrl)
+    && !result?.pixPayload
+    && isPublicAsaasInvoiceUrl(result.invoiceUrl);
+
+  useEffect(() => {
+    persistSignupResult(result ? { ...result, paid: paymentConfirmed } : null);
+  }, [result, paymentConfirmed]);
+
+  useEffect(() => {
+    if (!result?.signupId || paymentConfirmed) return undefined;
+
+    let cancelled = false;
+
+    async function pollStatus() {
+      try {
+        const response = await axios.get(`/api/public/billing/signup/${result.signupId}/status`);
+        if (cancelled) return;
+        if (response.data?.paid) {
+          setPaymentConfirmed(true);
+          setResult((current) => (current ? { ...current, storeActive: Boolean(response.data.storeActive) } : current));
+        }
+      } catch {
+        // Mantém a tela de Pix; webhook/reconciliação continua no servidor.
+      }
+    }
+
+    pollStatus();
+    pollRef.current = window.setInterval(pollStatus, SIGNUP_PIX_POLL_MS);
+    return () => {
+      cancelled = true;
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [result?.signupId, paymentConfirmed]);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -265,6 +345,7 @@ export default function SignupPage() {
     setPending(true);
     try {
       const response = await axios.post('/api/public/billing/signup', payload);
+      setPaymentConfirmed(false);
       setResult(response.data);
       setForm((current) => ({ ...current, number: '', ccv: '' }));
     } catch (requestError) {
@@ -364,30 +445,55 @@ export default function SignupPage() {
 
               {result ? (
                 <div className="ct-result">
-                  <h2 id="ct-checkout-title">Pagamento em confirmação</h2>
-                  <p>
-                    Abrir a fatura ou voltar desta página não ativa a loja. O convite chega depois que o pagamento for confirmado.
-                  </p>
-                  {result.pixPayload ? (
-                    <div className="ct-pix-box">
-                      <QRCodeSVG value={result.pixPayload} size={180} level="M" includeMargin />
-                      <p className="ct-pix-code" data-testid="pix-payload">{result.pixPayload}</p>
-                      <button type="button" className="ct-copy-btn" onClick={copyPix}>
-                        {copied ? 'Código copiado' : 'Copiar código Pix'}
-                      </button>
-                    </div>
-                  ) : null}
-                  {result.invoiceUrl ? (
-                    <p>
-                      <a className="ct-invoice-link" href={result.invoiceUrl} target="_blank" rel="noreferrer">
-                        Abrir a fatura
-                        <ArrowRight size={16} aria-hidden="true" />
-                      </a>
-                    </p>
-                  ) : null}
-                  <p className="ct-status">
-                    {result.storeActive ? 'Aguardando a confirmação do pagamento.' : 'A loja ainda não está ativa.'}
-                  </p>
+                  <h2 id="ct-checkout-title">
+                    {paymentConfirmed ? 'Pagamento confirmado' : 'Pague com Pix para ativar'}
+                  </h2>
+                  {paymentConfirmed ? (
+                    <>
+                      <p>
+                        Recebemos a confirmação. O convite com a senha chega no e-mail informado.
+                        Só então use o login da Weper — não é preciso entrar agora.
+                      </p>
+                      <p className="ct-status" data-testid="signup-paid">
+                        {result.storeActive
+                          ? 'Loja liberada. Verifique seu e-mail para o convite.'
+                          : 'Pagamento ok. Aguardamos o e-mail de convite para o primeiro acesso.'}
+                      </p>
+                      <p>
+                        <Link className="ct-invoice-link" to={PATHS.LOGIN}>
+                          Já recebi o convite — ir ao login
+                          <ArrowRight size={16} aria-hidden="true" />
+                        </Link>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p>
+                        Escaneie o QR ou copie o código no app do banco. Fique nesta página até a confirmação.
+                        O convite e o login só ficam disponíveis depois do pagamento.
+                      </p>
+                      {result.pixPayload ? (
+                        <div className="ct-pix-box">
+                          <QRCodeSVG value={result.pixPayload} size={180} level="M" includeMargin />
+                          <p className="ct-pix-code" data-testid="pix-payload">{result.pixPayload}</p>
+                          <button type="button" className="ct-copy-btn" onClick={copyPix}>
+                            {copied ? 'Código copiado' : 'Copiar código Pix'}
+                          </button>
+                        </div>
+                      ) : null}
+                      {showPublicInvoice ? (
+                        <p>
+                          <a className="ct-invoice-link" href={result.invoiceUrl} target="_blank" rel="noreferrer">
+                            Abrir fatura pública
+                            <ArrowRight size={16} aria-hidden="true" />
+                          </a>
+                        </p>
+                      ) : null}
+                      <p className="ct-status" data-testid="signup-waiting">
+                        Aguardando o pagamento do Pix. A loja ainda não está ativa.
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <>

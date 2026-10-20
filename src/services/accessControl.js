@@ -105,6 +105,9 @@ export const PATHS = {
   PARTNERS_PAYOUTS: '/parceiros/pagamentos',
   PARTNERS_RECOVERY: '/parceiros/recuperar-acesso',
   PARTNERS_RESET: '/parceiros/redefinir-senha',
+  SIGNUP: '/contratar',
+  SIGNUP_RETURN: '/contratar/retorno',
+  INVITE: '/convite',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -219,6 +222,9 @@ export const PUBLIC_PATHS = [
   PATHS.PARTNERS_LOGIN,
   PATHS.PARTNERS_RECOVERY,
   PATHS.PARTNERS_RESET,
+  PATHS.SIGNUP,
+  PATHS.SIGNUP_RETURN,
+  PATHS.INVITE,
 ];
 
 export function isPlatformAdmin(user) {

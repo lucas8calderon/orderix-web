@@ -1,9 +1,19 @@
 ﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
-import SignupPage from './SignupPage';
+import SignupPage, { isPublicAsaasInvoiceUrl } from './SignupPage';
 
-jest.mock('axios', () => ({ post: jest.fn() }));
+jest.mock('axios', () => ({
+  post: jest.fn(),
+  get: jest.fn(() => new Promise(() => {})),
+}));
+
+beforeEach(() => {
+  window.sessionStorage.clear();
+  axios.post.mockReset();
+  axios.get.mockReset();
+  axios.get.mockImplementation(() => new Promise(() => {}));
+});
 
 function setup(path = '/contratar?plan=PLAN_02') {
   return render(
@@ -30,7 +40,14 @@ test('starts without a preselected plan and blocks submit until one is chosen', 
 });
 
 test('pix signup does not ask for address or send a price', async () => {
-  axios.post.mockResolvedValue({ data: { pixPayload: '000201', invoiceUrl: 'https://sandbox.asaas.com/i/1', storeActive: false } });
+  axios.post.mockResolvedValue({
+    data: {
+      signupId: 42,
+      pixPayload: '000201',
+      invoiceUrl: 'https://sandbox.asaas.com/i/1',
+      storeActive: false,
+    },
+  });
   setup();
   expect(screen.queryByLabelText('CEP')).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/CNPJ do estabelecimento/i)).not.toBeInTheDocument();
@@ -47,9 +64,19 @@ test('pix signup does not ask for address or send a price', async () => {
   expect(payload.billingType).toBe('PIX');
   expect(payload.price).toBeUndefined();
   expect(payload.postalCode).toBeUndefined();
-  expect(await screen.findByText('Pagamento em confirmação')).toBeInTheDocument();
+  expect(await screen.findByText('Pague com Pix para ativar')).toBeInTheDocument();
   expect(screen.getByTestId('pix-payload')).toHaveTextContent('000201');
-  expect(screen.getByText('A loja ainda não está ativa.')).toBeInTheDocument();
+  expect(screen.getByTestId('signup-waiting')).toHaveTextContent(/Aguardando o pagamento do Pix/i);
+  expect(screen.queryByRole('link', { name: /Abrir fatura/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /login/i })).not.toBeInTheDocument();
+  await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/signup/42/status'));
+});
+
+test('public Asaas invoice urls are recognized; portal login is rejected', () => {
+  expect(isPublicAsaasInvoiceUrl('https://sandbox.asaas.com/i/abc')).toBe(true);
+  expect(isPublicAsaasInvoiceUrl('https://www.asaas.com/i/abc')).toBe(true);
+  expect(isPublicAsaasInvoiceUrl('https://www.asaas.com/login/auth')).toBe(false);
+  expect(isPublicAsaasInvoiceUrl('https://evil.example/i/1')).toBe(false);
 });
 
 test('card without postal code stays on the form', () => {
@@ -94,7 +121,12 @@ test('commercial dropdown omits PLAN_TEST without deep link', () => {
 
 test('deep link PLAN_TEST preselects homologation plan and can submit', async () => {
   axios.post.mockResolvedValue({
-    data: { pixPayload: '000201', invoiceUrl: 'https://sandbox.asaas.com/i/test', storeActive: false },
+    data: {
+      signupId: 7,
+      pixPayload: '000201',
+      invoiceUrl: 'https://sandbox.asaas.com/i/test',
+      storeActive: false,
+    },
   });
   setup('/contratar?plan=PLAN_TEST');
   expect(screen.getByLabelText(/Plano selecionado|faturamento mensal/i)).toHaveValue('PLAN_TEST');
@@ -106,4 +138,5 @@ test('deep link PLAN_TEST preselects homologation plan and can submit', async ()
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
   await waitFor(() => expect(axios.post).toHaveBeenCalled());
   expect(axios.post.mock.calls[0][1].planCode).toBe('PLAN_TEST');
+  expect(await screen.findByTestId('signup-waiting')).toBeInTheDocument();
 });

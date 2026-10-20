@@ -94,6 +94,15 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/demo/weper-pizza')).toBe(true);
     expect(isPublicPath('/app/dashboard')).toBe(false);
   });
+
+  it('trata contratação e convite como rotas públicas', () => {
+    expect(isPublicPath('/contratar')).toBe(true);
+    expect(isPublicPath('/contratar/retorno')).toBe(true);
+    expect(isPublicPath('/convite')).toBe(true);
+    expect(isPublicPath(PATHS.SIGNUP)).toBe(true);
+    expect(isPublicPath(PATHS.SIGNUP_RETURN)).toBe(true);
+    expect(isPublicPath(PATHS.INVITE)).toBe(true);
+  });
 });
 
 describe('canAccessRoute', () => {
