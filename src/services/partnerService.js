@@ -147,6 +147,24 @@ export async function updatePartnerProfile({ firstName, lastName, whatsapp }) {
   return response.data;
 }
 
+export async function updatePartnerPayoutData({
+  holderName,
+  document,
+  pixKeyType,
+  pixKey,
+  currentPassword,
+}) {
+  const response = await axios.put(`${PORTAL_URL}/me/payout-data`, {
+    holderName: holderName?.trim(),
+    document: document?.trim(),
+    pixKeyType,
+    pixKey: pixKey?.trim(),
+    currentPassword,
+  });
+  syncPartnerSessionUser(response.data);
+  return response.data;
+}
+
 export async function changePartnerPassword({ currentPassword, newPassword, confirmPassword }) {
   await axios.post(`${PORTAL_URL}/me/password`, { currentPassword, newPassword, confirmPassword });
 }

@@ -27,6 +27,29 @@ export async function updateAdminPartnerStatus(id, { status, reason }) {
   return response.data;
 }
 
+export async function reviewAdminPartnerPayoutData(id, { status, notes }) {
+  const response = await axios.put(`${PARTNERS_URL}/${id}/payout-data`, {
+    status,
+    notes: notes?.trim() || undefined,
+  });
+  return response.data;
+}
+
+export async function createAdminPartnerPayoutBatch(id) {
+  const response = await axios.post(`${PARTNERS_URL}/${id}/payout-batches`);
+  return response.data;
+}
+
+export async function approveAdminPayoutBatch(batchId) {
+  const response = await axios.post(`${PARTNERS_URL}/payout-batches/${batchId}/approve`);
+  return response.data;
+}
+
+export async function transferAdminPayoutBatch(batchId) {
+  const response = await axios.post(`${PARTNERS_URL}/payout-batches/${batchId}/transfer`);
+  return response.data;
+}
+
 export async function listAdminPartnerReferrals(id, { status, q, page = 0, size = 10 } = {}) {
   const response = await axios.get(`${PARTNERS_URL}/${id}/referrals`, {
     params: compactParams({ status, q, page, size }),

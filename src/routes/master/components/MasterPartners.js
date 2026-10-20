@@ -43,6 +43,8 @@ import {
   listAdminPartnerPayouts,
   listAdminPartnerReferrals,
   listAdminPartners,
+  createAdminPartnerPayoutBatch,
+  reviewAdminPartnerPayoutData,
   updateAdminPartnerStatus,
 } from '../service/partnersAdminService';
 
@@ -216,6 +218,83 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
                   <Field label="Indicações">{partner.totalReferrals ?? 0}</Field>
                   <Field label="Convertidas">{partner.convertedReferrals ?? 0}</Field>
                   <Field label="Cadastro">{formatDateTime(partner.createdAt)}</Field>
+                  <Field label="Titular Pix">{partner.payoutHolderName || '—'}</Field>
+                  <Field label="Documento">{partner.payoutDocument || '—'}</Field>
+                  <Field label="Chave Pix">{partner.pixKeyType ? `${partner.pixKeyType}: ${partner.pixKey || '—'}` : '—'}</Field>
+                  <Field label="Status recebimento">{partner.payoutDataStatus || 'MISSING'}</Field>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>Dados de recebimento (Pix)</Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                    <Button
+                      variant="contained"
+                      disabled={busy || partner.payoutDataStatus === 'READY'}
+                      onClick={async () => {
+                        setBusy(true);
+                        setError('');
+                        try {
+                          const updated = await reviewAdminPartnerPayoutData(partner.id, { status: 'READY' });
+                          setPartner(updated);
+                          notify('Dados Pix liberados para lotes.');
+                        } catch (failure) {
+                          setError(getApiErrorMessage(failure, 'Não foi possível aprovar os dados Pix.'));
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Aprovar Pix
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      disabled={busy || partner.payoutDataStatus === 'REJECTED'}
+                      onClick={async () => {
+                        setBusy(true);
+                        setError('');
+                        try {
+                          const updated = await reviewAdminPartnerPayoutData(partner.id, {
+                            status: 'REJECTED',
+                            notes: reason || 'Dados Pix rejeitados na revisão administrativa.',
+                          });
+                          setPartner(updated);
+                          notify('Dados Pix rejeitados.');
+                        } catch (failure) {
+                          setError(getApiErrorMessage(failure, 'Não foi possível rejeitar os dados Pix.'));
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Rejeitar Pix
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      disabled={busy || !partner.payoutDataStatus || partner.payoutDataStatus !== 'READY'}
+                      onClick={async () => {
+                        setBusy(true);
+                        setError('');
+                        try {
+                          const batch = await createAdminPartnerPayoutBatch(partner.id);
+                          notify(`Lote #${batch.id} criado (${batch.status}). Aprove e transfira com flag desligada em prod.`);
+                        } catch (failure) {
+                          setError(getApiErrorMessage(failure, 'Não foi possível criar o lote.'));
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Criar lote
+                    </Button>
+                  </Stack>
+                  {partner.payoutDataNotes && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      {partner.payoutDataNotes}
+                    </Typography>
+                  )}
+                  <Alert severity="info" sx={{ mt: 1.5 }}>
+                    Transferência Pix real exige aprovação do lote + flag `asaas.partner-pix-transfer.enabled`. Sem auto-agendamento em produção.
+                  </Alert>
                 </Box>
 
                 <Box>

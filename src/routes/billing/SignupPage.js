@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { PRICING_TIERS, formatPrice } from '../../config/pricingTiers';
+import { capturePartnerRef, getStoredPartnerRef } from '../../services/partnerReferral';
 import '../home/styles/Rebrand.css';
 
 const EMPTY = {
@@ -21,6 +22,9 @@ const EMPTY = {
 
 export default function SignupPage() {
   const [params] = useSearchParams();
+  useEffect(() => {
+    capturePartnerRef(params.toString() ? `?${params.toString()}` : window.location.search);
+  }, [params]);
   const initialPlan = useMemo(() => {
     const requested = params.get('plan');
     return PRICING_TIERS.some((tier) => tier.code === requested) ? requested : 'PLAN_01';
@@ -49,6 +53,7 @@ export default function SignupPage() {
       setError('Informe os dados do cartão para repasse. Eles não ficam salvos nesta tela.');
       return;
     }
+    const partnerReferralCode = getStoredPartnerRef() || undefined;
     const payload = {
       planCode,
       billingType,
@@ -58,6 +63,7 @@ export default function SignupPage() {
       phone: card ? form.phone.trim() : undefined,
       postalCode: card ? form.postalCode.trim() : undefined,
       addressNumber: card ? form.addressNumber.trim() : undefined,
+      partnerReferralCode,
       card: card ? {
         holderName: form.holderName.trim() || form.name.trim(),
         number: form.number.trim(),

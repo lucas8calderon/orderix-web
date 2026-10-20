@@ -138,13 +138,15 @@ export default function PartnerDashboardPage() {
   const kpis = [
     { label: 'Indicações', value: dashboard?.totalReferrals ?? 0 },
     { label: 'Convertidas', value: dashboard?.convertedReferrals ?? 0 },
-    { label: 'Comissões previstas', value: formatCurrency(dashboard?.estimatedCommissions) },
-    { label: 'Comissões pendentes', value: formatCurrency(dashboard?.pendingCommissions) },
-    { label: 'Comissões recebidas', value: formatCurrency(dashboard?.totalReceived), accent: true },
+    { label: 'Previstas', value: formatCurrency(dashboard?.estimatedCommissions) },
+    { label: 'Pendentes', value: formatCurrency(dashboard?.pendingCommissions) },
+    { label: 'Disponível', value: formatCurrency(dashboard?.availableCommissions), accent: true },
+    { label: 'Em processamento', value: formatCurrency(dashboard?.reservedCommissions) },
+    { label: 'Recebidas', value: formatCurrency(dashboard?.totalReceived) },
     {
       label: 'Próximo pagamento',
-      value: dashboard?.nextPayoutDate ? formatDate(dashboard.nextPayoutDate) : 'A definir',
-      hint: dashboard?.nextPayoutDate ? undefined : 'Sem pagamento agendado',
+      value: dashboard?.nextPayoutDate ? formatDate(dashboard.nextPayoutDate) : 'Sob aprovação',
+      hint: dashboard?.nextPayoutDate ? undefined : 'Lotes Pix só após aprovação admin',
     },
   ];
 

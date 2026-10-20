@@ -99,8 +99,20 @@ const PAYOUT_COLUMNS = [
   { key: 'paidAt', label: 'Pago em', render: (item) => formatDateTime(item.paidAt) },
 ];
 
+function commissionKindLabel(item) {
+  const percent = Number(item.commissionPercent);
+  if (item.commissionKind === 'FIRST_MONTH' || percent === 100) {
+    return '1ª mensalidade (100%)';
+  }
+  if (item.commissionKind === 'RENEWAL' || percent === 10) {
+    return 'Renovação (10%)';
+  }
+  return item.commissionPercent != null ? `${item.commissionPercent}%` : '—';
+}
+
 const COMMISSION_COLUMNS = [
   { key: 'establishment', label: 'Estabelecimento', render: (item) => item.establishmentName || '—' },
+  { key: 'kind', label: 'Tipo', render: (item) => commissionKindLabel(item) },
   { key: 'amount', label: 'Valor', align: 'right', render: (item) => formatCurrency(item.commissionAmount) },
   { key: 'status', label: 'Status', render: (item) => <PartnerStatusChip kind="commission" value={item.status} /> },
   { key: 'competence', label: 'Competência', render: (item) => formatDate(item.competenceDate) },
@@ -179,7 +191,7 @@ export default function PartnerPayoutsPage() {
                 </Stack>
                 <Typography variant="h6" sx={{ mt: 0.5 }}>{formatCurrency(item.commissionAmount)}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Competência {formatDate(item.competenceDate)} · Elegível {formatDate(item.eligibilityDate)}
+                  {commissionKindLabel(item)} · Competência {formatDate(item.competenceDate)}
                 </Typography>
               </>
             )}
