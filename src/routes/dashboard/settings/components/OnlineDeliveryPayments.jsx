@@ -15,6 +15,7 @@ import {
   isClearStoredSecret,
   isSecretInputMask,
   secretInputMask,
+  testAsaasConnection,
   testPagBankConnection,
 } from '../../../../services/paymentConfigService';
 import {
@@ -160,15 +161,23 @@ export function OnlineDeliveryPayments({
     setTesting(true);
     setTestMessage('');
     try {
-      const response = await testPagBankConnection();
+      const response = asaas ? await testAsaasConnection() : await testPagBankConnection();
       if (response?.data?.ok) {
-        onSettingChange('pagbankCardPublicKeyConfigured', null, true);
+        if (asaas) {
+          onSettingChange('asaasPublicKeyConfigured', null, true);
+        } else {
+          onSettingChange('pagbankCardPublicKeyConfigured', null, true);
+        }
         setTestMessage('Conexão ok. A chave de cartão ficou guardada nesta loja.');
       } else {
-        setTestMessage('Não foi possível consultar a chave com o token salvo.');
+        setTestMessage(asaas
+          ? 'Não foi possível consultar a chave com a API key salva.'
+          : 'Não foi possível consultar a chave com o token salvo.');
       }
     } catch {
-      setTestMessage('Não foi possível consultar a chave com o token salvo.');
+      setTestMessage(asaas
+        ? 'Não foi possível consultar a chave com a API key salva.'
+        : 'Não foi possível consultar a chave com o token salvo.');
     } finally {
       setTesting(false);
     }
@@ -267,6 +276,13 @@ export function OnlineDeliveryPayments({
             inputRef={asaasKeyInputRef}
             onChange={(value) => onSettingChange('asaasApiKey', null, value)}
           />
+          <Button type="button" variant="outlined" onClick={testConnection} disabled={testing || saving}>
+            {testing ? 'Testando...' : 'Testar conexão'}
+          </Button>
+          <Typography className="setting-hint" variant="body2">
+            Salve a API key antes de testar. O teste consulta a chave pública de cartão no Asaas e não mostra a API key.
+          </Typography>
+          {testMessage ? <Typography className="setting-hint" variant="body2">{testMessage}</Typography> : null}
           <SecretField
             label="Chave pública (cartão)"
             value={settings.asaasPublicKey}
@@ -373,7 +389,7 @@ export function OnlineDeliveryPayments({
       {!accessConfigured || !publicKeyConfigured ? (
         <Typography className="setting-hint" variant="body2">
           {asaas
-            ? 'Salve a API key e a chave pública antes de ligar o cartão (tokenização no navegador, sem guardar PAN/CVV).'
+            ? 'Salve a API key e teste a conexão para guardar a chave pública antes de ligar o cartão (tokenização no navegador, sem guardar PAN/CVV).'
             : pagbank
               ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'
               : !accessConfigured
