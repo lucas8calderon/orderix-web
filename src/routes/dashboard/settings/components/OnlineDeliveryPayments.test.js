@@ -387,6 +387,7 @@ describe('OnlineDeliveryPayments', () => {
   it('mostra campos Asaas da loja sem misturar Mercado Pago', () => {
     renderSection({ deliveryOnlineProvider: 'ASAAS' });
     expect(screen.getByLabelText('API key da loja')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Testar conexão' })).toBeInTheDocument();
     expect(screen.getByLabelText('Chave pública (cartão)')).toBeInTheDocument();
     expect(screen.getByLabelText('Token do webhook de delivery')).toBeInTheDocument();
     expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();

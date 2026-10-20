@@ -146,6 +146,10 @@ export function testPagBankConnection() {
   return axios.post(`${PAYMENT_CONFIG_URL}/pagbank/test`);
 }
 
+export function testAsaasConnection() {
+  return axios.post(`${PAYMENT_CONFIG_URL}/asaas/test`);
+}
+
 export function serviceFeePercentToUi(percent) {
   const n = Number(percent);
   if (!Number.isFinite(n)) return 10;
