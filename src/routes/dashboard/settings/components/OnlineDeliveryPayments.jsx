@@ -247,7 +247,7 @@ export function OnlineDeliveryPayments({
             {testing ? 'Testando...' : 'Testar conexão'}
           </Button>
           <Typography className="setting-hint" variant="body2">
-            Salve o token antes de testar. O teste só consulta a chave pública de cartão e não mostra o token.
+            Salve o token antes de testar. O teste consulta a chave pública de cartão (e cria se ainda não existir) e não mostra o token.
           </Typography>
           {testMessage ? <Typography className="setting-hint" variant="body2">{testMessage}</Typography> : null}
         </Box>

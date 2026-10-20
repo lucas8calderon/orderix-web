@@ -388,11 +388,12 @@ describe('OnlineDeliveryPayments', () => {
     renderSection({ deliveryOnlineProvider: 'ASAAS' });
     expect(screen.getByLabelText('API key da loja')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Testar conexão' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Chave pública (cartão)')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Chave pública (cartão)')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Token do webhook de delivery')).toBeInTheDocument();
     expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Token da conta')).not.toBeInTheDocument();
     expect(screen.getByText(/nunca a chave da assinatura Weper/i)).toBeInTheDocument();
+    expect(screen.getByText(/tokenização roda no servidor Weper/i)).toBeInTheDocument();
   });
 
   it('ao selecionar Asaas sem API key desliga Pix e cartão herdados', () => {
