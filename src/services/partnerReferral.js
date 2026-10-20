@@ -17,7 +17,7 @@ const PARTNER_REF_PATTERN = /^[A-Za-z0-9_-]{3,64}$/;
 /** Devolve o código em maiúsculas ou null se o formato não for aceitável. */
 export function normalizePartnerRef(value) {
   if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
+  const trimmed = value.trim().replace(/\s+/g, '');
   if (!PARTNER_REF_PATTERN.test(trimmed)) return null;
   return trimmed.toUpperCase();
 }

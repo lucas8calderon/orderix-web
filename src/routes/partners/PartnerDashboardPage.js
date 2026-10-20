@@ -19,9 +19,14 @@ import PartnerReferralDialog from './PartnerReferralDialog';
 import PartnerReferralsPanel from './PartnerReferralsPanel';
 import PartnerShell from './PartnerShell';
 
+function shareableCode(dashboard) {
+  return dashboard?.shareCode || dashboard?.referralCode || '';
+}
+
 function buildReferralLink(dashboard) {
-  if (dashboard?.referralCode && typeof window !== 'undefined') {
-    return buildPublicReferralLink(dashboard.referralCode, window.location.origin);
+  const code = shareableCode(dashboard);
+  if (code && typeof window !== 'undefined') {
+    return buildPublicReferralLink(code, window.location.origin);
   }
   return dashboard?.referralLink || '';
 }
@@ -112,6 +117,10 @@ export default function PartnerDashboardPage() {
 
   const firstName = dashboard?.firstName || sessionUser?.firstName || 'parceiro';
   const referralLink = buildReferralLink(dashboard);
+  const shareCode = shareableCode(dashboard);
+  const legacyStillValid = Boolean(
+    dashboard?.referralCode && shareCode && dashboard.referralCode !== shareCode,
+  );
   const showToast = (message, severity = 'success') => setToast({ open: true, message, severity });
 
   const handleCopy = async () => {
@@ -121,6 +130,16 @@ export default function PartnerDashboardPage() {
       showToast('Link de indicação copiado!');
     } catch {
       showToast('Não foi possível copiar. Selecione o link e copie manualmente.', 'error');
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!shareCode) return;
+    try {
+      await copyText(shareCode);
+      showToast('Código de indicação copiado!');
+    } catch {
+      showToast('Não foi possível copiar. Selecione o código e copie manualmente.', 'error');
     }
   };
 
@@ -206,41 +225,65 @@ export default function PartnerDashboardPage() {
         <section className="partner-card" aria-labelledby="partner-link-title">
           <h2 id="partner-link-title" className="partner-card-title">Seu link de indicação</h2>
           <p className="partner-card-subtitle">
-            Compartilhe este link com estabelecimentos interessados na Weper.
+            Compartilhe o link ou peça para o cliente digitar o código em Contratar.
           </p>
           {dashboardLoading && !dashboard ? (
             <Skeleton variant="rounded" height={48} />
           ) : (
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-              <TextField
-                size="small"
-                fullWidth
-                value={referralLink || 'Link indisponível no momento'}
-                inputProps={{ readOnly: true, 'aria-label': 'Link de indicação' }}
-                onFocus={(event) => event.target.select()}
-              />
-              <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-                <Button variant="contained" startIcon={<ContentCopyOutlinedIcon />} onClick={handleCopy} disabled={!referralLink}>
-                  Copiar
-                </Button>
+            <>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  value={referralLink || 'Link indisponível no momento'}
+                  inputProps={{ readOnly: true, 'aria-label': 'Link de indicação' }}
+                  onFocus={(event) => event.target.select()}
+                />
+                <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                  <Button variant="contained" startIcon={<ContentCopyOutlinedIcon />} onClick={handleCopy} disabled={!referralLink}>
+                    Copiar
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<WhatsAppIcon />}
+                    component="a"
+                    href={whatsappShare || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    disabled={!referralLink}
+                  >
+                    Compartilhar
+                  </Button>
+                </Stack>
+              </Stack>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 1.5 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Código para digitar"
+                  value={shareCode || 'Código indisponível no momento'}
+                  inputProps={{
+                    readOnly: true,
+                    'aria-label': 'Código de indicação',
+                    style: { fontFamily: 'ui-monospace, monospace', fontWeight: 700, letterSpacing: '0.14em' },
+                  }}
+                  onFocus={(event) => event.target.select()}
+                />
                 <Button
                   variant="outlined"
-                  startIcon={<WhatsAppIcon />}
-                  component="a"
-                  href={whatsappShare || undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  disabled={!referralLink}
+                  startIcon={<ContentCopyOutlinedIcon />}
+                  onClick={handleCopyCode}
+                  disabled={!shareCode}
+                  sx={{ flexShrink: 0, alignSelf: { sm: 'center' } }}
                 >
-                  Compartilhar
+                  Copiar código
                 </Button>
               </Stack>
-            </Stack>
-          )}
-          {dashboard?.referralCode && (
-            <p className="partner-kpi-hint" style={{ marginTop: 10 }}>
-              Código: <strong>{dashboard.referralCode}</strong>
-            </p>
+              <p className="partner-kpi-hint" style={{ marginTop: 10 }}>
+                O cliente cola este código no campo “Indicação? Insira o código”.
+                {legacyStillValid ? ' Links já enviados com o código anterior continuam válidos.' : ''}
+              </p>
+            </>
           )}
         </section>
 

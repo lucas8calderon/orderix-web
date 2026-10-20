@@ -229,7 +229,12 @@ export default function PartnerProfilePage() {
             <h2 className="partner-card-title">Sua conta</h2>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 4 }} sx={{ mt: 1.5 }}>
               <Box><Typography variant="caption" color="text.secondary">Situação</Typography><Box sx={{ mt: 0.5 }}><PartnerStatusChip kind="partner" value={profile.status} /></Box></Box>
-              <Box><Typography variant="caption" color="text.secondary">Código</Typography><Typography fontWeight={600}>{profile.referralCode || '—'}</Typography></Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Código para digitar</Typography>
+                <Typography fontWeight={700} sx={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.12em' }}>
+                  {profile.shareCode || profile.referralCode || '—'}
+                </Typography>
+              </Box>
               <Box><Typography variant="caption" color="text.secondary">Desde</Typography><Typography fontWeight={600}>{formatDateTime(profile.createdAt)}</Typography></Box>
             </Stack>
           </section>

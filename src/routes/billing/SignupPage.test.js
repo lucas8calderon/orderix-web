@@ -14,6 +14,10 @@ jest.mock('axios', () => ({
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  document.cookie.split(';').forEach((part) => {
+    const name = part.split('=')[0]?.trim();
+    if (name) document.cookie = `${name}=; Path=/; Max-Age=0`;
+  });
   axios.post.mockReset();
   axios.get.mockReset();
   axios.get.mockImplementation(() => new Promise(() => {}));
@@ -74,6 +78,45 @@ test('pix signup does not ask for address or send a price', async () => {
   expect(screen.queryByRole('link', { name: /Abrir fatura/i })).not.toBeInTheDocument();
   expect(screen.queryByRole('link', { name: /login/i })).not.toBeInTheDocument();
   await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/signup/42/status'));
+});
+
+test('referral field is prefilled from ref, editable, and shows a notice without blocking payment', async () => {
+  axios.post.mockResolvedValue({
+    data: {
+      signupId: 7,
+      pixPayload: '000201',
+      partnerReferralNotice: 'Código de indicação inválido. A contratação segue sem comissão de parceiro.',
+    },
+  });
+  setup('/contratar?plan=PLAN_02&ref=WPR-BK9ASD');
+  const field = await screen.findByLabelText('Indicação? Insira o código');
+  await waitFor(() => expect(field).toHaveValue('WPR-BK9ASD'));
+  fireEvent.change(field, { target: { value: 'nao-existe' } });
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  await waitFor(() => expect(axios.post).toHaveBeenCalled());
+  expect(axios.post.mock.calls[0][1].partnerReferralCode).toBe('NAO-EXISTE');
+  expect(await screen.findByTestId('partner-referral-notice')).toHaveTextContent(/sem comissão de parceiro/i);
+  expect(screen.getByTestId('pix-payload')).toHaveTextContent('000201');
+});
+
+test('cleared referral field is not sent even when ref was stored', async () => {
+  axios.post.mockResolvedValue({
+    data: { signupId: 8, pixPayload: '000201' },
+  });
+  setup('/contratar?plan=PLAN_02&ref=K7M4NP');
+  const field = await screen.findByLabelText('Indicação? Insira o código');
+  await waitFor(() => expect(field).toHaveValue('K7M4NP'));
+  fireEvent.change(field, { target: { value: '' } });
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  await waitFor(() => expect(axios.post).toHaveBeenCalled());
+  expect(axios.post.mock.calls[0][1].partnerReferralCode).toBeUndefined();
+  expect(screen.queryByTestId('partner-referral-notice')).not.toBeInTheDocument();
 });
 
 test('public Asaas invoice urls are recognized; portal login is rejected', () => {

@@ -60,6 +60,13 @@ const STATUS_ACTIONS = [
   { status: 'DISABLED', label: 'Desativar', variant: 'outlined' },
 ];
 
+function partnerCodeLabel(partner) {
+  const share = partner?.shareCode;
+  const legacy = partner?.referralCode;
+  if (share && legacy && share !== legacy) return `${share} (antigo ${legacy})`;
+  return share || legacy || '—';
+}
+
 const REFERRAL_COLUMNS = [
   { key: 'establishment', label: 'Estabelecimento', render: (item) => item.establishmentName },
   {
@@ -267,7 +274,7 @@ function PartnerDetailDialog({ partnerId, onClose, onChanged, notify }) {
                       {partner.phoneVerified ? '· verificado' : '· não verificado'}
                     </Typography>
                   </Field>
-                  <Field label="Código de indicação">{partner.referralCode || '—'}</Field>
+                  <Field label="Código de indicação">{partnerCodeLabel(partner)}</Field>
                   <Field label="Indicações">{partner.totalReferrals ?? 0}</Field>
                   <Field label="Convertidas">{partner.convertedReferrals ?? 0}</Field>
                   <Field label="Cadastro">{formatDateTime(partner.createdAt)}</Field>
@@ -776,7 +783,7 @@ export function MasterPartners() {
                     <TableRow key={partner.id} hover>
                       <TableCell sx={{ fontWeight: 600 }}>{partnerFullName(partner) || `#${partner.id}`}</TableCell>
                       <TableCell>{formatWhatsappDisplay(partner.whatsapp)}</TableCell>
-                      <TableCell>{partner.referralCode || '—'}</TableCell>
+                      <TableCell>{partnerCodeLabel(partner)}</TableCell>
                       <TableCell><PartnerStatusChip kind="partner" value={partner.status} /></TableCell>
                       <TableCell align="right">{partner.totalReferrals ?? 0}</TableCell>
                       <TableCell align="right">{partner.convertedReferrals ?? 0}</TableCell>
@@ -795,7 +802,7 @@ export function MasterPartners() {
                 <Paper key={partner.id} elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                   <SimpleCard
                     title={partnerFullName(partner) || `#${partner.id}`}
-                    subtitle={`${formatWhatsappDisplay(partner.whatsapp)} · ${partner.referralCode || '—'}`}
+                    subtitle={`${formatWhatsappDisplay(partner.whatsapp)} · ${partnerCodeLabel(partner)}`}
                     status={<PartnerStatusChip kind="partner" value={partner.status} />}
                   />
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>

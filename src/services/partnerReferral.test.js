@@ -35,6 +35,9 @@ describe('partnerReferral', () => {
     );
     expect(buildPublicReferralLink('ab', 'https://weper-staging-web.onrender.com')).toBe('');
     expect(buildPublicReferralLink('WPR-BK9ASD', '')).toBe('');
+    expect(buildPublicReferralLink('K7M4NP', 'https://weper-staging-web.onrender.com')).toBe(
+      'https://weper-staging-web.onrender.com/?ref=K7M4NP',
+    );
   });
 
   it('salva o ref válido em maiúsculas (session + cookie)', () => {
@@ -65,6 +68,7 @@ describe('partnerReferral', () => {
 
   it('normaliza e limpa', () => {
     expect(normalizePartnerRef('  xyz9 ')).toBe('XYZ9');
+    expect(normalizePartnerRef('k7m 4np')).toBe('K7M4NP');
     expect(normalizePartnerRef(null)).toBeNull();
     capturePartnerRef('?ref=xyz9');
     clearStoredPartnerRef();

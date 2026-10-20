@@ -238,6 +238,10 @@ export default function SignupPage() {
   const [params] = useSearchParams();
   useEffect(() => {
     capturePartnerRef(params.toString() ? `?${params.toString()}` : window.location.search);
+    if (!referralEdited.current) {
+      const stored = getStoredPartnerRef();
+      if (stored) setReferralCodeInput(stored);
+    }
   }, [params]);
 
   const requestedPlan = params.get('plan');
@@ -265,6 +269,8 @@ export default function SignupPage() {
   const [copied, setCopied] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(() => Boolean(readStoredSignupResult()?.paid));
   const [qrImageFailed, setQrImageFailed] = useState(false);
+  const [referralCodeInput, setReferralCodeInput] = useState(() => getStoredPartnerRef() || '');
+  const referralEdited = useRef(false);
   const pollRef = useRef(null);
 
   const plan = getPlanTier(planCode);
@@ -364,7 +370,8 @@ export default function SignupPage() {
       setError('Informe os dados do cartão para repasse. Eles não ficam salvos nesta tela.');
       return;
     }
-    const partnerReferralCode = getStoredPartnerRef() || undefined;
+    const typedReferral = referralCodeInput.trim();
+    const partnerReferralCode = typedReferral || undefined;
     const payload = {
       planCode,
       billingType,
@@ -499,6 +506,11 @@ export default function SignupPage() {
 
               {result ? (
                 <div className="ct-result">
+                  {result.partnerReferralNotice ? (
+                    <p className="ct-note" role="status" data-testid="partner-referral-notice">
+                      {result.partnerReferralNotice}
+                    </p>
+                  ) : null}
                   <h2 id="ct-checkout-title">
                     {paymentConfirmed ? 'Pagamento confirmado' : 'Pague com Pix para ativar'}
                   </h2>
@@ -735,6 +747,25 @@ export default function SignupPage() {
                           required
                         />
                       </div>
+                    </div>
+
+                    <div className="ct-field">
+                      <label htmlFor="partnerReferralCode">Indicação? Insira o código</label>
+                      <input
+                        id="partnerReferralCode"
+                        className="ct-code-input"
+                        value={referralCodeInput}
+                        onChange={(event) => {
+                          referralEdited.current = true;
+                          setReferralCodeInput(event.target.value.toUpperCase().replace(/\s+/g, ''));
+                        }}
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        maxLength={16}
+                        placeholder="Ex.: K7M4NP"
+                      />
+                      <p className="ct-field-note">Opcional. Você pode alterar o código antes de pagar.</p>
                     </div>
 
                     <div>
