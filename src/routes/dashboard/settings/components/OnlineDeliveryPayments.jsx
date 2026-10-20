@@ -55,8 +55,9 @@ export function OnlineDeliveryPayments({
   const publicKeyConfigured = pagbank
     ? Boolean(settings.pagbankCardPublicKeyConfigured)
     : asaas
-      ? hasTypedSecret(settings.asaasPublicKey) || Boolean(settings.asaasPublicKeyConfigured)
+      ? accessConfigured
       : hasMercadoPagoPublicKey(settings, environment);
+  const cardReady = asaas ? accessConfigured : (accessConfigured && publicKeyConfigured);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState('');
   const [pixPausedForMissingToken, setPixPausedForMissingToken] = useState(false);
@@ -89,7 +90,7 @@ export function OnlineDeliveryPayments({
       onSettingChange('onlinePixEnabled', null, false);
       setPixPausedForMissingToken(true);
     }
-    if (!publicKeyConfigured && settings.onlineCardEnabled) {
+    if (!asaasKeyStored && settings.onlineCardEnabled) {
       onSettingChange('onlineCardEnabled', null, false);
     }
   }, [
@@ -98,7 +99,6 @@ export function OnlineDeliveryPayments({
     tokenStored,
     asaasKeyStored,
     publicKeyStored,
-    publicKeyConfigured,
     settings.onlinePixEnabled,
     settings.onlineCardEnabled,
     onSettingChange,
@@ -163,13 +163,11 @@ export function OnlineDeliveryPayments({
     try {
       const response = asaas ? await testAsaasConnection() : await testPagBankConnection();
       if (response?.data?.ok) {
-        if (asaas) {
-          onSettingChange('asaasPublicKeyConfigured', null, true);
-        } else {
+        if (!asaas) {
           onSettingChange('pagbankCardPublicKeyConfigured', null, true);
         }
         setTestMessage(asaas
-          ? 'Conexão ok. A tokenização de cartão ficou liberada nesta loja.'
+          ? 'Conexão ok. A API key da loja está válida para Pix e cartão.'
           : 'Conexão ok. A chave de cartão ficou guardada nesta loja.');
       } else {
         setTestMessage(asaas
@@ -282,17 +280,9 @@ export function OnlineDeliveryPayments({
             {testing ? 'Testando...' : 'Testar conexão'}
           </Button>
           <Typography className="setting-hint" variant="body2">
-            Salve a API key antes de testar. O Asaas não tem chave pública separada: o teste valida a API key e libera a tokenização no navegador, sem mostrar o segredo.
+            Salve a API key antes de testar. O Asaas não tem chave pública de cartão: a tokenização roda no servidor Weper com a API key da loja.
           </Typography>
           {testMessage ? <Typography className="setting-hint" variant="body2">{testMessage}</Typography> : null}
-          <SecretField
-            label="Chave pública (cartão)"
-            value={settings.asaasPublicKey}
-            configuredLength={settings.asaasPublicKeyLength}
-            configured={Boolean(settings.asaasPublicKeyConfigured) && isUnsetSecret(settings.asaasPublicKey)}
-            saving={saving}
-            onChange={(value) => onSettingChange('asaasPublicKey', null, value)}
-          />
           <SecretField
             label="Token do webhook de delivery"
             value={settings.asaasWebhookToken}
@@ -381,17 +371,17 @@ export function OnlineDeliveryPayments({
         control={(
           <Switch
             checked={Boolean(settings.onlineCardEnabled)}
-            disabled={!accessConfigured || !publicKeyConfigured}
+            disabled={!cardReady}
             onChange={(e) => onSettingChange('onlineCardEnabled', null, e.target.checked)}
             sx={switchStyles}
           />
         )}
         label="Cartão de crédito online"
       />
-      {!accessConfigured || !publicKeyConfigured ? (
+      {!cardReady ? (
         <Typography className="setting-hint" variant="body2">
           {asaas
-            ? 'Salve a API key e teste a conexão para guardar a chave pública antes de ligar o cartão (tokenização no navegador, sem guardar PAN/CVV).'
+            ? 'Salve a API key Asaas da loja antes de ligar o cartão online.'
             : pagbank
               ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'
               : !accessConfigured

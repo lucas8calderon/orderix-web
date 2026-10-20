@@ -51,6 +51,19 @@ export function getDeliveryPixPayment(slug, orderId, paymentId) {
   );
 }
 
+export function tokenizeDeliveryAsaasCard(slug, orderId, card) {
+  return axios.post(
+    `${API_BASE_URL}/api/public/delivery/${encodeURIComponent(slug)}/orders/${orderId}/payments/card/tokenize`,
+    {
+      holderName: card?.holderName,
+      number: card?.number,
+      expiryMonth: card?.expiryMonth,
+      expiryYear: card?.expiryYear,
+      ccv: card?.ccv,
+    }
+  );
+}
+
 export function createDeliveryCardPayment(slug, orderId, idempotencyKey, payload) {
   const body = {
     cardToken: payload?.cardToken,
@@ -58,6 +71,7 @@ export function createDeliveryCardPayment(slug, orderId, idempotencyKey, payload
     installments: payload?.installments,
     identificationType: payload?.identificationType,
     identificationNumber: payload?.identificationNumber,
+    providerCustomerId: payload?.providerCustomerId,
   };
   return axios.post(
     `${API_BASE_URL}/api/public/delivery/${encodeURIComponent(slug)}/orders/${orderId}/payments/card`,
