@@ -410,4 +410,37 @@ describe('OnlineDeliveryPayments', () => {
     expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
     expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, false);
   });
+
+  it('salvar envia a API key Asaas lida do input', () => {
+    const onSave = jest.fn();
+    renderSection({
+      deliveryOnlineProvider: 'ASAAS',
+      asaasApiKeyConfigured: false,
+      onlinePixEnabled: false,
+      asaasApiKey: '',
+    }, jest.fn(), onSave);
+    const input = screen.getByLabelText('API key da loja');
+    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    valueSetter.call(input, 'aact_loja_sandbox');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(onSave).toHaveBeenCalledWith('onlinePayments', {
+      paymentOverrides: { asaasApiKey: 'aact_loja_sandbox' },
+    });
+  });
+
+  it('com API key Asaas configurada libera Pix online e mostra máscara', () => {
+    renderSection({
+      deliveryOnlineProvider: 'ASAAS',
+      asaasApiKeyConfigured: true,
+      asaasApiKeyLength: 18,
+      asaasPublicKeyConfigured: true,
+      asaasPublicKeyLength: 12,
+      asaasApiKey: '',
+      asaasPublicKey: '',
+      onlinePixEnabled: false,
+    });
+    expect(screen.getByLabelText('API key da loja')).toHaveValue(secretInputMask(18));
+    expect(screen.getByText(/Asaas · produção · configurado/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Pix online')).not.toBeDisabled();
+  });
 });

@@ -460,6 +460,10 @@ export const useSettingsState = () => {
         deliveryOnlineProvider: paymentSettings.deliveryOnlineProvider,
         pagbankEnvironment: paymentSettings.pagbankEnvironment,
         pagbankAccessToken: paymentSettings.pagbankAccessToken,
+        asaasEnvironment: paymentSettings.asaasEnvironment,
+        asaasApiKey: paymentSettings.asaasApiKey,
+        asaasPublicKey: paymentSettings.asaasPublicKey,
+        asaasWebhookToken: paymentSettings.asaasWebhookToken,
       });
       setSettings((prev) => ({ ...prev, ...payment }));
       showToast(

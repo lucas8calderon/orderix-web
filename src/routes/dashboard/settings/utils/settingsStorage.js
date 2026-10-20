@@ -144,6 +144,10 @@ export const settingsStorage = {
       deliveryOnlineProvider,
       pagbankEnvironment,
       pagbankAccessToken,
+      asaasEnvironment,
+      asaasApiKey,
+      asaasPublicKey,
+      asaasWebhookToken,
       ...rest
     } = newSettings || {};
     mockSettings = { ...mockSettings, ...rest };
@@ -176,6 +180,10 @@ export const settingsStorage = {
       deliveryOnlineProvider,
       pagbankEnvironment,
       pagbankAccessToken,
+      asaasEnvironment,
+      asaasApiKey,
+      asaasPublicKey,
+      asaasWebhookToken,
     });
     return { ...mockSettings, ...payment };
   },
@@ -210,6 +218,10 @@ export const settingsStorage = {
       'deliveryOnlineProvider',
       'pagbankEnvironment',
       'pagbankAccessToken',
+      'asaasEnvironment',
+      'asaasApiKey',
+      'asaasPublicKey',
+      'asaasWebhookToken',
     ]);
     if (paymentKeys.has(key)) {
       const current = await this.getPaymentConfig();
