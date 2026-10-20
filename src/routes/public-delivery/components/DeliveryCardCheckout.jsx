@@ -19,6 +19,8 @@ import './DeliveryCardCheckout.css';
 
 const SDK_URL = 'https://sdk.mercadopago.com/js/v2';
 const PAGBANK_SDK_URL = 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js';
+const ASAAS_SANDBOX = 'https://api-sandbox.asaas.com';
+const ASAAS_PROD = 'https://api.asaas.com';
 
 function paintThenContinue() {
   return new Promise((resolve) => {
@@ -82,6 +84,54 @@ function loadPagBank() {
   });
 }
 
+/** Tokeniza no Asaas no navegador — PAN/CVV não passam pelo backend Weper. */
+export async function tokenizeAsaasCard({
+  publicKey,
+  environment,
+  holder,
+  number,
+  expMonth,
+  expYear,
+  securityCode,
+  payerEmail,
+}) {
+  const base = environment === 'prod' ? ASAAS_PROD : ASAAS_SANDBOX;
+  const response = await fetch(`${base}/v3/creditCard/tokenizeCreditCard`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      access_token: String(publicKey || '').trim(),
+    },
+    body: JSON.stringify({
+      creditCard: {
+        holderName: holder,
+        number: String(number || '').replace(/\D/g, ''),
+        expiryMonth: String(expMonth || '').padStart(2, '0'),
+        expiryYear: String(expYear || ''),
+        ccv: String(securityCode || ''),
+      },
+      creditCardHolderInfo: {
+        name: holder,
+        email: payerEmail || 'cartao@weper.local',
+        cpfCnpj: '24971563792',
+        postalCode: '01310100',
+        addressNumber: '100',
+        phone: '11999999999',
+      },
+      remoteIp: '0.0.0.0',
+    }),
+  });
+  if (!response.ok) {
+    throw new Error('tokenize');
+  }
+  const data = await response.json();
+  const token = data?.creditCardToken || data?.token;
+  if (!token) {
+    throw new Error('tokenize');
+  }
+  return String(token);
+}
+
 export default function DeliveryCardCheckout({
   open,
   slug,
@@ -89,6 +139,7 @@ export default function DeliveryCardCheckout({
   amount,
   publicKey,
   provider = 'MERCADOPAGO',
+  asaasEnvironment = 'sandbox',
   payerEmail,
   onClose,
   onApproved,
@@ -109,7 +160,9 @@ export default function DeliveryCardCheckout({
   const [expYear, setExpYear] = useState('');
   const [securityCode, setSecurityCode] = useState('');
   const pagbank = provider === 'PAGBANK';
-  const providerLabel = pagbank ? 'PagBank' : 'Mercado Pago';
+  const asaas = provider === 'ASAAS';
+  const manualCardForm = pagbank || asaas;
+  const providerLabel = asaas ? 'Asaas' : pagbank ? 'PagBank' : 'Mercado Pago';
 
   useEffect(() => {
     if (!open) {
@@ -123,7 +176,7 @@ export default function DeliveryCardCheckout({
   }, [open, orderId]);
 
   useEffect(() => {
-    if (!open || phase !== 'form' || !publicKey || !orderId || pagbank) {
+    if (!open || phase !== 'form' || !publicKey || !orderId || manualCardForm) {
       return undefined;
     }
     let cancelled = false;
@@ -179,7 +232,7 @@ export default function DeliveryCardCheckout({
         controller.unmount();
       }
     };
-  }, [open, phase, publicKey, orderId, amount, payerEmail, attempt, containerId, pagbank]);
+  }, [open, phase, publicKey, orderId, amount, payerEmail, attempt, containerId, manualCardForm]);
 
   useEffect(() => {
     if (!open || phase !== 'pending' || !payment?.id) {
@@ -243,7 +296,7 @@ export default function DeliveryCardCheckout({
       });
   };
 
-  const submitPagBank = async (event) => {
+  const submitManualCard = async (event) => {
     event.preventDefault();
     if (processing) {
       return;
@@ -255,25 +308,40 @@ export default function DeliveryCardCheckout({
     await paintThenContinue();
     let sent = false;
     try {
-      const pagseguro = await loadPagBank();
-      const result = pagseguro.encryptCard({
-        publicKey,
-        holder,
-        number: String(number || '').replace(/\D/g, ''),
-        expMonth,
-        expYear,
-        securityCode,
-      });
-      const encrypted = result && (result.encryptedCard || result.encrypted);
+      let token;
+      if (asaas) {
+        token = await tokenizeAsaasCard({
+          publicKey,
+          environment: asaasEnvironment,
+          holder,
+          number,
+          expMonth,
+          expYear,
+          securityCode,
+          payerEmail,
+        });
+      } else {
+        const pagseguro = await loadPagBank();
+        const result = pagseguro.encryptCard({
+          publicKey,
+          holder,
+          number: String(number || '').replace(/\D/g, ''),
+          expMonth,
+          expYear,
+          securityCode,
+        });
+        const encrypted = result && (result.encryptedCard || result.encrypted);
+        if (!encrypted || result.hasErrors) {
+          setError('Não foi possível proteger os dados do cartão.');
+          return;
+        }
+        token = encrypted;
+      }
       setNumber('');
       setSecurityCode('');
-      if (!encrypted || result.hasErrors) {
-        setError('Não foi possível proteger os dados do cartão.');
-        return;
-      }
       sent = true;
       await submitCard({
-        token: encrypted,
+        token,
         payment_method_id: 'credit',
         installments: 1,
       });
@@ -281,7 +349,9 @@ export default function DeliveryCardCheckout({
       setNumber('');
       setSecurityCode('');
       if (!sent) {
-        setError('Não foi possível carregar o PagBank.');
+        setError(asaas
+          ? 'Não foi possível tokenizar o cartão no Asaas.'
+          : 'Não foi possível carregar o PagBank.');
       }
     } finally {
       setProcessing(false);
@@ -321,8 +391,8 @@ export default function DeliveryCardCheckout({
           <span className="delivery-card-amount-value">{formatCurrency(amount)}</span>
         </p>
         {error && phase !== 'approved' ? <Alert severity={phase === 'unknown' ? 'warning' : 'error'} sx={{ mb: 2 }}>{error}</Alert> : null}
-        {phase === 'form' && pagbank ? (
-          <Box component="form" onSubmit={submitPagBank} className="delivery-card-brick delivery-card-form" aria-busy={processing}>
+        {phase === 'form' && manualCardForm ? (
+          <Box component="form" onSubmit={submitManualCard} className="delivery-card-brick delivery-card-form" aria-busy={processing}>
             <TextField label="Nome impresso no cartão" value={holder} onChange={(e) => setHolder(e.target.value)} fullWidth required disabled={processing} autoComplete="cc-name" />
             <TextField label="Número do cartão" value={number} onChange={(e) => setNumber(e.target.value)} fullWidth required disabled={processing} inputProps={{ inputMode: 'numeric', autoComplete: 'cc-number' }} />
             <Box className="delivery-card-fields">
@@ -334,11 +404,11 @@ export default function DeliveryCardCheckout({
               Pagar à vista
             </Button>
             <Typography className="delivery-card-trust" component="p">
-              Dados do cartão criptografados antes de sair do aparelho.
+              Dados do cartão tokenizados antes de sair do aparelho ({providerLabel}).
             </Typography>
           </Box>
         ) : null}
-        {phase === 'form' && !pagbank ? (
+        {phase === 'form' && !manualCardForm ? (
           <>
             {loadingBrick ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>

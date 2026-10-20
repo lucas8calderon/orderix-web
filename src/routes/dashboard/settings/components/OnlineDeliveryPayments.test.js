@@ -360,4 +360,30 @@ describe('OnlineDeliveryPayments', () => {
     expect(screen.getByLabelText('Pix online')).toBeDisabled();
     expect(screen.getByLabelText('Cartão de crédito online')).toBeDisabled();
   });
+
+  it('mostra campos Asaas da loja sem misturar Mercado Pago', () => {
+    renderSection({ deliveryOnlineProvider: 'ASAAS' });
+    expect(screen.getByLabelText('API key da loja')).toBeInTheDocument();
+    expect(screen.getByLabelText('Chave pública (cartão)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Token do webhook de delivery')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Token da conta')).not.toBeInTheDocument();
+    expect(screen.getByText(/nunca a chave da assinatura Weper/i)).toBeInTheDocument();
+  });
+
+  it('ao selecionar Asaas sem API key desliga Pix e cartão herdados', () => {
+    const onSettingChange = jest.fn();
+    renderSection({
+      deliveryOnlineProvider: 'MERCADOPAGO',
+      mercadoPagoConfigured: true,
+      asaasApiKeyConfigured: false,
+      onlinePixEnabled: true,
+      onlineCardEnabled: true,
+    }, onSettingChange);
+    const native = screen.getByLabelText('Provedor online').parentElement.querySelector('input');
+    fireEvent.change(native, { target: { value: 'ASAAS' } });
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryOnlineProvider', null, 'ASAAS');
+    expect(onSettingChange).toHaveBeenCalledWith('onlinePixEnabled', null, false);
+    expect(onSettingChange).toHaveBeenCalledWith('onlineCardEnabled', null, false);
+  });
 });
