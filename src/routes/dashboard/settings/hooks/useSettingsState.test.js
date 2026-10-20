@@ -417,4 +417,48 @@ describe('useSettingsState delivery branding', () => {
       })
     );
   });
+
+  it('envia credenciais Asaas no save de pagamentos online', async () => {
+    settingsStorage.updatePaymentConfig.mockResolvedValue({
+      deliveryOnlineProvider: 'ASAAS',
+      onlinePixEnabled: false,
+      asaasApiKeyConfigured: true,
+      asaasApiKeyLength: 18,
+      asaasPublicKeyConfigured: true,
+      asaasPublicKeyLength: 12,
+      asaasWebhookTokenConfigured: true,
+      asaasWebhookTokenLength: 10,
+      asaasEnvironment: 'sandbox',
+    });
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('onlinePayments', {
+        paymentOverrides: {
+          deliveryOnlineProvider: 'ASAAS',
+          asaasEnvironment: 'sandbox',
+          asaasApiKey: 'aact_loja_sandbox',
+          asaasPublicKey: 'pub_asaas_12',
+          asaasWebhookToken: 'whsec_loja',
+          onlinePixEnabled: false,
+        },
+      });
+    });
+
+    expect(saved).toBe(true);
+    expect(settingsStorage.updatePaymentConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deliveryOnlineProvider: 'ASAAS',
+        asaasEnvironment: 'sandbox',
+        asaasApiKey: 'aact_loja_sandbox',
+        asaasPublicKey: 'pub_asaas_12',
+        asaasWebhookToken: 'whsec_loja',
+        onlinePixEnabled: false,
+      })
+    );
+    expect(result.current.settings.asaasApiKeyConfigured).toBe(true);
+    expect(result.current.settings.asaasApiKeyLength).toBe(18);
+  });
 });

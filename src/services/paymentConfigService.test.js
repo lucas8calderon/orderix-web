@@ -317,4 +317,43 @@ describe('hydrateSavedSecretLengths', () => {
     expect(payload.pagbankAccessToken).toBe('token-da-loja');
     expect(payload.pagbankEnvironment).toBe('sandbox');
   });
+
+  it('mapeia Asaas no GET/PUT sem devolver a API key', () => {
+    const ui = toPaymentUi({
+      deliveryOnlineProvider: 'ASAAS',
+      asaasEnvironment: 'sandbox',
+      asaasApiKeyConfigured: true,
+      asaasApiKeyLength: 18,
+      asaasPublicKeyConfigured: true,
+      asaasPublicKeyLength: 12,
+      asaasWebhookTokenConfigured: true,
+      asaasWebhookTokenLength: 10,
+      asaasApiKey: 'nao-devolver',
+      asaasPublicKey: 'nao-devolver',
+      asaasWebhookToken: 'nao-devolver',
+    });
+    expect(ui.deliveryOnlineProvider).toBe('ASAAS');
+    expect(ui.asaasApiKey).toBe('');
+    expect(ui.asaasPublicKey).toBe('');
+    expect(ui.asaasWebhookToken).toBe('');
+    expect(ui.asaasApiKeyConfigured).toBe(true);
+    expect(ui.asaasApiKeyLength).toBe(18);
+
+    const payload = toPaymentPayload({
+      ...ui,
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      asaasApiKey: 'aact_loja_sandbox',
+      asaasPublicKey: 'pub_asaas_12',
+      asaasWebhookToken: 'whsec_loja',
+    });
+    expect(payload.deliveryOnlineProvider).toBe('ASAAS');
+    expect(payload.asaasEnvironment).toBe('sandbox');
+    expect(payload.asaasApiKey).toBe('aact_loja_sandbox');
+    expect(payload.asaasPublicKey).toBe('pub_asaas_12');
+    expect(payload.asaasWebhookToken).toBe('whsec_loja');
+  });
 });
