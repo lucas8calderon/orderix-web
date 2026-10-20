@@ -174,7 +174,7 @@ export default function SignupPage() {
 
   const initialPlan = useMemo(() => {
     const requested = params.get('plan');
-    return PRICING_TIERS.some((tier) => tier.code === requested) ? requested : 'PLAN_01';
+    return PRICING_TIERS.some((tier) => tier.code === requested) ? requested : '';
   }, [params]);
 
   const [planCode, setPlanCode] = useState(initialPlan);
@@ -185,7 +185,8 @@ export default function SignupPage() {
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const plan = PRICING_TIERS.find((tier) => tier.code === planCode) || PRICING_TIERS[0];
+  const plan = PRICING_TIERS.find((tier) => tier.code === planCode) || null;
+  const planSelected = Boolean(plan);
   const card = billingType === 'CREDIT_CARD';
   const isPj = form.person === 'JURIDICA';
 
@@ -197,10 +198,19 @@ export default function SignupPage() {
     update('document', isPj ? maskCnpj(value) : maskCpf(value));
   }
 
+  function selectPlan(code) {
+    setPlanCode(code);
+    setError('');
+  }
+
   async function submit(event) {
     event.preventDefault();
     if (pending) return;
     setError('');
+    if (!planSelected) {
+      setError('Selecione a faixa de faturamento para continuar.');
+      return;
+    }
     if (card && (!form.phone.trim() || !form.postalCode.trim() || !form.addressNumber.trim())) {
       setError('No cartão, informe telefone, CEP e número do responsável financeiro.');
       return;
@@ -386,8 +396,14 @@ export default function SignupPage() {
                       <select
                         id="plan"
                         value={planCode}
-                        onChange={(event) => setPlanCode(event.target.value)}
+                        onChange={(event) => selectPlan(event.target.value)}
+                        required
+                        className={planSelected ? undefined : 'is-placeholder'}
+                        aria-invalid={Boolean(error && !planSelected)}
                       >
+                        <option value="" disabled>
+                          Selecione a faixa de faturamento
+                        </option>
                         {PRICING_TIERS.map((tier) => (
                           <option key={tier.code} value={tier.code}>
                             {tier.label} — {formatPrice(tier.monthlyPrice)}/mês
@@ -396,23 +412,32 @@ export default function SignupPage() {
                       </select>
                     </div>
 
-                    <div className="ct-plan-summary" aria-live="polite">
+                    <div
+                      className={`ct-plan-summary${planSelected ? '' : ' is-empty'}`}
+                      aria-live="polite"
+                    >
                       <div className="ct-plan-summary-top">
                         <div>
                           <span>Seu plano Weper</span>
-                          <strong>
-                            {formatPrice(plan.monthlyPrice)}
-                            <small>/mês</small>
-                          </strong>
+                          {planSelected ? (
+                            <strong>
+                              {formatPrice(plan.monthlyPrice)}
+                              <small>/mês</small>
+                            </strong>
+                          ) : (
+                            <strong className="ct-plan-summary-placeholder">Selecione um plano</strong>
+                          )}
                         </div>
-                        <span className="ct-plan-badge">Plano completo</span>
+                        {planSelected ? <span className="ct-plan-badge">Plano completo</span> : null}
                       </div>
-                      <ul>
-                        <li><Check size={15} aria-hidden="true" /> Funcionalidades incluídas no plano.</li>
-                        <li><Check size={15} aria-hidden="true" /> Sem comissões da Weper por venda.</li>
-                        <li><Check size={15} aria-hidden="true" /> Suporte conforme o plano.</li>
-                        <li><Check size={15} aria-hidden="true" /> Atualizações da plataforma.</li>
-                      </ul>
+                      {planSelected ? (
+                        <ul>
+                          <li><Check size={15} aria-hidden="true" /> Funcionalidades incluídas no plano.</li>
+                          <li><Check size={15} aria-hidden="true" /> Sem comissões da Weper por venda.</li>
+                          <li><Check size={15} aria-hidden="true" /> Suporte conforme o plano.</li>
+                          <li><Check size={15} aria-hidden="true" /> Atualizações da plataforma.</li>
+                        </ul>
+                      ) : null}
                     </div>
 
                     <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
@@ -630,7 +655,7 @@ export default function SignupPage() {
 
                     {error ? <p className="ct-alert" role="alert">{error}</p> : null}
 
-                    <button className="ct-submit" type="submit" disabled={pending}>
+                    <button className="ct-submit" type="submit" disabled={pending || !planSelected}>
                       {pending ? 'Enviando…' : 'Continuar para o pagamento'}
                       {!pending ? <ArrowRight size={18} aria-hidden="true" /> : null}
                     </button>

@@ -611,6 +611,14 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.ct-field select.is-placeholder {
+  color: var(--ct-muted);
+}
+
+.ct-field select.is-placeholder option {
+  color: var(--ct-ink);
+}
+
 .ct-field input:focus,
 .ct-field select:focus {
   outline: none;
@@ -629,6 +637,18 @@
   border-radius: 12px;
   background: var(--ct-soft-2);
   border: 1px solid #d9e5fb;
+}
+
+.ct-plan-summary.is-empty {
+  background: #f8fafc;
+  border-color: var(--ct-border);
+}
+
+.ct-plan-summary-top strong.ct-plan-summary-placeholder {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+  color: var(--ct-muted);
 }
 
 .ct-plan-summary-top {

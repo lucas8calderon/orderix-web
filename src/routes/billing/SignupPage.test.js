@@ -13,6 +13,22 @@ function setup(path = '/contratar?plan=PLAN_02') {
   );
 }
 
+function selectPlan(planCode = 'PLAN_02') {
+  fireEvent.change(screen.getByLabelText(/faturamento mensal/i), {
+    target: { value: planCode },
+  });
+}
+
+test('starts without a preselected plan and blocks submit until one is chosen', () => {
+  setup('/contratar');
+  const planSelect = screen.getByLabelText(/faturamento mensal/i);
+  expect(planSelect).toHaveValue('');
+  expect(screen.getByRole('option', { name: /Selecione a faixa de faturamento/i })).toBeDisabled();
+  expect(screen.getByText('Selecione um plano')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Continuar para o pagamento/i })).toBeDisabled();
+  expect(axios.post).not.toHaveBeenCalled();
+});
+
 test('pix signup does not ask for address or send a price', async () => {
   axios.post.mockResolvedValue({ data: { pixPayload: '000201', invoiceUrl: 'https://sandbox.asaas.com/i/1', storeActive: false } });
   setup();
@@ -38,6 +54,7 @@ test('pix signup does not ask for address or send a price', async () => {
 
 test('card without postal code stays on the form', () => {
   setup('/contratar');
+  selectPlan();
   fireEvent.click(screen.getByLabelText('Cartão'));
   expect(screen.getByLabelText('CEP')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
