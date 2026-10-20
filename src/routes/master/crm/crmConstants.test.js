@@ -55,12 +55,8 @@ describe('instagram', () => {
 });
 
 describe('whatsapp template', () => {
-  it('monta link oficial sem enviar a mensagem', () => {
+  it('monta link oficial só com o número', () => {
     expect(whatsAppDigits('(11) 99999-8888')).toBe('5511999998888');
-    const url = buildWhatsAppUrl('11999998888');
-    expect(url.startsWith('https://wa.me/5511999998888?text=')).toBe(true);
-    expect(url).toContain(encodeURIComponent('parceria gratuita'));
-    expect(url).toContain(encodeURIComponent('todos os módulos e benefícios'));
-    expect(url).toContain(encodeURIComponent('não receber contatos'));
+    expect(buildWhatsAppUrl('11999998888')).toBe('https://wa.me/5511999998888');
   });
 });
