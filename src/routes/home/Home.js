@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Menu, X, Smartphone, LayoutDashboard, UtensilsCrossed, ShoppingBag, ChefHat, Monitor, MessageCircle, Layers, QrCode, CheckCircle2, Coffee, Pizza, Store, MoveRight } from 'lucide-react';
 import { WeperMark } from './components/WeperMark';
 import { PRICING_TIERS, formatPrice, getMinimumPrice, getMaximumPrice } from '../../config/pricingTiers';
 import { PATHS } from '../../services/accessControl';
+import { capturePartnerRef } from '../../services/partnerReferral';
 import { openWhatsApp, WHATSAPP_DISPLAY } from './landingAssets';
 import './styles/Rebrand.css';
 
@@ -58,7 +59,10 @@ export default function Home() {
   const [activeSolution, setActiveSolution] = useState(0);
   const [tierId, setTierId] = useState(PRICING_TIERS[0].id);
   const menuButton = useRef(null);
+  const location = useLocation();
   const solution = SOLUTIONS[activeSolution];
+  // ?ref=CODIGO (link de parceiro): só guarda na sessão, sem atribuir conversão.
+  useEffect(() => { capturePartnerRef(location.search); }, [location.search]);
   const tier = PRICING_TIERS.find(item => item.id === tierId) || PRICING_TIERS[0];
   useEffect(() => {
     const title = document.title;
@@ -112,7 +116,7 @@ export default function Home() {
 
       <section className="wp-final"><div className="wp-container wp-final-inner"><span className="wp-kicker">SEU NEGÓCIO. SEU PRÓXIMO PASSO.</span><h2>Mais conectado.<br />Mais organizado.<br /><em>Mais Weper.</em></h2><p>Vamos simplificar a operação do seu estabelecimento?</p><ContactButton secondary>Quero conhecer a Weper</ContactButton><span className="wp-final-mark" aria-hidden="true">W</span></div></section>
     </main>
-    <footer className="wp-footer"><div className="wp-container"><div className="wp-footer-top"><div><a href="#home" className="wp-logo" aria-label="Weper, início"><WeperMark size={32} /></a><p>Tecnologia para conectar<br />seu negócio ao próximo passo.</p></div><nav aria-label="Links do rodapé"><div><strong>Conheça a Weper</strong><a href="#solucoes">Soluções</a><a href="#demo">Demonstração</a><a href="#plans">Preços</a><Link to={PATHS.PARTNERS}>Parceiros</Link></div><div><strong>Conte com a gente</strong><button onClick={() => openWhatsApp()} type="button">Fale com a equipe</button><Link to="/login">Acessar minha conta</Link><span>{WHATSAPP_DISPLAY}</span></div></nav></div><div className="wp-footer-bottom"><span>© {new Date().getFullYear()} Weper Solutions.</span><div><Link to="/privacy">Privacidade</Link><Link to="/terms">Termos de uso</Link></div></div></div></footer>
+    <footer className="wp-footer"><div className="wp-container"><div className="wp-footer-top"><div><a href="#home" className="wp-logo" aria-label="Weper, início"><WeperMark size={32} /></a><p>Tecnologia para conectar<br />seu negócio ao próximo passo.</p></div><nav aria-label="Links do rodapé"><div><strong>Conheça a Weper</strong><a href="#solucoes">Soluções</a><a href="#demo">Demonstração</a><a href="#plans">Preços</a><Link to={PATHS.PARTNERS}>Parceiros</Link><Link to={PATHS.PARTNERS_LOGIN}>Área de Parceiros</Link></div><div><strong>Conte com a gente</strong><button onClick={() => openWhatsApp()} type="button">Fale com a equipe</button><Link to="/login">Acessar minha conta</Link><span>{WHATSAPP_DISPLAY}</span></div></nav></div><div className="wp-footer-bottom"><span>© {new Date().getFullYear()} Weper Solutions.</span><div><Link to="/privacy">Privacidade</Link><Link to="/terms">Termos de uso</Link></div></div></div></footer>
     <button className="wp-contact-float" type="button" aria-label="Falar com a Weper pelo WhatsApp" onClick={() => openWhatsApp()}><MessageCircle size={22} /></button>
   </div>;
 }

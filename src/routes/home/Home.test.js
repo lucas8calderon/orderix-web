@@ -61,3 +61,10 @@ test('Escape closes the navigation and restores focus', () => {
   expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveAttribute('aria-expanded', 'false');
   expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveFocus();
 });
+
+test('captura ?ref= do link de parceiro em sessionStorage no mount', () => {
+  window.sessionStorage.clear();
+  render(<MemoryRouter initialEntries={['/?ref=Parc-01']}><Home /></MemoryRouter>);
+  expect(window.sessionStorage.getItem('weper.partnerRef')).toBe('PARC-01');
+  window.sessionStorage.clear();
+});

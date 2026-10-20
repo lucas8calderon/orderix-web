@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -22,6 +22,7 @@ import {
 import { getFeatureById } from '../../config/weperFeatures';
 import { formatPrice } from '../../config/pricingTiers';
 import { PATHS } from '../../services/accessControl';
+import { capturePartnerRef } from '../../services/partnerReferral';
 import { WeperMark } from '../home/components/WeperMark';
 import { openWhatsApp, WHATSAPP_DISPLAY } from '../home/landingAssets';
 import '../home/styles/Rebrand.css';
@@ -37,6 +38,7 @@ import {
   buildPartnerExamples,
   getPartnerReferencePlan,
 } from './partnerProgram';
+import PartnerRegisterDialog from './PartnerRegisterDialog';
 import './Partners.css';
 
 const STEP_ICONS = {
@@ -77,11 +79,19 @@ function scrollToSection(event, sectionId) {
 
 export default function PartnersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
   const menuButton = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const reference = getPartnerReferencePlan();
   const examples = buildPartnerExamples(reference, PARTNER_DEFAULT_RATE);
 
   useEffect(() => applyPartnerDocumentMeta(), []);
+
+  // ?ref=CODIGO: só guarda o código na sessão; não há atribuição de conversão aqui.
+  useEffect(() => {
+    capturePartnerRef(location.search);
+  }, [location.search]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -95,9 +105,13 @@ export default function PartnersPage() {
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
-  const join = (event) => {
-    if (event?.preventDefault) scrollToSection(event, 'quero-ser-parceiro');
+  const openRegister = () => {
     closeMenu();
+    setRegisterOpen(true);
+  };
+  const handleRegistered = () => {
+    setRegisterOpen(false);
+    navigate(PATHS.PARTNERS_LOGIN);
   };
 
   return (
@@ -127,11 +141,11 @@ export default function PartnersPage() {
             <a href="/#solucoes" onClick={closeMenu}>Soluções</a>
             <a href="/#plans" onClick={closeMenu}>Preços</a>
             <Link to={PATHS.PARTNERS} aria-current="page" onClick={closeMenu}>Parceiros</Link>
-            <Link to={PATHS.LOGIN} className="wp-mobile-login" onClick={closeMenu}>Entrar <ArrowUpRight size={15} /></Link>
+            <Link to={PATHS.PARTNERS_LOGIN} className="wp-mobile-login" onClick={closeMenu}>Área de Parceiros <ArrowUpRight size={15} /></Link>
           </nav>
           <div className="wp-header-actions">
-            <Link to={PATHS.LOGIN}>Entrar <ArrowUpRight size={15} /></Link>
-            <button type="button" className="wp-button wp-button--primary" onClick={join}>Quero ser parceiro</button>
+            <Link to={PATHS.PARTNERS_LOGIN}>Área de Parceiros <ArrowUpRight size={15} /></Link>
+            <button type="button" className="wp-button wp-button--primary" onClick={openRegister}>Seja Parceiro</button>
           </div>
         </div>
       </header>
@@ -142,19 +156,24 @@ export default function PartnersPage() {
             <div className="wp-hero-copy">
               <span className="wp-eyebrow"><span className="wp-blue-dot" /> Programa de Parceiros Weper</span>
               <h1 id="partner-hero-title">
-                Indique a Weper. <em>Cresça junto com a gente.</em> <span aria-hidden="true">💙</span>
+                Cresça com a Weper. <em>Ganhe indicando novos estabelecimentos.</em>
               </h1>
               <p>
-                Faça parte do nosso programa de parceiros, indique estabelecimentos que podem se beneficiar das soluções Weper e tenha a oportunidade de receber comissões recorrentes pelas assinaturas.
+                Conhece empreendedores que precisam melhorar a gestão do negócio? Torne-se parceiro da Weper, indique nossa plataforma e acompanhe suas oportunidades e futuras comissões em um só lugar.
               </p>
               <div className="wp-actions">
-                <a className="wp-button wp-button--primary" href="#simulador" onClick={(event) => scrollToSection(event, 'simulador')}>
-                  Simular meus ganhos <ArrowRight size={18} aria-hidden="true" />
-                </a>
-                <a className="wp-button wp-button--outline" href="#quero-ser-parceiro" onClick={join}>
-                  Quero ser parceiro
-                </a>
+                <button type="button" className="wp-button wp-button--primary" onClick={openRegister}>
+                  Seja Parceiro <ArrowRight size={18} aria-hidden="true" />
+                </button>
+                <Link className="wp-button wp-button--outline" to={PATHS.PARTNERS_LOGIN}>
+                  Acessar Área de Parceiros
+                </Link>
               </div>
+              <p className="wp-partners-hero-link">
+                <a className="wp-text-link" href="#simulador" onClick={(event) => scrollToSection(event, 'simulador')}>
+                  Simular meus ganhos <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              </p>
               <div className="wp-hero-assurance">
                 <span><CheckCircle2 size={15} aria-hidden="true" /> Indicação de estabelecimentos</span>
                 <span><CheckCircle2 size={15} aria-hidden="true" /> Comissão sobre assinaturas pagas</span>
@@ -292,9 +311,14 @@ export default function PartnersPage() {
             <span className="wp-kicker">PROGRAMA DE PARCEIROS</span>
             <h2 id="partner-join-title">Vamos crescer juntos? <span aria-hidden="true">💙</span></h2>
             <p>Estamos buscando pessoas que acreditam no potencial dos empreendedores e querem ajudar estabelecimentos a evoluir com tecnologia. Se você se identifica com essa proposta, queremos conhecer você!</p>
-            <button type="button" className="wp-button wp-button--white" onClick={() => openWhatsApp(PARTNER_WHATSAPP_MESSAGE)}>
-              Quero fazer parte <ArrowUpRight size={18} aria-hidden="true" />
-            </button>
+            <div className="wp-actions wp-partners-final-actions">
+              <button type="button" className="wp-button wp-button--white" onClick={openRegister}>
+                Seja Parceiro <ArrowRight size={18} aria-hidden="true" />
+              </button>
+              <button type="button" className="wp-button wp-button--white" onClick={() => openWhatsApp(PARTNER_WHATSAPP_MESSAGE)}>
+                Quero fazer parte <ArrowUpRight size={18} aria-hidden="true" />
+              </button>
+            </div>
             <span className="wp-final-mark" aria-hidden="true">W</span>
           </div>
         </section>
@@ -317,6 +341,7 @@ export default function PartnersPage() {
               <div>
                 <strong>Conte com a gente</strong>
                 <button type="button" onClick={() => openWhatsApp(PARTNER_WHATSAPP_MESSAGE)}>Fale com a equipe</button>
+                <Link to={PATHS.PARTNERS_LOGIN}>Área de Parceiros</Link>
                 <Link to={PATHS.LOGIN}>Acessar minha conta</Link>
                 <span>{WHATSAPP_DISPLAY}</span>
               </div>
@@ -340,6 +365,12 @@ export default function PartnersPage() {
       >
         <MessageCircle size={22} />
       </button>
+
+      <PartnerRegisterDialog
+        open={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onRegistered={handleRegistered}
+      />
     </div>
   );
 }

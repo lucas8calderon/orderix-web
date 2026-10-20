@@ -40,18 +40,22 @@ function setup() {
 
 describe('landing do programa de parceiros', () => {
   beforeEach(() => {
-    document.head.innerHTML = '';
+    window.sessionStorage.clear();
+    // Só os metadados de SEO: o emotion/MUI mantém referências aos <style> do head.
+    // eslint-disable-next-line testing-library/no-node-access
+    document.head.querySelectorAll('meta, link[rel="canonical"]').forEach((node) => node.remove());
     document.title = 'Weper';
     openWhatsApp.mockClear();
   });
 
   it('explica o programa, publica o SEO e abre o WhatsApp oficial', () => {
     const view = setup();
-    expect(screen.getByRole('heading', { level: 1, name: /Indique a Weper/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /Cresça com a Weper/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Simular meus ganhos/ })).toHaveAttribute('href', '#simulador');
-    expect(screen.getAllByRole('link', { name: 'Quero ser parceiro' })[0]).toHaveAttribute('href', '#quero-ser-parceiro');
+    expect(screen.getAllByRole('button', { name: /Seja Parceiro/ }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Acessar Área de Parceiros' })).toHaveAttribute('href', '/parceiros/login');
     expect(screen.getByText(PARTNER_DISCLAIMER)).toBeInTheDocument();
-    expect(screen.getByText(/futura área exclusiva/)).toBeInTheDocument();
+    expect(screen.getByText(/comissões na Área de Parceiros/)).toBeInTheDocument();
     expect(screen.getByText(/formalização da parceria/)).toBeInTheDocument();
     expect(document.title).toBe(PARTNER_PAGE_SEO.title);
 
@@ -106,4 +110,23 @@ describe('landing do programa de parceiros', () => {
     expect(examples).toHaveTextContent(moneyText(network.monthlyCommission));
     expect(screen.getByRole('link', { name: /Conhecer as funcionalidades/ })).toHaveAttribute('href', '/#solucoes');
   });
-});
+
+  it('"Seja Parceiro" abre o cadastro e o WhatsApp não é usado', async () => {
+    setup();
+    fireEvent.click(screen.getAllByRole('button', { name: /Seja Parceiro/ })[0]);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: 'Seja parceiro Weper' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Em breve')).toBeInTheDocument();
+    expect(within(dialog).getByRole('link', { name: 'Termos de uso' })).toHaveAttribute('href', '/terms');
+    expect(within(dialog).getByRole('link', { name: 'Política de privacidade' })).toHaveAttribute('href', '/privacy');
+    expect(openWhatsApp).not.toHaveBeenCalled();
+  });
+
+  it('guarda ?ref= em sessionStorage sem exigir conversão', () => {
+    render(
+      <MemoryRouter initialEntries={['/parceiros?ref=abc123']}>
+        <PartnersPage />
+      </MemoryRouter>,
+    );
+    expect(window.sessionStorage.getItem('weper.partnerRef')).toBe('ABC123');
+  });});

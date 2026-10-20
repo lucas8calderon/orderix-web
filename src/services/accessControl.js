@@ -8,6 +8,7 @@ export const ROLES = {
   WAITER: 'WAITER',
   KITCHEN: 'KITCHEN',
   CASHIER: 'CASHIER',
+  PARTNER: 'PARTNER',
 };
 
 export const SUBSCRIPTION_STATUS = {
@@ -82,6 +83,7 @@ export const PATHS = {
   ADMIN_PLANOS: '/admin/planos',
   ADMIN_ASSINATURAS: '/admin/assinaturas',
   ADMIN_CRM: '/admin/crm',
+  ADMIN_PARTNERS: '/admin/parceiros',
   LEGACY_DASHBOARD: '/dashboard',
   LEGACY_MASTER: '/master/dashboard',
   PUBLIC_MENU: '/cardapio',
@@ -94,6 +96,12 @@ export const PATHS = {
   DEMO: '/demo',
   DEMO_SLUG: '/demo/:slug',
   PARTNERS: '/parceiros',
+  PARTNERS_LOGIN: '/parceiros/login',
+  PARTNERS_DASHBOARD: '/parceiros/dashboard',
+  PARTNERS_PROFILE: '/parceiros/perfil',
+  PARTNERS_PAYOUTS: '/parceiros/pagamentos',
+  PARTNERS_RECOVERY: '/parceiros/recuperar-acesso',
+  PARTNERS_RESET: '/parceiros/redefinir-senha',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -117,6 +125,14 @@ const PLATFORM_ADMIN_ROUTES = [
   PATHS.ADMIN_PLANOS,
   PATHS.ADMIN_ASSINATURAS,
   PATHS.ADMIN_CRM,
+  PATHS.ADMIN_PARTNERS,
+];
+
+/** Área autenticada do parceiro. Login, recuperação e redefinição são públicos. */
+const PARTNER_AREA_ROUTES = [
+  PATHS.PARTNERS_DASHBOARD,
+  PATHS.PARTNERS_PROFILE,
+  PATHS.PARTNERS_PAYOUTS,
 ];
 
 /**
@@ -152,6 +168,10 @@ export const ROLE_ROUTES = {
     home: PATHS.APP_GARCOM,
     routes: [PATHS.APP_GARCOM],
   },
+  [ROLES.PARTNER]: {
+    home: PATHS.PARTNERS_DASHBOARD,
+    routes: PARTNER_AREA_ROUTES,
+  },
 };
 
 /**
@@ -182,6 +202,7 @@ export const ROLE_PERMISSIONS = {
   [ROLES.CASHIER]: ['store.floor'],
   [ROLES.KITCHEN]: ['store.kitchen'],
   [ROLES.WAITER]: ['store.waiter'],
+  [ROLES.PARTNER]: ['partner.portal'],
 };
 
 export const PUBLIC_PATHS = [
@@ -192,11 +213,32 @@ export const PUBLIC_PATHS = [
   PATHS.TERMS,
   PATHS.DEMO,
   PATHS.PARTNERS,
+  PATHS.PARTNERS_LOGIN,
+  PATHS.PARTNERS_RECOVERY,
+  PATHS.PARTNERS_RESET,
 ];
 
 export function isPlatformAdmin(user) {
   const role = user?.role;
   return role === ROLES.MASTER || role === ROLES.SUPER_ADMIN;
+}
+
+export function isPartner(user) {
+  return user?.role === ROLES.PARTNER;
+}
+
+/** Rotas da área autenticada do parceiro (exclui landing, login e recuperação). */
+export function isPartnerAreaPath(path) {
+  const normalized = normalizePath(path);
+  return PARTNER_AREA_ROUTES.some(
+    (route) => normalized === route || normalized.startsWith(`${route}/`)
+  );
+}
+
+/** Qualquer path sob /parceiros, público ou não. */
+export function isPartnersPath(path) {
+  const normalized = normalizePath(path);
+  return normalized === PATHS.PARTNERS || normalized.startsWith(`${PATHS.PARTNERS}/`);
 }
 
 export function isStoreAdmin(user) {
@@ -334,6 +376,11 @@ export function canAccessRoute(user, path) {
     return true;
   }
 
+  // Parceiro não tem loja nem assinatura: só enxerga a própria área.
+  if (isPartner(user)) {
+    return isPartnerAreaPath(normalized);
+  }
+
   if (normalized === PATHS.SUBSCRIPTION_BLOCKED) {
     return !isPlatformAdmin(user) && !isSubscriptionActive(user);
   }
@@ -367,6 +414,9 @@ export function getPostLoginPath(user) {
   }
   if (isPlatformAdmin(user)) {
     return ROLE_ROUTES[user.role]?.home || PATHS.ADMIN_DASHBOARD;
+  }
+  if (isPartner(user)) {
+    return PATHS.PARTNERS_DASHBOARD;
   }
   if (!isSubscriptionActive(user)) {
     return PATHS.SUBSCRIPTION_BLOCKED;

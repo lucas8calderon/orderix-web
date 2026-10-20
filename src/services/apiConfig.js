@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { getToken, clearSession, getCurrentUser, saveSession } from './session';
-import { PATHS } from './accessControl';
+import { PATHS, isPartnerAreaPath } from './accessControl';
 import { clearDeliveryCustomerSession, getDeliveryCustomerToken } from './deliveryCustomerSession';
 
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
@@ -11,12 +11,24 @@ axios.defaults.timeout = 15000;
 /** Só o save de configurações. O restante continua no timeout de 15s. */
 export const SETTINGS_SAVE_TIMEOUT_MS = 60000;
 
+function isPublicPartnerApi(config) {
+  const url = `${config?.baseURL || ''}${config?.url || ''}`;
+  return url.includes('/api/public/partner');
+}
+
 function isPublicDeliveryApi(config) {
   const url = `${config?.baseURL || ''}${config?.url || ''}`;
   return url.includes('/api/public/delivery');
 }
 
 axios.interceptors.request.use((config) => {
+  if (isPublicPartnerApi(config)) {
+    // Login/cadastro/recuperação de parceiro não carregam token de outra sessão.
+    if (config.headers?.Authorization) {
+      delete config.headers.Authorization;
+    }
+    return config;
+  }
   if (isPublicDeliveryApi(config)) {
     const customerToken = getDeliveryCustomerToken();
     if (customerToken) {
@@ -37,6 +49,10 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
+      if (isPublicPartnerApi(error.config || {})) {
+        // Credenciais inválidas no login do parceiro: não derruba outra sessão.
+        return Promise.reject(error);
+      }
       if (isPublicDeliveryApi(error.config || {})) {
         clearDeliveryCustomerSession();
         return Promise.reject(error);
@@ -44,11 +60,11 @@ axios.interceptors.response.use(
       clearSession();
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
-        const stayOnPage = [PATHS.LOGIN, PATHS.HOME, PATHS.PRIVACY, PATHS.FORGOT_PASSWORD, PATHS.TERMS, PATHS.PARTNERS, '/convite'];
+        const stayOnPage = [PATHS.LOGIN, PATHS.HOME, PATHS.PRIVACY, PATHS.FORGOT_PASSWORD, PATHS.TERMS, PATHS.PARTNERS, PATHS.PARTNERS_LOGIN, PATHS.PARTNERS_RECOVERY, PATHS.PARTNERS_RESET, '/convite'];
         const isPublicMenu = path === PATHS.PUBLIC_MENU || path.startsWith(`${PATHS.PUBLIC_MENU}/`);
         const isPublicDelivery = path === PATHS.PUBLIC_DELIVERY || path.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
         if (!stayOnPage.includes(path) && !isPublicMenu && !isPublicDelivery) {
-          window.location.assign(PATHS.LOGIN);
+          window.location.assign(isPartnerAreaPath(path) ? PATHS.PARTNERS_LOGIN : PATHS.LOGIN);
         }
       }
     }

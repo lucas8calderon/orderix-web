@@ -2,6 +2,9 @@
 .wp-partners .wp-hero h1{font-size:clamp(34px,4.4vw,58px);letter-spacing:-2.2px;max-width:640px}
 .wp-partners .wp-hero-copy>p{max-width:540px}
 .wp-partners .wp-hero{padding-bottom:28px}
+.wp-partners .wp-hero-copy>p.wp-partners-hero-link{margin:18px 0 0;font-size:14px;line-height:1.4}
+.wp-partners-final-actions{position:relative;z-index:1}
+.wp-partners-final-actions .wp-button{width:auto}
 .wp-partners .wp-hero-grid{grid-template-columns:1fr;min-height:0}
 .wp-partners .wp-navigation a[aria-current=page]{color:var(--wp-blue)}
 

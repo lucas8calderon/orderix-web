@@ -12,6 +12,7 @@ import {
   getRestaurantId,
   hasPermission,
   hasStoreContext,
+  isPartnerAreaPath,
   isPlatformAdmin,
   isPublicPath,
   isStoreAdmin,
@@ -211,5 +212,45 @@ describe('formatDate / toDateInputValue', () => {
     expect(toDateInputValue('20261021')).toBe('2026-10-21');
     expect(toDateInputValue([2026, 10, 21])).toBe('2026-10-21');
     expect(toDateInputValue('2026-10-21T00:00:00')).toBe('2026-10-21');
+  });
+});
+
+describe('parceiros', () => {
+  const partner = { id: 5, role: ROLES.PARTNER, partnerId: 9, name: 'Ana Silva' };
+
+  it('PARTNER vai para o dashboard de parceiros após o login', () => {
+    expect(getPostLoginPath(partner)).toBe(PATHS.PARTNERS_DASHBOARD);
+    expect(getDefaultRouteByRole(partner)).toBe('/parceiros/dashboard');
+  });
+
+  it('PARTNER acessa só a própria área, nunca /app, /admin ou bloqueio de assinatura', () => {
+    expect(canAccessRoute(partner, PATHS.PARTNERS_DASHBOARD)).toBe(true);
+    expect(canAccessRoute(partner, PATHS.PARTNERS_PROFILE)).toBe(true);
+    expect(canAccessRoute(partner, PATHS.PARTNERS_PAYOUTS)).toBe(true);
+    expect(canAccessRoute(partner, PATHS.APP_DASHBOARD)).toBe(false);
+    expect(canAccessRoute(partner, PATHS.ADMIN_DASHBOARD)).toBe(false);
+    expect(canAccessRoute(partner, PATHS.ADMIN_PARTNERS)).toBe(false);
+    expect(canAccessRoute(partner, PATHS.SUBSCRIPTION_BLOCKED)).toBe(false);
+  });
+
+  it('outras roles não entram na área de parceiros', () => {
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.PARTNERS_DASHBOARD)).toBe(false);
+    expect(canAccessRoute(user({ role: ROLES.MASTER, storeId: null }), PATHS.PARTNERS_PAYOUTS)).toBe(false);
+  });
+
+  it('só MASTER e SUPER_ADMIN acessam /admin/parceiros', () => {
+    expect(canAccessRoute(user({ role: ROLES.MASTER, storeId: null }), PATHS.ADMIN_PARTNERS)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.SUPER_ADMIN, storeId: null }), PATHS.ADMIN_PARTNERS)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_PARTNERS)).toBe(false);
+  });
+
+  it('login, recuperação e redefinição são públicos; a área autenticada não', () => {
+    expect(isPublicPath(PATHS.PARTNERS_LOGIN)).toBe(true);
+    expect(isPublicPath(PATHS.PARTNERS_RECOVERY)).toBe(true);
+    expect(isPublicPath(PATHS.PARTNERS_RESET)).toBe(true);
+    expect(isPublicPath(PATHS.PARTNERS_DASHBOARD)).toBe(false);
+    expect(isPartnerAreaPath('/parceiros/perfil')).toBe(true);
+    expect(isPartnerAreaPath('/parceiros/login')).toBe(false);
+    expect(isPartnerAreaPath('/parceiros')).toBe(false);
   });
 });

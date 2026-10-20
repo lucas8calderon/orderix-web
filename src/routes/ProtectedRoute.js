@@ -4,6 +4,7 @@ import { getCurrentUser, isAuthenticated } from '../services/session';
 import {
   canAccessRoute,
   getPostLoginPath,
+  isPartnerAreaPath,
   PATHS,
 } from '../services/accessControl';
 
@@ -17,7 +18,8 @@ export function ProtectedRoute({ children }) {
   const user = getCurrentUser();
 
   if (!isAuthenticated() || !user) {
-    return <Navigate to={PATHS.LOGIN} replace state={{ from: location }} />;
+    const loginPath = isPartnerAreaPath(location.pathname) ? PATHS.PARTNERS_LOGIN : PATHS.LOGIN;
+    return <Navigate to={loginPath} replace state={{ from: location }} />;
   }
 
   if (!canAccessRoute(user, location.pathname)) {

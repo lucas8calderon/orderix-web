@@ -77,7 +77,7 @@ export const PARTNER_ADVANTAGES = [
   {
     id: 'clear',
     title: 'Transparência',
-    text: 'O programa prevê acompanhamento das indicações e comissões em uma futura área exclusiva.',
+    text: 'O programa prevê acompanhamento das indicações e comissões na Área de Parceiros.',
   },
   {
     id: 'support',
@@ -173,7 +173,7 @@ export const PARTNER_FAQS = [
   {
     question: 'Como posso começar?',
     answer:
-      'Fale com a equipe Weper pelo WhatsApp. Vamos conhecer você, explicar o programa e combinar os próximos passos. O cadastro em uma área exclusiva de parceiros ainda não está disponível nesta página.',
+      'Fale com a equipe Weper pelo WhatsApp. Vamos conhecer você, explicar o programa e combinar os próximos passos. Você também pode criar seu acesso à Área de Parceiros pelo botão Seja Parceiro e acompanhar indicações, comissões e pagamentos por lá.',
   },
 ];
 

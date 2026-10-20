@@ -30,6 +30,12 @@ const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTra
 const DeliveryOrdersPage = lazy(() => import('./routes/public-delivery/DeliveryOrdersPage'));
 const DeliveryAccountPage = lazy(() => import('./routes/public-delivery/DeliveryAccountPage'));
 const PartnersPage = lazy(() => import('./routes/partners/PartnersPage'));
+const PartnerLoginPage = lazy(() => import('./routes/partners/PartnerLoginPage'));
+const PartnerRecoveryPage = lazy(() => import('./routes/partners/PartnerRecoveryPage'));
+const PartnerResetPasswordPage = lazy(() => import('./routes/partners/PartnerResetPasswordPage'));
+const PartnerDashboardPage = lazy(() => import('./routes/partners/PartnerDashboardPage'));
+const PartnerProfilePage = lazy(() => import('./routes/partners/PartnerProfilePage'));
+const PartnerPayoutsPage = lazy(() => import('./routes/partners/PartnerPayoutsPage'));
 const DemoIndex = lazy(() => import('./routes/demo/DemoIndex'));
 const DemoStorePage = lazy(() => import('./routes/demo/DemoStorePage'));
 
@@ -78,6 +84,17 @@ function AdminLayout() {
   );
 }
 
+/** Área autenticada do parceiro: layout próprio, sem providers da loja. */
+function PartnerLayout() {
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
+    </ProtectedRoute>
+  );
+}
+
 function BlockedLayout() {
   return (
     <ProtectedRoute>
@@ -109,6 +126,36 @@ function App() {
               </Suspense>
             )}
           />
+          <Route
+            path={PATHS.PARTNERS_LOGIN}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <PartnerLoginPage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.PARTNERS_RECOVERY}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <PartnerRecoveryPage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.PARTNERS_RESET}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <PartnerResetPasswordPage />
+              </Suspense>
+            )}
+          />
+          <Route element={<PartnerLayout />}>
+            <Route path={PATHS.PARTNERS_DASHBOARD} element={<PartnerDashboardPage />} />
+            <Route path={PATHS.PARTNERS_PROFILE} element={<PartnerProfilePage />} />
+            <Route path={PATHS.PARTNERS_PAYOUTS} element={<PartnerPayoutsPage />} />
+          </Route>
+          <Route path="/parceiros/*" element={<Navigate to={PATHS.PARTNERS} replace />} />
           <Route
             path={PATHS.DEMO}
             element={(
