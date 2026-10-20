@@ -25,7 +25,6 @@ import {
   defaultPagBankEnvironment,
 } from '../../../../services/paymentTestEnvironment';
 import { SettingsSectionCard } from './SettingsSectionCard';
-import { PagBankSetupTutorials } from './PagBankSetupTutorials';
 
 function resolveProvider(value) {
   if (value === 'PAGBANK' || value === 'ASAAS' || value === 'INFINITEPAY') return value;
@@ -221,7 +220,6 @@ export function OnlineDeliveryPayments({
       onAction={saveOnlinePayments}
       actionDisabled={saving}
     >
-      <PagBankSetupTutorials />
       <TextField
         select
         label="Provedor de pagamento do Delivery"

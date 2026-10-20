@@ -35,18 +35,6 @@ describe('OnlineDeliveryPayments', () => {
     expect(screen.getByRole('button', { name: 'Desativar integração' })).toBeInTheDocument();
   });
 
-  it('mostra o tutorial de cadastro do PagBank', () => {
-    renderSection();
-    expect(screen.getByRole('tab', { name: 'Na Weper' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Entre na loja')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));
-    expect(screen.getByText('Abra Configurações')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'No PagBank' }));
-    expect(screen.getByText('Use a conta que recebe')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));
-    expect(screen.getByText('Gere o token de produção')).toBeInTheDocument();
-  });
-
   it('loja não vê seletor de ambiente de teste', () => {
     renderSection({ deliveryOnlineProvider: 'ASAAS' });
     expect(screen.queryByLabelText('Ambiente')).not.toBeInTheDocument();
