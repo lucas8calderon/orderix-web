@@ -51,12 +51,33 @@ describe('buildFloorOrderBody', () => {
     const customer = buildFloorOrderBody({
       target: { kind: 'customer' },
       customerName: 'Rafael',
+      customerIdentificationNote: 'Camiseta vermelha',
       waiterId: null,
       lines: [{ product: cafe, quantity: 2, selections: {}, extraIds: [] }],
     });
     expect(customer.mode).toBe('customer-create');
     expect(customer.body.customerName).toBe('Rafael');
+    expect(customer.body.customerIdentificationNote).toBe('Camiseta vermelha');
     expect(customer.body.products).toHaveLength(1);
+
+    const shell = buildFloorOrderBody({
+      target: { kind: 'customer' },
+      customerName: 'Rafael',
+      customerIdentificationNote: 'Óculos',
+      waiterId: null,
+      lines: [],
+    });
+    expect(shell.mode).toBe('customer-create');
+    expect(shell.body.products).toHaveLength(0);
+    expect(shell.body.customerIdentificationNote).toBe('Óculos');
+
+    const addItems = buildFloorOrderBody({
+      target: { kind: 'customer', id: 42 },
+      customerName: 'Rafael',
+      waiterId: null,
+      lines: [],
+    });
+    expect(addItems.error).toMatch(/produto/);
   });
 
   it('exige a escolha obrigatória', () => {

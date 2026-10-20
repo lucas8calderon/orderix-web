@@ -60,6 +60,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerIdentificationNote, setCustomerIdentificationNote] = useState('');
   const [observation, setObservation] = useState('');
   const [quantities, setQuantities] = useState({});
   const [variationQuantities, setVariationQuantities] = useState({});
@@ -69,6 +70,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
   useEffect(() => {
     if (!open) return undefined;
     setCustomerName(defaultCustomerName(target));
+    setCustomerIdentificationNote(target?.customerIdentificationNote || '');
     setObservation('');
     setQuantities({});
     setVariationQuantities({});
@@ -147,6 +149,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
       const built = buildFloorOrderBody({
         target,
         customerName,
+        customerIdentificationNote,
         observation,
         lines,
         waiterId,
@@ -156,8 +159,10 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
         return;
       }
       const key = newKey();
+      let createdOrder = null;
       if (built.mode === 'customer-create') {
-        await createCustomerOrder(built.body, key);
+        const response = await createCustomerOrder(built.body, key);
+        createdOrder = response?.data || null;
       } else if (built.mode === 'customer-items') {
         await addCustomerOrderItems(built.orderId, {
           products: built.body.products,
@@ -166,7 +171,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
       } else {
         await createFloorOrder(built.tableId, built.body, key);
       }
-      onPlaced?.();
+      onPlaced?.(createdOrder);
     } catch (err) {
       setError(err?.response?.data?.message || 'Não foi possível lançar o pedido.');
     } finally {
@@ -185,14 +190,32 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
           label="Nome do cliente"
           value={customerName}
           onChange={(event) => setCustomerName(event.target.value)}
+          disabled={Boolean(target?.kind === 'customer' && target?.id)}
         />
+        {target?.kind === 'customer' && !target?.id ? (
+          <TextField
+            fullWidth
+            margin="dense"
+            label="Identificação visual (opcional)"
+            placeholder="Ex.: camiseta vermelha, óculos"
+            value={customerIdentificationNote}
+            onChange={(event) => setCustomerIdentificationNote(event.target.value.slice(0, 120))}
+            helperText="Ajuda a cozinha e o caixa a reconhecer o cliente no food truck."
+            inputProps={{ maxLength: 120 }}
+          />
+        ) : null}
         <TextField
           fullWidth
           margin="dense"
-          label="Observação"
+          label="Observação do pedido"
           value={observation}
           onChange={(event) => setObservation(event.target.value)}
         />
+        {target?.kind === 'customer' && !target?.id ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 0.5 }}>
+            Você pode criar só com o nome (shell) e lançar produtos depois, ou já incluir itens agora.
+          </Typography>
+        ) : null}
         <TextField
           fullWidth
           margin="dense"

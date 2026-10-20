@@ -16,6 +16,7 @@ export function isSellableProduct(product) {
 export function buildFloorOrderBody({
   target,
   customerName,
+  customerIdentificationNote,
   observation,
   lines,
   waiterId,
@@ -24,8 +25,13 @@ export function buildFloorOrderBody({
   if (!name) {
     return { error: 'Informe o nome do cliente.' };
   }
+  const noteRaw = customerIdentificationNote ?? target?.customerIdentificationNote ?? '';
+  const note = String(noteRaw).trim().slice(0, 120) || null;
+  const customer = target?.kind === 'customer';
+  const customerCreate = customer && !target?.id;
   const chosen = (lines || []).filter((line) => Number(line.quantity) > 0);
-  if (chosen.length === 0) {
+  // Shell sem itens é permitido só na criação de Pedido por Cliente (alinha com a API).
+  if (chosen.length === 0 && !customerCreate) {
     return { error: 'Escolha ao menos um produto.' };
   }
 
@@ -71,7 +77,6 @@ export function buildFloorOrderBody({
     });
   }
 
-  const customer = target?.kind === 'customer';
   const counter = target?.kind === 'counter';
   const comanda = target?.kind === 'comanda';
   if (!counter && !customer && !waiterId) {
@@ -79,12 +84,15 @@ export function buildFloorOrderBody({
   }
 
   if (customer) {
+    if (target?.id && products.length === 0) {
+      return { error: 'Escolha ao menos um produto.' };
+    }
     return {
       mode: target?.id ? 'customer-items' : 'customer-create',
       orderId: target?.id || null,
       body: {
         customerName: name,
-        customerIdentificationNote: String(target?.customerIdentificationNote || '').trim() || null,
+        customerIdentificationNote: note,
         observation: String(observation || '').trim() || null,
         products,
       },
