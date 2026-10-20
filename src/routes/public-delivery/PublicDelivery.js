@@ -27,7 +27,7 @@ import { formatCurrency } from '../../services/accessControl';
 import { scheduleForDisplay } from '../../services/storeHoursService';
 import StoreClosedHoursCard from '../../commons/components/StoreClosedHoursCard';
 import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
-import { createDeliveryPixPayment } from '../../services/deliveryPaymentService';
+import { createDeliveryPixPayment, createInfinitePayCheckout, isInfinitePayCheckoutUrl } from '../../services/deliveryPaymentService';
 import DeliveryCardCheckout from './components/DeliveryCardCheckout';
 import { listDeliveryCustomerAddresses, createDeliveryCustomerAddress } from '../../services/deliveryCustomerService';
 import { readDeliveryCustomerSession } from '../../services/deliveryCustomerSession';
@@ -628,6 +628,32 @@ export default function PublicDelivery() {
       }
       setCheckoutOpen(false);
       setCartOpen(false);
+      const infinitePay = catalog?.onlinePaymentProvider === 'INFINITEPAY';
+      if (infinitePay && payload.onlinePayment && response.data?.id && publicToken) {
+        try {
+          const payKey = (window.crypto && window.crypto.randomUUID)
+            ? window.crypto.randomUUID()
+            : `${Date.now()}-${Math.random()}`;
+          const created = await createInfinitePayCheckout(slug, response.data.id, payKey);
+          const url = created.data?.ticketUrl;
+          if (!isInfinitePayCheckoutUrl(url)) {
+            navigate(`/delivery/pedido/${publicToken}`, {
+              state: { slug, paymentNotice: 'failed' },
+            });
+            return;
+          }
+          window.location.assign(url);
+        } catch (payErr) {
+          navigate(`/delivery/pedido/${publicToken}`, {
+            state: {
+              slug,
+              paymentNotice: 'failed',
+              paymentError: payErr?.response?.data?.message || 'Não foi possível abrir o checkout.',
+            },
+          });
+        }
+        return;
+      }
       const onlineCard = Boolean(catalog?.onlineCardEnabled && checkout.onlinePayment && checkout.paymentMethod === 'CREDIT');
       if (onlineCard && response.data?.id) {
         setCardOrder({

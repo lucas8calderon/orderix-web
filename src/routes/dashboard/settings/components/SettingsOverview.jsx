@@ -324,7 +324,7 @@ export function SettingsOverview({ settings, onNavigate, onSettingChange, saving
             <QuickCard
               icon={IntegrationIcon}
               title="Integrações"
-              text="InfinitePay no salão. Mercado Pago fica no Delivery."
+              text="InfinitePay no salão e, se a loja escolher, no delivery. Mercado Pago, PagBank e Asaas continuam disponíveis."
               onClick={() => onNavigate('integracoes')}
             />
           </div>

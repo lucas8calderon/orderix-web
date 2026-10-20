@@ -356,4 +356,32 @@ describe('hydrateSavedSecretLengths', () => {
     expect(payload.asaasPublicKey).toBe('pub_asaas_12');
     expect(payload.asaasWebhookToken).toBe('whsec_loja');
   });
+
+  it('aceita InfinitePay no delivery e envia a InfiniteTag da loja', () => {
+    const ui = toPaymentUi({
+      deliveryOnlineProvider: 'INFINITEPAY',
+      infinitePayHandle: 'minha-loja',
+      infinitePayIntegrationStatus: 'CONFIGURED',
+      onlinePixEnabled: true,
+      onlineCardEnabled: true,
+    });
+    expect(ui.deliveryOnlineProvider).toBe('INFINITEPAY');
+    expect(ui.infinitePayHandle).toBe('minha-loja');
+    expect(ui.infinitePayIntegrationStatus).toBe('CONFIGURED');
+
+    const payload = toPaymentPayload({
+      ...ui,
+      tablePaymentMode: 'MANUAL_CONFIRMATION',
+      comandaPaymentMode: 'MANUAL_CONFIRMATION',
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      paymentMethods: { PIX: true },
+      serviceFee: 10,
+      infinitePayHandle: '$minha-loja',
+    });
+    expect(payload.deliveryOnlineProvider).toBe('INFINITEPAY');
+    expect(payload.infinitePayHandle).toBe('$minha-loja');
+    expect(payload.onlinePixEnabled).toBe(true);
+    expect(payload.pagbankAccessToken).toBeUndefined();
+    expect(payload.mercadoPagoAccessToken).toBeUndefined();
+  });
 });

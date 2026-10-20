@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
+  Alert,
   Box,
   Button,
   Container,
@@ -8,6 +9,14 @@ import {
 } from '@mui/material';
 import { clearLastOrderByToken, findSlugForOrderToken } from '../../services/deliveryLastOrder';
 import { readDeliveryCustomerSession } from '../../services/deliveryCustomerSession';
+import { clearCart } from '../../services/deliveryCart';
+import {
+  confirmInfinitePayReturn,
+  createInfinitePayCheckout,
+  isInfinitePayCheckoutUrl,
+  isPixPaid,
+  readInfinitePayReturn,
+} from '../../services/deliveryPaymentService';
 import DeliveryBottomNav from './components/DeliveryBottomNav';
 import DeliveryTrackingView from './DeliveryTrackingView';
 import { useDeliveryOrderPolling } from './useDeliveryOrderPolling';
@@ -50,6 +59,91 @@ export default function DeliveryTracking() {
 
   const storeSlug = order?.storeSlug || location.state?.slug || findSlugForOrderToken(publicToken);
   const hasSession = Boolean(readDeliveryCustomerSession());
+  const [paymentNotice, setPaymentNotice] = useState(location.state?.paymentNotice || '');
+  const [paymentError, setPaymentError] = useState(location.state?.paymentError || '');
+  const [retryingPayment, setRetryingPayment] = useState(false);
+  const returnedPayment = readInfinitePayReturn(location.search);
+
+  useEffect(() => {
+    if (!publicToken || !returnedPayment?.orderNsu) return undefined;
+    let cancelled = false;
+    setPaymentNotice('verifying');
+    confirmInfinitePayReturn(publicToken, returnedPayment)
+      .then((response) => {
+        if (cancelled) return;
+        const status = response?.data?.status;
+        if (isPixPaid(status)) {
+          setPaymentNotice('approved');
+          if (storeSlug) clearCart(storeSlug);
+          retry();
+          return;
+        }
+        if (String(response?.data?.statusMessage || '').toLowerCase().includes('não confirmado')) {
+          setPaymentNotice('mismatch');
+          return;
+        }
+        setPaymentNotice('pending');
+      })
+      .catch(() => {
+        if (!cancelled) setPaymentNotice('failed');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [publicToken, location.search, storeSlug, retry]);
+
+  const retryInfinitePay = async () => {
+    if (!storeSlug || !order?.id) return;
+    setRetryingPayment(true);
+    setPaymentError('');
+    try {
+      const payKey = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+      const created = await createInfinitePayCheckout(storeSlug, order.id, payKey);
+      const url = created.data?.ticketUrl;
+      if (!isInfinitePayCheckoutUrl(url)) {
+        setPaymentNotice('failed');
+        return;
+      }
+      window.location.assign(url);
+    } catch (err) {
+      setPaymentNotice('failed');
+      setPaymentError(err?.response?.data?.message || 'Não foi possível abrir o checkout.');
+    } finally {
+      setRetryingPayment(false);
+    }
+  };
+
+  const paymentBanner = paymentNotice === 'verifying' ? (
+    <Alert severity="info">Verificando pagamento...</Alert>
+  ) : paymentNotice === 'approved' ? (
+    <Alert severity="success">Pagamento aprovado.</Alert>
+  ) : paymentNotice === 'pending' ? (
+    <Alert
+      severity="warning"
+      action={order?.id ? (
+        <Button color="inherit" size="small" onClick={retryInfinitePay} disabled={retryingPayment}>
+          {retryingPayment ? 'Abrindo...' : 'Tentar de novo'}
+        </Button>
+      ) : null}
+    >
+      Pagamento não confirmado. Se você concluiu o pagamento, aguarde a confirmação.
+    </Alert>
+  ) : paymentNotice === 'mismatch' ? (
+    <Alert severity="error">Pagamento não confirmado. O valor não confere com o pedido.</Alert>
+  ) : paymentNotice === 'failed' ? (
+    <Alert
+      severity="error"
+      action={order?.id ? (
+        <Button color="inherit" size="small" onClick={retryInfinitePay} disabled={retryingPayment}>
+          {retryingPayment ? 'Abrindo...' : 'Tentar de novo'}
+        </Button>
+      ) : null}
+    >
+      {paymentError || 'Não foi possível confirmar o pagamento.'}
+    </Alert>
+  ) : null;
 
   if (loading && !order) {
     return <TrackingSkeleton />;
@@ -86,6 +180,7 @@ export default function DeliveryTracking() {
           showHomeButton={Boolean(storeSlug)}
           refreshError={refreshError}
           onRetryRefresh={retry}
+          banner={paymentBanner}
         />
       </Container>
       {storeSlug ? (

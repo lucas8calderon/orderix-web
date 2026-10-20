@@ -80,6 +80,52 @@ export function createDeliveryCardPayment(slug, orderId, idempotencyKey, payload
   );
 }
 
+export function isInfinitePayCheckoutUrl(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === 'checkout.infinitepay.io' || host.endsWith('.infinitepay.io');
+  } catch {
+    return false;
+  }
+}
+
+export function readInfinitePayReturn(search) {
+  const params = new URLSearchParams(search || '');
+  const orderNsu = params.get('order_nsu');
+  const slug = params.get('slug');
+  const transactionNsu = params.get('transaction_nsu');
+  if (!orderNsu && !slug && !transactionNsu) return null;
+  return {
+    orderNsu,
+    slug,
+    transactionNsu,
+    captureMethod: params.get('capture_method'),
+  };
+}
+
+export function createInfinitePayCheckout(slug, orderId, idempotencyKey) {
+  return withNormalizedPix(
+    axios.post(
+      `${API_BASE_URL}/api/public/delivery/${encodeURIComponent(slug)}/orders/${orderId}/payments/infinitepay`,
+      {},
+      { headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {} }
+    )
+  );
+}
+
+export function confirmInfinitePayReturn(publicToken, payload) {
+  return withNormalizedPix(
+    axios.post(
+      `${API_BASE_URL}/api/public/delivery/orders/${encodeURIComponent(publicToken)}/payments/infinitepay/confirm`,
+      {
+        orderNsu: payload?.orderNsu || null,
+        slug: payload?.slug || null,
+        transactionNsu: payload?.transactionNsu || null,
+      }
+    )
+  );
+}
+
 export function getDeliveryPixPaymentByToken(publicToken) {
   return withNormalizedPix(
     axios.get(`${API_BASE_URL}/api/public/delivery/orders/${encodeURIComponent(publicToken)}/payment`)

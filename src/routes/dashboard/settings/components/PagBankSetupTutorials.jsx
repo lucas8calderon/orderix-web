@@ -23,8 +23,8 @@ const TUTORIALS = [
       },
       {
         title: 'Escolha PagBank',
-        body: 'Em Provedor online, selecione PagBank. Uma loja que já usa Mercado Pago continua nele até esta troca. Cobrança já criada não muda de provedor.',
-        example: ['Provedor online', 'Mercado Pago', 'PagBank'],
+        body: 'Em Provedor de pagamento do Delivery, selecione PagBank. Uma loja que já usa Mercado Pago continua nele até esta troca. Cobrança já criada não muda de provedor.',
+        example: ['Provedor de pagamento do Delivery', 'Mercado Pago', 'PagBank'],
       },
       {
         title: 'Cole o token e salve',

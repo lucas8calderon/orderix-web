@@ -28,9 +28,16 @@ import { SettingsSectionCard } from './SettingsSectionCard';
 import { PagBankSetupTutorials } from './PagBankSetupTutorials';
 
 function resolveProvider(value) {
-  if (value === 'PAGBANK' || value === 'ASAAS') return value;
+  if (value === 'PAGBANK' || value === 'ASAAS' || value === 'INFINITEPAY') return value;
   return 'MERCADOPAGO';
 }
+
+const INFINITEPAY_STATUS_LABEL = {
+  NOT_CONFIGURED: 'Não configurada',
+  CONFIGURED: 'Configurada',
+  VALIDATED: 'Validada',
+  ERROR: 'Erro de configuração',
+};
 
 export function OnlineDeliveryPayments({
   settings,
@@ -42,12 +49,16 @@ export function OnlineDeliveryPayments({
   const provider = resolveProvider(settings.deliveryOnlineProvider);
   const pagbank = provider === 'PAGBANK';
   const asaas = provider === 'ASAAS';
+  const infinitePay = provider === 'INFINITEPAY';
   const mercadoPago = provider === 'MERCADOPAGO';
+  const infinitePayHandle = String(settings.infinitePayHandle || '').replace(/^\$+/, '').trim();
   const showTestEnvironment = canChoosePaymentTestEnvironment();
   const environment = settings.mercadoPagoEnvironment === 'test' ? 'test' : 'prod';
   const pagbankEnvironment = settings.pagbankEnvironment === 'sandbox' ? 'sandbox' : 'prod';
   const asaasEnvironment = settings.asaasEnvironment === 'sandbox' ? 'sandbox' : 'prod';
-  const accessConfigured = pagbank
+  const accessConfigured = infinitePay
+    ? Boolean(infinitePayHandle)
+    : pagbank
     ? hasTypedSecret(settings.pagbankAccessToken) || Boolean(settings.pagbankAccessTokenConfigured)
     : asaas
       ? hasTypedSecret(settings.asaasApiKey) || Boolean(settings.asaasApiKeyConfigured)
@@ -57,7 +68,7 @@ export function OnlineDeliveryPayments({
     : asaas
       ? accessConfigured
       : hasMercadoPagoPublicKey(settings, environment);
-  const cardReady = asaas ? accessConfigured : (accessConfigured && publicKeyConfigured);
+  const cardReady = infinitePay || asaas ? accessConfigured : (accessConfigured && publicKeyConfigured);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState('');
   const [pixPausedForMissingToken, setPixPausedForMissingToken] = useState(false);
@@ -116,6 +127,15 @@ export function OnlineDeliveryPayments({
       }
     }
     if (nextProvider === 'PAGBANK' && !tokenStored) {
+      if (settings.onlinePixEnabled) {
+        onSettingChange('onlinePixEnabled', null, false);
+        setPixPausedForMissingToken(true);
+      }
+      if (settings.onlineCardEnabled) {
+        onSettingChange('onlineCardEnabled', null, false);
+      }
+    }
+    if (nextProvider === 'INFINITEPAY' && !String(settings.infinitePayHandle || '').replace(/^\$+/, '').trim()) {
       if (settings.onlinePixEnabled) {
         onSettingChange('onlinePixEnabled', null, false);
         setPixPausedForMissingToken(true);
@@ -183,8 +203,10 @@ export function OnlineDeliveryPayments({
     }
   };
 
-  const providerLabel = asaas ? 'Asaas' : pagbank ? 'PagBank' : 'Mercado Pago';
-  const envLabel = asaas
+  const providerLabel = infinitePay ? 'InfinitePay' : asaas ? 'Asaas' : pagbank ? 'PagBank' : 'Mercado Pago';
+  const envLabel = infinitePay
+    ? 'checkout da loja'
+    : asaas
     ? (asaasEnvironment === 'prod' ? 'produção' : 'sandbox')
     : pagbank
       ? (pagbankEnvironment === 'prod' ? 'produção' : 'sandbox')
@@ -194,7 +216,7 @@ export function OnlineDeliveryPayments({
     <SettingsSectionCard
       icon={CreditCardIcon}
       title="Pagamentos online"
-      description="Pix e cartão no delivery. O dinheiro cai na conta do provedor escolhido para esta loja. Mercado Pago, PagBank e Asaas ficam separados da assinatura Weper."
+      description="Pix e cartão no delivery. O dinheiro cai na conta do provedor escolhido para esta loja. A Weper não cobra comissão sobre as vendas."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={saveOnlinePayments}
       actionDisabled={saving}
@@ -202,16 +224,70 @@ export function OnlineDeliveryPayments({
       <PagBankSetupTutorials />
       <TextField
         select
-        label="Provedor online"
+        label="Provedor de pagamento do Delivery"
         value={provider}
         onChange={(e) => selectProvider(e.target.value)}
         className="setting-input"
         fullWidth
       >
         <MenuItem value="MERCADOPAGO">Mercado Pago</MenuItem>
+        <MenuItem value="INFINITEPAY">InfinitePay</MenuItem>
         <MenuItem value="PAGBANK">PagBank</MenuItem>
         <MenuItem value="ASAAS">Asaas</MenuItem>
       </TextField>
+      {infinitePay ? (
+        <Box
+          className="payment-provider-fields"
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderLeft: '4px solid #2563EB',
+            borderRadius: 2,
+            p: 2,
+            mt: 1.5,
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Typography variant="subtitle1" sx={(theme) => ({ fontWeight: 700, color: theme.palette.mode === 'dark' ? '#60A5FA' : '#1D4ED8' })}>
+            InfinitePay
+          </Typography>
+          <Typography className="setting-hint" variant="body2">
+            Conecte sua conta InfinitePay e receba diretamente os pagamentos realizados pelos clientes do seu delivery.
+          </Typography>
+          <Typography className="setting-hint" variant="body2">
+            A Weper não cobra comissão sobre suas vendas. Eventuais taxas de processamento são definidas pela InfinitePay.
+          </Typography>
+          <TextField
+            label="InfiniteTag"
+            value={settings.infinitePayHandle || ''}
+            onChange={(e) => onSettingChange('infinitePayHandle', null, e.target.value)}
+            className="setting-input"
+            fullWidth
+            required
+            placeholder="$sua-loja"
+            helperText="Nome de usuário no app InfinitePay. Pode digitar com ou sem $."
+          />
+          <Typography className="setting-hint" variant="body2">
+            Status da integração: {INFINITEPAY_STATUS_LABEL[settings.infinitePayIntegrationStatus] || INFINITEPAY_STATUS_LABEL.NOT_CONFIGURED}.
+            {' '}
+            Validada só depois que a InfinitePay aceitar um link de checkout. Não há consulta de conta sem criar cobrança.
+          </Typography>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => onSave('onlinePayments', {
+              paymentOverrides: {
+                infinitePayHandle: settings.infinitePayHandle || '',
+                onlinePixEnabled: false,
+                onlineCardEnabled: false,
+              },
+            })}
+            disabled={saving}
+          >
+            Desativar integração
+          </Button>
+        </Box>
+      ) : null}
       <Typography className="setting-hint" variant="body2">
         {providerLabel}
         {' · '}
@@ -350,15 +426,19 @@ export function OnlineDeliveryPayments({
         )}
         label="Pix online"
       />
-      {(pagbank || asaas) && pixPausedForMissingToken ? (
+          {(pagbank || asaas || infinitePay) && pixPausedForMissingToken ? (
         <Typography className="setting-hint" variant="body2">
-          {asaas
+          {infinitePay
+            ? 'Informe a InfiniteTag e salve antes de ligar o Pix.'
+            : asaas
             ? 'Salve a API key da loja primeiro e só depois ligue o Pix.'
             : 'Salve o token primeiro e só depois ligue o Pix.'}
         </Typography>
       ) : !accessConfigured ? (
         <Typography className="setting-hint" variant="body2">
-          {asaas
+          {infinitePay
+            ? 'Informe a InfiniteTag e clique em Salvar para ligar o Pix online.'
+            : asaas
             ? 'Digite a API key Asaas da loja e clique em Salvar para ligar o Pix online.'
             : pagbank
               ? 'Digite o token da conta PagBank e clique em Salvar para ligar o Pix online.'
@@ -380,7 +460,9 @@ export function OnlineDeliveryPayments({
       />
       {!cardReady ? (
         <Typography className="setting-hint" variant="body2">
-          {asaas
+          {infinitePay
+            ? 'Informe a InfiniteTag antes de ligar o cartão. O cliente paga na página da InfinitePay, sem digitar o cartão aqui.'
+            : asaas
             ? 'Salve a API key Asaas da loja antes de ligar o cartão online.'
             : pagbank
               ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'

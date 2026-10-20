@@ -221,6 +221,7 @@ export function toPaymentUi(dto = {}) {
     mercadoPagoPublicKey: '',
     mercadoPagoWebhookSecret: '',
     deliveryOnlineProvider: resolveOnlineProvider(dto.deliveryOnlineProvider),
+    infinitePayIntegrationStatus: infinitePayStatus(dto.infinitePayIntegrationStatus, dto.infinitePayHandle),
     pagbankEnvironment: dto.pagbankEnvironment === 'sandbox' ? 'sandbox' : 'prod',
     pagbankAccessTokenConfigured: Boolean(dto.pagbankAccessTokenConfigured),
     pagbankCardPublicKeyConfigured: Boolean(dto.pagbankCardPublicKeyConfigured),
@@ -240,8 +241,16 @@ export function toPaymentUi(dto = {}) {
 }
 
 function resolveOnlineProvider(value) {
-  if (value === 'PAGBANK' || value === 'ASAAS') return value;
+  if (value === 'PAGBANK' || value === 'ASAAS' || value === 'INFINITEPAY') return value;
   return 'MERCADOPAGO';
+}
+
+function infinitePayStatus(status, handle) {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'VALIDATED' || normalized === 'ERROR' || normalized === 'CONFIGURED') {
+    return normalized;
+  }
+  return String(handle || '').trim() ? 'CONFIGURED' : 'NOT_CONFIGURED';
 }
 
 function providerForMode(mode, configured, legacyDefault) {
@@ -348,7 +357,8 @@ export function toPaymentPayload(ui) {
     pagbankEnvironment: ui.pagbankEnvironment === 'sandbox' ? 'sandbox' : 'prod',
     asaasEnvironment: ui.asaasEnvironment === 'sandbox' ? 'sandbox' : 'prod',
   };
-  if ([tablePaymentProvider, comandaPaymentProvider, counterPaymentProvider].includes('INFINITEPAY')) {
+  if ([tablePaymentProvider, comandaPaymentProvider, counterPaymentProvider].includes('INFINITEPAY')
+    || resolveOnlineProvider(ui.deliveryOnlineProvider) === 'INFINITEPAY') {
     payload.infinitePayHandle = ui.infinitePayHandle || '';
     payload.infinitePayDocument = ui.infinitePayDocument || '';
   }

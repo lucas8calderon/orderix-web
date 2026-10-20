@@ -22,6 +22,19 @@ describe('OnlineDeliveryPayments', () => {
     getCurrentUser.mockReturnValue({ role: 'STORE_ADMIN' });
   });
 
+  it('mostra a InfiniteTag quando o provedor do delivery é InfinitePay', () => {
+    renderSection({
+      deliveryOnlineProvider: 'INFINITEPAY',
+      infinitePayHandle: '$loja-teste',
+      infinitePayIntegrationStatus: 'CONFIGURED',
+    });
+    expect(screen.getByLabelText(/InfiniteTag/)).toHaveValue('$loja-teste');
+    expect(screen.getByText(/Conecte sua conta InfinitePay/)).toBeInTheDocument();
+    expect(screen.getByText(/taxas de processamento são definidas pela InfinitePay/)).toBeInTheDocument();
+    expect(screen.getByText(/Status da integração: Configurada/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desativar integração' })).toBeInTheDocument();
+  });
+
   it('mostra o tutorial de cadastro do PagBank', () => {
     renderSection();
     expect(screen.getByRole('tab', { name: 'Na Weper' })).toHaveAttribute('aria-selected', 'true');
@@ -336,7 +349,7 @@ describe('OnlineDeliveryPayments', () => {
       onlinePixEnabled: true,
       onlineCardEnabled: true,
     }, onSettingChange);
-    const native = screen.getByLabelText('Provedor online').parentElement.querySelector('input');
+    const native = screen.getByLabelText('Provedor de pagamento do Delivery').parentElement.querySelector('input');
     fireEvent.change(native, { target: { value: 'PAGBANK' } });
     expect(onSettingChange).toHaveBeenCalledWith('deliveryOnlineProvider', null, 'PAGBANK');
     expect(onSettingChange).toHaveBeenCalledWith('pagbankEnvironment', null, 'prod');
@@ -405,7 +418,7 @@ describe('OnlineDeliveryPayments', () => {
       onlinePixEnabled: true,
       onlineCardEnabled: true,
     }, onSettingChange);
-    const native = screen.getByLabelText('Provedor online').parentElement.querySelector('input');
+    const native = screen.getByLabelText('Provedor de pagamento do Delivery').parentElement.querySelector('input');
     fireEvent.change(native, { target: { value: 'ASAAS' } });
     expect(onSettingChange).toHaveBeenCalledWith('deliveryOnlineProvider', null, 'ASAAS');
     expect(onSettingChange).toHaveBeenCalledWith('asaasEnvironment', null, 'prod');
