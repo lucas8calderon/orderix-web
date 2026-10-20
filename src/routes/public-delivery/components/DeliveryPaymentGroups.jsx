@@ -1,6 +1,7 @@
-import { Box, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography, InputAdornment } from '@mui/material';
+import { Alert, Box, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography, InputAdornment } from '@mui/material';
 import { formatCurrency } from '../../../services/accessControl';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../utils/currencyInput';
+import { INFINITEPAY_ADDRESS_NOTICE } from '../infinitePayAddressNotice';
 import './DeliveryPaymentGroups.css';
 
 const ON_DELIVERY_OPTIONS = [
@@ -49,9 +50,15 @@ export default function DeliveryPaymentGroups({
   const blockedMessage = acceptPrepaid
     ? PREPAY_NO_ONLINE_MSG
     : 'Este canal não tem uma forma de pagamento disponível.';
+  const infinitePayCheckout = String(onlinePaymentProvider || '').toUpperCase() === 'INFINITEPAY' && showOnline;
 
   return (
     <Box className="delivery-payment-groups">
+      {infinitePayCheckout ? (
+        <Alert severity="info" className="delivery-payment-infinitepay-notice">
+          {INFINITEPAY_ADDRESS_NOTICE}
+        </Alert>
+      ) : null}
       {blocked ? (
         <Typography variant="body2" color="error" role="alert" sx={{ mb: 1 }}>
           {blockedMessage}

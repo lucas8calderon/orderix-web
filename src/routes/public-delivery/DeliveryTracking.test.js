@@ -6,6 +6,7 @@ import { getDeliveryOrder } from '../../services/deliveryService';
 import { writeLastOrder, readLastOrder } from '../../services/deliveryLastOrder';
 import { POLL_INTERVAL_MS } from './orderTrackingConfig';
 import { WEPER_COMMERCIAL_URL } from '../../config/weperSite';
+import { INFINITEPAY_ADDRESS_NOTICE } from './infinitePayAddressNotice';
 
 jest.mock('../../services/deliveryService', () => ({
   getDeliveryOrder: jest.fn(),
@@ -295,5 +296,18 @@ describe('DeliveryTracking', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(help.compareDocumentPosition(promoTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('navigation', { name: 'Navegação do delivery' })).toBeInTheDocument();
+  });
+
+  it('explica o endereço da InfinitePay antes de tentar o pagamento de novo', async () => {
+    getDeliveryOrder.mockResolvedValue({ data: baseOrder({ storeSlug: 'minions' }) });
+
+    renderTracking('token-abc', [{
+      pathname: '/delivery/pedido/token-abc',
+      state: { paymentNotice: 'failed', slug: 'minions' },
+    }]);
+
+    const notice = await screen.findByText(INFINITEPAY_ADDRESS_NOTICE);
+    const retry = screen.getByRole('button', { name: 'Tentar de novo' });
+    expect(notice.compareDocumentPosition(retry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

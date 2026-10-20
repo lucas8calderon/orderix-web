@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DeliveryPaymentGroups, { PREPAY_NO_ONLINE_MSG } from './DeliveryPaymentGroups';
+import { INFINITEPAY_ADDRESS_NOTICE } from '../infinitePayAddressNotice';
 
 const baseCheckout = {
   paymentMethod: 'PIX',
@@ -118,5 +119,20 @@ describe('DeliveryPaymentGroups', () => {
     expect(screen.getByRole('radio', { name: 'Cartão de crédito' })).toBeInTheDocument();
     expect(screen.queryByText(/PagBank/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Mercado Pago/)).not.toBeInTheDocument();
+    expect(screen.queryByText(INFINITEPAY_ADDRESS_NOTICE)).not.toBeInTheDocument();
+  });
+
+  it.each(['PICKUP', 'DELIVERY'])('avisa que a InfinitePay pede endereço no pagamento online (%s)', (fulfillment) => {
+    render(
+      <DeliveryPaymentGroups
+        checkout={baseCheckout}
+        onChange={jest.fn()}
+        onlinePixEnabled
+        onlinePaymentProvider="INFINITEPAY"
+        fulfillment={fulfillment}
+        total={20}
+      />
+    );
+    expect(screen.getByText(INFINITEPAY_ADDRESS_NOTICE)).toBeInTheDocument();
   });
 });

@@ -19,6 +19,7 @@ import {
 } from '../../services/deliveryPaymentService';
 import DeliveryBottomNav from './components/DeliveryBottomNav';
 import DeliveryTrackingView from './DeliveryTrackingView';
+import { INFINITEPAY_ADDRESS_NOTICE } from './infinitePayAddressNotice';
 import { useDeliveryOrderPolling } from './useDeliveryOrderPolling';
 import './PublicDelivery.css';
 
@@ -115,7 +116,14 @@ export default function DeliveryTracking() {
     }
   };
 
-  const paymentBanner = paymentNotice === 'verifying' ? (
+  const canRetryInfinitePay = Boolean(order?.id)
+    && (paymentNotice === 'pending' || paymentNotice === 'failed');
+  const infinitePayAddressAlert = canRetryInfinitePay ? (
+    <Alert severity="info" sx={{ mb: 1 }}>
+      {INFINITEPAY_ADDRESS_NOTICE}
+    </Alert>
+  ) : null;
+  const paymentStatusAlert = paymentNotice === 'verifying' ? (
     <Alert severity="info">Verificando pagamento...</Alert>
   ) : paymentNotice === 'approved' ? (
     <Alert severity="success">Pagamento aprovado.</Alert>
@@ -143,6 +151,12 @@ export default function DeliveryTracking() {
     >
       {paymentError || 'Não foi possível confirmar o pagamento.'}
     </Alert>
+  ) : null;
+  const paymentBanner = (infinitePayAddressAlert || paymentStatusAlert) ? (
+    <>
+      {infinitePayAddressAlert}
+      {paymentStatusAlert}
+    </>
   ) : null;
 
   if (loading && !order) {
