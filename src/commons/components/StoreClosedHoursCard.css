@@ -2,15 +2,15 @@
   margin: 8px 0 14px;
   padding: 4px;
   border-radius: 14px;
-  background: #fff7ed;
-  border: 1px solid #fdba74;
+  background: var(--status-info-bg, #DBEAFE);
+  border: 1px solid color-mix(in srgb, var(--status-info-text, #1D4ED8) 42%, transparent);
 }
 
 .store-closed-hours-card--menu {
   margin: 0 0 16px;
   border-radius: 12px;
-  background: var(--status-warning-bg, #fff7ed);
-  border-color: var(--color-border, #fdba74);
+  background: var(--status-info-bg, #DBEAFE);
+  border-color: color-mix(in srgb, var(--status-info-text, #1D4ED8) 42%, transparent);
 }
 
 .store-closed-hours-card__toggle {
@@ -32,7 +32,7 @@
 }
 
 .store-closed-hours-card__toggle:focus-visible {
-  outline: 2px solid #c2410c;
+  outline: 2px solid var(--color-primary, #2563EB);
   outline-offset: 2px;
 }
 
@@ -49,13 +49,13 @@
 
 .store-closed-hours-card__title {
   font-weight: 700 !important;
-  color: #9a3412 !important;
+  color: var(--status-info-text, #1D4ED8) !important;
   font-size: 0.95rem !important;
   line-height: 1.35 !important;
 }
 
 .store-closed-hours-card__copy {
-  color: #9a3412 !important;
+  color: var(--status-info-text, #1D4ED8) !important;
   font-size: 0.875rem !important;
   margin-top: 4px !important;
   line-height: 1.4 !important;
@@ -66,13 +66,13 @@
 .store-closed-hours-card--menu .store-closed-hours-card__day,
 .store-closed-hours-card--menu .store-closed-hours-card__value,
 .store-closed-hours-card--menu .store-closed-hours-card__chevron {
-  color: var(--status-warning-text, #9a3412) !important;
+  color: var(--status-info-text, #1D4ED8) !important;
 }
 
 .store-closed-hours-card__chevron {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #9a3412 !important;
+  color: var(--status-info-text, #1D4ED8) !important;
   transition: transform 0.2s ease;
 }
 
@@ -95,7 +95,7 @@
 
 .store-closed-hours-card__day,
 .store-closed-hours-card__value {
-  color: #9a3412 !important;
+  color: var(--status-info-text, #1D4ED8) !important;
   font-size: 0.875rem !important;
 }
 
