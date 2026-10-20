@@ -20,6 +20,11 @@ import {
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { PagBankSetupTutorials } from './PagBankSetupTutorials';
 
+function resolveProvider(value) {
+  if (value === 'PAGBANK' || value === 'ASAAS') return value;
+  return 'MERCADOPAGO';
+}
+
 export function OnlineDeliveryPayments({
   settings,
   onSettingChange,
@@ -27,41 +32,65 @@ export function OnlineDeliveryPayments({
   switchStyles,
   saving,
 }) {
-  const provider = settings.deliveryOnlineProvider === 'PAGBANK' ? 'PAGBANK' : 'MERCADOPAGO';
+  const provider = resolveProvider(settings.deliveryOnlineProvider);
   const pagbank = provider === 'PAGBANK';
+  const asaas = provider === 'ASAAS';
+  const mercadoPago = provider === 'MERCADOPAGO';
   const environment = settings.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test';
   const pagbankEnvironment = settings.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox';
+  const asaasEnvironment = settings.asaasEnvironment === 'prod' ? 'prod' : 'sandbox';
   const accessConfigured = pagbank
     ? hasTypedSecret(settings.pagbankAccessToken) || Boolean(settings.pagbankAccessTokenConfigured)
-    : hasMercadoPagoAccessToken(settings, environment);
+    : asaas
+      ? hasTypedSecret(settings.asaasApiKey) || Boolean(settings.asaasApiKeyConfigured)
+      : hasMercadoPagoAccessToken(settings, environment);
   const publicKeyConfigured = pagbank
     ? Boolean(settings.pagbankCardPublicKeyConfigured)
-    : hasMercadoPagoPublicKey(settings, environment);
+    : asaas
+      ? hasTypedSecret(settings.asaasPublicKey) || Boolean(settings.asaasPublicKeyConfigured)
+      : hasMercadoPagoPublicKey(settings, environment);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState('');
   const [pixPausedForMissingToken, setPixPausedForMissingToken] = useState(false);
   const pagbankTokenInputRef = useRef(null);
+  const asaasKeyInputRef = useRef(null);
   const tokenStored = Boolean(settings.pagbankAccessTokenConfigured);
+  const asaasKeyStored = Boolean(settings.asaasApiKeyConfigured);
   const publicKeyStored = Boolean(settings.pagbankCardPublicKeyConfigured);
 
   useEffect(() => {
-    if (!pagbank) {
+    if (!pagbank && !asaas) {
       setPixPausedForMissingToken(false);
       return;
     }
-    if (tokenStored) {
+    if (pagbank) {
+      if (tokenStored) {
+        setPixPausedForMissingToken(false);
+      } else if (settings.onlinePixEnabled) {
+        onSettingChange('onlinePixEnabled', null, false);
+        setPixPausedForMissingToken(true);
+      }
+      if (!publicKeyStored && settings.onlineCardEnabled) {
+        onSettingChange('onlineCardEnabled', null, false);
+      }
+      return;
+    }
+    if (asaasKeyStored) {
       setPixPausedForMissingToken(false);
     } else if (settings.onlinePixEnabled) {
       onSettingChange('onlinePixEnabled', null, false);
       setPixPausedForMissingToken(true);
     }
-    if (!publicKeyStored && settings.onlineCardEnabled) {
+    if (!publicKeyConfigured && settings.onlineCardEnabled) {
       onSettingChange('onlineCardEnabled', null, false);
     }
   }, [
     pagbank,
+    asaas,
     tokenStored,
+    asaasKeyStored,
     publicKeyStored,
+    publicKeyConfigured,
     settings.onlinePixEnabled,
     settings.onlineCardEnabled,
     onSettingChange,
@@ -78,15 +107,35 @@ export function OnlineDeliveryPayments({
         onSettingChange('onlineCardEnabled', null, false);
       }
     }
+    if (nextProvider === 'ASAAS' && !asaasKeyStored) {
+      if (settings.onlinePixEnabled) {
+        onSettingChange('onlinePixEnabled', null, false);
+        setPixPausedForMissingToken(true);
+      }
+      if (settings.onlineCardEnabled) {
+        onSettingChange('onlineCardEnabled', null, false);
+      }
+    }
   };
 
   const saveOnlinePayments = () => {
-    const typed = pagbankTokenInputRef.current?.value;
-    if (pagbank && hasTypedSecret(typed)) {
-      onSave('onlinePayments', {
-        paymentOverrides: { pagbankAccessToken: String(typed).trim() },
-      });
-      return;
+    if (pagbank) {
+      const typed = pagbankTokenInputRef.current?.value;
+      if (hasTypedSecret(typed)) {
+        onSave('onlinePayments', {
+          paymentOverrides: { pagbankAccessToken: String(typed).trim() },
+        });
+        return;
+      }
+    }
+    if (asaas) {
+      const typed = asaasKeyInputRef.current?.value;
+      if (hasTypedSecret(typed)) {
+        onSave('onlinePayments', {
+          paymentOverrides: { asaasApiKey: String(typed).trim() },
+        });
+        return;
+      }
     }
     onSave('onlinePayments');
   };
@@ -109,11 +158,18 @@ export function OnlineDeliveryPayments({
     }
   };
 
+  const providerLabel = asaas ? 'Asaas' : pagbank ? 'PagBank' : 'Mercado Pago';
+  const envLabel = asaas
+    ? (asaasEnvironment === 'prod' ? 'produção' : 'sandbox')
+    : pagbank
+      ? (pagbankEnvironment === 'prod' ? 'produção' : 'sandbox')
+      : (environment === 'prod' ? 'produção' : 'teste');
+
   return (
     <SettingsSectionCard
       icon={CreditCardIcon}
       title="Pagamentos online"
-      description="Pix e cartão no delivery. O dinheiro cai na conta do provedor escolhido para esta loja. Mercado Pago e PagBank ficam separados."
+      description="Pix e cartão no delivery. O dinheiro cai na conta do provedor escolhido para esta loja. Mercado Pago, PagBank e Asaas ficam separados da assinatura Weper."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={saveOnlinePayments}
       actionDisabled={saving}
@@ -129,11 +185,12 @@ export function OnlineDeliveryPayments({
       >
         <MenuItem value="MERCADOPAGO">Mercado Pago</MenuItem>
         <MenuItem value="PAGBANK">PagBank</MenuItem>
+        <MenuItem value="ASAAS">Asaas</MenuItem>
       </TextField>
       <Typography className="setting-hint" variant="body2">
-        {pagbank ? 'PagBank' : 'Mercado Pago'}
+        {providerLabel}
         {' · '}
-        {pagbank ? (pagbankEnvironment === 'prod' ? 'produção' : 'sandbox') : (environment === 'prod' ? 'produção' : 'teste')}
+        {envLabel}
         {' · '}
         {accessConfigured ? 'configurado' : 'não configurado'}.
       </Typography>
@@ -167,7 +224,52 @@ export function OnlineDeliveryPayments({
           </Typography>
           {testMessage ? <Typography className="setting-hint" variant="body2">{testMessage}</Typography> : null}
         </Box>
-      ) : (
+      ) : null}
+      {asaas ? (
+        <Box className="payment-provider-fields">
+          <TextField
+            select
+            label="Ambiente"
+            value={asaasEnvironment}
+            onChange={(e) => onSettingChange('asaasEnvironment', null, e.target.value === 'prod' ? 'prod' : 'sandbox')}
+            className="setting-input"
+            fullWidth
+          >
+            <MenuItem value="sandbox">Sandbox</MenuItem>
+            <MenuItem value="prod">Produção</MenuItem>
+          </TextField>
+          <SecretField
+            label="API key da loja"
+            value={settings.asaasApiKey}
+            configuredLength={settings.asaasApiKeyLength}
+            configured={Boolean(settings.asaasApiKeyConfigured) && isUnsetSecret(settings.asaasApiKey)}
+            saving={saving}
+            inputRef={asaasKeyInputRef}
+            onChange={(value) => onSettingChange('asaasApiKey', null, value)}
+          />
+          <SecretField
+            label="Chave pública (cartão)"
+            value={settings.asaasPublicKey}
+            configuredLength={settings.asaasPublicKeyLength}
+            configured={Boolean(settings.asaasPublicKeyConfigured) && isUnsetSecret(settings.asaasPublicKey)}
+            saving={saving}
+            onChange={(value) => onSettingChange('asaasPublicKey', null, value)}
+          />
+          <SecretField
+            label="Token do webhook de delivery"
+            value={settings.asaasWebhookToken}
+            configuredLength={settings.asaasWebhookTokenLength}
+            configured={Boolean(settings.asaasWebhookTokenConfigured) && isUnsetSecret(settings.asaasWebhookToken)}
+            saving={saving}
+            onChange={(value) => onSettingChange('asaasWebhookToken', null, value)}
+          />
+          <Typography className="setting-hint" variant="body2">
+            Use a API key da conta Asaas desta loja — nunca a chave da assinatura Weper. No Asaas, aponte o webhook de
+            cobrança para /api/webhooks/asaas/delivery com o token acima (header asaas-access-token).
+          </Typography>
+        </Box>
+      ) : null}
+      {mercadoPago ? (
         <Box className="payment-provider-fields">
           <TextField
             select
@@ -206,7 +308,7 @@ export function OnlineDeliveryPayments({
             onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
           />
         </Box>
-      )}
+      ) : null}
       <FormControlLabel
         control={(
           <Switch
@@ -218,17 +320,21 @@ export function OnlineDeliveryPayments({
         )}
         label="Pix online"
       />
-      {pagbank && pixPausedForMissingToken ? (
+      {(pagbank || asaas) && pixPausedForMissingToken ? (
         <Typography className="setting-hint" variant="body2">
-          Salve o token primeiro e só depois ligue o Pix.
+          {asaas
+            ? 'Salve a API key da loja primeiro e só depois ligue o Pix.'
+            : 'Salve o token primeiro e só depois ligue o Pix.'}
         </Typography>
       ) : !accessConfigured ? (
         <Typography className="setting-hint" variant="body2">
-          {pagbank
-            ? 'Digite o token da conta PagBank e clique em Salvar para ligar o Pix online.'
-            : environment === 'prod'
-              ? 'Digite o Access Token da loja e clique em Salvar para ligar o Pix online.'
-              : 'Selecione Teste (com MERCADO_PAGO_ACCESS_TOKEN no servidor) ou digite o Access Token e clique em Salvar.'}
+          {asaas
+            ? 'Digite a API key Asaas da loja e clique em Salvar para ligar o Pix online.'
+            : pagbank
+              ? 'Digite o token da conta PagBank e clique em Salvar para ligar o Pix online.'
+              : environment === 'prod'
+                ? 'Digite o Access Token da loja e clique em Salvar para ligar o Pix online.'
+                : 'Selecione Teste (com MERCADO_PAGO_ACCESS_TOKEN no servidor) ou digite o Access Token e clique em Salvar.'}
         </Typography>
       ) : null}
       <FormControlLabel
@@ -244,13 +350,15 @@ export function OnlineDeliveryPayments({
       />
       {!accessConfigured || !publicKeyConfigured ? (
         <Typography className="setting-hint" variant="body2">
-          {pagbank
-            ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'
-            : !accessConfigured
-              ? 'Access Token e Public Key são necessários para ligar o cartão online.'
-              : environment === 'prod'
-                ? 'Digite a Public Key da loja para ligar o cartão online.'
-                : 'Configure MERCADO_PAGO_PUBLIC_KEY no servidor ou digite a Public Key para ligar o cartão online.'}
+          {asaas
+            ? 'Salve a API key e a chave pública antes de ligar o cartão (tokenização no navegador, sem guardar PAN/CVV).'
+            : pagbank
+              ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'
+              : !accessConfigured
+                ? 'Access Token e Public Key são necessários para ligar o cartão online.'
+                : environment === 'prod'
+                  ? 'Digite a Public Key da loja para ligar o cartão online.'
+                  : 'Configure MERCADO_PAGO_PUBLIC_KEY no servidor ou digite a Public Key para ligar o cartão online.'}
         </Typography>
       ) : null}
     </SettingsSectionCard>

@@ -376,7 +376,7 @@ function validPixInstant(ms) {
 export function isMercadoPagoTicket(provider, ticketUrl) {
   if (!ticketUrl) return false;
   const name = String(provider || '').toUpperCase();
-  if (name === 'PAGBANK') return false;
+  if (name === 'PAGBANK' || name === 'ASAAS') return false;
   if (name === 'MERCADOPAGO') return true;
   return isMercadoPagoHost(ticketUrl);
 }

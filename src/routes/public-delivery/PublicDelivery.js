@@ -1280,8 +1280,15 @@ export default function PublicDelivery() {
         slug={slug}
         orderId={cardOrder?.orderId}
         amount={cardOrder?.amount}
-        publicKey={catalog?.onlinePaymentProvider === 'PAGBANK' ? catalog?.pagbankPublicKey : catalog?.mercadoPagoPublicKey}
+        publicKey={
+          catalog?.onlinePaymentProvider === 'PAGBANK'
+            ? catalog?.pagbankPublicKey
+            : catalog?.onlinePaymentProvider === 'ASAAS'
+              ? catalog?.asaasPublicKey
+              : catalog?.mercadoPagoPublicKey
+        }
         provider={catalog?.onlinePaymentProvider || 'MERCADOPAGO'}
+        asaasEnvironment={catalog?.asaasEnvironment || 'sandbox'}
         payerEmail={customer?.email}
         onClose={() => setCardOpen(false)}
         onApproved={() => {

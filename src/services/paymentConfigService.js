@@ -216,13 +216,28 @@ export function toPaymentUi(dto = {}) {
     mercadoPagoAccessToken: '',
     mercadoPagoPublicKey: '',
     mercadoPagoWebhookSecret: '',
-    deliveryOnlineProvider: dto.deliveryOnlineProvider === 'PAGBANK' ? 'PAGBANK' : 'MERCADOPAGO',
+    deliveryOnlineProvider: resolveOnlineProvider(dto.deliveryOnlineProvider),
     pagbankEnvironment: dto.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox',
     pagbankAccessTokenConfigured: Boolean(dto.pagbankAccessTokenConfigured),
     pagbankCardPublicKeyConfigured: Boolean(dto.pagbankCardPublicKeyConfigured),
     pagbankAccessTokenLength: Number(dto.pagbankAccessTokenLength) || 0,
     pagbankAccessToken: '',
+    asaasEnvironment: dto.asaasEnvironment === 'prod' ? 'prod' : 'sandbox',
+    asaasApiKeyConfigured: Boolean(dto.asaasApiKeyConfigured),
+    asaasPublicKeyConfigured: Boolean(dto.asaasPublicKeyConfigured),
+    asaasWebhookTokenConfigured: Boolean(dto.asaasWebhookTokenConfigured),
+    asaasApiKeyLength: Number(dto.asaasApiKeyLength) || 0,
+    asaasPublicKeyLength: Number(dto.asaasPublicKeyLength) || 0,
+    asaasWebhookTokenLength: Number(dto.asaasWebhookTokenLength) || 0,
+    asaasApiKey: '',
+    asaasPublicKey: '',
+    asaasWebhookToken: '',
   };
+}
+
+function resolveOnlineProvider(value) {
+  if (value === 'PAGBANK' || value === 'ASAAS') return value;
+  return 'MERCADOPAGO';
 }
 
 function providerForMode(mode, configured, legacyDefault) {
@@ -325,8 +340,9 @@ export function toPaymentPayload(ui) {
     onlinePixEnabled: Boolean(ui.onlinePixEnabled),
     onlineCardEnabled: Boolean(ui.onlineCardEnabled),
     mercadoPagoEnvironment: ui.mercadoPagoEnvironment === 'prod' ? 'prod' : 'test',
-    deliveryOnlineProvider: ui.deliveryOnlineProvider === 'PAGBANK' ? 'PAGBANK' : 'MERCADOPAGO',
+    deliveryOnlineProvider: resolveOnlineProvider(ui.deliveryOnlineProvider),
     pagbankEnvironment: ui.pagbankEnvironment === 'prod' ? 'prod' : 'sandbox',
+    asaasEnvironment: ui.asaasEnvironment === 'prod' ? 'prod' : 'sandbox',
   };
   if ([tablePaymentProvider, comandaPaymentProvider, counterPaymentProvider].includes('INFINITEPAY')) {
     payload.infinitePayHandle = ui.infinitePayHandle || '';
@@ -340,6 +356,12 @@ export function toPaymentPayload(ui) {
   if (webhookSecret !== undefined) payload.mercadoPagoWebhookSecret = webhookSecret;
   const pagbankToken = secretPayload(ui.pagbankAccessToken);
   if (pagbankToken !== undefined) payload.pagbankAccessToken = pagbankToken;
+  const asaasApiKey = secretPayload(ui.asaasApiKey);
+  const asaasPublicKey = secretPayload(ui.asaasPublicKey);
+  const asaasWebhookToken = secretPayload(ui.asaasWebhookToken);
+  if (asaasApiKey !== undefined) payload.asaasApiKey = asaasApiKey;
+  if (asaasPublicKey !== undefined) payload.asaasPublicKey = asaasPublicKey;
+  if (asaasWebhookToken !== undefined) payload.asaasWebhookToken = asaasWebhookToken;
   return payload;
 }
 
@@ -363,6 +385,21 @@ const SAVED_SECRET_FIELDS = [
     valueKey: 'pagbankAccessToken',
     lengthKey: 'pagbankAccessTokenLength',
     flags: ['pagbankAccessTokenConfigured'],
+  },
+  {
+    valueKey: 'asaasApiKey',
+    lengthKey: 'asaasApiKeyLength',
+    flags: ['asaasApiKeyConfigured'],
+  },
+  {
+    valueKey: 'asaasPublicKey',
+    lengthKey: 'asaasPublicKeyLength',
+    flags: ['asaasPublicKeyConfigured'],
+  },
+  {
+    valueKey: 'asaasWebhookToken',
+    lengthKey: 'asaasWebhookTokenLength',
+    flags: ['asaasWebhookTokenConfigured'],
   },
 ];
 

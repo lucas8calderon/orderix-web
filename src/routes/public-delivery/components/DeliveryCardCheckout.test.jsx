@@ -22,6 +22,68 @@ test('PagBank mostra o formulário à vista e não carrega o Mercado Pago', () =
   expect(document.querySelector('script[data-mp-sdk="1"]')).toBeNull();
 });
 
+test('Asaas mostra o formulário transparente e tokeniza sem Mercado Pago', async () => {
+  const previousFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ creditCardToken: 'tok_asaas_abc123xyz890' }),
+  });
+  axios.post.mockResolvedValue({ data: { status: 'APPROVED', id: 2 } });
+  const previousRaf = window.requestAnimationFrame;
+  window.requestAnimationFrame = (callback) => {
+    callback();
+    return 0;
+  };
+
+  try {
+    render(
+      <DeliveryCardCheckout
+        open
+        slug="loja"
+        orderId={11}
+        amount={30}
+        publicKey="chave-publica-asaas"
+        provider="ASAAS"
+        asaasEnvironment="sandbox"
+        onClose={() => {}}
+        onApproved={() => {}}
+        onChooseOther={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Pagar à vista' })).toBeInTheDocument();
+    expect(document.querySelector('script[data-mp-sdk="1"]')).toBeNull();
+
+    fireEvent.change(screen.getByLabelText(/Nome impresso no cartão/i), { target: { value: 'Cliente' } });
+    fireEvent.change(screen.getByLabelText(/Número do cartão/i), { target: { value: '4111111111111111' } });
+    fireEvent.change(screen.getByLabelText(/Mês/i), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText(/Ano/i), { target: { value: '2030' } });
+    fireEvent.change(screen.getByLabelText(/CVV/i), { target: { value: '123' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Pagar à vista' }).closest('form'));
+
+    expect(await screen.findByRole('heading', { name: 'Pagamento aprovado' })).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api-sandbox.asaas.com/v3/creditCard/tokenizeCreditCard',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ access_token: 'chave-publica-asaas' }),
+      }),
+    );
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/payments/card'),
+      expect.objectContaining({ cardToken: 'tok_asaas_abc123xyz890' }),
+      expect.any(Object),
+    );
+    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(body.creditCard.number).toBe('4111111111111111');
+    expect(axios.post.mock.calls[0][1].cardToken).not.toContain('411111');
+  } finally {
+    global.fetch = previousFetch;
+    window.requestAnimationFrame = previousRaf;
+    axios.post.mockReset();
+  }
+});
+
 test('PagBank mostra Processando e desabilita o pagamento antes de criptografar', async () => {
   const previous = window.PagSeguro;
   const previousRaf = window.requestAnimationFrame;

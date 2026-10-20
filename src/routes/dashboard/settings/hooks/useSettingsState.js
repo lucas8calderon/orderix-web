@@ -97,6 +97,16 @@ const DEFAULT_PAYMENT = {
   pagbankCardPublicKeyConfigured: false,
   pagbankAccessTokenLength: 0,
   pagbankAccessToken: '',
+  asaasEnvironment: 'sandbox',
+  asaasApiKeyConfigured: false,
+  asaasPublicKeyConfigured: false,
+  asaasWebhookTokenConfigured: false,
+  asaasApiKeyLength: 0,
+  asaasPublicKeyLength: 0,
+  asaasWebhookTokenLength: 0,
+  asaasApiKey: '',
+  asaasPublicKey: '',
+  asaasWebhookToken: '',
 };
 
 const DEFAULT_PUBLIC_MENU = {
