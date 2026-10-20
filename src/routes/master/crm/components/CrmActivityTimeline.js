@@ -1,18 +1,6 @@
 import React from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { formatDateTime, statusLabel } from '../crmConstants';
-
-const TYPE_TITLE = {
-  CREATED: 'Lead cadastrado',
-  UPDATED: 'Lead atualizado',
-  STATUS_CHANGED: 'Status alterado',
-  CONTACT_REGISTERED: 'Contato realizado',
-  ARCHIVED: 'Lead arquivado',
-  RESTORED: 'Lead restaurado',
-  NOTE: 'Observação',
-  MESSAGE: 'Mensagem',
-  AUTOMATION: 'Automação',
-};
+import { CRM_ACTIVITY_TITLES, formatDateTime, statusLabel } from '../crmConstants';
 
 export function CrmActivityTimeline({ activities, loading }) {
   if (loading) {
@@ -46,17 +34,20 @@ export function CrmActivityTimeline({ activities, loading }) {
               {formatDateTime(activity.createdAt)}
             </Typography>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {TYPE_TITLE[activity.type] || activity.description}
+              {CRM_ACTIVITY_TITLES[activity.type] || activity.description}
             </Typography>
             {activity.type === 'STATUS_CHANGED' && (activity.previousStatus || activity.newStatus) ? (
               <Typography variant="body2" color="text.secondary">
                 {statusLabel(activity.previousStatus)} → {statusLabel(activity.newStatus)}
+                {activity.description && activity.description.includes('[')
+                  ? ` · ${activity.description}`
+                  : ''}
               </Typography>
             ) : activity.type === 'CONTACT_REGISTERED' && activity.contactType ? (
               <Typography variant="body2" color="text.secondary">
                 {activity.contactType}
-                {activity.description && activity.description.includes('—')
-                  ? ` · ${activity.description.split('—').slice(1).join('—').trim()}`
+                {activity.description
+                  ? ` · ${activity.description}`
                   : ''}
               </Typography>
             ) : activity.type !== 'CREATED' ? (

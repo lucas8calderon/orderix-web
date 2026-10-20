@@ -16,6 +16,7 @@ export function CrmKanban({
   onRegisterContact,
   onChangeStatus,
   onArchive,
+  onConfirmSend,
 }) {
   const grouped = CRM_STATUSES.reduce((acc, column) => {
     acc[column.id] = leads.filter((lead) => lead.status === column.id);
@@ -103,6 +104,7 @@ export function CrmKanban({
                       onRegisterContact={onRegisterContact}
                       onChangeStatus={onChangeStatus}
                       onArchive={onArchive}
+                      onConfirmSend={onConfirmSend}
                     />
                   ))}
                   {provided.placeholder}

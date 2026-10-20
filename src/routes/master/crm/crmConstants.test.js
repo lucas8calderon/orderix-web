@@ -1,4 +1,12 @@
-import { adjacentStatus, followUpDelayLabel, followUpState, phoneContactLabel } from './crmConstants';
+import {
+  adjacentStatus,
+  deadlineIndicator,
+  deadlineStateFromDue,
+  followUpDelayLabel,
+  followUpState,
+  formatCountdown,
+  phoneContactLabel,
+} from './crmConstants';
 import { buildInstagramUrl, instagramHandle } from './instagram';
 import { buildWhatsAppUrl, whatsAppDigits } from './whatsappTemplate';
 
@@ -13,11 +21,34 @@ describe('crm follow-up indicators', () => {
     expect(followUpState({ status: 'WON', nextContactAt: '2026-09-20T10:00:00' }, now)).toBe('NONE');
   });
 
-  it('formata atraso em dias', () => {
-    expect(followUpDelayLabel({ nextContactAt: '2026-09-20T10:00:00' }, now)).toBe('Retorno atrasado há 2 dias');
-    expect(followUpDelayLabel({ nextContactAt: '2026-09-21T10:00:00' }, now)).toBe('Retorno atrasado há 1 dia');
-    expect(followUpDelayLabel({ nextContactAt: '2026-09-22T10:00:00' }, now)).toBe('Retornar hoje às 10:00');
-    expect(followUpDelayLabel({ nextContactAt: '2026-09-25T10:00:00' }, now)).toBe('Retorno 25/09 às 10:00');
+  it('formata atraso em dias (fallback sem activeAction)', () => {
+    expect(followUpDelayLabel({ nextContactAt: '2026-09-20T10:00:00' }, now)).toContain('Atrasado');
+    expect(followUpDelayLabel({ nextContactAt: '2026-09-22T10:00:00' }, now)).toContain('Atrasado');
+    expect(followUpDelayLabel({ nextContactAt: '2026-09-22T14:00:00' }, now)).toContain('Vence em');
+    expect(followUpDelayLabel({ nextContactAt: '2026-09-25T10:00:00' }, now)).toContain('Vence em');
+  });
+});
+
+describe('crm deadline indicators', () => {
+  const now = new Date('2026-10-20T12:00:00');
+
+  it('classifica on-time, due-soon e overdue', () => {
+    expect(deadlineStateFromDue('2026-10-20T20:00:00', now)).toBe('ON_TIME');
+    expect(deadlineStateFromDue('2026-10-20T14:00:00', now)).toBe('DUE_SOON');
+    expect(deadlineStateFromDue('2026-10-20T11:00:00', now)).toBe('OVERDUE');
+  });
+
+  it('monta countdown e badge a partir da ação ativa', () => {
+    expect(formatCountdown('2026-10-20T15:00:00', now)).toBe('Vence em 3h');
+    expect(formatCountdown('2026-10-20T10:00:00', now)).toBe('Atrasado há 2h');
+    const badge = deadlineIndicator({
+      status: 'NEW',
+      deadlineState: 'OVERDUE',
+      activeAction: { dueAt: '2026-10-20T10:00:00', actionTypeLabel: 'Primeiro contato' },
+    }, now);
+    expect(badge.tone).toBe('overdue');
+    expect(badge.cardClass).toBe('is-overdue');
+    expect(badge.label).toContain('Primeiro contato');
   });
 });
 

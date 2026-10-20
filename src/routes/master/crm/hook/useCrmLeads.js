@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   archiveCrmLead,
   changeCrmLeadStatus,
+  confirmCrmLeadSend,
   createCrmLead,
   getCrmLeadActivities,
   getCrmLeads,
@@ -160,23 +161,39 @@ export function useCrmLeads() {
     return response.data;
   }, [fetchMetrics, patchLead]);
 
-  const changeStatus = useCallback(async (id, status) => {
+  const changeStatus = useCallback(async (id, status, extras = {}) => {
     const previousLeads = leads;
     const previousList = listPage;
-    const optimistic = (lead) => (lead.id === id ? { ...lead, status } : lead);
-    setLeads((current) => current.map(optimistic));
-    setListPage((current) => ({ ...current, items: current.items.map(optimistic) }));
+    const skipOptimistic = status === 'LOST' || status === 'DEMO' || status === 'PROPOSAL' || status === 'INTERESTED';
+    if (!skipOptimistic) {
+      const optimistic = (lead) => (lead.id === id ? { ...lead, status } : lead);
+      setLeads((current) => current.map(optimistic));
+      setListPage((current) => ({ ...current, items: current.items.map(optimistic) }));
+    }
     try {
-      const response = await changeCrmLeadStatus(id, status);
+      const response = await changeCrmLeadStatus(id, status, extras);
       patchLead(response.data);
       await fetchMetrics();
       return response.data;
     } catch (err) {
-      setLeads(previousLeads);
-      setListPage(previousList);
+      if (!skipOptimistic) {
+        setLeads(previousLeads);
+        setListPage(previousList);
+      }
       throw err;
     }
   }, [fetchMetrics, leads, listPage, patchLead]);
+
+  const confirmSend = useCallback(async (id, payload = {}) => {
+    const response = await confirmCrmLeadSend(id, payload);
+    patchLead(response.data);
+    try {
+      await fetchMetrics();
+    } catch (err) {
+      console.error(err);
+    }
+    return response.data;
+  }, [fetchMetrics, patchLead]);
 
   const registerContact = useCallback(async (id, payload) => {
     const response = await registerCrmContact(id, payload);
@@ -258,6 +275,7 @@ export function useCrmLeads() {
     createLead,
     updateLead,
     changeStatus,
+    confirmSend,
     registerContact,
     archiveLead,
     loadActivities,

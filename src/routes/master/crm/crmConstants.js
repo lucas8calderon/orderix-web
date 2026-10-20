@@ -55,10 +55,45 @@ export const BRAZIL_STATES = [
 
 export const FOLLOW_UP_FILTERS = [
   { id: '', label: 'Todos' },
-  { id: 'TODAY', label: 'Retornos hoje' },
   { id: 'OVERDUE', label: 'Atrasados' },
-  { id: 'MISSING', label: 'Sem próximo contato' },
+  { id: 'TODAY', label: 'Vencem hoje' },
+  { id: 'DUE_24H', label: 'Próximas 24h' },
+  { id: 'NO_FIRST_CONTACT', label: 'Sem 1º contato' },
+  { id: 'MISSING', label: 'Sem prazo' },
+  { id: 'UPCOMING', label: 'Futuros' },
 ];
+
+export const CRM_LOST_REASONS = [
+  { id: 'NO_RESPONSE', label: 'Sem resposta' },
+  { id: 'NO_INTEREST', label: 'Sem interesse' },
+  { id: 'PRICE', label: 'Preço' },
+  { id: 'OTHER_SOLUTION', label: 'Já utiliza outra solução' },
+  { id: 'INVALID_CONTACT', label: 'Contato inválido' },
+  { id: 'OTHER', label: 'Outro' },
+];
+
+export const CRM_ACTIVITY_TITLES = {
+  CREATED: 'Lead cadastrado',
+  UPDATED: 'Lead atualizado',
+  STATUS_CHANGED: 'Status alterado',
+  CONTACT_REGISTERED: 'Contato realizado',
+  ARCHIVED: 'Lead arquivado',
+  RESTORED: 'Lead reativado',
+  NOTE: 'Observação',
+  MESSAGE: 'Mensagem',
+  AUTOMATION: 'Automação',
+  DISCOVERED: 'Descoberto no Google Places',
+  RECONSULTED: 'Reconsultado no Places',
+  ACTION_SCHEDULED: 'Próxima ação agendada',
+  ACTION_COMPLETED: 'Ação concluída',
+  DEADLINE_OVERDUE: 'Prazo vencido',
+  DEMO_SCHEDULED: 'Demonstração agendada',
+  PROPOSAL_SENT: 'Proposta enviada',
+  CONVERTED: 'Convertido',
+  CLOSED: 'Encerrado',
+};
+
+export const DUE_SOON_HOURS = 4;
 
 export const CRM_LIST_COLUMNS = [
   { id: 'businessName', label: 'Estabelecimento' },
@@ -108,22 +143,98 @@ export function followUpState(lead, now = new Date()) {
   return 'UPCOMING';
 }
 
+/** Deriva estado de prazo a partir de dueAt (backend) — sem polling. */
+export function deadlineStateFromDue(dueAt, now = new Date()) {
+  if (!dueAt) return null;
+  const due = new Date(dueAt);
+  if (Number.isNaN(due.getTime())) return null;
+  if (now.getTime() > due.getTime()) return 'OVERDUE';
+  const soonMs = DUE_SOON_HOURS * 3600 * 1000;
+  if (due.getTime() - now.getTime() <= soonMs) return 'DUE_SOON';
+  return 'ON_TIME';
+}
+
+export function formatCountdown(dueAt, now = new Date()) {
+  const due = new Date(dueAt);
+  if (Number.isNaN(due.getTime())) return '';
+  const diffMs = due.getTime() - now.getTime();
+  const abs = Math.abs(diffMs);
+  const hours = Math.floor(abs / 3600000);
+  const minutes = Math.floor((abs % 3600000) / 60000);
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  let span;
+  if (days >= 1) {
+    span = days === 1 ? '1 dia' : `${days} dias`;
+    if (remHours > 0) span += ` ${remHours}h`;
+  } else if (hours >= 1) {
+    span = minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
+  } else {
+    span = `${Math.max(1, minutes)}min`;
+  }
+  return diffMs >= 0 ? `Vence em ${span}` : `Atrasado há ${span}`;
+}
+
+export function deadlineIndicator(lead, now = new Date()) {
+  if (!lead || lead.status === 'WON' || lead.status === 'LOST') {
+    return { state: 'NONE', label: '', tone: 'none', cardClass: '' };
+  }
+  const dueAt = lead.activeAction?.dueAt || lead.nextContactAt;
+  const backendState = lead.deadlineState || lead.activeAction?.state;
+  const state = backendState && ['ON_TIME', 'DUE_SOON', 'OVERDUE'].includes(backendState)
+    ? backendState
+    : (deadlineStateFromDue(dueAt, now) || (dueAt ? null : 'MISSING'));
+
+  if (!dueAt || state === 'MISSING') {
+    return { state: 'MISSING', label: 'Sem prazo de ação', tone: 'missing', cardClass: 'is-missing' };
+  }
+
+  const actionLabel = lead.activeAction?.actionTypeLabel || lead.activeAction?.actionType;
+  const countdown = formatCountdown(dueAt, now);
+  if (state === 'OVERDUE') {
+    return {
+      state,
+      label: actionLabel ? `${actionLabel} · ${countdown}` : countdown,
+      tone: 'overdue',
+      cardClass: 'is-overdue',
+    };
+  }
+  if (state === 'DUE_SOON') {
+    return {
+      state,
+      label: actionLabel ? `${actionLabel} · ${countdown}` : countdown,
+      tone: 'dueSoon',
+      cardClass: 'is-due-soon',
+    };
+  }
+  return {
+    state: 'ON_TIME',
+    label: actionLabel ? `${actionLabel} · ${countdown}` : countdown,
+    tone: 'onTime',
+    cardClass: 'is-on-time',
+  };
+}
+
 export function followUpIndicator(lead, now = new Date()) {
+  const deadline = deadlineIndicator(lead, now);
+  if (deadline.state !== 'NONE' && deadline.label) {
+    return deadline;
+  }
   const state = lead?.followUpState || followUpState(lead, now);
   if (state === 'NONE') {
-    return { state, label: '', tone: 'none' };
+    return { state, label: '', tone: 'none', cardClass: '' };
   }
   if (state === 'MISSING' || !lead?.nextContactAt) {
-    return { state: state === 'MISSING' ? 'MISSING' : state, label: 'Sem próximo contato', tone: 'missing' };
+    return { state: 'MISSING', label: 'Sem próximo contato', tone: 'missing', cardClass: 'is-missing' };
   }
   const next = new Date(lead.nextContactAt);
   if (Number.isNaN(next.getTime())) {
-    return { state: 'MISSING', label: 'Sem próximo contato', tone: 'missing' };
+    return { state: 'MISSING', label: 'Sem próximo contato', tone: 'missing', cardClass: 'is-missing' };
   }
   const time = next.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
   const date = next.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   if (state === 'TODAY') {
-    return { state, label: `Retornar hoje às ${time}`, tone: 'today' };
+    return { state, label: `Retornar hoje às ${time}`, tone: 'today', cardClass: 'is-today' };
   }
   if (state === 'OVERDUE') {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -133,13 +244,18 @@ export function followUpIndicator(lead, now = new Date()) {
       state,
       label: days === 1 ? 'Retorno atrasado há 1 dia' : `Retorno atrasado há ${days} dias`,
       tone: 'overdue',
+      cardClass: 'is-overdue',
     };
   }
-  return { state: 'UPCOMING', label: `Retorno ${date} às ${time}`, tone: 'upcoming' };
+  return { state: 'UPCOMING', label: `Retorno ${date} às ${time}`, tone: 'upcoming', cardClass: '' };
 }
 
 export function followUpDelayLabel(lead, now = new Date()) {
   return followUpIndicator(lead, now).label || null;
+}
+
+export function lostReasonLabel(value) {
+  return CRM_LOST_REASONS.find((item) => item.id === value)?.label || value || '—';
 }
 
 export function formatDateTime(value) {

@@ -5,7 +5,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import { Draggable } from 'react-beautiful-dnd';
-import { businessTypeLabel, locationLabel } from '../crmConstants';
+import { businessTypeLabel, followUpIndicator, locationLabel } from '../crmConstants';
 import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
@@ -20,8 +20,10 @@ export function CrmLeadCard({
   onRegisterContact,
   onChangeStatus,
   onArchive,
+  onConfirmSend,
 }) {
-  const followUp = lead.followUpState || 'NONE';
+  const indicator = followUpIndicator(lead);
+  const cardTone = indicator.cardClass || '';
 
   return (
     <Draggable draggableId={String(lead.id)} index={index}>
@@ -38,7 +40,7 @@ export function CrmLeadCard({
           <Paper
             elevation={snapshot.isDragging ? 6 : 0}
             onClick={() => onOpen(lead)}
-            className={`crm-lead-card ${followUp === 'OVERDUE' ? 'is-overdue' : ''} ${followUp === 'TODAY' ? 'is-today' : ''} ${snapshot.isDragging ? 'is-dragging' : ''}`}
+            className={`crm-lead-card ${cardTone} ${snapshot.isDragging ? 'is-dragging' : ''}`}
             sx={{
               p: 1.25,
               mb: 1,
@@ -70,6 +72,7 @@ export function CrmLeadCard({
                   onRegisterContact={onRegisterContact}
                   onChangeStatus={onChangeStatus}
                   onArchive={onArchive}
+                  onConfirmSend={onConfirmSend}
                 />
               </Box>
             </Stack>

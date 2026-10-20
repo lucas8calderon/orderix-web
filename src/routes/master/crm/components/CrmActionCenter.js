@@ -3,11 +3,12 @@ import { Button, Paper, Stack, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { CrmFollowUps } from './CrmFollowUps';
 
-export function CrmActionCenter({ metrics, onFilterToday, onFilterOverdue }) {
+export function CrmActionCenter({ metrics, onFilterToday, onFilterOverdue, onFilterNoFirstContact }) {
   const overdue = metrics?.followUpsOverdue ?? 0;
   const today = metrics?.followUpsToday ?? 0;
+  const noFirst = metrics?.noFirstContact ?? 0;
   const [open, setOpen] = useState(false);
-  const hasActions = overdue > 0 || today > 0;
+  const hasActions = overdue > 0 || today > 0 || noFirst > 0;
 
   return (
     <Paper
@@ -51,6 +52,16 @@ export function CrmActionCenter({ metrics, onFilterToday, onFilterOverdue }) {
             >
               <span aria-hidden="true">🟠 </span>
               {today} {today === 1 ? 'retorno para hoje' : 'retornos para hoje'}
+            </Typography>
+          )}
+          {noFirst > 0 && (
+            <Typography
+              variant="body2"
+              sx={{ cursor: 'pointer' }}
+              onClick={onFilterNoFirstContact}
+            >
+              <span aria-hidden="true">⚪ </span>
+              {noFirst} {noFirst === 1 ? 'lead sem 1º contato' : 'leads sem 1º contato'}
             </Typography>
           )}
           <Button

@@ -77,8 +77,17 @@
   box-shadow: inset 4px 0 0 var(--color-error, #b91c1c);
 }
 
+.crm-lead-card.is-due-soon,
 .crm-lead-card.is-today {
   box-shadow: inset 4px 0 0 var(--color-warning, #d97706);
+}
+
+.crm-lead-card.is-on-time {
+  box-shadow: inset 4px 0 0 var(--color-success, #15803d);
+}
+
+.crm-lead-card.is-missing {
+  box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.55);
 }
 
 .crm-places-usage {

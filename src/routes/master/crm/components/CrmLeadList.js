@@ -44,6 +44,7 @@ export function CrmLeadList({
   onRegisterContact,
   onChangeStatus,
   onArchive,
+  onConfirmSend,
 }) {
   const items = pageData?.items || [];
   const [activeField, activeDir] = (sort || 'nextContactAt,asc').split(',');
@@ -141,6 +142,7 @@ export function CrmLeadList({
                       onRegisterContact={onRegisterContact}
                       onChangeStatus={onChangeStatus}
                       onArchive={onArchive}
+                      onConfirmSend={onConfirmSend}
                     />
                   </Stack>
                 </TableCell>

@@ -8,6 +8,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined';
@@ -22,6 +23,7 @@ export function CrmLeadMenu({
   onRegisterContact,
   onChangeStatus,
   onArchive,
+  onConfirmSend,
 }) {
   const [anchor, setAnchor] = useState(null);
   const [statusAnchor, setStatusAnchor] = useState(null);
@@ -58,6 +60,12 @@ export function CrmLeadMenu({
           <ListItemIcon><SpeakerNotesOutlinedIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Registrar contato</ListItemText>
         </MenuItem>
+        {lead?.phone && lead?.status !== 'WON' && lead?.status !== 'LOST' && (
+          <MenuItem onClick={() => { close(); onConfirmSend?.(lead); }}>
+            <ListItemIcon><CheckCircleOutlineIcon fontSize="small" /></ListItemIcon>
+            <ListItemText>Marcar como enviada</ListItemText>
+          </MenuItem>
+        )}
         <MenuItem onClick={(event) => setStatusAnchor(event.currentTarget)}>
           <ListItemIcon><SwapHorizOutlinedIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Alterar status</ListItemText>

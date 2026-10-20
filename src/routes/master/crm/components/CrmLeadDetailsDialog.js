@@ -20,10 +20,19 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useIsMobile } from '../../../../commons/hooks/useResponsive';
-import { businessTypeLabel, CRM_STATUSES, formatDateTime, locationLabel, phoneContactLabel, sourceLabel } from '../crmConstants';
+import {
+  businessTypeLabel,
+  CRM_STATUSES,
+  formatDateTime,
+  locationLabel,
+  lostReasonLabel,
+  phoneContactLabel,
+  sourceLabel,
+} from '../crmConstants';
 import { buildInstagramUrl } from '../instagram';
 import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmActivityTimeline } from './CrmActivityTimeline';
+import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
 import { CrmLeadMenu } from './CrmLeadMenu';
 
@@ -66,6 +75,7 @@ export function CrmLeadDetailsDialog({
   onEdit,
   onRegisterContact,
   onChangeStatus,
+  onConfirmSend,
   onArchive,
   saving,
 }) {
@@ -98,6 +108,14 @@ export function CrmLeadDetailsDialog({
         >
           Abrir no WhatsApp
         </Button>
+        <Button
+          variant="outlined"
+          disabled={!lead.phone || whatsAppBlocked || saving || lead.status === 'WON' || lead.status === 'LOST'}
+          onClick={onConfirmSend}
+          sx={{ textTransform: 'none' }}
+        >
+          Marcar como enviada
+        </Button>
         <CrmInstagramButton instagram={lead.instagram} />
         <Button variant="outlined" onClick={onRegisterContact} sx={{ textTransform: 'none' }}>
           Registrar contato
@@ -105,9 +123,18 @@ export function CrmLeadDetailsDialog({
       </Stack>
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        Após enviar no WhatsApp, volte para registrar o contato ou atualizar o status no quadro.
+        Abrir o WhatsApp não registra envio. Após colar e enviar a mensagem, use &quot;Marcar como enviada&quot;.
       </Typography>
       <CrmWhatsAppOptOut key={lead.id} lead={lead} onBlocked={setWhatsAppBlocked} />
+
+      <Section title="Prazo da próxima ação">
+        <CrmFollowUpIndicator lead={lead} />
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
+          Tentativas: {lead.contactAttempts ?? 0}
+          {lead.deadlineStateLabel ? ` · ${lead.deadlineStateLabel}` : ''}
+        </Typography>
+      </Section>
+
       <Section title="Contato">
         <Stack spacing={1.25}>
           <Field label="Responsável" value={lead.contactName} />
@@ -127,8 +154,13 @@ export function CrmLeadDetailsDialog({
               value={status}
               disabled={saving}
               onChange={(event) => {
-                setStatus(event.target.value);
-                onChangeStatus(lead, event.target.value);
+                const next = event.target.value;
+                if (next === 'LOST') {
+                  onChangeStatus(lead, next);
+                  return;
+                }
+                setStatus(next);
+                onChangeStatus(lead, next);
               }}
             >
               {CRM_STATUSES.map((item) => (
@@ -137,9 +169,14 @@ export function CrmLeadDetailsDialog({
             </Select>
           </FormControl>
           <Field label="Origem" value={sourceLabel(lead.source)} />
+          {lead.status === 'LOST' && (
+            <Field label="Motivo da perda" value={lead.lostReasonLabel || lostReasonLabel(lead.lostReason)} />
+          )}
+          <Field label="Descoberto em" value={formatDateTime(lead.discoveredAt)} />
           <Field label="Primeiro contato" value={formatDateTime(lead.firstContactAt)} />
           <Field label="Último contato" value={formatDateTime(lead.lastContactAt)} />
-          <Field label="Próximo contato" value={formatDateTime(lead.nextContactAt)} />
+          <Field label="Última resposta" value={formatDateTime(lead.lastResponseAt)} />
+          <Field label="Próxima ação" value={formatDateTime(lead.nextContactAt || lead.activeAction?.dueAt)} />
         </Stack>
       </Section>
 
@@ -174,6 +211,7 @@ export function CrmLeadDetailsDialog({
         onEdit={() => onEdit(lead)}
         onRegisterContact={onRegisterContact}
         onChangeStatus={onChangeStatus}
+        onConfirmSend={() => onConfirmSend?.(lead)}
         onArchive={onArchive}
       />
       <IconButton onClick={onClose} aria-label="Fechar">

@@ -25,6 +25,7 @@ import { CrmLeadList } from './components/CrmLeadList';
 import { CrmLeadFormDialog } from './components/CrmLeadFormDialog';
 import { CrmLeadDetailsDialog } from './components/CrmLeadDetailsDialog';
 import { CrmContactDialog } from './components/CrmContactDialog';
+import { CrmLostReasonDialog } from './components/CrmLostReasonDialog';
 import { CrmProspectingDialog } from './components/CrmProspectingDialog';
 import { getCrmLead } from './service/crmService';
 import './CrmBoard.css';
@@ -32,6 +33,9 @@ import './CrmBoard.css';
 function statusToast(status) {
   if (status === 'WON') return 'Lead marcado como ganho.';
   if (status === 'LOST') return 'Lead marcado como perdido.';
+  if (status === 'DEMO') return 'Demonstração registrada.';
+  if (status === 'PROPOSAL') return 'Proposta registrada.';
+  if (status === 'INTERESTED') return 'Lead marcado como interessado (ação em 4h).';
   return 'Status atualizado.';
 }
 
@@ -46,6 +50,7 @@ export function CrmBoard() {
   const [prospectingOpen, setProspectingOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  const [lostDialog, setLostDialog] = useState({ open: false, leadId: null });
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
   const showToast = (message, severity = 'success') => {
@@ -112,17 +117,56 @@ export function CrmBoard() {
     }
   };
 
-  const handleStatusChange = async (leadOrId, status) => {
+  const handleStatusChange = async (leadOrId, status, extras = {}) => {
     const id = typeof leadOrId === 'object' ? leadOrId?.id : leadOrId;
     if (!id || !status) return;
+    if (status === 'LOST' && !extras.lostReason) {
+      setLostDialog({ open: true, leadId: id });
+      return;
+    }
     try {
-      const updated = await crm.changeStatus(id, status);
+      const updated = await crm.changeStatus(id, status, extras);
       showToast(statusToast(status));
       if (detailsLead?.id === id) {
         await refreshDetails(updated);
       }
     } catch (err) {
       showToast(err?.response?.data?.message || 'Não foi possível alterar o status.', 'error');
+    }
+  };
+
+  const handleLostConfirm = async ({ lostReason, reason }) => {
+    const id = lostDialog.leadId;
+    if (!id || !lostReason) return;
+    setSaving(true);
+    try {
+      const updated = await crm.changeStatus(id, 'LOST', { lostReason, reason });
+      setLostDialog({ open: false, leadId: null });
+      showToast(statusToast('LOST'));
+      if (detailsLead?.id === id) {
+        await refreshDetails(updated);
+      }
+    } catch (err) {
+      showToast(err?.response?.data?.message || 'Não foi possível marcar como perdido.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmSend = async (lead) => {
+    const target = lead || detailsLead;
+    if (!target?.id) return;
+    setSaving(true);
+    try {
+      const updated = await crm.confirmSend(target.id);
+      showToast('Envio confirmado. Próxima ação em 48h.');
+      if (detailsLead?.id === target.id) {
+        await refreshDetails(updated);
+      }
+    } catch (err) {
+      showToast(err?.response?.data?.message || 'Não foi possível confirmar o envio.', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -231,6 +275,7 @@ export function CrmBoard() {
                 metrics={crm.metrics}
                 onFilterToday={() => crm.setQuickFollowUp('TODAY')}
                 onFilterOverdue={() => crm.setQuickFollowUp('OVERDUE')}
+                onFilterNoFirstContact={() => crm.setQuickFollowUp('NO_FIRST_CONTACT')}
               />
             </Box>
           </Stack>
@@ -287,6 +332,7 @@ export function CrmBoard() {
                 onRegisterContact={openContact}
                 onChangeStatus={handleStatusChange}
                 onArchive={handleArchive}
+                onConfirmSend={handleConfirmSend}
               />
             ) : (
               <CrmKanban
@@ -299,6 +345,7 @@ export function CrmBoard() {
                 onRegisterContact={openContact}
                 onChangeStatus={handleStatusChange}
                 onArchive={handleArchive}
+                onConfirmSend={handleConfirmSend}
               />
             )}
           </Box>
@@ -327,7 +374,15 @@ export function CrmBoard() {
         }}
         onRegisterContact={() => setContactOpen(true)}
         onChangeStatus={handleStatusChange}
+        onConfirmSend={() => handleConfirmSend(detailsLead)}
         onArchive={handleArchive}
+        saving={saving}
+      />
+
+      <CrmLostReasonDialog
+        open={lostDialog.open}
+        onClose={() => setLostDialog({ open: false, leadId: null })}
+        onConfirm={handleLostConfirm}
         saving={saving}
       />
 

@@ -55,8 +55,19 @@ export function updateCrmLead(id, payload) {
   return axios.put(`${CRM_URL}/leads/${id}`, payload);
 }
 
-export function changeCrmLeadStatus(id, status, reason) {
-  return axios.patch(`${CRM_URL}/leads/${id}/status`, { status, reason });
+export function changeCrmLeadStatus(id, status, extras = {}) {
+  const body = typeof extras === 'string'
+    ? { status, reason: extras }
+    : { status, ...extras };
+  return axios.patch(`${CRM_URL}/leads/${id}/status`, body);
+}
+
+export function confirmCrmLeadSend(id, payload = {}) {
+  return axios.post(`${CRM_URL}/leads/${id}/messages/confirm-sent`, payload);
+}
+
+export function scheduleCrmLeadAction(id, payload) {
+  return axios.post(`${CRM_URL}/leads/${id}/actions`, payload);
 }
 
 export function registerCrmContact(id, payload) {
