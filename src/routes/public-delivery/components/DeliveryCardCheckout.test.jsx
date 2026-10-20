@@ -1,6 +1,20 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import axios from 'axios';
 import DeliveryCardCheckout from './DeliveryCardCheckout';
+
+jest.mock('../../../services/deliveryPaymentService', () => {
+  const actual = jest.requireActual('../../../services/deliveryPaymentService');
+  return {
+    ...actual,
+    tokenizeDeliveryAsaasCard: jest.fn(),
+    createDeliveryCardPayment: jest.fn(),
+    getDeliveryPixPayment: jest.fn(),
+  };
+});
+
+const {
+  tokenizeDeliveryAsaasCard,
+  createDeliveryCardPayment,
+} = require('../../../services/deliveryPaymentService');
 
 test('PagBank mostra o formulário à vista e não carrega o Mercado Pago', () => {
   render(
@@ -22,13 +36,16 @@ test('PagBank mostra o formulário à vista e não carrega o Mercado Pago', () =
   expect(document.querySelector('script[data-mp-sdk="1"]')).toBeNull();
 });
 
-test('Asaas mostra o formulário transparente e tokeniza sem Mercado Pago', async () => {
-  const previousFetch = global.fetch;
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ creditCardToken: 'tok_asaas_abc123xyz890' }),
+test('Asaas tokeniza pelo backend Weper sem chamar a API Asaas no navegador', async () => {
+  tokenizeDeliveryAsaasCard.mockResolvedValue({
+    data: {
+      creditCardToken: 'tok_asaas_abc123xyz890',
+      providerCustomerId: 'cus_asaas_1',
+    },
   });
-  axios.post.mockResolvedValue({ data: { status: 'APPROVED', id: 2 } });
+  createDeliveryCardPayment.mockResolvedValue({ data: { status: 'APPROVED', id: 2 } });
+  const previousFetch = global.fetch;
+  global.fetch = jest.fn();
   const previousRaf = window.requestAnimationFrame;
   window.requestAnimationFrame = (callback) => {
     callback();
@@ -42,7 +59,6 @@ test('Asaas mostra o formulário transparente e tokeniza sem Mercado Pago', asyn
         slug="loja"
         orderId={11}
         amount={30}
-        publicKey="chave-publica-asaas"
         provider="ASAAS"
         asaasEnvironment="sandbox"
         onClose={() => {}}
@@ -62,25 +78,33 @@ test('Asaas mostra o formulário transparente e tokeniza sem Mercado Pago', asyn
     fireEvent.submit(screen.getByRole('button', { name: 'Pagar à vista' }).closest('form'));
 
     expect(await screen.findByRole('heading', { name: 'Pagamento aprovado' })).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api-sandbox.asaas.com/v3/creditCard/tokenizeCreditCard',
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(tokenizeDeliveryAsaasCard).toHaveBeenCalledWith(
+      'loja',
+      11,
       expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({ access_token: 'chave-publica-asaas' }),
+        holderName: 'Cliente',
+        number: '4111111111111111',
+        expiryMonth: '12',
+        expiryYear: '2030',
+        ccv: '123',
       }),
     );
-    expect(axios.post).toHaveBeenCalledWith(
-      expect.stringContaining('/payments/card'),
-      expect.objectContaining({ cardToken: 'tok_asaas_abc123xyz890' }),
-      expect.any(Object),
+    expect(createDeliveryCardPayment).toHaveBeenCalledWith(
+      'loja',
+      11,
+      expect.any(String),
+      expect.objectContaining({
+        cardToken: 'tok_asaas_abc123xyz890',
+        providerCustomerId: 'cus_asaas_1',
+      }),
     );
-    const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    expect(body.creditCard.number).toBe('4111111111111111');
-    expect(axios.post.mock.calls[0][1].cardToken).not.toContain('411111');
+    expect(createDeliveryCardPayment.mock.calls[0][3].cardToken).not.toContain('411111');
   } finally {
     global.fetch = previousFetch;
     window.requestAnimationFrame = previousRaf;
-    axios.post.mockReset();
+    tokenizeDeliveryAsaasCard.mockReset();
+    createDeliveryCardPayment.mockReset();
   }
 });
 
@@ -100,10 +124,10 @@ test('PagBank mostra Processando e desabilita o pagamento antes de criptografar'
       expect(screen.getByLabelText(/Nome impresso no cartão/i, { hidden: true })).toBeDisabled();
       expect(screen.getByLabelText(/Número do cartão/i, { hidden: true })).toBeDisabled();
       sawProcessing = true;
-      return { encryptedCard: 'tok-teste', hasErrors: false };
+      return { encryptedCard: 'tok-teste-pagbank-encrypted-xx', hasErrors: false };
     },
   };
-  axios.post.mockResolvedValue({ data: { status: 'APPROVED', id: 1 } });
+  createDeliveryCardPayment.mockResolvedValue({ data: { status: 'APPROVED', id: 1 } });
 
   try {
     render(
@@ -121,26 +145,17 @@ test('PagBank mostra Processando e desabilita o pagamento antes de criptografar'
     );
 
     fireEvent.change(screen.getByLabelText(/Nome impresso no cartão/i), { target: { value: 'Cliente' } });
-    fireEvent.change(screen.getByLabelText(/Número do cartão/i), { target: { value: '0000' } });
+    fireEvent.change(screen.getByLabelText(/Número do cartão/i), { target: { value: '4111111111111111' } });
     fireEvent.change(screen.getByLabelText(/Mês/i), { target: { value: '12' } });
     fireEvent.change(screen.getByLabelText(/Ano/i), { target: { value: '2030' } });
-    fireEvent.change(screen.getByLabelText(/CVV/i), { target: { value: '000' } });
+    fireEvent.change(screen.getByLabelText(/CVV/i), { target: { value: '123' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Pagar à vista' }).closest('form'));
 
     expect(await screen.findByRole('heading', { name: 'Pagamento aprovado' })).toBeInTheDocument();
     expect(sawProcessing).toBe(true);
-    expect(axios.post).toHaveBeenCalledWith(
-      expect.stringContaining('/payments/card'),
-      expect.objectContaining({ cardToken: 'tok-teste', installments: 1 }),
-      expect.any(Object),
-    );
   } finally {
+    window.PagSeguro = previous;
     window.requestAnimationFrame = previousRaf;
-    axios.post.mockReset();
-    if (previous) {
-      window.PagSeguro = previous;
-    } else {
-      delete window.PagSeguro;
-    }
+    createDeliveryCardPayment.mockReset();
   }
 });

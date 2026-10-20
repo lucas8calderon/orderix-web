@@ -14,13 +14,16 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { formatCurrency } from '../../../services/accessControl';
-import { createDeliveryCardPayment, getDeliveryPixPayment, isPixPaid } from '../../../services/deliveryPaymentService';
+import {
+  createDeliveryCardPayment,
+  getDeliveryPixPayment,
+  isPixPaid,
+  tokenizeDeliveryAsaasCard,
+} from '../../../services/deliveryPaymentService';
 import './DeliveryCardCheckout.css';
 
 const SDK_URL = 'https://sdk.mercadopago.com/js/v2';
 const PAGBANK_SDK_URL = 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js';
-const ASAAS_SANDBOX = 'https://api-sandbox.asaas.com';
-const ASAAS_PROD = 'https://api.asaas.com';
 
 function paintThenContinue() {
   return new Promise((resolve) => {
@@ -84,52 +87,32 @@ function loadPagBank() {
   });
 }
 
-/** Tokeniza no Asaas no navegador — PAN/CVV não passam pelo backend Weper. */
+/**
+ * Tokeniza no Asaas via backend Weper (API key nunca no navegador).
+ * Exige customer Asaas — o proxy cria/reutiliza e devolve providerCustomerId.
+ */
 export async function tokenizeAsaasCard({
-  publicKey,
-  environment,
+  slug,
+  orderId,
   holder,
   number,
   expMonth,
   expYear,
   securityCode,
-  payerEmail,
 }) {
-  const base = environment === 'prod' ? ASAAS_PROD : ASAAS_SANDBOX;
-  const response = await fetch(`${base}/v3/creditCard/tokenizeCreditCard`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      access_token: String(publicKey || '').trim(),
-    },
-    body: JSON.stringify({
-      creditCard: {
-        holderName: holder,
-        number: String(number || '').replace(/\D/g, ''),
-        expiryMonth: String(expMonth || '').padStart(2, '0'),
-        expiryYear: String(expYear || ''),
-        ccv: String(securityCode || ''),
-      },
-      creditCardHolderInfo: {
-        name: holder,
-        email: payerEmail || 'cartao@weper.local',
-        cpfCnpj: '24971563792',
-        postalCode: '01310100',
-        addressNumber: '100',
-        phone: '11999999999',
-      },
-      remoteIp: '0.0.0.0',
-    }),
+  const response = await tokenizeDeliveryAsaasCard(slug, orderId, {
+    holderName: holder,
+    number: String(number || '').replace(/\D/g, ''),
+    expiryMonth: String(expMonth || '').padStart(2, '0'),
+    expiryYear: String(expYear || ''),
+    ccv: String(securityCode || ''),
   });
-  if (!response.ok) {
+  const token = response?.data?.creditCardToken;
+  const providerCustomerId = response?.data?.providerCustomerId;
+  if (!token || !providerCustomerId) {
     throw new Error('tokenize');
   }
-  const data = await response.json();
-  const token = data?.creditCardToken || data?.token;
-  if (!token) {
-    throw new Error('tokenize');
-  }
-  return String(token);
+  return { token: String(token), providerCustomerId: String(providerCustomerId) };
 }
 
 export default function DeliveryCardCheckout({
@@ -264,6 +247,7 @@ export default function DeliveryCardCheckout({
       installments: Number(formData?.installments),
       identificationType: formData?.payer?.identification?.type,
       identificationNumber: formData?.payer?.identification?.number,
+      providerCustomerId: formData?.providerCustomerId,
     };
     return createDeliveryCardPayment(slug, orderId, keyRef.current, payload)
       .then((response) => {
@@ -309,17 +293,19 @@ export default function DeliveryCardCheckout({
     let sent = false;
     try {
       let token;
+      let providerCustomerId;
       if (asaas) {
-        token = await tokenizeAsaasCard({
-          publicKey,
-          environment: asaasEnvironment,
+        const tokenized = await tokenizeAsaasCard({
+          slug,
+          orderId,
           holder,
           number,
           expMonth,
           expYear,
           securityCode,
-          payerEmail,
         });
+        token = tokenized.token;
+        providerCustomerId = tokenized.providerCustomerId;
       } else {
         const pagseguro = await loadPagBank();
         const result = pagseguro.encryptCard({
@@ -344,6 +330,7 @@ export default function DeliveryCardCheckout({
         token,
         payment_method_id: 'credit',
         installments: 1,
+        providerCustomerId,
       });
     } catch {
       setNumber('');
@@ -400,11 +387,19 @@ export default function DeliveryCardCheckout({
               <TextField label="Ano" value={expYear} onChange={(e) => setExpYear(e.target.value)} required disabled={processing} inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-exp-year' }} />
               <TextField label="CVV" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} required disabled={processing} type="password" inputProps={{ inputMode: 'numeric', maxLength: 4, autoComplete: 'cc-csc' }} />
             </Box>
-            <Button className="delivery-card-pay" type="submit" variant="contained" fullWidth disabled={!publicKey || processing}>
+            <Button
+              className="delivery-card-pay"
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={(!asaas && !publicKey) || processing}
+            >
               Pagar à vista
             </Button>
             <Typography className="delivery-card-trust" component="p">
-              Dados do cartão tokenizados antes de sair do aparelho ({providerLabel}).
+              {asaas
+                ? 'Dados do cartão tokenizados no Asaas via conexão segura Weper.'
+                : `Dados do cartão tokenizados antes de sair do aparelho (${providerLabel}).`}
             </Typography>
           </Box>
         ) : null}
