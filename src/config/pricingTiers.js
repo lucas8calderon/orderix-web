@@ -66,7 +66,7 @@ export const PRICING_TIERS = [
 ];
 
 /**
- * Homologação Asaas SaaS (R$ 5 — mínimo da API). Fora de PRICING_TIERS — não entra na oferta comercial.
+ * Homologação Asaas SaaS (R$ 10). Fora de PRICING_TIERS — não entra na oferta comercial.
  * Uso: deep link /contratar?plan=PLAN_TEST ou dropdown só em staging.
  * @see docs/asaas/PLAN_TEST.md no backend
  */
@@ -76,9 +76,9 @@ export const TEST_PLAN = {
   number: 0,
   minRevenue: 0,
   maxRevenue: Infinity,
-  monthlyPrice: 5.0,
+  monthlyPrice: 10.0,
   label: 'Homologação (teste Asaas)',
-  description: 'Plano interno R$ 5,00 para validar Pix/cartão',
+  description: 'Plano interno R$ 10,00 para validar Pix/cartão',
   isTestPlan: true,
 };
 

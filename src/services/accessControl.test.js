@@ -205,7 +205,7 @@ describe('faixas comerciais', () => {
     expect(Object.values(PLANS).map((plan) => plan.price)).toEqual([39.9, 69.9, 89.9, 99.9, 149.9]);
     expect(formatPlanSummary('PLAN_01')).toBe('Plano 1 · Até R$ 1.000');
     expect(formatPlanSummary('PLAN_05')).toBe('Plano 5 · Acima de R$ 7.000');
-    expect(formatPlanSummary('PLAN_TEST')).toBe('Plano teste · Homologação R$ 5,00');
+    expect(formatPlanSummary('PLAN_TEST')).toBe('Plano teste · Homologação R$ 10,00');
     expect(formatPlanSummary('BASIC')).toBe('BASIC');
   });
 });

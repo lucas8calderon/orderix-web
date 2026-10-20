@@ -503,7 +503,7 @@ export default function SignupPage() {
                   </p>
                   {isTestPlan ? (
                     <p className="ct-alert" role="status">
-                      Plano de homologação Asaas (R$ 5,00 — mínimo da API). Não é oferta comercial.
+                      Plano de homologação Asaas (R$ 10,00). Não é oferta comercial.
                     </p>
                   ) : null}
 
@@ -569,7 +569,7 @@ export default function SignupPage() {
                           {isTestPlan ? (
                             <>
                               <li><Check size={15} aria-hidden="true" /> Validação do fluxo Asaas (Pix ou cartão).</li>
-                              <li><Check size={15} aria-hidden="true" /> Cobrança de R$ 5,00 — sandbox ou conta Weper.</li>
+                              <li><Check size={15} aria-hidden="true" /> Cobrança de R$ 10,00 — sandbox ou conta Weper.</li>
                               <li><Check size={15} aria-hidden="true" /> Loja liberada após confirmação do pagamento.</li>
                             </>
                           ) : (
