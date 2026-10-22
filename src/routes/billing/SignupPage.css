@@ -119,6 +119,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
+  padding: 8px 4px;
   font-size: 13px;
   font-weight: 600;
   color: #526078;
@@ -159,9 +161,16 @@
 
 .ct-more {
   grid-area: more;
+  animation: ct-fade-up 0.55s ease 0.16s both;
+}
+
+.ct-more-details {
   display: grid;
   gap: 40px;
-  animation: ct-fade-up 0.55s ease 0.16s both;
+}
+
+.ct-more-details > summary {
+  display: none;
 }
 
 @keyframes ct-fade-up {
@@ -593,8 +602,30 @@
 .ct-hint {
   display: inline-flex;
   align-items: center;
-  color: #94a3b8;
-  cursor: help;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  margin: -14px -10px -14px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.ct-hint:focus-visible {
+  outline: 3px solid var(--ct-secondary);
+  outline-offset: 2px;
+}
+
+.ct-hint-text {
+  margin: -4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ct-muted);
 }
 
 .ct-field input,
@@ -920,6 +951,10 @@
 }
 
 .ct-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
   color: var(--ct-primary);
   font-weight: 600;
   text-decoration: underline;
@@ -1035,11 +1070,33 @@
 }
 
 @media (max-width: 960px) {
+  .ct-more-details > summary {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px 16px;
+    border: 1px solid var(--ct-border);
+    border-radius: 12px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .ct-more-details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ct-more-details[open] > summary {
+    margin-bottom: 8px;
+  }
+
   .ct-layout {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "intro"
       "checkout"
+      "intro"
       "more";
     gap: 28px;
   }
@@ -1080,28 +1137,50 @@
     padding-bottom: 48px;
   }
 
-  .ct-secure-pill span {
-    display: none;
+  .ct-header-inner {
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 8px;
+    min-height: 0;
+    padding-block: 10px;
   }
 
-  .ct-secure-pill {
-    gap: 0;
+  .ct-header-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .ct-brand-copy span {
-    display: none;
+    display: block;
+    white-space: normal;
   }
 
   .ct-card {
     padding: 20px 16px 18px;
   }
 
-  .ct-steps {
-    gap: 0;
+  .ct-step {
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .ct-step-index {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .ct-step-line {
+    width: 8px;
+    margin: 10px 2px 0;
   }
 
   .ct-step-label {
     font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 
   .ct-field-row,
@@ -1109,6 +1188,10 @@
   .ct-person-toggle,
   .ct-features {
     grid-template-columns: 1fr;
+  }
+
+  .ct-field-row.ct-field-row--compact {
+    grid-template-columns: 1fr 1fr;
   }
 
   .ct-diff-card {

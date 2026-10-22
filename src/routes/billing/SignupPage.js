@@ -270,6 +270,12 @@ export default function SignupPage() {
   const [paymentConfirmed, setPaymentConfirmed] = useState(() => Boolean(readStoredSignupResult()?.paid));
   const [qrImageFailed, setQrImageFailed] = useState(false);
   const [referralCodeInput, setReferralCodeInput] = useState(() => getStoredPartnerRef() || '');
+  const [planHintOpen, setPlanHintOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(() => (
+    typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(min-width: 961px)').matches
+  ));
   const referralEdited = useRef(false);
   const pollRef = useRef(null);
 
@@ -286,6 +292,14 @@ export default function SignupPage() {
     && !pixFields.pixPayload
     && !pixQrSrc
     && isPublicAsaasInvoiceUrl(pixFields.invoiceUrl);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const media = window.matchMedia('(min-width: 961px)');
+    const sync = () => setMoreOpen(media.matches);
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     setQrImageFailed(false);
@@ -607,16 +621,20 @@ export default function SignupPage() {
                             ? 'Plano selecionado'
                             : 'Qual é o faturamento mensal do seu estabelecimento?'}
                         </label>
-                        <span
+                        <button
+                          type="button"
                           className="ct-hint"
-                          title="O faturamento mensal determina a faixa de mensalidade da sua assinatura."
+                          aria-expanded={planHintOpen}
+                          aria-controls="plan-hint"
+                          onClick={() => setPlanHintOpen((open) => !open)}
                         >
                           <Info size={16} aria-hidden="true" />
-                          <span className="sr-only">
-                            O faturamento mensal determina a faixa de mensalidade da sua assinatura.
-                          </span>
-                        </span>
+                          <span className="sr-only">Explicar a faixa de faturamento</span>
+                        </button>
                       </div>
+                      <p id="plan-hint" className="ct-hint-text" hidden={!planHintOpen}>
+                        O faturamento mensal determina a faixa de mensalidade da sua assinatura.
+                      </p>
                       <select
                         id="plan"
                         value={planCode}
@@ -668,7 +686,7 @@ export default function SignupPage() {
                             <>
                               <li><Check size={15} aria-hidden="true" /> Funcionalidades incluídas no plano.</li>
                               <li><Check size={15} aria-hidden="true" /> Sem comissões da Weper por venda.</li>
-                              <li><Check size={15} aria-hidden="true" /> Suporte conforme o plano.</li>
+                              <li><Check size={15} aria-hidden="true" /> Suporte pelo WhatsApp, em todas as faixas.</li>
                               <li><Check size={15} aria-hidden="true" /> Atualizações da plataforma.</li>
                             </>
                           )}
@@ -842,7 +860,7 @@ export default function SignupPage() {
                             inputMode="numeric"
                           />
                         </div>
-                        <div className="ct-field-row">
+                        <div className="ct-field-row ct-field-row--compact">
                           <div className="ct-field">
                             <label htmlFor="expiryMonth">Mês</label>
                             <input
@@ -884,7 +902,7 @@ export default function SignupPage() {
                             autoComplete="tel"
                           />
                         </div>
-                        <div className="ct-field-row">
+                        <div className="ct-field-row ct-field-row--compact">
                           <div className="ct-field">
                             <label htmlFor="postalCode">CEP</label>
                             <input
@@ -946,6 +964,12 @@ export default function SignupPage() {
           </section>
 
           <section className="ct-more" aria-label="Mais sobre a Weper">
+            <details
+              className="ct-more-details"
+              open={moreOpen}
+              onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+            >
+              <summary>Ver o que a plataforma inclui</summary>
             <div>
               <h2 className="ct-section-title">Tudo o que você precisa para operar</h2>
               <div className="ct-features">
@@ -1026,6 +1050,7 @@ export default function SignupPage() {
                 <span>Estamos aqui para ajudar você a começar.</span>
               </article>
             </div>
+            </details>
           </section>
         </div>
       </div>
