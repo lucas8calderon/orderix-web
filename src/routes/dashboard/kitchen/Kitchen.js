@@ -48,6 +48,12 @@ import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import {
     SALES_CHANNEL_FILTERS,
 } from '../../../services/salesChannel';
+import {
+    applyKitchenFilterClick,
+    createKitchenFilterState,
+    filterKitchenOrders,
+    kitchenFilterSelection,
+} from './kitchenFilters';
 
 const KITCHEN_FILTERS = [
     ...SALES_CHANNEL_FILTERS,
@@ -315,7 +321,7 @@ export function Kitchen({ initialFilter }) {
     const [cancelTarget, setCancelTarget] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelling, setCancelling] = useState(false);
-    const [filterType, setFilterType] = useState(initialFilter || 'todos');
+    const [filterState, setFilterState] = useState(() => createKitchenFilterState(initialFilter));
     const [showFinalized, setShowFinalized] = useState(readShowFinalizedPref);
     const orderDialogProps = useDialogResponsiveProps({
         paperSx: {
@@ -330,7 +336,7 @@ export function Kitchen({ initialFilter }) {
 
     useEffect(() => {
         if (initialFilter) {
-            setFilterType(initialFilter);
+            setFilterState(createKitchenFilterState(initialFilter));
         }
     }, [initialFilter]);
 
@@ -345,22 +351,11 @@ export function Kitchen({ initialFilter }) {
         return `há ${diffInHours}h ${diffInMinutes % 60}min`;
     };
 
-    const getOrdersByStatus = (status) => {
-        let filteredOrders = orders;
+    const selectedFilters = kitchenFilterSelection(filterState);
 
-        if (filterType === 'atrasados') {
-            const limit = Date.now() - 20 * 60 * 1000;
-            filteredOrders = orders.filter((order) => (
-                (order.status === 'novo' || order.status === 'em_producao')
-                && order.createdAt
-                && order.createdAt.getTime() <= limit
-            ));
-        } else if (filterType !== 'todos') {
-            filteredOrders = orders.filter(order => order.orderType === filterType);
-        }
-
-        return filteredOrders.filter(order => order.status === status);
-    };
+    const getOrdersByStatus = (status) => (
+        filterKitchenOrders(orders, filterState).filter((order) => order.status === status)
+    );
 
     const finalizedCount = getOrdersByStatus('finalizado').length;
     const showFinalizedColumn = showFinalized && finalizedCount > 0;
@@ -559,18 +554,19 @@ export function Kitchen({ initialFilter }) {
                     Filtros
                 </Typography>
                 <ToggleButtonGroup
-                    value={filterType}
-                    exclusive
-                    onChange={(event, newFilter) => {
-                        if (newFilter !== null) {
-                            setFilterType(newFilter);
-                        }
+                    value={selectedFilters}
+                    onChange={(event, nextValue) => {
+                        setFilterState((current) => applyKitchenFilterClick(current, nextValue));
                     }}
                     aria-label="tipo de pedido"
                     sx={{
                         flexWrap: 'wrap',
                         width: '100%',
                         gap: { xs: 1, sm: 2 },
+                        '& .MuiToggleButtonGroup-grouped.Mui-selected + .MuiToggleButtonGroup-grouped.Mui-selected': {
+                            borderLeft: '1px solid var(--color-primary)',
+                            marginLeft: 0,
+                        },
                         '& .MuiToggleButton-root': {
                             border: '1px solid var(--color-border)',
                             borderRadius: '8px',
@@ -587,6 +583,7 @@ export function Kitchen({ initialFilter }) {
                             '&.Mui-selected': {
                                 backgroundColor: 'var(--color-primary)',
                                 color: 'white',
+                                borderColor: 'var(--color-primary)',
                                 '&:hover': {
                                     backgroundColor: 'var(--color-primary-dark)'
                                 }
