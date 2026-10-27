@@ -16,3 +16,7 @@ export function updateCategory(categoryId, category) {
 export function deleteCategories(categoryId) {
   return axios.delete(`${API_BASE_URL}/category/deleteById?categoryId=${categoryId}`);
 }
+
+export function reorderCategories(orderedIds, parentId = null) {
+  return axios.put(`${API_BASE_URL}/category/reorder`, { parentId, orderedIds });
+}

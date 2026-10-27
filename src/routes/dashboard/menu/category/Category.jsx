@@ -13,6 +13,9 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Loading } from '../../../../commons/components/Loading';
@@ -20,6 +23,7 @@ import { GenericError } from '../../../../commons/components/GenericError';
 import { CategoryFormDialog } from '../components/CategoryFormDialog';
 import { ConfirmDeleteDialog } from '../components/ConfirmDeleteDialog';
 import { useGetCategories, usePostCategory } from './hooks/useGetCategories';
+import { reorderCategories } from './service/categoryService';
 import { useDeleteCategory } from './hooks/useDeleteCategories';
 import { CategoryContext } from './providers/CategoryContext';
 import { resolveMenuImage } from '../utils/defaultMenuImage';
@@ -42,6 +46,7 @@ export function CategoryContainer({
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [reordering, setReordering] = useState(false);
 
   const { categories, loading, error, refetch } = useGetCategories(refreshKey + refreshToken);
   const {
@@ -166,6 +171,44 @@ export function CategoryContainer({
     }
   };
 
+  const canReorder = categoryFilter === 'all' && categoryTree.length > 1;
+
+  const applyRootOrder = async (orderedIds) => {
+    setReordering(true);
+    try {
+      await reorderCategories(orderedIds, null);
+      setRefreshKey((key) => key + 1);
+    } catch (_) {
+      setToast({ open: true, message: 'Não foi possível salvar a ordem', severity: 'error' });
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const moveRoot = (categoryId, direction) => {
+    if (!canReorder || reordering) return;
+    const ids = categoryTree.map((item) => item.id);
+    const index = ids.findIndex((id) => String(id) === String(categoryId));
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ids.length) return;
+    const next = [...ids];
+    const [moved] = next.splice(index, 1);
+    next.splice(target, 0, moved);
+    applyRootOrder(next);
+  };
+
+  const dropRoot = (draggedId, targetId) => {
+    if (!canReorder || reordering || String(draggedId) === String(targetId)) return;
+    const ids = categoryTree.map((item) => item.id);
+    const from = ids.findIndex((id) => String(id) === String(draggedId));
+    const to = ids.findIndex((id) => String(id) === String(targetId));
+    if (from < 0 || to < 0) return;
+    const next = [...ids];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    applyRootOrder(next);
+  };
+
   const handleToggleActive = async (category) => {
     try {
       await saveCategory({
@@ -276,8 +319,13 @@ export function CategoryContainer({
               ))}
             </Box>
           </Box>
+          {canReorder ? (
+            <Typography className="category-order-hint">
+              A ordem desta lista é a ordem do cardápio. Suba, desça ou arraste cada categoria.
+            </Typography>
+          ) : null}
           <Box className="category-list">
-            {visibleCategoryTree.map((root) => {
+            {visibleCategoryTree.map((root, index) => {
               const children = root.children || [];
               return (
                 <CategoryManageCard
@@ -289,6 +337,13 @@ export function CategoryContainer({
                   productCounts={productCounts}
                   categories={categories}
                   selectedCategoryId={selectedCategory?.id}
+                  canReorder={canReorder}
+                  reordering={reordering}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < visibleCategoryTree.length - 1}
+                  onMoveUp={() => moveRoot(root.id, -1)}
+                  onMoveDown={() => moveRoot(root.id, 1)}
+                  onDropCategory={(draggedId) => dropRoot(draggedId, root.id)}
                   onSelect={() => setSelectedCategory(root)}
                   onToggle={() => handleToggleActive(root)}
                   onEdit={() => openEdit(root)}
@@ -329,6 +384,13 @@ function CategoryManageCard({
   productCounts = {},
   categories = [],
   selectedCategoryId,
+  canReorder = false,
+  reordering = false,
+  canMoveUp = false,
+  canMoveDown = false,
+  onMoveUp,
+  onMoveDown,
+  onDropCategory,
   onSelect,
   onToggle,
   onEdit,
@@ -349,6 +411,11 @@ function CategoryManageCard({
     <Card
       className={`category-manage-card ${isSelected ? 'selected' : ''} ${!isActive ? 'inactive' : ''}`}
       onClick={onSelect}
+      onDragOver={canReorder ? (event) => event.preventDefault() : undefined}
+      onDrop={canReorder ? (event) => {
+        event.preventDefault();
+        onDropCategory?.(event.dataTransfer.getData('text/plain'));
+      } : undefined}
     >
       <CardContent>
         <Box className="category-card-top">
@@ -391,6 +458,48 @@ function CategoryManageCard({
           />
         </Box>
         <Box className="category-card-actions" onClick={(e) => e.stopPropagation()}>
+          {canReorder ? (
+            <Box className="category-order-controls">
+              <IconButton
+                size="small"
+                draggable={!reordering}
+                aria-label={'Arrastar ' + category.name}
+                disabled={reordering}
+                onDragStart={(event) => {
+                  event.stopPropagation();
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData('text/plain', String(category.id));
+                }}
+                sx={{ cursor: 'grab', color: 'var(--color-text-secondary)' }}
+              >
+                <DragIndicatorIcon fontSize="small" />
+              </IconButton>
+              <Tooltip title="Mover para cima">
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label={'Mover ' + category.name + ' para cima'}
+                    disabled={reordering || !canMoveUp}
+                    onClick={onMoveUp}
+                  >
+                    <ArrowUpwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Mover para baixo">
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label={'Mover ' + category.name + ' para baixo'}
+                    disabled={reordering || !canMoveDown}
+                    onClick={onMoveDown}
+                  >
+                    <ArrowDownwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
+          ) : null}
           <Button
             size="small"
             startIcon={<AddIcon />}

@@ -7,6 +7,22 @@
   margin: 0 0 16px;
 }
 
+.category-order-hint {
+  margin: 0 0 12px !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.875rem !important;
+}
+
+.category-order-controls {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.category-card-actions {
+  flex-wrap: wrap;
+}
+
 .category-filters .filter-chips-container {
   margin-top: 0;
 }

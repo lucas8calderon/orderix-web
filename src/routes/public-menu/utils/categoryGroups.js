@@ -1,3 +1,18 @@
+function menuRank(category) {
+  const value = Number(category?.sortOrder);
+  return Number.isFinite(value) ? value : null;
+}
+
+/** Mantém a ordem gravada pela loja. Sem posição, conserva a ordem recebida. */
+export function compareMenuOrder(left, right) {
+  const leftRank = menuRank(left);
+  const rightRank = menuRank(right);
+  if (leftRank == null && rightRank == null) return 0;
+  if (leftRank == null) return 1;
+  if (rightRank == null) return -1;
+  return leftRank - rightRank;
+}
+
 /** Agrupa o cardápio em categorias principais e subcategorias. */
 export function groupMenuCategories(categories = []) {
   const list = categories || [];
@@ -12,7 +27,7 @@ export function groupMenuCategories(categories = []) {
       ...category,
       children: childrenOf(category.id)
         .filter((child) => (child.products || []).length > 0)
-        .sort((left, right) => String(left.name || '').localeCompare(String(right.name || ''), 'pt-BR')),
+        .sort(compareMenuOrder),
     }))
     .filter((category) => (category.products || []).length > 0 || category.children.length > 0);
 }
