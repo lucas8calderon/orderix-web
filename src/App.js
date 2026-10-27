@@ -1,6 +1,6 @@
 import './App.css';
-import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Home from './routes/home/Home';
@@ -19,6 +19,8 @@ import { EmployeesProvider } from './routes/dashboard/employees/provider/Employe
 import { PATHS } from './services/accessControl';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppThemeProvider } from './theme/ThemeContext';
+import { CookieConsent } from './commons/components/CookieConsent';
+import { trackPageView } from './services/metaPixel';
 import './services/apiConfig';
 
 const Dashboard = lazy(() => import('./routes/dashboard/Dashboard'));
@@ -105,10 +107,20 @@ function BlockedLayout() {
   );
 }
 
+/** Meta Pixel nas páginas institucionais: uma visita por troca de rota, só após o aceite. */
+function MarketingTracking() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    trackPageView(pathname);
+  }, [pathname]);
+  return <CookieConsent pathname={pathname} onAccept={() => trackPageView(pathname)} />;
+}
+
 function App() {
   return (
     <AppThemeProvider>
       <Router>
+        <MarketingTracking />
         <Routes>
           <Route path={PATHS.HOME} element={<Home />} />
           <Route path="/contratar" element={<SignupPage />} />

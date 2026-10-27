@@ -162,6 +162,13 @@ const PrivacyPolicy = () => {
                 <li><strong>Cookies de Marketing:</strong> Personalizam anúncios e conteúdo</li>
               </ul>
               <p>
+                Nas páginas institucionais da Weper (página inicial, demonstrações e contratação)
+                usamos o Meta Pixel para medir os nossos anúncios no Facebook e no Instagram. Ele só
+                é ativado depois que você aceita os cookies de marketing no aviso exibido no site, não
+                recebe dados que você digita nos formulários e não é usado no painel, nos cardápios
+                ou no delivery das lojas.
+              </p>
+              <p>
                 Você pode gerenciar suas preferências de cookies através das configurações 
                 do seu navegador.
               </p>

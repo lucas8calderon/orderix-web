@@ -25,6 +25,7 @@ import {
 import { formatPrice, getPlanTier, getSignupPlanOptions, TEST_PLAN } from '../../config/pricingTiers';
 import { capturePartnerRef, getStoredPartnerRef } from '../../services/partnerReferral';
 import { PATHS } from '../../services/accessControl';
+import { trackMetaEvent } from '../../services/metaPixel';
 import WeperMark from '../home/components/WeperMark';
 import ecosystemDevicesWebp from '../../assets/images/landing/ecosystem-devices.webp';
 import ecosystemDevicesJpg from '../../assets/images/landing/ecosystem-devices.jpg';
@@ -310,6 +311,19 @@ export default function SignupPage() {
   }, [result, paymentConfirmed]);
 
   useEffect(() => {
+    // Anúncios: conta a assinatura uma vez por contratação (o pagamento confirmado pode reaparecer ao recarregar).
+    if (!paymentConfirmed || !result?.signupId || isTestPlan) return;
+    const key = `weper.pixelSubscribe.${result.signupId}`;
+    try {
+      if (window.localStorage.getItem(key)) return;
+      window.localStorage.setItem(key, '1');
+    } catch {
+      return;
+    }
+    trackMetaEvent('Subscribe', plan ? { value: plan.monthlyPrice, currency: 'BRL', content_name: plan.code } : {});
+  }, [paymentConfirmed, result?.signupId, isTestPlan, plan]);
+
+  useEffect(() => {
     if (!result?.signupId || paymentConfirmed) return undefined;
 
     let cancelled = false;
@@ -423,6 +437,9 @@ export default function SignupPage() {
         invoiceUrl: pix.invoiceUrl || response.data?.invoiceUrl || '',
       });
       setForm((current) => ({ ...current, number: '', ccv: '' }));
+      if (!isTestPlan) {
+        trackMetaEvent('InitiateCheckout', { value: plan.monthlyPrice, currency: 'BRL', content_name: plan.code });
+      }
     } catch (requestError) {
       const message = requestError?.response?.data?.message || 'Não foi possível iniciar a contratação.';
       setError(message);
