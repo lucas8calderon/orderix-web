@@ -7,10 +7,15 @@ import {
   getComandaAccount,
   getTableAccount,
 } from '../service/accountService';
+import { listDeliveryOrders } from '../service/deliveryOrderService';
 import {
   confirmExternalPayment,
   getStorePaymentConfig,
 } from '../../../../services/paymentConfigService';
+
+jest.mock('../service/deliveryOrderService', () => ({
+  listDeliveryOrders: jest.fn(),
+}));
 
 jest.mock('../service/accountService', () => ({
   closeComandaAccount: jest.fn(() => Promise.resolve({ data: {} })),
@@ -76,6 +81,14 @@ describe('getCloseAccountConfirmCopy', () => {
     expect(getCloseAccountConfirmCopy(comandaTarget, {
       paymentMode: 'ORDER_ONLY',
     }).title).toBe('Liberar comanda?');
+    expect(getCloseAccountConfirmCopy(
+      { kind: 'delivery', number: '0033', fulfillment: 'PICKUP' },
+      { paymentMode: 'MANUAL_CONFIRMATION', totalLabel: 'R$ 12,00' },
+    ).description).toMatch(/pedido de retirada 0033/);
+    expect(getCloseAccountConfirmCopy(
+      { kind: 'delivery', number: '0040', fulfillment: 'DELIVERY' },
+      { paymentMode: 'INTEGRATED_PAYMENT' },
+    ).title).toBe('Fechar pedido de entrega?');
   });
 });
 
@@ -196,5 +209,125 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     });
     expect(closeTableAccount).not.toHaveBeenCalled();
     expect(getTableAccount).toHaveBeenCalledWith(999);
+  });
+
+  it('cobra a retirada no mesmo fechamento do balcão, com a taxa de entrega', async () => {
+    listDeliveryOrders.mockResolvedValue({
+      data: [{
+        id: 33,
+        status: 'ACTIVE',
+        customerName: 'Lucas Calderon',
+        displayCode: '0033',
+        deliveryFulfillment: 'PICKUP',
+        deliveryFee: 0,
+        products: [{ id: 1, name: 'Cerveja Heineken', value: 12, quantity: 1 }],
+      }, {
+        id: 40,
+        status: 'ACTIVE',
+        customerName: 'Ana Souza',
+        deliveryFulfillment: 'DELIVERY',
+        deliveryFee: 5,
+        products: [{ id: 2, name: 'Batata', value: 10, quantity: 1 }],
+      }],
+    });
+    getStorePaymentConfig.mockResolvedValue({
+      data: {
+        acceptedMethods: ['PIX'],
+        serviceFeePercent: 0,
+        counterPaymentMode: 'MANUAL_CONFIRMATION',
+      },
+    });
+
+    const onPaid = jest.fn();
+    const pickupDialog = render(
+      <CheckoutDialog
+        open
+        target={{
+          kind: 'delivery',
+          id: 33,
+          number: '0033',
+          customerName: 'Lucas Calderon',
+          fulfillment: 'PICKUP',
+        }}
+        onClose={jest.fn()}
+        onPaid={onPaid}
+      />,
+    );
+
+    expect(await screen.findByText(/Cerveja Heineken/)).toBeInTheDocument();
+    expect(screen.getByText(/Retirada #0033 — Lucas Calderon/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Adicionar produtos' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' })).toBeEnabled();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    expect(await screen.findByText(/pedido de retirada 0033/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    await waitFor(() => {
+      expect(confirmExternalPayment).toHaveBeenCalledWith(
+        expect.objectContaining({ orderId: 33, paymentMethod: 'PIX' }),
+        expect.any(String),
+      );
+      expect(closeCounterOrder).toHaveBeenCalledWith(33, expect.objectContaining({
+        paymentMethod: 'PIX',
+      }), expect.any(String));
+    });
+    expect(closeTableAccount).not.toHaveBeenCalled();
+    pickupDialog.unmount();
+
+    render(
+      <CheckoutDialog
+        open
+        target={{ kind: 'delivery', id: 40, number: '0040', customerName: 'Ana Souza', fulfillment: 'DELIVERY' }}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+      />,
+    );
+    expect(await screen.findByText('Taxa de entrega')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    expect(await screen.findByText(/pagamento de R\$\s*15,00 foi realizado fora do Weper/)).toBeInTheDocument();
+    expect(screen.getByText(/pedido de entrega 0040 será fechado/)).toBeInTheDocument();
+  });
+
+  it('não dispara pagamento real no modo integrado da retirada', async () => {
+    listDeliveryOrders.mockResolvedValue({
+      data: [{
+        id: 33,
+        status: 'ACTIVE',
+        customerName: 'Lucas Calderon',
+        deliveryFulfillment: 'PICKUP',
+        products: [{ id: 1, name: 'Cerveja Heineken', value: 12, quantity: 1 }],
+      }],
+    });
+    getStorePaymentConfig.mockResolvedValue({
+      data: {
+        acceptedMethods: ['CREDIT'],
+        serviceFeePercent: 0,
+        counterPaymentMode: 'INTEGRATED_PAYMENT',
+      },
+    });
+
+    render(
+      <CheckoutDialog
+        open
+        target={{ kind: 'delivery', id: 33, number: '0033', customerName: 'Lucas Calderon', fulfillment: 'PICKUP' }}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(/Só feche aqui se o pagamento já estiver aprovado/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Fechar conta' })).toBeEnabled();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar conta' }));
+    expect(await screen.findByRole('heading', { name: 'Fechar pedido de retirada?' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    await waitFor(() => {
+      expect(closeCounterOrder).toHaveBeenCalledTimes(1);
+    });
+    expect(confirmExternalPayment).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import { Tables } from '../tables/Tables';
 import { Comandas } from '../comandas/Comandas';
 import { CounterSales } from './components/CounterSales';
 import { CustomerOrders } from './components/CustomerOrders';
+import { DeliveryOrders } from './components/DeliveryOrders';
 import { CheckoutDialog } from './components/CheckoutDialog';
 import { PlaceOrderDialog } from './components/PlaceOrderDialog';
 import './Atendimento.css';
@@ -42,7 +43,7 @@ export function Atendimento() {
   return (
     <Box className="atendimento-container">
       <Container maxWidth="xl" className="atendimento-content">
-        <PageHeader title="Atendimento" description="Lance produtos e feche a conta de mesas, comandas, balcão e pedidos por cliente." actions={<Button
+        <PageHeader title="Atendimento" description="Lance produtos e feche a conta de mesas, comandas, balcão, pedidos por cliente e delivery." actions={<Button
             startIcon={<RefreshIcon className={isRefreshing ? 'atendimento-refresh-icon' : ''} />}
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -74,6 +75,7 @@ export function Atendimento() {
             { value: 'tabs', label: 'Comandas' },
             { value: 'counter', label: 'Balcão' },
             { value: 'customer', label: 'Cliente' },
+            { value: 'delivery', label: 'Delivery' },
           ]}
         />
 
@@ -91,6 +93,10 @@ export function Atendimento() {
 
         <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">
           <CustomerOrders onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
+        </div>
+
+        <div role="tabpanel" id="service-panel-delivery" aria-labelledby="service-tab-delivery" hidden={tab !== 'delivery'} className="atendimento-section">
+          <DeliveryOrders onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
         </div>
       </Container>
 

@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -19,6 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { formatCurrency } from '../../../../services/accessControl';
+import { getAllCategories } from '../../menu/category/service/categoryService';
 import { getAllProducts } from '../../menu/product/service/productService';
 import { createFloorOrder, resolveOperatorWaiterId } from '../service/accountService';
 import {
@@ -27,6 +29,94 @@ import {
 } from '../service/customerOrderService';
 import { buildFloorOrderBody, defaultCustomerName, isSellableProduct } from '../utils/floorOrder';
 import { activeVariations, formatProductPrice } from '../../menu/utils/productVariations';
+
+const ALL_CATEGORIES = 'all';
+const OTHER_CATEGORY = 'others';
+
+function categoryKey(product) {
+  if (product?.categoryId == null || product.categoryId === '') return null;
+  return String(product.categoryId);
+}
+
+function categoryOrderValue(category) {
+  const raw = category?.sortOrder ?? category?.displayOrder ?? category?.position ?? category?.order;
+  if (raw == null || raw === '') return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+/** Ordem do cardápio: campo de ordem quando a API enviar; senão a ordem de getAllCategories (nome). */
+function categoriesInMenuOrder(categories) {
+  const list = (Array.isArray(categories) ? categories : []).filter((category) => category?.id != null);
+  if (!list.some((category) => categoryOrderValue(category) != null)) return list;
+  return [...list].sort((left, right) => {
+    const leftOrder = categoryOrderValue(left);
+    const rightOrder = categoryOrderValue(right);
+    if (leftOrder == null && rightOrder == null) return 0;
+    if (leftOrder == null) return 1;
+    if (rightOrder == null) return -1;
+    return leftOrder - rightOrder;
+  });
+}
+
+function buildCategoryChips(products, categories) {
+  const usedIds = new Set();
+  let hasOthers = false;
+  (products || []).forEach((product) => {
+    const key = categoryKey(product);
+    if (key == null) hasOthers = true;
+    else usedIds.add(key);
+  });
+
+  const chips = [];
+  const seen = new Set();
+  categoriesInMenuOrder(categories).forEach((category) => {
+    const id = String(category.id);
+    if (!usedIds.has(id) || seen.has(id)) return;
+    seen.add(id);
+    chips.push({ id, name: category.name || 'Sem nome' });
+  });
+
+  const missing = [];
+  (products || []).forEach((product) => {
+    const id = categoryKey(product);
+    if (id == null || seen.has(id)) return;
+    seen.add(id);
+    missing.push({ id, name: product.categoryName || 'Sem nome' });
+  });
+  missing.sort((left, right) => left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' }));
+
+  return { chips: [...chips, ...missing], hasOthers };
+}
+
+function CategoryFilterChip({ label, selected, onSelect }) {
+  return (
+    <Chip
+      label={label}
+      clickable
+      size="small"
+      variant={selected ? 'filled' : 'outlined'}
+      aria-pressed={selected}
+      onClick={onSelect}
+      sx={{
+        flex: '0 0 auto',
+        fontWeight: selected ? 700 : 500,
+        ...(selected
+          ? {
+              bgcolor: 'var(--color-primary)',
+              color: 'var(--color-on-primary)',
+              '&:hover': { bgcolor: 'var(--color-primary-dark)' },
+            }
+          : {
+              color: 'var(--color-text-primary)',
+              borderColor: 'var(--color-border)',
+              bgcolor: 'transparent',
+              '&:hover': { bgcolor: 'var(--color-primary-soft)' },
+            }),
+      }}
+    />
+  );
+}
 
 function newKey() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -55,6 +145,8 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
     },
   });
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -68,7 +160,10 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
   const [extras, setExtras] = useState({});
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) {
+      setCategoryFilter(ALL_CATEGORIES);
+      return undefined;
+    }
     setCustomerName(defaultCustomerName(target));
     setCustomerIdentificationNote(target?.customerIdentificationNote || '');
     setObservation('');
@@ -77,14 +172,19 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
     setSelections({});
     setExtras({});
     setQuery('');
+    setCategoryFilter(ALL_CATEGORIES);
     setError('');
     setLoading(true);
     let cancelled = false;
-    getAllProducts()
-      .then((response) => {
+    Promise.all([
+      getAllProducts(),
+      getAllCategories().catch(() => ({ data: [] })),
+    ])
+      .then(([productResponse, categoryResponse]) => {
         if (cancelled) return;
-        const list = Array.isArray(response.data) ? response.data : [];
+        const list = Array.isArray(productResponse.data) ? productResponse.data : [];
         setProducts(list.filter(isSellableProduct));
+        setCategories(Array.isArray(categoryResponse?.data) ? categoryResponse.data : []);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -98,11 +198,20 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
     };
   }, [open, target]);
 
+  const categoryChips = useMemo(
+    () => buildCategoryChips(products, categories),
+    [products, categories],
+  );
+
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    if (!term) return products;
-    return products.filter((product) => String(product.name || '').toLowerCase().includes(term));
-  }, [products, query]);
+    return products.filter((product) => {
+      if (term && !String(product.name || '').toLowerCase().includes(term)) return false;
+      if (categoryFilter === ALL_CATEGORIES) return true;
+      if (categoryFilter === OTHER_CATEGORY) return categoryKey(product) == null;
+      return categoryKey(product) === categoryFilter;
+    });
+  }, [products, query, categoryFilter]);
 
   const changeQuantity = (productId, delta) => {
     setQuantities((current) => {
@@ -182,7 +291,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
   return (
     <Dialog {...dialogProps} open={open} onClose={saving ? undefined : onClose} aria-labelledby="place-order-title">
       <DialogTitle id="place-order-title">Lançar em {destinationLabel(target)}</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ minWidth: 0, overflowX: 'hidden' }}>
         {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
         <TextField
           fullWidth
@@ -223,6 +332,45 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
+        {(categoryChips.chips.length > 0 || categoryChips.hasOthers) ? (
+          <Box sx={{ mt: 1.5, maxWidth: '100%', minWidth: 0 }}>
+            <Box
+              role="toolbar"
+              aria-label="Categorias"
+              sx={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: 1,
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                pb: 0.5,
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'thin',
+              }}
+            >
+              <CategoryFilterChip
+                label="Todas"
+                selected={categoryFilter === ALL_CATEGORIES}
+                onSelect={() => setCategoryFilter(ALL_CATEGORIES)}
+              />
+              {categoryChips.chips.map((category) => (
+                <CategoryFilterChip
+                  key={category.id}
+                  label={category.name}
+                  selected={categoryFilter === category.id}
+                  onSelect={() => setCategoryFilter(category.id)}
+                />
+              ))}
+              {categoryChips.hasOthers ? (
+                <CategoryFilterChip
+                  label="Outros"
+                  selected={categoryFilter === OTHER_CATEGORY}
+                  onSelect={() => setCategoryFilter(OTHER_CATEGORY)}
+                />
+              ) : null}
+            </Box>
+          </Box>
+        ) : null}
         {loading ? <Typography sx={{ mt: 2 }}>Carregando cardápio...</Typography> : null}
         {!loading && visible.length === 0 ? (
           <Typography sx={{ mt: 2 }} color="text.secondary">Nenhum produto disponível.</Typography>

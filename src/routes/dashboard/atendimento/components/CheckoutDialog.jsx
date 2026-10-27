@@ -36,6 +36,8 @@ import {
   closeCustomerOrder,
   getCustomerOrder,
 } from '../service/customerOrderService';
+import { listDeliveryOrders } from '../service/deliveryOrderService';
+import { deliveryChargeParts } from '../utils/deliveryOrderView';
 import {
   closeComandaAccount,
   closeCounterOrder,
@@ -92,19 +94,23 @@ const confirmPaperSx = {
 };
 
 export function getCloseAccountConfirmCopy(target, options = {}) {
+  const isDelivery = target?.kind === 'delivery';
   const isComanda = target?.kind === 'comanda';
-  const isCounter = target?.kind === 'counter' || target?.kind === 'customer';
   const isCustomer = target?.kind === 'customer';
+  const isCounter = target?.kind === 'counter' || isCustomer || isDelivery;
+  const pickup = String(target?.fulfillment || 'PICKUP').toUpperCase() !== 'DELIVERY';
   const number = target?.number != null && String(target.number).trim() !== ''
     ? String(target.number).trim()
     : '';
-  const noun = isCustomer
-    ? 'pedido por cliente'
-    : isCounter
-      ? 'pedido de balcão'
-      : isComanda
-        ? 'comanda'
-        : 'mesa';
+  const noun = isDelivery
+    ? (pickup ? 'pedido de retirada' : 'pedido de entrega')
+    : isCustomer
+      ? 'pedido por cliente'
+      : isCounter
+        ? 'pedido de balcão'
+        : isComanda
+          ? 'comanda'
+          : 'mesa';
   const subject = number ? `${noun} ${number}` : noun;
   const article = isCounter ? 'o' : 'a';
   const mode = options.paymentMode || 'MANUAL_CONFIRMATION';
@@ -119,13 +125,15 @@ export function getCloseAccountConfirmCopy(target, options = {}) {
   }
   if (mode === 'INTEGRATED_PAYMENT') {
     return {
-      title: isCustomer
-        ? 'Fechar pedido por cliente?'
-        : isCounter
-          ? 'Fechar pedido de balcão?'
-          : isComanda
-            ? 'Fechar comanda?'
-            : 'Fechar mesa?',
+      title: isDelivery
+        ? (pickup ? 'Fechar pedido de retirada?' : 'Fechar pedido de entrega?')
+        : isCustomer
+          ? 'Fechar pedido por cliente?'
+          : isCounter
+            ? 'Fechar pedido de balcão?'
+            : isComanda
+              ? 'Fechar comanda?'
+              : 'Fechar mesa?',
       description: `Só feche se o pagamento já foi aprovado no terminal. ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb} e os dados desta conta serão limpos.`,
     };
   }
@@ -165,16 +173,22 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     fullScreenOnMobile: false,
     paperSx: confirmPaperSx,
   });
-  const kindLabel = target?.kind === 'comanda'
-    ? 'Comanda'
+  const isDelivery = target?.kind === 'delivery';
+  const deliveryPickup = String(target?.fulfillment || '').toUpperCase() !== 'DELIVERY';
+  const kindLabel = isDelivery
+    ? (deliveryPickup ? 'Retirada' : 'Entrega')
+    : target?.kind === 'comanda'
+      ? 'Comanda'
+      : target?.kind === 'customer'
+        ? `#${target.number ?? ''} — ${target.customerName || 'Cliente'}`
+        : target?.kind === 'counter'
+          ? 'Pedido'
+          : 'Mesa';
+  const title = isDelivery
+    ? `${kindLabel} #${target?.number ?? ''} — ${target?.customerName || 'Cliente'}`
     : target?.kind === 'customer'
-      ? `#${target.number ?? ''} — ${target.customerName || 'Cliente'}`
-      : target?.kind === 'counter'
-        ? 'Pedido'
-        : 'Mesa';
-  const title = target?.kind === 'customer'
-    ? kindLabel
-    : (target ? `${kindLabel} ${target.number ?? ''}` : '');
+      ? kindLabel
+      : (target ? `${kindLabel} ${target.number ?? ''}` : '');
 
   useEffect(() => {
     if (!open || !target?.id) {
@@ -195,11 +209,22 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
         ? getComandaAccount(target.id)
         : target.kind === 'customer'
           ? getCustomerOrder(target.id)
-          : getTableAccount(target.kind === 'counter' ? 999 : target.id);
+          : target.kind === 'delivery'
+            ? listDeliveryOrders()
+            : getTableAccount(target.kind === 'counter' ? 999 : target.id);
 
     request
       .then((response) => {
         if (cancelled) return;
+        if (target.kind === 'delivery') {
+          const list = Array.isArray(response.data) ? response.data : [];
+          const order = list.find((item) => Number(item.id) === Number(target.id));
+          const status = String(order?.status || '').toUpperCase();
+          const unavailable = !order || status === 'CLOSED' || status === 'CANCELLED';
+          setAccount({ orders: unavailable ? [] : [order], groupOrderId: null, status: order?.status });
+          setEmpty(unavailable);
+          return;
+        }
         if (target.kind === 'customer') {
           const order = response.data || {};
           const closed = String(order.status || '').toUpperCase() === 'CLOSED';
@@ -276,7 +301,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
         setServiceFeeRate(Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0.1);
         const channel = target?.kind === 'comanda'
           ? 'comanda'
-          : (target?.kind === 'counter' || target?.kind === 'customer')
+          : (target?.kind === 'counter' || target?.kind === 'customer' || target?.kind === 'delivery')
             ? 'counter'
             : 'table';
         setPaymentMode(channelPaymentMode(dto, channel));
@@ -292,11 +317,22 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     };
   }, [open, target]);
 
-  const subtotal = useMemo(() => accountSubtotal(account), [account]);
+  const deliveryParts = useMemo(() => {
+    if (target?.kind !== 'delivery') return null;
+    return (account?.orders || []).reduce((acc, order) => {
+      const parts = deliveryChargeParts(order);
+      return { items: acc.items + parts.items, fee: acc.fee + parts.fee };
+    }, { items: 0, fee: 0 });
+  }, [account, target]);
+  const subtotal = useMemo(
+    () => (deliveryParts ? deliveryParts.items : accountSubtotal(account)),
+    [account, deliveryParts],
+  );
+  const deliveryFee = deliveryParts ? deliveryParts.fee : 0;
   const discountValue = Math.max(0, Number(discount) || 0);
   const serviceFeePercentLabel = Math.round(serviceFeeRate * 100);
   const serviceTax = applyServiceTax ? subtotal * serviceFeeRate : 0;
-  const total = Math.max(0, subtotal + serviceTax - discountValue);
+  const total = Math.max(0, subtotal + serviceTax - discountValue + deliveryFee);
   const itemCount = useMemo(() => countAccountItems(account), [account]);
   const needsPaymentMethod = paymentMode !== 'ORDER_ONLY';
   const canClose = !loading && !empty && itemCount > 0 && (!needsPaymentMethod || Boolean(paymentMethod));
@@ -336,7 +372,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
       if (target.kind === 'comanda') {
         return closeComandaAccount(target.id, payload, closeKey);
       }
-      if (target.kind === 'counter') {
+      if (target.kind === 'counter' || target.kind === 'delivery') {
         return closeCounterOrder(target.id, payload, closeKey);
       }
       if (target.kind === 'customer') {
@@ -366,7 +402,9 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     settle()
       .then((approved) => {
         if (paymentMode === 'MANUAL_CONFIRMATION' && !isSettledPaymentStatus(approved?.status)) {
-          const held = target.kind === 'counter' ? 'O pedido não foi fechado.' : 'A conta não foi liberada.';
+          const held = target.kind === 'counter' || target.kind === 'delivery'
+            ? 'O pedido não foi fechado.'
+            : 'A conta não foi liberada.';
           throw new Error(`Pagamento não confirmado. ${held}`);
         }
         setPaymentStatus(
@@ -433,7 +471,9 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
 
           {!loading && empty && (
             <Typography sx={{ py: 3, textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-              Nenhum pedido encontrado. {kindLabel} liberada.
+              {target?.kind === 'delivery'
+                ? 'Este pedido não está mais em aberto.'
+                : `Nenhum pedido encontrado. ${kindLabel} liberada.`}
             </Typography>
           )}
 
@@ -537,6 +577,12 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                   <Typography sx={{ color: 'var(--color-text-secondary)' }}>Subtotal</Typography>
                   <Typography>{formatCurrency(subtotal)}</Typography>
                 </Box>
+                {deliveryFee > 0 ? (
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography sx={{ color: 'var(--color-text-secondary)' }}>Taxa de entrega</Typography>
+                    <Typography>{formatCurrency(deliveryFee)}</Typography>
+                  </Box>
+                ) : null}
                 <FormControlLabel
                   control={
                     <Switch
@@ -624,7 +670,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
           >
             Fechar
           </Button>
-          {onAddProducts ? (
+          {onAddProducts && target?.kind !== 'delivery' ? (
             <Button variant="outlined" onClick={() => onAddProducts(target)} disabled={closing}>
               Adicionar produtos
             </Button>
