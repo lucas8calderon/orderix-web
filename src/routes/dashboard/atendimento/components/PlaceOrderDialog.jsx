@@ -206,7 +206,11 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     return products.filter((product) => {
-      if (term && !String(product.name || '').toLowerCase().includes(term)) return false;
+      if (term) {
+        const name = String(product.name || '').toLowerCase();
+        const sku = String(product.sku || product.code || '').toLowerCase();
+        if (!name.includes(term) && !sku.includes(term)) return false;
+      }
       if (categoryFilter === ALL_CATEGORIES) return true;
       if (categoryFilter === OTHER_CATEGORY) return categoryKey(product) == null;
       return categoryKey(product) === categoryFilter;

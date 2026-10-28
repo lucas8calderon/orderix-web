@@ -18,7 +18,7 @@ import { formatCurrency } from '../../../../services/accessControl';
 import { formatOrderDisplayCode } from '../../../../services/salesChannel';
 import { accountSubtotal, countAccountItems } from '../utils/accountTotals';
 import { listCustomerOrders } from '../service/customerOrderService';
-import { isOpenCounterOrder } from './CounterSales';
+import { isOpenCounterOrder } from '../pos/counterOrders';
 
 const STATUS_FILTERS = [
   { id: 'ACTIVE', label: 'Abertos', apiStatus: 'ACTIVE' },
@@ -165,7 +165,7 @@ export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }
           const code = formatOrderDisplayCode(order);
           return (
             <Grid item key={order.id} xs={12} sm={6} md={4} lg={3}>
-              <Card>
+              <Card elevation={0} sx={{ height: '100%', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
                 <CardActionArea
                   onClick={() => {
                     if (!cancelled && !closed) {

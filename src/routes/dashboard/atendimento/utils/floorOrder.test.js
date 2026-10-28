@@ -137,7 +137,23 @@ describe('buildFloorOrderBody', () => {
       id: 9,
       quantity: 1,
       variationId: 2,
+      observation: null,
     }));
+
+    const noted = buildFloorOrderBody({
+      target: { kind: 'counter' },
+      customerName: 'Balcão',
+      waiterId: null,
+      lines: [{
+        product: marmita,
+        quantity: 1,
+        variationId: 2,
+        selections: {},
+        extraIds: [],
+        observation: ' sem molho ',
+      }],
+    });
+    expect(noted.body.products[0].observation).toBe('sem molho');
   });
 });
 

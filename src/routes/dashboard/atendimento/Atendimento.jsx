@@ -43,7 +43,7 @@ export function Atendimento() {
   return (
     <Box className="atendimento-container">
       <Container maxWidth="xl" className="atendimento-content">
-        <PageHeader title="Atendimento" description="Lance produtos e feche a conta de mesas, comandas, balcão, pedidos por cliente e delivery." actions={<Button
+        <PageHeader title="Atendimento" description="Mesas, comandas, balcão, pedidos por cliente e delivery." actions={<Button
             startIcon={<RefreshIcon className={isRefreshing ? 'atendimento-refresh-icon' : ''} />}
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -66,6 +66,7 @@ export function Atendimento() {
             {isRefreshing ? 'Atualizando...' : 'Atualizar'}
           </Button>} />
         <PageTabs
+          className="atendimento-modes"
           id="service"
           label="Tipo de atendimento"
           value={tab}
@@ -87,8 +88,8 @@ export function Atendimento() {
           <Comandas onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
         </div>
 
-        <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section">
-          <CounterSales onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
+        <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section atendimento-section--pos">
+          <CounterSales active={tab === 'counter'} onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
         </div>
 
         <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">

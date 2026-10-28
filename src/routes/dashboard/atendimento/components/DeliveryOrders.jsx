@@ -121,7 +121,7 @@ export function DeliveryOrders({ onOpenAccount, floorVersion = 0 }) {
 
           return (
             <Grid item key={order.id} xs={12} sm={6} md={4} lg={3}>
-              <Card>
+              <Card elevation={0} sx={{ height: '100%', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
                 {pending ? (
                   <CardActionArea
                     onClick={() => onOpenAccount?.({

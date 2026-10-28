@@ -1,110 +1,30 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { Box, Button, Card, CardActionArea, CardContent, Grid, Typography } from '@mui/material';
-import { EmptyState } from '../../../../commons/components/EmptyState';
-import { Loading } from '../../../../commons/components/Loading';
-import { formatCurrency } from '../../../../services/accessControl';
-import { getTableAccount } from '../service/accountService';
-import { accountSubtotal, countAccountItems } from '../utils/accountTotals';
+import { useState } from 'react';
+import { CounterPos } from '../pos/CounterPos';
+import { OpenCounterOrders } from '../pos/OpenCounterOrders';
 
-export function isOpenCounterOrder(order) {
-  const status = String(order?.status || 'ACTIVE').toUpperCase();
-  if (status === 'CLOSED') return false;
-  if (status !== 'CANCELLED') return true;
-  const cancelledAt = order?.cancelledAt ? new Date(order.cancelledAt) : null;
-  if (!cancelledAt || Number.isNaN(cancelledAt.getTime())) return true;
-  return Date.now() - cancelledAt.getTime() < 24 * 60 * 60 * 1000;
-}
+export { isOpenCounterOrder } from '../pos/counterOrders';
 
-export function CounterSales({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    getTableAccount(999)
-      .then((response) => {
-        if (cancelled) return;
-        const list = response.data?.orders || [];
-        setOrders(list.filter(isOpenCounterOrder));
-        setError('');
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (err?.response?.status === 404) {
-          setOrders([]);
-          setError('');
-          return;
-        }
-        setError(err?.response?.data?.message || 'Não foi possível carregar os pedidos de balcão.');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [floorVersion]);
-
-  if (loading) {
-    return <Loading loadingMessage="Carregando pedidos de balcão..." />;
-  }
+export function CounterSales({ onOpenAccount, floorVersion = 0, active = true }) {
+  const [mode, setMode] = useState('sale');
 
   return (
     <>
-      <Box className="atendimento-section-header" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-        <Typography variant="h5" component="h2" className="atendimento-section-title">
-          Balcão
-        </Typography>
-        <Button onClick={() => onPlaceOrder?.({ kind: 'counter' })} sx={{ textTransform: 'none' }}>
-          Novo pedido
-        </Button>
-      </Box>
-      {error ? (
-        <EmptyState title="Não foi possível carregar o balcão" description={error} />
-      ) : null}
-      {!error && orders.length === 0 ? (
-        <EmptyState
-          title="Nenhum pedido aberto no balcão"
-          description="Lance um pedido aqui ou feche os que vieram do aplicativo Android."
+      <div hidden={mode !== 'sale'}>
+        <CounterPos
+          active={active && mode === 'sale'}
+          floorVersion={floorVersion}
+          onShowOrders={() => setMode('orders')}
+          onOpenAccount={onOpenAccount}
         />
-      ) : null}
-      <Grid container spacing={2}>
-        {orders.map((order) => {
-          const cancelled = String(order.status || '').toUpperCase() === 'CANCELLED';
-          const total = accountSubtotal({ orders: [order] });
-          const items = countAccountItems({ orders: [order] });
-          return (
-            <Grid item key={order.id} xs={12} sm={6} md={4} lg={3}>
-              <Card>
-                <CardActionArea
-                  onClick={() => {
-                    if (!cancelled) onOpenAccount?.({ kind: 'counter', id: order.id, number: order.id });
-                  }}
-                  aria-label={cancelled ? `Pedido ${order.id} cancelado` : `Abrir pedido ${order.id}`}
-                >
-                  <CardContent>
-                    <Typography variant="h6">Pedido {order.id}</Typography>
-                    <Typography color="text.secondary">
-                      {order.customerName || 'Balcão'}
-                    </Typography>
-                    <Typography sx={{ mt: 1 }}>
-                      {cancelled ? 'Cancelado' : `${items} ${items === 1 ? 'item' : 'itens'} · ${formatCurrency(total)}`}
-                    </Typography>
-                    {cancelled && order.cancelReason ? (
-                      <Typography variant="body2" sx={{ mt: 0.5 }}>
-                        {order.cancelReason}
-                      </Typography>
-                    ) : null}
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+      </div>
+      <div hidden={mode !== 'orders'}>
+        <OpenCounterOrders
+          visible={active && mode === 'orders'}
+          floorVersion={floorVersion}
+          onBack={() => setMode('sale')}
+          onOpenAccount={onOpenAccount}
+        />
+      </div>
     </>
   );
 }

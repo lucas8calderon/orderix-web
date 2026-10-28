@@ -72,6 +72,7 @@ export function buildFloorOrderBody({
       quantity: Number(line.quantity),
       categoryId: line.product.categoryId,
       variationId: line.variationId || null,
+      observation: String(line.observation || '').trim() || null,
       mandatorySelections: selections,
       extras,
     });
