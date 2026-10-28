@@ -63,3 +63,7 @@ const host = parsed.hostname.toLowerCase();
 if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
   fail('REACT_APP_API_BASE_URL não pode apontar para localhost.');
 }
+
+if (host === 'validation.invalid' || host.endsWith('.invalid')) {
+  fail('REACT_APP_API_BASE_URL não pode usar um host de validação.');
+}

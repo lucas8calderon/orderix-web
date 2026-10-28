@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
+import { ThermalPrintPanel } from '../../../../printing/ThermalPrintPanel';
 import {
   Alert,
   Box,
@@ -505,6 +506,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
               </Grid>
 
               <Box mt={3}>
+                <ThermalPrintPanel key={`${target?.kind}-${target?.id}`} account={account} placeLabel={title} />
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Itens do pedido
                 </Typography>

@@ -113,6 +113,7 @@ describe('Settings page navigation', () => {
     expect(screen.getByRole('button', { name: /editar informações/i })).toBeInTheDocument();
     expect(screen.getByText('Personalização visual')).toBeInTheDocument();
     expect(screen.getByText('Delivery ativo')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /KP-IM609/ })).not.toBeInTheDocument();
   });
 
   it('não navega para canais ao adicionar banner; o upload fica na visão geral', async () => {

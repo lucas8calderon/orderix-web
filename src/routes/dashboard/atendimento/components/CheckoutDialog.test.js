@@ -12,6 +12,7 @@ import {
   confirmExternalPayment,
   getStorePaymentConfig,
 } from '../../../../services/paymentConfigService';
+import { clearSession, saveSession } from '../../../../services/session';
 
 jest.mock('../service/deliveryOrderService', () => ({
   listDeliveryOrders: jest.fn(),
@@ -288,6 +289,33 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
     expect(await screen.findByText(/pagamento de R\$\s*15,00 foi realizado fora do Weper/)).toBeInTheDocument();
     expect(screen.getByText(/pedido de entrega 0040 será fechado/)).toBeInTheDocument();
+  });
+
+  it('imprime a comanda sem cobrar, fechar ou tratar a janela como sucesso', async () => {
+    saveSession('test', { storeId: 8 });
+    process.env.REACT_APP_THERMAL_PRINT_SCOPE = 'all';
+    const doc = document.implementation.createHTMLDocument();
+    const popup = { document: doc, focus: jest.fn(), print: jest.fn(), close: jest.fn() };
+    jest.spyOn(window, 'open').mockReturnValue(popup);
+    try {
+      await renderCheckout(tableTarget);
+      expect(screen.getByText(/não cobra, não fecha a conta/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Imprimir comanda 80 mm' }));
+      expect(popup.print).toHaveBeenCalledTimes(1);
+      expect(popup.close).not.toHaveBeenCalled();
+      expect(doc.documentElement.innerHTML).toContain('Mesa 12');
+      expect(doc.documentElement.innerHTML).toContain('Café');
+      expect(doc.documentElement.innerHTML).toContain('1x');
+      expect(doc.documentElement.innerHTML).toContain('NÃO É DOCUMENTO FISCAL');
+      expect(doc.documentElement.innerHTML).toContain('NÃO É COMPROVANTE DE PAGAMENTO');
+      expect(screen.getByRole('status')).toHaveTextContent(/não confirma que o papel saiu/);
+      expect(confirmExternalPayment).not.toHaveBeenCalled();
+      expect(closeTableAccount).not.toHaveBeenCalled();
+    } finally {
+      clearSession();
+      delete process.env.REACT_APP_THERMAL_PRINT_SCOPE;
+      jest.restoreAllMocks();
+    }
   });
 
   it('não dispara pagamento real no modo integrado da retirada', async () => {

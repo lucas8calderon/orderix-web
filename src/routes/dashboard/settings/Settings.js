@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import { ThermalPrintPanel } from '../../../printing/ThermalPrintPanel';
 import { Alert, Portal, Snackbar } from '@mui/material';
 import {
   Inventory2Outlined as InventoryIcon,
@@ -326,6 +327,7 @@ export function Settings() {
       {settingsNav}
       {isOverview ? (
         <div className="settings-section-panel" role="tabpanel">
+          <ThermalPrintPanel />
           <SettingsOverview
             settings={settings}
             onNavigate={goToSection}
