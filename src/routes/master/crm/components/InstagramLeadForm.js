@@ -104,7 +104,7 @@ export function InstagramLeadForm({ open, initialValues, onClose, onSubmit, savi
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} sx={{ textTransform: 'none' }}>Cancelar</Button>
-          <Button type="submit" variant="contained" disabled={saving} sx={{ textTransform: 'none', bgcolor: '#2563EB' }}>
+          <Button type="submit" variant="contained" color="primary" disabled={saving} sx={{ textTransform: 'none' }}>
             Salvar
           </Button>
         </DialogActions>

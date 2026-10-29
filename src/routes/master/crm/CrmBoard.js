@@ -227,7 +227,7 @@ export function CrmBoard() {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => { setEditing(null); setFormError(''); setFormOpen(true); }}
-              sx={{ textTransform: 'none', bgcolor: '#2563EB' }}
+              sx={{ textTransform: 'none' }}
             >
               Cadastrar lead
             </Button>
@@ -307,7 +307,7 @@ export function CrmBoard() {
         </Button>
       </Box>
 
-      {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#2563EB' }} /></Box>}
+      {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress color="primary" /></Box>}
       {!loading && error && <Alert severity="error">{error}</Alert>}
       {!loading && !error && leads.length === 0 && (
         <Alert severity="info">Nenhum lead de Instagram ainda. Cadastre um perfil para começar a prospecção.</Alert>
@@ -451,7 +451,7 @@ function Metric({ label, value, highlight }) {
   return (
     <Box className="ig-metric">
       <Typography variant="caption" color="text.secondary">{label}</Typography>
-      <Typography variant="h5" sx={{ fontWeight: 800, color: highlight ? '#DC2626' : 'inherit' }}>{value}</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: highlight ? 'error.main' : 'text.primary' }}>{value}</Typography>
     </Box>
   );
 }

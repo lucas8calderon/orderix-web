@@ -48,22 +48,22 @@ export function InstagramLeadDrawer({
     >
       <Box className="ig-lead-drawer-body">
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#0F172A' }}>{lead?.businessName || 'Lead'}</Typography>
-          <Button onClick={onClose} sx={{ textTransform: 'none', color: '#2563EB', flexShrink: 0 }}>Fechar</Button>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary' }}>{lead?.businessName || 'Lead'}</Typography>
+          <Button onClick={onClose} color="primary" sx={{ textTransform: 'none', flexShrink: 0 }}>Fechar</Button>
         </Stack>
-        {loading && <CircularProgress size={24} sx={{ color: '#2563EB' }} />}
+        {loading && <CircularProgress size={24} color="primary" />}
         {lead && (
           <>
-            <Box sx={{ color: '#0F172A' }}>
-              <Typography variant="body2" sx={{ color: '#334155' }}>{kindLabel(lead.leadKind)}</Typography>
-              <Typography variant="body2" sx={{ color: '#0F172A', fontWeight: 700 }}>{instagramHandle(lead)}</Typography>
-              <Typography variant="body2" sx={{ color: '#0F172A' }}>Cadastro: {formatWhen(lead.createdAt || lead.discoveredAt)}</Typography>
-              <Typography variant="body2" sx={{ color: '#0F172A' }}>Último contato: {formatWhen(lead.lastContactAt)}</Typography>
-              <Typography variant="body2" sx={{ color: '#0F172A' }}>Próximo acompanhamento: {formatWhen(lead.nextContactAt)}</Typography>
+            <Box>
+              <Typography variant="body2" color="text.secondary">{kindLabel(lead.leadKind)}</Typography>
+              <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 700 }}>{instagramHandle(lead)}</Typography>
+              <Typography variant="body2" color="text.primary">Cadastro: {formatWhen(lead.createdAt || lead.discoveredAt)}</Typography>
+              <Typography variant="body2" color="text.primary">Último contato: {formatWhen(lead.lastContactAt)}</Typography>
+              <Typography variant="body2" color="text.primary">Próximo acompanhamento: {formatWhen(lead.nextContactAt)}</Typography>
               <Typography variant="body2" sx={{ color: toneColor(tone), fontWeight: 700 }}>
                 {lead.prospectFlag || (tone === 'NONE' ? 'Sem prazo ativo' : 'Dentro do prazo')}
               </Typography>
-              <Button onClick={onEdit} sx={{ textTransform: 'none', px: 0, color: '#2563EB' }}>Editar dados</Button>
+              <Button onClick={onEdit} color="primary" sx={{ textTransform: 'none', px: 0 }}>Editar dados</Button>
             </Box>
             <TextField
               select
@@ -78,7 +78,7 @@ export function InstagramLeadDrawer({
             </TextField>
             {label && (
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#0F172A' }}>Mensagem preparada</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>Mensagem preparada</Typography>
                 <TextField
                   className="ig-message"
                   multiline
@@ -88,28 +88,29 @@ export function InstagramLeadDrawer({
                   onChange={(event) => setDraft(event.target.value)}
                   aria-label="Mensagem preparada"
                 />
-                <Typography variant="caption" sx={{ color: '#475569', display: 'block', mt: 0.75 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
                   Copiar ou abrir o Instagram não registra o envio.
                   {settings ? ` O próximo prazo usa ${settings.firstFollowUpDays} e depois ${settings.lastAttemptDays} dias.` : ''}
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ mt: 1, flexWrap: 'wrap' }}>
                   <Button variant="outlined" onClick={() => onCopy(draft)} sx={{ textTransform: 'none' }}>Copiar mensagem</Button>
                   <Button variant="outlined" onClick={onOpenInstagram} sx={{ textTransform: 'none' }}>Abrir Instagram</Button>
-                  <Button variant="contained" disabled={saving} onClick={() => onRegister(lead.id)} sx={{ textTransform: 'none', bgcolor: '#2563EB' }}>
+                  <Button variant="contained" color="primary" disabled={saving} onClick={() => onRegister(lead.id)} sx={{ textTransform: 'none' }}>
                     {label}
                   </Button>
                 </Stack>
                 <Button
                   onClick={() => onSaveMessage(lead.id, draft)}
                   disabled={saving}
-                  sx={{ textTransform: 'none', px: 0, color: '#2563EB' }}
+                  sx={{ textTransform: 'none', px: 0 }}
+                  color="primary"
                 >
                   Salvar texto só neste lead
                 </Button>
               </Box>
             )}
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#0F172A' }}>Observação</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>Observação</Typography>
               <TextField
                 multiline
                 minRows={2}
@@ -124,21 +125,22 @@ export function InstagramLeadDrawer({
                   setNote('');
                 }}
                 disabled={saving || !note.trim()}
-                sx={{ textTransform: 'none', color: '#2563EB' }}
+                sx={{ textTransform: 'none' }}
+                color="primary"
               >
                 Registrar observação
               </Button>
             </Box>
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#0F172A' }}>Histórico</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>Histórico</Typography>
               {(activities || []).map((item) => (
                 <Box key={item.id} sx={{ mb: 1.25 }}>
-                  <Typography variant="caption" sx={{ color: '#64748B' }}>{formatWhen(item.createdAt)}</Typography>
-                  <Typography variant="body2" sx={{ color: '#0F172A' }}>{item.description}</Typography>
+                  <Typography variant="caption" color="text.secondary">{formatWhen(item.createdAt)}</Typography>
+                  <Typography variant="body2" color="text.primary">{item.description}</Typography>
                 </Box>
               ))}
               {!loading && (activities || []).length === 0 && (
-                <Typography variant="body2" sx={{ color: '#64748B' }}>Nenhum evento ainda.</Typography>
+                <Typography variant="body2" color="text.secondary">Nenhum evento ainda.</Typography>
               )}
             </Box>
           </>

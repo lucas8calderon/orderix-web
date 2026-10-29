@@ -44,7 +44,7 @@ export function InstagramKanban({ leads, onOpen, onChangeStatus }) {
                   ))}
                   {provided.placeholder}
                   {grouped[column.id].length === 0 && (
-                    <Typography variant="caption" sx={{ px: 1.5, py: 2, display: 'block', color: '#64748B' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ px: 1.5, py: 2, display: 'block' }}>
                       Nenhum lead nesta etapa.
                     </Typography>
                   )}
@@ -78,9 +78,9 @@ function InstagramCard({ lead, index, onOpen, onChangeStatus }) {
             }}
             sx={{ borderLeft: `4px solid ${toneColor(tone)}` }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A' }}>{lead.businessName}</Typography>
-            <Typography variant="body2" sx={{ color: '#334155' }}>{instagramHandle(lead)}</Typography>
-            <Typography variant="caption" sx={{ color: '#64748B' }}>{kindLabel(lead.leadKind)}</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>{lead.businessName}</Typography>
+            <Typography variant="body2" color="text.secondary">{instagramHandle(lead)}</Typography>
+            <Typography variant="caption" color="text.secondary">{kindLabel(lead.leadKind)}</Typography>
             <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>{timeInStage(lead)}</Typography>
             {flag && (
               <Typography variant="caption" sx={{ color: toneColor(tone), fontWeight: 700, display: 'block' }}>
