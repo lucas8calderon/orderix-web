@@ -1,436 +1,457 @@
-import { CrmWhatsAppPanel } from './components/CrmWhatsAppPanel';
-import { CrmOutreachPanel } from './components/CrmOutreachPanel';
-import { PageHeader } from '../../../commons/components/PageHeader';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
+  MenuItem,
   Snackbar,
   Stack,
-  ToggleButton,
-  ToggleButtonGroup,
+  TextField,
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import TravelExploreIcon from '@mui/icons-material/TravelExplore';
-import { useCrmLeads } from './hook/useCrmLeads';
-import { CrmMetrics } from './components/CrmMetrics';
-import { CrmActionCenter } from './components/CrmActionCenter';
-import { CrmFilters } from './components/CrmFilters';
-import { CrmKanban } from './components/CrmKanban';
-import { CrmStatusChart } from './components/CrmStatusChart';
-import { CrmLeadList } from './components/CrmLeadList';
-import { CrmLeadFormDialog } from './components/CrmLeadFormDialog';
-import { CrmLeadDetailsDialog } from './components/CrmLeadDetailsDialog';
-import { CrmContactDialog } from './components/CrmContactDialog';
+import { PageHeader } from '../../../commons/components/PageHeader';
 import { CrmLostReasonDialog } from './components/CrmLostReasonDialog';
-import { CrmProspectingDialog } from './components/CrmProspectingDialog';
-import { getCrmLead } from './service/crmService';
+import { InstagramKanban } from './components/InstagramKanban';
+import { InstagramLeadDrawer } from './components/InstagramLeadDrawer';
+import { InstagramLeadForm } from './components/InstagramLeadForm';
+import { InstagramColumnJump, InstagramTemplatesDialog } from './components/InstagramTemplatesDialog';
+import {
+  INSTAGRAM_LEAD_KINDS,
+  columnOf,
+  compareUrgency,
+  isOverdue,
+  withinCreatedRange,
+} from './instagramCrm';
+import {
+  addInstagramLeadNote,
+  createCrmLead,
+  getCrmLeadActivities,
+  getCrmLeads,
+  getInstagramFollowUpSettings,
+  getInstagramLeadMessage,
+  getInstagramMessageTemplates,
+  moveInstagramLead,
+  registerInstagramTouch,
+  restoreInstagramMessageTemplate,
+  saveInstagramLeadMessage,
+  updateInstagramFollowUpSettings,
+  updateInstagramLeadProfile,
+  updateInstagramMessageTemplate,
+} from './service/crmService';
 import './CrmBoard.css';
 
-function statusToast(status) {
-  if (status === 'WON') return 'Lead marcado como ganho.';
-  if (status === 'LOST') return 'Lead marcado como perdido.';
-  if (status === 'DEMO') return 'Demonstração registrada.';
-  if (status === 'PROPOSAL') return 'Proposta registrada.';
-  if (status === 'INTERESTED') return 'Lead marcado como interessado (ação em 4h).';
-  return 'Status atualizado.';
-}
-
 export function CrmBoard() {
-  const crm = useCrmLeads();
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState({ q: '', kind: '', status: '', overdue: false, from: '', to: '' });
+  const [urgentFirst, setUrgentFirst] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState(null);
-  const [detailsLead, setDetailsLead] = useState(null);
-  const [activities, setActivities] = useState([]);
-  const [loadingActivities, setLoadingActivities] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
-  const [prospectingOpen, setProspectingOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [details, setDetails] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [settings, setSettings] = useState(null);
   const [lostDialog, setLostDialog] = useState({ open: false, leadId: null });
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
-  const showToast = (message, severity = 'success') => {
-    setToast({ open: true, message, severity });
-  };
+  const showToast = (messageText, severity = 'success') => setToast({ open: true, message: messageText, severity });
 
-  const openCreate = () => {
-    setEditingLead(null);
-    setFormError('');
-    setFormOpen(true);
-  };
-
-  const openEdit = (lead) => {
-    setEditingLead(lead);
-    setFormError('');
-    setFormOpen(true);
-  };
-
-  const loadDetails = useCallback(async (lead) => {
-    setDetailsLead(lead);
-    setLoadingActivities(true);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      const items = await crm.loadActivities(lead.id);
-      setActivities(items);
+      const response = await getCrmLeads({ channel: 'INSTAGRAM' });
+      setLeads(response.data || []);
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível carregar o histórico.', 'error');
+      setError(err?.response?.data?.message || 'Não foi possível carregar o CRM.');
     } finally {
-      setLoadingActivities(false);
+      setLoading(false);
     }
-  }, [crm]);
+  }, []);
+
+  useEffect(() => {
+    load();
+    getInstagramFollowUpSettings().then((response) => setSettings(response.data)).catch(() => {});
+  }, [load]);
+
+  const metrics = useMemo(() => {
+    const rows = leads;
+    return {
+      total: rows.length,
+      fresh: rows.filter((lead) => columnOf(lead.status) === 'NEW').length,
+      overdue: rows.filter(isOverdue).length,
+      negotiating: rows.filter((lead) => columnOf(lead.status) === 'NEGOTIATING').length,
+      won: rows.filter((lead) => columnOf(lead.status) === 'WON').length,
+    };
+  }, [leads]);
+
+  const visible = useMemo(() => {
+    const query = filters.q.trim().toLowerCase();
+    return leads
+      .filter((lead) => !filters.kind || lead.leadKind === filters.kind)
+      .filter((lead) => !filters.status || columnOf(lead.status) === filters.status)
+      .filter((lead) => !filters.overdue || isOverdue(lead))
+      .filter((lead) => withinCreatedRange(lead, filters.from, filters.to))
+      .filter((lead) => {
+        if (!query) return true;
+        const name = (lead.businessName || '').toLowerCase();
+        const handle = (lead.instagramUsername || '').toLowerCase();
+        return name.includes(query) || handle.includes(query);
+      })
+      .sort(urgentFirst ? compareUrgency : (a, b) => (b.id || 0) - (a.id || 0));
+  }, [leads, filters, urgentFirst]);
 
   const refreshDetails = async (lead) => {
-    setDetailsLead(lead);
+    setDetails(lead);
+    setLoadingDetails(true);
     try {
-      const items = await crm.loadActivities(lead.id);
-      setActivities(items);
+      const [messageResponse, activityResponse] = await Promise.all([
+        getInstagramLeadMessage(lead.id),
+        getCrmLeadActivities(lead.id),
+      ]);
+      setMessage(messageResponse.data);
+      setActivities(activityResponse.data || []);
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível atualizar o histórico.', 'error');
+      showToast(err?.response?.data?.message || 'Não foi possível abrir o lead.', 'error');
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
-  const handleSaveLead = async (payload) => {
+  const openLead = async (lead) => {
+    const current = leads.find((item) => item.id === lead.id) || lead;
+    await refreshDetails(current);
+  };
+
+  const applyLead = (updated) => {
+    if (!updated?.id) return;
+    setLeads((prev) => {
+      const exists = prev.some((item) => item.id === updated.id);
+      if (!exists) return [updated, ...prev];
+      return prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item));
+    });
+    if (details?.id === updated.id) {
+      refreshDetails(updated);
+    }
+  };
+
+  const handleCreateOrEdit = async (payload) => {
     setSaving(true);
     setFormError('');
     try {
-      if (editingLead?.id) {
-        const updated = await crm.updateLead(editingLead.id, payload);
+      if (editing?.id) {
+        const response = await updateInstagramLeadProfile(editing.id, payload);
+        applyLead(response.data);
         showToast('Lead atualizado.');
-        setFormOpen(false);
-        if (detailsLead?.id === updated.id) {
-          await refreshDetails(updated);
-        }
       } else {
-        await crm.createLead(payload);
-        showToast('Lead cadastrado.');
-        setFormOpen(false);
+        const response = await createCrmLead({
+          businessName: payload.businessName,
+          leadKind: payload.leadKind,
+          instagram: payload.instagram,
+          businessType: payload.businessType,
+          contactName: payload.contactName,
+          notes: payload.notes,
+          city: payload.city,
+          state: payload.state,
+          source: 'INSTAGRAM',
+        });
+        applyLead(response.data);
+        showToast('Lead cadastrado em Novo Lead.');
       }
+      setFormOpen(false);
+      setEditing(null);
     } catch (err) {
-      const message = err?.response?.data?.message || 'Não foi possível salvar o lead.';
-      setFormError(message);
-      showToast(message, 'error');
+      const messageText = err?.response?.data?.message || 'Não foi possível salvar o lead.';
+      setFormError(messageText);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleStatusChange = async (leadOrId, status, extras = {}) => {
-    const id = typeof leadOrId === 'object' ? leadOrId?.id : leadOrId;
-    if (!id || !status) return;
-    if (status === 'LOST' && !extras.lostReason) {
-      setLostDialog({ open: true, leadId: id });
+  const requestStatus = (leadId, status) => {
+    if (status === 'LOST') {
+      setLostDialog({ open: true, leadId });
       return;
     }
-    try {
-      const updated = await crm.changeStatus(id, status, extras);
-      showToast(statusToast(status));
-      if (detailsLead?.id === id) {
-        await refreshDetails(updated);
-      }
-    } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível alterar o status.', 'error');
-    }
+    changeStatus(leadId, status);
   };
 
-  const handleLostConfirm = async ({ lostReason, reason }) => {
-    const id = lostDialog.leadId;
-    if (!id || !lostReason) return;
+  const changeStatus = async (leadId, status, extras = {}) => {
     setSaving(true);
     try {
-      const updated = await crm.changeStatus(id, 'LOST', { lostReason, reason });
+      const response = await moveInstagramLead(leadId, { status, ...extras });
+      applyLead(response.data);
+      showToast('Etapa atualizada.');
       setLostDialog({ open: false, leadId: null });
-      showToast(statusToast('LOST'));
-      if (detailsLead?.id === id) {
-        await refreshDetails(updated);
-      }
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível marcar como perdido.', 'error');
+      showToast(err?.response?.data?.message || 'Não foi possível mover o lead.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleConfirmSend = async (lead) => {
-    const target = lead || detailsLead;
-    if (!target?.id) return;
-    setSaving(true);
+  const openTemplates = async () => {
+    setTemplatesOpen(true);
     try {
-      const updated = await crm.confirmSend(target.id);
-      showToast('Envio confirmado. Próxima ação em 48h.');
-      if (detailsLead?.id === target.id) {
-        await refreshDetails(updated);
-      }
+      const [templateResponse, settingsResponse] = await Promise.all([
+        getInstagramMessageTemplates(),
+        getInstagramFollowUpSettings(),
+      ]);
+      setTemplates(templateResponse.data || []);
+      setSettings(settingsResponse.data);
     } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível confirmar o envio.', 'error');
-    } finally {
-      setSaving(false);
+      showToast(err?.response?.data?.message || 'Não foi possível carregar os modelos.', 'error');
     }
   };
-
-  const openContact = (lead) => {
-    if (lead) setDetailsLead(lead);
-    setContactOpen(true);
-  };
-
-  const handleRegisterContact = async (payload) => {
-    const lead = detailsLead;
-    if (!lead) return;
-    setSaving(true);
-    try {
-      const updated = await crm.registerContact(lead.id, payload);
-      showToast('Contato registrado.');
-      setContactOpen(false);
-      await refreshDetails(updated);
-    } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível registrar o contato.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleArchive = async (lead) => {
-    const target = lead || detailsLead;
-    if (!target) return;
-    setSaving(true);
-    try {
-      await crm.archiveLead(target.id);
-      showToast('Lead arquivado.');
-      if (detailsLead?.id === target.id) {
-        setDetailsLead(null);
-      }
-    } catch (err) {
-      showToast(err?.response?.data?.message || 'Não foi possível arquivar o lead.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const hasFilters = Boolean(
-    crm.filters.q
-    || crm.filters.status
-    || crm.filters.businessType
-    || crm.filters.city
-    || crm.filters.source
-    || crm.filters.followUp
-  );
-  const emptyCatalog = !crm.loading && !crm.error && (crm.metrics?.totalLeads ?? 0) === 0 && !hasFilters;
-  const busy = crm.view === 'list' ? crm.listLoading && !crm.listPage.items.length : crm.loading;
-  const showBoardFilters = crm.view !== 'dashboard';
 
   return (
-    <Box className="crm-board" sx={{ flex: 1, minHeight: 0, minWidth: 0, width: '100%', maxWidth: '100%' }}>
-      <PageHeader title="CRM de prospecção" description="Organize seus contatos e acompanhe as próximas ações comerciais." actions={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            variant="outlined"
-            startIcon={<TravelExploreIcon />}
-            onClick={() => setProspectingOpen(true)}
-            sx={{ textTransform: 'none', minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
-          >
-            Prospectar
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={openCreate}
-            sx={{
-              backgroundColor: 'var(--color-primary)',
-              '&:hover': { backgroundColor: 'var(--color-primary-dark)' },
-              textTransform: 'none',
-              width: { xs: '100%', sm: 'auto' },
-              minHeight: 44,
-            }}
-          >
-            Cadastrar lead
-          </Button>
-        </Stack>} />
+    <Box className="crm-board">
+      <PageHeader
+        title="CRM Instagram"
+        description="Prospecção manual. O envio no Direct continua com você."
+        actions={(
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            <Button variant="outlined" onClick={openTemplates} sx={{ textTransform: 'none' }}>Templates</Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => { setEditing(null); setFormError(''); setFormOpen(true); }}
+              sx={{ textTransform: 'none', bgcolor: '#2563EB' }}
+            >
+              Cadastrar lead
+            </Button>
+          </Stack>
+        )}
+      />
 
-      {busy && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress sx={{ color: 'var(--color-primary)' }} />
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} className="ig-metrics">
+        <Metric label="Leads" value={metrics.total} />
+        <Metric label="Novos" value={metrics.fresh} />
+        <Metric label="Follow-ups pendentes" value={metrics.overdue} highlight={metrics.overdue > 0} />
+        <Metric label="Em negociação" value={metrics.negotiating} />
+        <Metric label="Convertidos" value={metrics.won} />
+      </Stack>
+
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mb: 1 }}>
+        <TextField
+          size="small"
+          label="Nome ou Instagram"
+          value={filters.q}
+          onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
+        />
+        <TextField
+          select
+          size="small"
+          label="Tipo"
+          value={filters.kind}
+          onChange={(event) => setFilters((prev) => ({ ...prev, kind: event.target.value }))}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {INSTAGRAM_LEAD_KINDS.map((item) => <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>)}
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Etapa"
+          value={filters.status}
+          onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">Todas</MenuItem>
+          <MenuItem value="NEW">Novo Lead</MenuItem>
+          <MenuItem value="CONTACTED">Contatado</MenuItem>
+          <MenuItem value="WAITING_RESPONSE">Aguardando Retorno</MenuItem>
+          <MenuItem value="NEGOTIATING">Em Negociação</MenuItem>
+          <MenuItem value="WON">Convertido</MenuItem>
+          <MenuItem value="NO_RESPONSE">Sem Resposta</MenuItem>
+          <MenuItem value="LOST">Descartado</MenuItem>
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Prazo"
+          value={filters.overdue ? 'overdue' : ''}
+          onChange={(event) => setFilters((prev) => ({ ...prev, overdue: event.target.value === 'overdue' }))}
+          sx={{ minWidth: 140 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="overdue">Follow-up vencido</MenuItem>
+        </TextField>
+        <TextField
+          size="small"
+          label="Cadastro de"
+          type="date"
+          InputLabelProps={{ shrink: true }}
+          value={filters.from}
+          onChange={(event) => setFilters((prev) => ({ ...prev, from: event.target.value }))}
+        />
+        <TextField
+          size="small"
+          label="até"
+          type="date"
+          InputLabelProps={{ shrink: true }}
+          value={filters.to}
+          onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
+        />
+        <Button onClick={() => setUrgentFirst((prev) => !prev)} sx={{ textTransform: 'none' }}>
+          {urgentFirst ? 'Mais urgentes primeiro' : 'Ordem recente'}
+        </Button>
+      </Stack>
+
+      {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#2563EB' }} /></Box>}
+      {!loading && error && <Alert severity="error">{error}</Alert>}
+      {!loading && !error && leads.length === 0 && (
+        <Alert severity="info">Nenhum lead de Instagram ainda. Cadastre um perfil para começar a prospecção.</Alert>
+      )}
+      {!loading && !error && leads.length > 0 && visible.length === 0 && (
+        <Alert severity="info">Nenhum lead com esses filtros.</Alert>
+      )}
+      {!loading && !error && visible.length > 0 && (
+        <Box className="crm-board-main">
+          <InstagramColumnJump onJump={(id) => document.getElementById(`ig-column-${id}`)?.scrollIntoView({ behavior: 'smooth', inline: 'start' })} />
+          <InstagramKanban leads={visible} onOpen={openLead} onChangeStatus={requestStatus} />
         </Box>
       )}
 
-      {!busy && crm.error && (
-        <Alert severity="error">
-          Não foi possível carregar o CRM. Verifique se sua conta é administrativa da Weper.
-        </Alert>
-      )}
-
-      {!busy && !crm.error && (
-        <>
-          <Stack
-            direction={{ xs: 'column', lg: 'row' }}
-            spacing={1.25}
-            alignItems={{ lg: 'stretch' }}
-            className="crm-board-summary"
-          >
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <CrmMetrics metrics={crm.metrics} />
-            </Box>
-            <Box sx={{ width: { lg: 280 }, flexShrink: 0 }}>
-              <CrmActionCenter
-                metrics={crm.metrics}
-                onFilterToday={() => crm.setQuickFollowUp('TODAY')}
-                onFilterOverdue={() => crm.setQuickFollowUp('OVERDUE')}
-                onFilterNoFirstContact={() => crm.setQuickFollowUp('NO_FIRST_CONTACT')}
-              />
-            </Box>
-          </Stack>
-
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={1}
-            alignItems={{ md: 'flex-start' }}
-            justifyContent="space-between"
-          >
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              {showBoardFilters && (
-                <CrmFilters
-                  filters={crm.filters}
-                  onChange={crm.setFilter}
-                  onQuickFollowUp={crm.setQuickFollowUp}
-                  onClear={crm.clearFilters}
-                />
-              )}
-            </Box>
-            <ToggleButtonGroup
-              aria-label="Visualização do CRM"
-              exclusive
-              size="small"
-              value={crm.view}
-              onChange={(_, value) => value && crm.setView(value)}
-              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, mt: { md: showBoardFilters ? 4 : 0 } }}
-            >
-              <ToggleButton value="dashboard" sx={{ textTransform: 'none', px: 2 }}>Painel</ToggleButton>
-              <ToggleButton value="kanban" sx={{ textTransform: 'none', px: 2 }}>Kanban</ToggleButton>
-              <ToggleButton value="list" sx={{ textTransform: 'none', px: 2 }}>Lista</ToggleButton>
-            </ToggleButtonGroup>
-          </Stack>
-
-          <Box className="crm-board-main">
-            {crm.view === 'dashboard' ? (
-              <Box sx={{ overflow: 'auto', minHeight: 0, flex: 1 }}>
-                <CrmWhatsAppPanel />
-                <CrmOutreachPanel />
-                <CrmStatusChart metrics={crm.metrics} />
-              </Box>
-            ) : crm.view === 'list' ? (
-              <CrmLeadList
-                pageData={crm.listPage}
-                sort={crm.sort}
-                loading={crm.listLoading}
-                emptyCatalog={emptyCatalog}
-                hasFilters={hasFilters}
-                onCreate={openCreate}
-                onPageChange={crm.setPage}
-                onSort={crm.changeSort}
-                onOpen={loadDetails}
-                onEdit={openEdit}
-                onRegisterContact={openContact}
-                onChangeStatus={handleStatusChange}
-                onArchive={handleArchive}
-                onConfirmSend={handleConfirmSend}
-              />
-            ) : (
-              <CrmKanban
-                leads={crm.leads}
-                emptyCatalog={emptyCatalog}
-                hasFilters={hasFilters}
-                onCreate={openCreate}
-                onOpen={loadDetails}
-                onEdit={openEdit}
-                onRegisterContact={openContact}
-                onChangeStatus={handleStatusChange}
-                onArchive={handleArchive}
-                onConfirmSend={handleConfirmSend}
-              />
-            )}
-          </Box>
-        </>
-      )}
-
-      <CrmLeadFormDialog
+      <InstagramLeadForm
         open={formOpen}
+        initialValues={editing}
         onClose={() => setFormOpen(false)}
-        initialValues={editingLead}
-        onSubmit={handleSaveLead}
+        onSubmit={handleCreateOrEdit}
         saving={saving}
         error={formError}
       />
-
-      <CrmLeadDetailsDialog
-        open={Boolean(detailsLead)}
-        lead={detailsLead}
+      <InstagramLeadDrawer
+        open={Boolean(details)}
+        lead={details}
+        message={message}
         activities={activities}
-        loadingActivities={loadingActivities}
-        onClose={() => setDetailsLead(null)}
-        onEdit={() => {
-          setEditingLead(detailsLead);
-          setFormError('');
-          setFormOpen(true);
-        }}
-        onRegisterContact={() => setContactOpen(true)}
-        onChangeStatus={handleStatusChange}
-        onConfirmSend={() => handleConfirmSend(detailsLead)}
-        onArchive={handleArchive}
+        loading={loadingDetails}
         saving={saving}
+        settings={settings}
+        onClose={() => setDetails(null)}
+        onEdit={() => { setEditing(details); setFormError(''); setFormOpen(true); }}
+        onChangeStatus={requestStatus}
+        onCopy={async (text) => {
+          try {
+            await navigator.clipboard.writeText(text || '');
+            showToast('Mensagem copiada. O envio continua manual.');
+          } catch (err) {
+            showToast('Não foi possível copiar a mensagem.', 'error');
+          }
+        }}
+        onOpenInstagram={() => {
+          const url = details?.instagramProfileUrl || details?.instagram;
+          if (!url) return;
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }}
+        onRegister={async (id) => {
+          setSaving(true);
+          try {
+            const response = await registerInstagramTouch(id);
+            applyLead(response.data);
+            showToast('Contato registrado.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível registrar o contato.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onSaveMessage={async (id, content) => {
+          setSaving(true);
+          try {
+            const response = await saveInstagramLeadMessage(id, content);
+            setMessage(response.data);
+            showToast('Texto salvo só neste lead.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível salvar o texto.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onAddNote={async (id, content) => {
+          setSaving(true);
+          try {
+            const response = await addInstagramLeadNote(id, content);
+            applyLead(response.data);
+            showToast('Observação registrada.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível registrar a observação.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
       />
-
+      <InstagramTemplatesDialog
+        open={templatesOpen}
+        templates={templates}
+        settings={settings}
+        saving={saving}
+        onClose={() => setTemplatesOpen(false)}
+        onSave={async (id, content) => {
+          setSaving(true);
+          try {
+            const response = await updateInstagramMessageTemplate(id, content);
+            setTemplates((prev) => prev.map((item) => (item.id === id ? response.data : item)));
+            showToast('Modelo atualizado.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível salvar o modelo.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onRestore={async (id) => {
+          setSaving(true);
+          try {
+            const response = await restoreInstagramMessageTemplate(id);
+            setTemplates((prev) => prev.map((item) => (item.id === id ? response.data : item)));
+            showToast('Texto padrão restaurado.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível restaurar o modelo.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onSaveSettings={async (payload) => {
+          setSaving(true);
+          try {
+            const response = await updateInstagramFollowUpSettings(payload);
+            setSettings(response.data);
+            showToast('Prazos atualizados.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível salvar os prazos.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+      />
       <CrmLostReasonDialog
         open={lostDialog.open}
+        saving={saving}
         onClose={() => setLostDialog({ open: false, leadId: null })}
-        onConfirm={handleLostConfirm}
-        saving={saving}
+        onConfirm={({ lostReason, reason }) => changeStatus(lostDialog.leadId, 'LOST', { lostReason, reason })}
       />
-
-      <CrmContactDialog
-        open={contactOpen}
-        onClose={() => setContactOpen(false)}
-        onSubmit={handleRegisterContact}
-        saving={saving}
-      />
-
-      <CrmProspectingDialog
-        open={prospectingOpen}
-        onClose={() => setProspectingOpen(false)}
-        onImported={async (data) => {
-          try {
-            await crm.refetch();
-          } catch (err) {
-            console.error(err);
-          }
-          if (data?.imported) {
-            showToast(`${data.imported} lead${data.imported === 1 ? '' : 's'} adicionado${data.imported === 1 ? '' : 's'} ao CRM.`);
-          }
-        }}
-        onOpenLead={async (leadId) => {
-          if (!leadId) return;
-          setProspectingOpen(false);
-          try {
-            const local = crm.leads.find((lead) => lead.id === leadId)
-              || crm.listPage.items.find((lead) => lead.id === leadId);
-            const lead = local || (await getCrmLead(leadId)).data;
-            await loadDetails(lead);
-          } catch (err) {
-            showToast(err?.response?.data?.message || 'Não foi possível abrir o lead.', 'error');
-          }
-        }}
-      />
-
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={4000}
-        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
-        sx={{ zIndex: 1500 }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={toast.severity} onClose={() => setToast((prev) => ({ ...prev, open: false }))}>
-          {toast.message}
-        </Alert>
+      <Snackbar open={toast.open} autoHideDuration={4000} onClose={() => setToast((prev) => ({ ...prev, open: false }))}>
+        <Alert severity={toast.severity} onClose={() => setToast((prev) => ({ ...prev, open: false }))}>{toast.message}</Alert>
       </Snackbar>
+    </Box>
+  );
+}
+
+function Metric({ label, value, highlight }) {
+  return (
+    <Box className="ig-metric">
+      <Typography variant="caption" color="text.secondary">{label}</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, color: highlight ? '#DC2626' : 'inherit' }}>{value}</Typography>
     </Box>
   );
 }

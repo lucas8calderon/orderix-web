@@ -81,3 +81,75 @@ export function getCrmLeadActivities(id, page = 0, size = 50) {
 export function archiveCrmLead(id) {
   return axios.delete(`${CRM_URL}/leads/${id}`);
 }
+
+export function getCrmInstagramTemplates() {
+  return axios.get(`${CRM_URL}/instagram/templates`);
+}
+
+export function updateCrmInstagramTemplates(payload) {
+  return axios.put(`${CRM_URL}/instagram/templates`, payload);
+}
+
+export function prepareCrmInstagram(id) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/prepare`);
+}
+
+export function recordCrmInstagramEvent(id, event) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/events`, { event });
+}
+
+export function confirmCrmInstagramSend(id) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/confirm`);
+}
+
+export function registerCrmInstagramResponse(id, notes) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/response`, { notes });
+}
+
+export function scheduleCrmInstagramFollowUp(id, payload) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/follow-up`, payload);
+}
+
+export function getInstagramMessageTemplates() {
+  return axios.get(`${CRM_URL}/instagram/message-templates`);
+}
+
+export function updateInstagramMessageTemplate(id, content) {
+  return axios.put(`${CRM_URL}/instagram/message-templates/${id}`, { content });
+}
+
+export function restoreInstagramMessageTemplate(id) {
+  return axios.post(`${CRM_URL}/instagram/message-templates/${id}/restore`);
+}
+
+export function getInstagramFollowUpSettings() {
+  return axios.get(`${CRM_URL}/instagram/follow-up-settings`);
+}
+
+export function updateInstagramFollowUpSettings(payload) {
+  return axios.put(`${CRM_URL}/instagram/follow-up-settings`, payload);
+}
+
+export function getInstagramLeadMessage(id) {
+  return axios.get(`${CRM_URL}/instagram/leads/${id}/message`);
+}
+
+export function saveInstagramLeadMessage(id, content) {
+  return axios.put(`${CRM_URL}/instagram/leads/${id}/message`, { content });
+}
+
+export function registerInstagramTouch(id) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/register-touch`);
+}
+
+export function moveInstagramLead(id, payload) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/move`, payload);
+}
+
+export function addInstagramLeadNote(id, content) {
+  return axios.post(`${CRM_URL}/instagram/leads/${id}/notes`, { content });
+}
+
+export function updateInstagramLeadProfile(id, payload) {
+  return axios.put(`${CRM_URL}/instagram/leads/${id}/profile`, payload);
+}
