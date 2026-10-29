@@ -55,10 +55,8 @@ export function flagOf(lead) {
 }
 
 export function timeInStage(lead, now = new Date()) {
-  const raw = lead?.statusChangedAt || lead?.createdAt;
-  if (!raw) return '';
-  const start = new Date(raw);
-  if (Number.isNaN(start.getTime())) return '';
+  const start = parseWhen(lead?.statusChangedAt || lead?.createdAt);
+  if (!start) return '';
   const days = Math.floor((now.getTime() - start.getTime()) / 86400000);
   if (days <= 0) return 'Entrou hoje';
   if (days === 1) return 'Há 1 dia nesta etapa';
@@ -70,8 +68,8 @@ export function compareUrgency(a, b) {
   const left = rank[toneOf(a)] ?? 3;
   const right = rank[toneOf(b)] ?? 3;
   if (left !== right) return left - right;
-  const aTime = a?.nextContactAt ? new Date(a.nextContactAt).getTime() : Number.MAX_SAFE_INTEGER;
-  const bTime = b?.nextContactAt ? new Date(b.nextContactAt).getTime() : Number.MAX_SAFE_INTEGER;
+  const aTime = parseWhen(a?.nextContactAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const bTime = parseWhen(b?.nextContactAt)?.getTime() ?? Number.MAX_SAFE_INTEGER;
   return aTime - bTime;
 }
 
@@ -81,8 +79,8 @@ export function isOverdue(lead) {
 
 export function withinCreatedRange(lead, from, to) {
   if (!from && !to) return true;
-  const created = lead?.createdAt ? new Date(lead.createdAt) : null;
-  if (!created || Number.isNaN(created.getTime())) return false;
+  const created = parseWhen(lead?.createdAt);
+  if (!created) return false;
   if (from) {
     const start = new Date(`${from}T00:00:00`);
     if (created < start) return false;
@@ -99,10 +97,25 @@ export function instagramHandle(lead) {
   return '';
 }
 
+export function parseWhen(value) {
+  if (value == null || value === '') return null;
+  if (Array.isArray(value)) {
+    const [year, month, day, hour = 0, minute = 0, second = 0] = value;
+    const date = new Date(year, (month || 1) - 1, day || 1, hour, minute, second);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  if (typeof value === 'number') {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const text = String(value).trim().replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1');
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function formatWhen(value) {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  const date = parseWhen(value);
+  if (!date) return '—';
   return date.toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',

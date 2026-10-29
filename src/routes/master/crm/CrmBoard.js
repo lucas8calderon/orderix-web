@@ -27,6 +27,7 @@ import {
 import {
   addInstagramLeadNote,
   createCrmLead,
+  getCrmLead,
   getCrmLeadActivities,
   getCrmLeads,
   getInstagramFollowUpSettings,
@@ -113,10 +114,12 @@ export function CrmBoard() {
     setDetails(lead);
     setLoadingDetails(true);
     try {
-      const [messageResponse, activityResponse] = await Promise.all([
+      const [fullResponse, messageResponse, activityResponse] = await Promise.all([
+        getCrmLead(lead.id),
         getInstagramLeadMessage(lead.id),
         getCrmLeadActivities(lead.id),
       ]);
+      setDetails({ ...lead, ...(fullResponse.data || {}) });
       setMessage(messageResponse.data);
       setActivities(activityResponse.data || []);
     } catch (err) {
@@ -240,7 +243,7 @@ export function CrmBoard() {
         <Metric label="Convertidos" value={metrics.won} />
       </Stack>
 
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mb: 1 }}>
+      <Box className="ig-filters">
         <TextField
           size="small"
           label="Nome ou Instagram"
@@ -253,7 +256,6 @@ export function CrmBoard() {
           label="Tipo"
           value={filters.kind}
           onChange={(event) => setFilters((prev) => ({ ...prev, kind: event.target.value }))}
-          sx={{ minWidth: 180 }}
         >
           <MenuItem value="">Todos</MenuItem>
           {INSTAGRAM_LEAD_KINDS.map((item) => <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>)}
@@ -264,7 +266,6 @@ export function CrmBoard() {
           label="Etapa"
           value={filters.status}
           onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-          sx={{ minWidth: 160 }}
         >
           <MenuItem value="">Todas</MenuItem>
           <MenuItem value="NEW">Novo Lead</MenuItem>
@@ -281,7 +282,6 @@ export function CrmBoard() {
           label="Prazo"
           value={filters.overdue ? 'overdue' : ''}
           onChange={(event) => setFilters((prev) => ({ ...prev, overdue: event.target.value === 'overdue' }))}
-          sx={{ minWidth: 140 }}
         >
           <MenuItem value="">Todos</MenuItem>
           <MenuItem value="overdue">Follow-up vencido</MenuItem>
@@ -296,16 +296,16 @@ export function CrmBoard() {
         />
         <TextField
           size="small"
-          label="até"
+          label="Cadastro até"
           type="date"
           InputLabelProps={{ shrink: true }}
           value={filters.to}
           onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
         />
-        <Button onClick={() => setUrgentFirst((prev) => !prev)} sx={{ textTransform: 'none' }}>
+        <Button className="ig-sort" onClick={() => setUrgentFirst((prev) => !prev)}>
           {urgentFirst ? 'Mais urgentes primeiro' : 'Ordem recente'}
         </Button>
-      </Stack>
+      </Box>
 
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress sx={{ color: '#2563EB' }} /></Box>}
       {!loading && error && <Alert severity="error">{error}</Alert>}

@@ -1,6 +1,7 @@
 import {
   columnOf,
   compareUrgency,
+  formatWhen,
   registerLabel,
   renderProspectMessage,
 } from './instagramCrm';
@@ -21,6 +22,12 @@ describe('instagram CRM', () => {
     const overdue = { prospectTone: 'OVERDUE', nextContactAt: '2026-10-29T10:00:00' };
     const soon = { prospectTone: 'DUE_SOON', nextContactAt: '2026-10-28T10:00:00' };
     expect(compareUrgency(overdue, soon)).toBeLessThan(0);
+  });
+
+  it('formata a data de cadastro mesmo com fração longa de segundos', () => {
+    expect(formatWhen('2026-10-29T01:29:12.123456789')).toMatch(/29\/10\/2026/);
+    expect(formatWhen([2026, 10, 29, 1, 29, 12])).toMatch(/29\/10\/2026/);
+    expect(formatWhen(null)).toBe('—');
   });
 
   it('copiar e abrir não têm rótulo de registro de contato', () => {
