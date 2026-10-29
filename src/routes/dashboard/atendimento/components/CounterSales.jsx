@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Alert, Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CounterPos } from '../pos/CounterPos';
 import { OpenCounterOrders } from '../pos/OpenCounterOrders';
 
 export { isOpenCounterOrder } from '../pos/counterOrders';
 
-export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, active = true }) {
+export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, active = true, cashClosed = false }) {
   const [mode, setMode] = useState('sale');
   const [openCount, setOpenCount] = useState(0);
   const [sentVersion, setSentVersion] = useState(0);
@@ -17,6 +17,11 @@ export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, a
 
   return (
     <>
+      {cashClosed ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          O caixa está fechado. Abra o caixa no topo da tela para as vendas entrarem no controle do dia.
+        </Alert>
+      ) : null}
       <ToggleButtonGroup
         exclusive
         value={mode}

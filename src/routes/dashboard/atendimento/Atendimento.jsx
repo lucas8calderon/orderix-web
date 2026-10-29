@@ -1,7 +1,7 @@
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { Box, Button, Container } from '@mui/material';
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Tables } from '../tables/Tables';
 import { Comandas } from '../comandas/Comandas';
 import { CounterSales } from './components/CounterSales';
@@ -9,6 +9,8 @@ import { CustomerOrders } from './components/CustomerOrders';
 import { DeliveryOrders } from './components/DeliveryOrders';
 import { CheckoutDialog } from './components/CheckoutDialog';
 import { PlaceOrderDialog } from './components/PlaceOrderDialog';
+import { CashBar } from './cash/CashBar';
+import { CashHistory } from './cash/CashHistory';
 import './Atendimento.css';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import { PageTabs } from '../../../commons/components/PageTabs';
@@ -34,7 +36,11 @@ export function Atendimento() {
   const [accountRefresh, setAccountRefresh] = useState(0);
   const [floorVersion, setFloorVersion] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cashState, setCashState] = useState({ known: false, open: false, version: 0 });
   const refreshTimerRef = useRef(null);
+  const handleCashChange = useCallback((session) => {
+    setCashState((current) => ({ known: true, open: Boolean(session), version: current.version + 1 }));
+  }, []);
 
   useEffect(() => () => {
     if (refreshTimerRef.current) {
@@ -79,6 +85,7 @@ export function Atendimento() {
           >
             {isRefreshing ? 'Atualizando...' : 'Atualizar'}
           </Button>} />
+        <CashBar floorVersion={floorVersion} onChange={handleCashChange} />
         <PageTabs
           className="atendimento-modes"
           id="service"
@@ -91,6 +98,7 @@ export function Atendimento() {
             { value: 'counter', label: tabLabel('Balcão', counts.counter) },
             { value: 'customer', label: tabLabel('Cliente', counts.customer) },
             { value: 'delivery', label: tabLabel('Delivery', counts.delivery) },
+            { value: 'cash', label: 'Caixa' },
           ]}
         />
 
@@ -103,11 +111,15 @@ export function Atendimento() {
         </div>
 
         <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section atendimento-section--pos">
-          <CounterSales active={tab === 'counter'} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} />
+          <CounterSales active={tab === 'counter'} cashClosed={cashState.known && !cashState.open} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} />
         </div>
 
         <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">
           <CustomerOrders onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} onCountChange={countSetter('customer')} floorVersion={floorVersion} />
+        </div>
+
+        <div role="tabpanel" id="service-panel-cash" aria-labelledby="service-tab-cash" hidden={tab !== 'cash'} className="atendimento-section">
+          <CashHistory visible={tab === 'cash'} floorVersion={floorVersion} refreshKey={cashState.version} />
         </div>
 
         <div role="tabpanel" id="service-panel-delivery" aria-labelledby="service-tab-delivery" hidden={tab !== 'delivery'} className="atendimento-section">
