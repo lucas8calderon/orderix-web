@@ -173,7 +173,8 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
   const [account, setAccount] = useState(null);
   const [empty, setEmpty] = useState(false);
   const [error, setError] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('PIX');
+  // Sem forma pré-selecionada: o caixa precisa escolher, para não fechar no meio errado.
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentMethods, setPaymentMethods] = useState(FALLBACK_PAYMENT_METHODS);
   const [serviceFeeRate, setServiceFeeRate] = useState(0.1);
   const [applyServiceTax, setApplyServiceTax] = useState(false);
@@ -218,6 +219,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     setApplyServiceTax(false);
     setDiscount('0');
     setReceived('');
+    setPaymentMethod('');
     setPaymentStatus('');
 
     const request =
@@ -309,9 +311,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
         const nextMethods = methods.length ? methods : FALLBACK_PAYMENT_METHODS;
         setPaymentMethods(nextMethods);
         setPaymentMethod((current) => (
-          nextMethods.some((method) => method.id === current)
-            ? current
-            : nextMethods[0].id
+          nextMethods.some((method) => method.id === current) ? current : ''
         ));
         const rate = Number(dto.serviceFeePercent);
         setServiceFeeRate(Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : 0.1);
@@ -655,6 +655,11 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                     </ToggleButton>
                   ))}
                 </ToggleButtonGroup>
+                {!paymentMethod ? (
+                  <Typography variant="body2" sx={{ mt: 1, color: 'var(--status-warning-text, #b45309)', fontWeight: 600 }}>
+                    Escolha a forma de pagamento para confirmar.
+                  </Typography>
+                ) : null}
                 {paymentMethod === 'CASH' ? (
                   <Box className="checkout-cash">
                     <TextField

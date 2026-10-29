@@ -1,12 +1,27 @@
 import { comandaFloorStatus, tableFloorStatus } from './floorStatus';
 
 describe('status de mesa e comanda', () => {
-  it('não marca mesa em manutenção como disponível', () => {
-    const maintenance = tableFloorStatus({ capacity: 0, isAvailable: true });
-    expect(maintenance.label).toBe('Em manutenção');
-    expect(maintenance.label).not.toBe('Disponível');
-    expect(maintenance.canDelete).toBe(true);
+  it('mesa sem capacidade funciona normalmente', () => {
+    for (const capacity of [0, null, undefined, '']) {
+      const free = tableFloorStatus({ capacity, isAvailable: true });
+      expect(free).toEqual(expect.objectContaining({
+        label: 'Disponível',
+        detail: 'Capacidade não informada',
+        primaryLabel: 'Lançar',
+        placeOrder: true,
+        canDelete: true,
+      }));
+    }
+    expect(tableFloorStatus({ capacity: null, isAvailable: false })).toEqual(expect.objectContaining({
+      label: 'Em uso',
+      detail: 'Capacidade não informada',
+      primaryLabel: 'Cobrar',
+      secondaryLabel: 'Lançar mais',
+      canDelete: false,
+    }));
+  });
 
+  it('mostra a capacidade e o uso da mesa', () => {
     const occupied = tableFloorStatus({ capacity: 4, isAvailable: false });
     expect(occupied.label).toBe('Em uso');
     expect(occupied.canDelete).toBe(false);

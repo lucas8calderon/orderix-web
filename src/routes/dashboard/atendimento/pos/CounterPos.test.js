@@ -236,4 +236,14 @@ describe('PDV de balcão', () => {
     fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
     expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
   });
+
+  it('trava o lançamento do usuário de caixa com o caixa fechado', async () => {
+    renderPos({ launchBlocked: true });
+    expect(await screen.findByRole('alert')).toHaveTextContent('O caixa está fechado');
+    fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
+    expect(screen.getByRole('button', { name: /^Cobrar/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Enviar sem cobrar' })).toBeDisabled();
+    fireEvent.keyDown(window, { key: 'Enter', ctrlKey: true });
+    expect(createFloorOrder).not.toHaveBeenCalled();
+  });
 });

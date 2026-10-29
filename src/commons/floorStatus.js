@@ -1,18 +1,10 @@
+// A capacidade é só informativa: mesa sem capacidade funciona normalmente.
 export function tableFloorStatus(table) {
   const capacity = Number(table?.capacity);
   const inUse = table?.isAvailable === false;
-  const maintenance = !(capacity >= 1);
-  if (maintenance) {
-    return {
-      label: 'Em manutenção',
-      tone: 'warning',
-      detail: 'Fora de operação',
-      canDelete: !inUse,
-      primaryLabel: 'Ver conta',
-      placeOrder: false,
-    };
-  }
-  const people = `${capacity} ${capacity > 1 ? 'pessoas' : 'pessoa'}`;
+  const people = capacity >= 1
+    ? `${capacity} ${capacity > 1 ? 'pessoas' : 'pessoa'}`
+    : 'Capacidade não informada';
   if (inUse) {
     return {
       label: 'Em uso',

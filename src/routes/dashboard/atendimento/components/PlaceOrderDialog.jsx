@@ -13,7 +13,7 @@ function destinationLabel(target) {
  * Lançamento em mesa, comanda, pedido por cliente ou balcão (vindo da cobrança).
  * Usa o mesmo PDV da aba Balcão: catálogo à esquerda e carrinho à direita.
  */
-export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
+export function PlaceOrderDialog({ open, target, onClose, onPlaced, launchBlocked = false }) {
   const isMobile = useIsMobile();
   return (
     <Dialog
@@ -45,6 +45,7 @@ export function PlaceOrderDialog({ open, target, onClose, onPlaced }) {
             embedded
             target={target}
             active={open}
+            launchBlocked={launchBlocked}
             onPlaced={onPlaced}
           />
         ) : null}

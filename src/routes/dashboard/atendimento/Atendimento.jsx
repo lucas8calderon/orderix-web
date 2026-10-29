@@ -14,6 +14,8 @@ import { CashHistory } from './cash/CashHistory';
 import './Atendimento.css';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import { PageTabs } from '../../../commons/components/PageTabs';
+import { isCashier } from '../../../services/accessControl';
+import { getCurrentUser } from '../../../services/session';
 
 function tabLabel(label, count) {
   if (!count) return label;
@@ -38,6 +40,8 @@ export function Atendimento() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [cashState, setCashState] = useState({ known: false, open: false, version: 0 });
   const refreshTimerRef = useRef(null);
+  // Usuário de caixa só lança produtos com o caixa aberto (o backend também valida).
+  const cashBlocked = isCashier(getCurrentUser()) && cashState.known && !cashState.open;
   const handleCashChange = useCallback((session) => {
     setCashState((current) => ({ known: true, open: Boolean(session), version: current.version + 1 }));
   }, []);
@@ -111,7 +115,7 @@ export function Atendimento() {
         </div>
 
         <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section atendimento-section--pos">
-          <CounterSales active={tab === 'counter'} cashClosed={cashState.known && !cashState.open} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} />
+          <CounterSales active={tab === 'counter'} cashClosed={cashState.known && !cashState.open} cashBlocked={cashBlocked} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} />
         </div>
 
         <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">
@@ -149,6 +153,7 @@ export function Atendimento() {
       <PlaceOrderDialog
         open={Boolean(orderTarget)}
         target={orderTarget}
+        launchBlocked={cashBlocked}
         onClose={() => setOrderTarget(null)}
         onPlaced={() => {
           setOrderTarget(null);

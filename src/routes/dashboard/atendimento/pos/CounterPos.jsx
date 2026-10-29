@@ -66,6 +66,7 @@ export function CounterPos({
   onSent,
   onPlaced,
   embedded = false,
+  launchBlocked = false,
 }) {
   // Na aba Balcão o PDV guarda rascunho e cobra; embutido (mesa, comanda, cliente) só envia.
   const isCounter = target?.kind === 'counter' && !embedded;
@@ -205,7 +206,7 @@ export function CounterPos({
   };
 
   const submit = async (intent) => {
-    if (submitRef.current || !canSubmit) return;
+    if (submitRef.current || !canSubmit || launchBlocked) return;
     const signature = draftSignature(customerName, observation, lines);
     if (attemptRef.current.signature !== signature) {
       attemptRef.current = { key: newLineKey(), signature };
@@ -315,6 +316,7 @@ export function CounterPos({
         disabled: !canSubmit,
       };
   primary.onClick = primaryAction;
+  if (launchBlocked) primary.disabled = true;
 
   const cart = (
     <OrderCart
@@ -343,7 +345,7 @@ export function CounterPos({
         hint: holdsKitchen
           ? 'Fica em Pedidos abertos e só vai para a cozinha depois do pagamento.'
           : 'Vai para a cozinha agora. Cobre depois em Pedidos abertos.',
-        disabled: lines.length === 0,
+        disabled: lines.length === 0 || launchBlocked,
         onClick: () => submit('send'),
       } : null}
       draftHint={isCounter ? 'Rascunho salvo automaticamente neste caixa.' : ''}
@@ -358,6 +360,11 @@ export function CounterPos({
   return (
     <Box className="counter-pos">
       <Box className="counter-pos__catalog">
+        {launchBlocked ? (
+          <Alert severity="warning" role="alert">
+            O caixa está fechado. Abra o caixa no topo do Atendimento para lançar produtos.
+          </Alert>
+        ) : null}
         <Box className="counter-pos__filters">
           <ProductSearch value={query} onChange={setQuery} inputRef={searchRef} />
           <ProductCategoryFilter

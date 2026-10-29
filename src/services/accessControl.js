@@ -255,6 +255,10 @@ export function isStoreAdmin(user) {
   return role === ROLES.STORE_ADMIN || role === ROLES.ADMIN;
 }
 
+export function isCashier(user) {
+  return user?.role === ROLES.CASHIER;
+}
+
 export function isFloorOperator(user) {
   const role = user?.role;
   return role === ROLES.WAITER || role === ROLES.CASHIER || isStoreAdmin(user) || isPlatformAdmin(user);

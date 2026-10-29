@@ -5,7 +5,7 @@ import { OpenCounterOrders } from '../pos/OpenCounterOrders';
 
 export { isOpenCounterOrder } from '../pos/counterOrders';
 
-export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, active = true, cashClosed = false }) {
+export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, active = true, cashClosed = false, cashBlocked = false }) {
   const [mode, setMode] = useState('sale');
   const [openCount, setOpenCount] = useState(0);
   const [sentVersion, setSentVersion] = useState(0);
@@ -17,7 +17,7 @@ export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, a
 
   return (
     <>
-      {cashClosed ? (
+      {cashClosed && !cashBlocked ? (
         <Alert severity="info" sx={{ mb: 2 }}>
           O caixa está fechado. Abra o caixa no topo da tela para as vendas entrarem no controle do dia.
         </Alert>
@@ -41,6 +41,7 @@ export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, a
       <div hidden={mode !== 'sale'}>
         <CounterPos
           active={active && mode === 'sale'}
+          launchBlocked={cashBlocked}
           floorVersion={floorVersion}
           onOpenAccount={onOpenAccount}
           onSent={() => setSentVersion((version) => version + 1)}

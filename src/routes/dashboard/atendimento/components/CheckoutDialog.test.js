@@ -58,6 +58,16 @@ function mockAccountApis() {
   getComandaAccount.mockResolvedValue({ data: openAccount });
 }
 
+async function choosePix(label = 'PIX') {
+  const confirm = await screen.findByRole('button', { name: /^Confirmar pagamento/ });
+  expect(confirm).toBeDisabled();
+  expect(screen.getByText('Escolha a forma de pagamento para confirmar.')).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('button', { name: label }));
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
+  });
+}
+
 async function renderCheckout(target = tableTarget) {
   render(
     <CheckoutDialog
@@ -68,9 +78,7 @@ async function renderCheckout(target = tableTarget) {
     />,
   );
   expect(await screen.findByText(/Café/)).toBeInTheDocument();
-  await waitFor(() => {
-    expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
-  });
+  await choosePix();
 }
 
 describe('getCloseAccountConfirmCopy', () => {
@@ -197,9 +205,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
 
     expect(await screen.findByText(/Café/)).toBeInTheDocument();
     expect(screen.queryByText(/Suco/)).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
-    });
+    await choosePix('Dinheiro');
     fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
@@ -258,9 +264,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     expect(await screen.findByText(/Cerveja Heineken/)).toBeInTheDocument();
     expect(screen.getByText(/Retirada #0033 — Lucas Calderon/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Adicionar produtos' })).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
-    });
+    await choosePix();
     fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     expect(await screen.findByText(/pedido de retirada 0033/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
@@ -286,6 +290,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
       />,
     );
     expect(await screen.findByText('Taxa de entrega')).toBeInTheDocument();
+    await choosePix();
     fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     expect(await screen.findByText(/pagamento de R\$\s*15,00 foi realizado fora do Weper/)).toBeInTheDocument();
     expect(screen.getByText(/pedido de entrega 0040 será fechado/)).toBeInTheDocument();
@@ -345,6 +350,8 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     );
 
     expect(await screen.findByText(/Só feche aqui se o pagamento já estiver aprovado/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fechar conta' })).toBeDisabled();
+    fireEvent.click(await screen.findByRole('button', { name: 'Cartão de Crédito' }));
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Fechar conta' })).toBeEnabled();
     });
