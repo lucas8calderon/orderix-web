@@ -13,8 +13,22 @@ import './Atendimento.css';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import { PageTabs } from '../../../commons/components/PageTabs';
 
+function tabLabel(label, count) {
+  if (!count) return label;
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+      {label}
+      <Box component="span" className="atendimento-tab-count" aria-label={`${count} pendentes`}>{count}</Box>
+    </Box>
+  );
+}
+
 export function Atendimento() {
   const [tab, setTab] = useState('tables');
+  const [counts, setCounts] = useState({ counter: 0, customer: 0, delivery: 0 });
+  const countSetter = (key) => (value) => setCounts((current) => (
+    current[key] === value ? current : { ...current, [key]: value }
+  ));
   const [accountTarget, setAccountTarget] = useState(null);
   const [orderTarget, setOrderTarget] = useState(null);
   const [accountRefresh, setAccountRefresh] = useState(0);
@@ -74,9 +88,9 @@ export function Atendimento() {
           tabs={[
             { value: 'tables', label: 'Mesas' },
             { value: 'tabs', label: 'Comandas' },
-            { value: 'counter', label: 'Balcão' },
-            { value: 'customer', label: 'Cliente' },
-            { value: 'delivery', label: 'Delivery' },
+            { value: 'counter', label: tabLabel('Balcão', counts.counter) },
+            { value: 'customer', label: tabLabel('Cliente', counts.customer) },
+            { value: 'delivery', label: tabLabel('Delivery', counts.delivery) },
           ]}
         />
 
@@ -89,15 +103,15 @@ export function Atendimento() {
         </div>
 
         <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section atendimento-section--pos">
-          <CounterSales active={tab === 'counter'} onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
+          <CounterSales active={tab === 'counter'} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} />
         </div>
 
         <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">
-          <CustomerOrders onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} floorVersion={floorVersion} />
+          <CustomerOrders onOpenAccount={setAccountTarget} onPlaceOrder={setOrderTarget} onCountChange={countSetter('customer')} floorVersion={floorVersion} />
         </div>
 
         <div role="tabpanel" id="service-panel-delivery" aria-labelledby="service-tab-delivery" hidden={tab !== 'delivery'} className="atendimento-section">
-          <DeliveryOrders onOpenAccount={setAccountTarget} floorVersion={floorVersion} />
+          <DeliveryOrders onOpenAccount={setAccountTarget} onCountChange={countSetter('delivery')} floorVersion={floorVersion} />
         </div>
       </Container>
 

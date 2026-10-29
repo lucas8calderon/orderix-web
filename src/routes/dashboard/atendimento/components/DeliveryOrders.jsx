@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { Box, Card, CardActionArea, CardContent, Chip, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, CardActionArea, CardContent, Chip, Grid, Typography } from '@mui/material';
 import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
 import { formatCurrency } from '../../../../services/accessControl';
@@ -17,7 +17,7 @@ import {
   summarizeOrderItems,
 } from '../utils/deliveryOrderView';
 
-export function DeliveryOrders({ onOpenAccount, floorVersion = 0 }) {
+export function DeliveryOrders({ onOpenAccount, onCountChange, floorVersion = 0 }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,7 +29,9 @@ export function DeliveryOrders({ onOpenAccount, floorVersion = 0 }) {
       .then((response) => {
         if (cancelled) return;
         const list = Array.isArray(response.data) ? response.data : [];
-        setOrders(list.filter(isOpenDeliveryOrder));
+        const open = list.filter(isOpenDeliveryOrder);
+        setOrders(open);
+        onCountChange?.(open.filter(isPendingStoreCharge).length);
         setError('');
       })
       .catch((err) => {
@@ -119,22 +121,31 @@ export function DeliveryOrders({ onOpenAccount, floorVersion = 0 }) {
             </CardContent>
           );
 
+          const receive = () => onOpenAccount?.({
+            kind: 'delivery',
+            id: order.id,
+            number: code || order.id,
+            customerName: order.customerName,
+            fulfillment: pickup ? 'PICKUP' : 'DELIVERY',
+          });
           return (
             <Grid item key={order.id} xs={12} sm={6} md={4} lg={3}>
-              <Card elevation={0} sx={{ height: '100%', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+              <Card elevation={0} sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: '16px', border: '1px solid var(--color-border)', borderTop: '4px solid', borderTopColor: pending ? 'var(--status-warning-text, #b45309)' : 'var(--color-success)' }}>
                 {pending ? (
-                  <CardActionArea
-                    onClick={() => onOpenAccount?.({
-                      kind: 'delivery',
-                      id: order.id,
-                      number: code || order.id,
-                      customerName: order.customerName,
-                      fulfillment: pickup ? 'PICKUP' : 'DELIVERY',
-                    })}
-                    aria-label={`Receber pagamento do pedido ${code} de ${order.customerName || 'cliente'}`}
-                  >
-                    {content}
-                  </CardActionArea>
+                  <>
+                    <CardActionArea
+                      onClick={receive}
+                      sx={{ flex: 1, display: 'flex', alignItems: 'stretch', justifyContent: 'flex-start' }}
+                      aria-label={`Receber pagamento do pedido ${code} de ${order.customerName || 'cliente'}`}
+                    >
+                      {content}
+                    </CardActionArea>
+                    <Box sx={{ px: 1, py: 0.75, borderTop: '1px solid', borderColor: 'divider' }}>
+                      <Button fullWidth variant="contained" disableElevation onClick={receive} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}>
+                        Receber e finalizar
+                      </Button>
+                    </Box>
+                  </>
                 ) : content}
               </Card>
             </Grid>

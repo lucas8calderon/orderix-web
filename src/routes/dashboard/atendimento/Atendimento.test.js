@@ -33,13 +33,15 @@ describe('aba Delivery do Atendimento', () => {
   it('renderiza o pedido de retirada na aba Delivery', async () => {
     render(<Atendimento />);
 
-    expect(screen.getByRole('tab', { name: 'Delivery' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'Delivery' }));
+    expect(screen.getByRole('tab', { name: /^Delivery/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /^Delivery/ }));
 
     expect(await screen.findByRole('heading', { name: 'Delivery' })).toBeInTheDocument();
     expect(screen.getByText('Lucas Calderon')).toBeInTheDocument();
     expect(screen.getByText('1x Cerveja Heineken')).toBeInTheDocument();
     expect(screen.getByText('Retirada')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Receber pagamento do pedido 0033/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Receber e finalizar' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^Delivery/ })).toHaveTextContent('Delivery1');
   });
 });

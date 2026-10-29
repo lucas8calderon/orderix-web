@@ -1,6 +1,9 @@
 import React, { forwardRef, useEffect, useMemo, useState } from 'react';
 import { ThermalPrintPanel } from '../../../../printing/ThermalPrintPanel';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -11,10 +14,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Divider,
   FormControlLabel,
-  Grid,
   IconButton,
+  InputAdornment,
   Slide,
   Snackbar,
   Switch,
@@ -24,13 +26,15 @@ import {
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useDialogResponsiveProps, useIsMobile } from '../../../../commons/hooks/useResponsive';
 import { formatCurrency } from '../../../../services/accessControl';
 import {
   channelPaymentMode,
   confirmExternalPayment,
   getStorePaymentConfig,
   isSettledPaymentStatus,
+  PAYMENT_METHOD_LABELS,
   paymentMethodsFromConfig,
 } from '../../../../services/paymentConfigService';
 import {
@@ -63,6 +67,13 @@ const FALLBACK_PAYMENT_METHODS = [
 
 function apiErrorMessage(error, fallback) {
   return error?.response?.data?.message || fallback;
+}
+
+export function cashChange(total, received) {
+  const value = Number(String(received ?? '').replace(',', '.'));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  const diff = Math.round((value - total) * 100) / 100;
+  return diff >= 0 ? { change: diff, missing: 0 } : { change: 0, missing: -diff };
 }
 
 function isEmptyAccountError(error) {
@@ -117,11 +128,12 @@ export function getCloseAccountConfirmCopy(target, options = {}) {
   const mode = options.paymentMode || 'MANUAL_CONFIRMATION';
   const totalLabel = options.totalLabel || '';
   const releaseVerb = isCounter ? 'fechado' : 'liberada';
+  const methodNote = options.methodLabel ? ` Forma de pagamento: ${options.methodLabel}.` : '';
 
   if (mode === 'ORDER_ONLY') {
     return {
-      title: isCounter ? 'Fechar pedido?' : isComanda ? 'Liberar comanda?' : 'Liberar mesa?',
-      description: `O Weper não cobra neste canal. Ao confirmar, ${article} ${subject} será ${releaseVerb}. Esta ação não pode ser desfeita.`,
+      title: isCounter ? 'Finalizar pedido?' : isComanda ? 'Finalizar comanda?' : 'Finalizar mesa?',
+      description: `${totalLabel ? `Total ${totalLabel}.` : ''}${methodNote} Ao confirmar, ${article} ${subject} será ${releaseVerb}. Esta ação não pode ser desfeita.`.trim(),
     };
   }
   if (mode === 'INTEGRATED_PAYMENT') {
@@ -141,7 +153,7 @@ export function getCloseAccountConfirmCopy(target, options = {}) {
 
   return {
     title: 'Confirma que o pagamento foi realizado?',
-    description: `Confirma que o pagamento de ${totalLabel || 'R$ 0,00'} foi realizado fora do Weper? ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb}. O Weper não processou esta transação.`,
+    description: `Confirma que o pagamento de ${totalLabel || 'R$ 0,00'} foi realizado fora do Weper?${methodNote} ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb}. O Weper não processou esta transação.`,
   };
 }
 
@@ -166,6 +178,8 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
   const [serviceFeeRate, setServiceFeeRate] = useState(0.1);
   const [applyServiceTax, setApplyServiceTax] = useState(false);
   const [discount, setDiscount] = useState('0');
+  const [received, setReceived] = useState('');
+  const isMobile = useIsMobile();
   const [toast, setToast] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -203,6 +217,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
     setError('');
     setApplyServiceTax(false);
     setDiscount('0');
+    setReceived('');
     setPaymentStatus('');
 
     const request =
@@ -335,11 +350,16 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
   const serviceTax = applyServiceTax ? subtotal * serviceFeeRate : 0;
   const total = Math.max(0, subtotal + serviceTax - discountValue + deliveryFee);
   const itemCount = useMemo(() => countAccountItems(account), [account]);
-  const needsPaymentMethod = paymentMode !== 'ORDER_ONLY';
-  const canClose = !loading && !empty && itemCount > 0 && (!needsPaymentMethod || Boolean(paymentMethod));
+  // A forma de pagamento é sempre registrada, inclusive em "Somente lançar", para o caixa e o dashboard.
+  const canClose = !loading && !empty && itemCount > 0 && Boolean(paymentMethod);
+  const methodLabel = paymentMethods.find((method) => method.id === paymentMethod)?.label
+    || PAYMENT_METHOD_LABELS[paymentMethod]
+    || '';
+  const change = paymentMethod === 'CASH' ? cashChange(total, received) : null;
   const confirmCopy = getCloseAccountConfirmCopy(target, {
     paymentMode,
     totalLabel: formatCurrency(total),
+    methodLabel,
   });
 
   const handleAskConfirm = () => {
@@ -480,36 +500,34 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
 
           {!loading && account && !empty && (
             <>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Pedidos
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'var(--color-text-secondary)' }}>
-                    {(account.orders || []).length} pedido(s) · {itemCount} item(ns)
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Tipo
-                  </Typography>
-                  <Chip
-                    label={kindLabel}
-                    size="small"
-                    sx={{
-                      backgroundColor: 'var(--color-primary)',
-                      color: 'var(--color-on-primary)',
-                      fontWeight: 'bold',
-                    }}
-                  />
-                </Grid>
-              </Grid>
-
-              <Box mt={3}>
-                <ThermalPrintPanel key={`${target?.kind}-${target?.id}`} account={account} placeLabel={title} />
-                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  Itens do pedido
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                <Chip
+                  label={kindLabel}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'var(--color-primary)',
+                    color: 'var(--color-on-primary)',
+                    fontWeight: 'bold',
+                  }}
+                />
+                <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', flex: 1 }}>
+                  {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+                  {(account.orders || []).length > 1 ? ` em ${(account.orders || []).length} pedidos` : ''}
                 </Typography>
+                <ThermalPrintPanel key={`${target?.kind}-${target?.id}`} account={account} placeLabel={title} />
+              </Box>
+
+              <Accordion
+                key={`items-${target?.kind}-${target?.id}-${isMobile}`}
+                defaultExpanded={!isMobile}
+                disableGutters
+                elevation={0}
+                className="checkout-items"
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography fontWeight="bold">Itens do pedido</Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0 }}>
                 {(account.orders || []).map((order) => (
                   <Box key={order.id} className="checkout-order-block">
                     <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
@@ -570,11 +588,10 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                     ) : null}
                   </Box>
                 ))}
-              </Box>
+                </AccordionDetails>
+              </Accordion>
 
-              <Divider sx={{ my: 3 }} />
-
-              <Box className="checkout-summary">
+              <Box className="checkout-summary" sx={{ mt: 2 }}>
                 <Box display="flex" justifyContent="space-between">
                   <Typography sx={{ color: 'var(--color-text-secondary)' }}>Subtotal</Typography>
                   <Typography>{formatCurrency(subtotal)}</Typography>
@@ -585,59 +602,43 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                     <Typography>{formatCurrency(deliveryFee)}</Typography>
                   </Box>
                 ) : null}
-                <FormControlLabel
-                  control={
-                    <Switch
-                      color="primary"
-                      checked={applyServiceTax}
-                      onChange={(event) => setApplyServiceTax(event.target.checked)}
-                    />
-                  }
-                  label={`Taxa de serviço (${serviceFeePercentLabel}%)`}
-                />
-                {applyServiceTax && (
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography sx={{ color: 'var(--color-text-secondary)' }}>Taxa</Typography>
-                    <Typography>{formatCurrency(serviceTax)}</Typography>
-                  </Box>
-                )}
-                <TextField
-                  label="Desconto"
-                  type="number"
-                  size="small"
-                  value={discount}
-                  onChange={(event) => setDiscount(event.target.value)}
-                  inputProps={{ min: 0, step: '0.01' }}
-                  sx={{ maxWidth: 180 }}
-                />
-                <Box display="flex" justifyContent="space-between" mt={1}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} flexWrap="wrap">
+                  <FormControlLabel
+                    sx={{ mr: 0 }}
+                    control={
+                      <Switch
+                        color="primary"
+                        checked={applyServiceTax}
+                        onChange={(event) => setApplyServiceTax(event.target.checked)}
+                      />
+                    }
+                    label={`Taxa de serviço (${serviceFeePercentLabel}%)`}
+                  />
+                  {applyServiceTax ? <Typography>{formatCurrency(serviceTax)}</Typography> : null}
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
+                  <Typography sx={{ color: 'var(--color-text-secondary)' }}>Desconto</Typography>
+                  <TextField
+                    type="number"
+                    size="small"
+                    value={discount}
+                    onChange={(event) => setDiscount(event.target.value)}
+                    inputProps={{ min: 0, step: '0.01', 'aria-label': 'Desconto' }}
+                    InputProps={{ startAdornment: <InputAdornment position="start">R$</InputAdornment> }}
+                    sx={{ maxWidth: 160 }}
+                  />
+                </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="baseline" className="checkout-total">
                   <Typography variant="h6" fontWeight="bold">
                     Total
                   </Typography>
-                  <Typography variant="h6" fontWeight="bold" sx={{ color: 'var(--color-primary)' }}>
+                  <Typography variant="h5" fontWeight="bold" sx={{ color: 'var(--color-primary)' }}>
                     {formatCurrency(total)}
                   </Typography>
                 </Box>
               </Box>
 
-              {paymentStatus === 'PROCESSING' && (
-                <Alert severity="info" sx={{ mb: 2 }} icon={<CircularProgress size={18} />}>
-                  {paymentMode === 'ORDER_ONLY' ? 'Liberando conta…' : 'Registrando pagamento…'}
-                </Alert>
-              )}
-              {paymentMode === 'MANUAL_CONFIRMATION' && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Pagamento confirmado manualmente — o Weper não processa esta transação.
-                </Alert>
-              )}
-              {paymentMode === 'INTEGRATED_PAYMENT' && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Cobrar no terminal Android. Só feche aqui se o pagamento já estiver aprovado.
-                </Alert>
-              )}
-
-              {paymentMode !== 'ORDER_ONLY' && (
-              <Box mt={3}>
+              <Box mt={2.5}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Forma de pagamento
                 </Typography>
@@ -646,6 +647,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                   value={paymentMethod}
                   onChange={(_, value) => value && setPaymentMethod(value)}
                   className="checkout-payments"
+                  aria-label="Forma de pagamento"
                 >
                   {paymentMethods.map((method) => (
                     <ToggleButton key={method.id} value={method.id}>
@@ -653,7 +655,44 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                     </ToggleButton>
                   ))}
                 </ToggleButtonGroup>
+                {paymentMethod === 'CASH' ? (
+                  <Box className="checkout-cash">
+                    <TextField
+                      label="Valor recebido"
+                      type="number"
+                      size="small"
+                      value={received}
+                      onChange={(event) => setReceived(event.target.value)}
+                      inputProps={{ min: 0, step: '0.01' }}
+                      InputProps={{ startAdornment: <InputAdornment position="start">R$</InputAdornment> }}
+                      sx={{ maxWidth: 200 }}
+                    />
+                    {change ? (
+                      <Typography
+                        aria-live="polite"
+                        sx={{ fontWeight: 800, color: change.missing ? 'var(--color-error, #dc2626)' : 'var(--color-success)' }}
+                      >
+                        {change.missing ? `Faltam ${formatCurrency(change.missing)}` : `Troco: ${formatCurrency(change.change)}`}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                ) : null}
               </Box>
+
+              {paymentStatus === 'PROCESSING' && (
+                <Alert severity="info" sx={{ mt: 2 }} icon={<CircularProgress size={18} />}>
+                  {paymentMode === 'ORDER_ONLY' ? 'Finalizando…' : 'Registrando pagamento…'}
+                </Alert>
+              )}
+              {paymentMode === 'MANUAL_CONFIRMATION' && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Receba na maquininha ou no caixa e confirme aqui. O Weper não processa esta transação.
+                </Alert>
+              )}
+              {paymentMode === 'INTEGRATED_PAYMENT' && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Cobrar no terminal Android. Só feche aqui se o pagamento já estiver aprovado.
+                </Alert>
               )}
             </>
           )}
@@ -691,9 +730,9 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
               {closing
                 ? (paymentStatus === 'PROCESSING' ? 'Registrando...' : 'Fechando...')
                 : paymentMode === 'ORDER_ONLY'
-                  ? 'Liberar conta'
+                  ? `Finalizar · ${formatCurrency(total)}`
                   : paymentMode === 'MANUAL_CONFIRMATION'
-                    ? 'Confirmar pagamento e liberar'
+                    ? `Confirmar pagamento · ${formatCurrency(total)}`
                     : 'Fechar conta'}
             </Button>
           )}

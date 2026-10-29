@@ -3,6 +3,7 @@ import { CounterPos } from './CounterPos';
 import { getAllCategories } from '../../menu/category/service/categoryService';
 import { getAllProducts } from '../../menu/product/service/productService';
 import { createFloorOrder } from '../service/accountService';
+import { getStorePaymentConfig } from '../../../../services/paymentConfigService';
 
 jest.mock('../../menu/product/service/productService', () => ({
   getAllProducts: jest.fn(),
@@ -14,6 +15,12 @@ jest.mock('../../menu/category/service/categoryService', () => ({
 
 jest.mock('../service/accountService', () => ({
   createFloorOrder: jest.fn(),
+  resolveOperatorWaiterId: jest.fn(),
+}));
+
+jest.mock('../../../../services/paymentConfigService', () => ({
+  ...jest.requireActual('../../../../services/paymentConfigService'),
+  getStorePaymentConfig: jest.fn(() => Promise.resolve({ data: {} })),
 }));
 
 const cafe = {
@@ -103,6 +110,7 @@ describe('PDV de balcão', () => {
       ],
     });
     createFloorOrder.mockResolvedValue({ data: { orders: [{ id: 55 }] } });
+    getStorePaymentConfig.mockResolvedValue({ data: {} });
   });
 
   it('adiciona produto simples, mantém o carrinho ao filtrar e altera a quantidade', async () => {
@@ -118,12 +126,12 @@ describe('PDV de balcão', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Aumentar Café' }));
     expect(screen.getByLabelText('Quantidade de Café')).toHaveTextContent('2');
-    expect(screen.getByRole('button', { name: 'Finalizar pedido' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Cobrar/ })).toBeEnabled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Diminuir Café' }));
     fireEvent.click(screen.getByRole('button', { name: 'Diminuir Café' }));
     expect(screen.queryByLabelText('Quantidade de Café')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Finalizar pedido' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Cobrar/ })).toBeDisabled();
   });
 
   it('busca por SKU, indica indisponível e não inclui o produto', async () => {
@@ -165,7 +173,7 @@ describe('PDV de balcão', () => {
     renderPos({ onOpenAccount });
 
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
-    const finish = screen.getByRole('button', { name: 'Finalizar pedido' });
+    const finish = screen.getByRole('button', { name: /^Cobrar/ });
     fireEvent.click(finish);
     fireEvent.click(finish);
     expect(createFloorOrder).toHaveBeenCalledTimes(1);
@@ -184,7 +192,7 @@ describe('PDV de balcão', () => {
 
     createFloorOrder.mockRejectedValue({ response: { data: { message: 'Sem estoque' } } });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar Café' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Enviar pedido' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Sem estoque');
     expect(screen.getByLabelText('Quantidade de Café')).toBeInTheDocument();
     expect(onOpenAccount).toHaveBeenCalledTimes(1);
@@ -195,8 +203,7 @@ describe('PDV de balcão', () => {
     const view = renderPos();
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.getByLabelText('Quantidade de Café')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
-    expect(screen.getByRole('status')).toHaveTextContent('Rascunho salvo neste caixa.');
+    expect(screen.getByText('Rascunho salvo automaticamente neste caixa.')).toBeInTheDocument();
     view.unmount();
 
     localStorage.setItem('weper.user', JSON.stringify({ storeId: 8 }));
@@ -207,5 +214,26 @@ describe('PDV de balcão', () => {
     localStorage.setItem('weper.user', JSON.stringify({ storeId: 4 }));
     renderPos();
     expect(await screen.findByLabelText('Quantidade de Café')).toHaveTextContent('1');
+  });
+
+  it('envia sem cobrar e mostra o número do pedido com atalho para cobrar', async () => {
+    const onOpenAccount = jest.fn();
+    renderPos({ onOpenAccount });
+    fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
+    const cart = screen.getByRole('region', { name: 'Pedido balcão' });
+    expect(await within(cart).findByText('Pedido 55 enviado.')).toBeInTheDocument();
+    expect(onOpenAccount).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Cobrar / imprimir' }));
+    expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 55, number: 55 });
+  });
+
+  it('agrupa por categoria e busca no cardápio inteiro', async () => {
+    renderPos();
+    expect(await screen.findByRole('heading', { name: 'Bebidas' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Porções' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Porções' }));
+    fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
+    expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
   });
 });

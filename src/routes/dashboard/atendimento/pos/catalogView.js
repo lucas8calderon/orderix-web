@@ -67,6 +67,28 @@ export function buildCategoryChips(products, categories) {
   return { chips: [...chips, ...missing], hasOthers };
 }
 
+export function countProductsByCategory(products) {
+  const counts = { [ALL_CATEGORIES]: 0, [OTHER_CATEGORY]: 0 };
+  (products || []).forEach((product) => {
+    counts[ALL_CATEGORIES] += 1;
+    const key = categoryKey(product) ?? OTHER_CATEGORY;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+// Agrupa na ordem dos chips; produtos sem categoria vão para "Outros", no fim.
+export function groupProductsByCategory(products, chips) {
+  const groups = (chips || []).map((chip) => ({ id: chip.id, name: chip.name, products: [] }));
+  const byId = new Map(groups.map((group) => [group.id, group]));
+  const others = { id: OTHER_CATEGORY, name: 'Outros', products: [] };
+  (products || []).forEach((product) => {
+    const group = byId.get(categoryKey(product)) || others;
+    group.products.push(product);
+  });
+  return [...groups, others].filter((group) => group.products.length > 0);
+}
+
 export function productCode(product) {
   return String(product?.sku || product?.code || product?.barcode || '').trim();
 }
@@ -84,10 +106,12 @@ export function productMatchesQuery(product, query) {
     || id === term;
 }
 
+// A busca procura em todo o cardápio: com termo digitado, a categoria escolhida não restringe.
 export function filterCatalogProducts(products, { query = '', categoryFilter = ALL_CATEGORIES } = {}) {
+  const searching = Boolean(normalizeSearch(query));
   return (products || []).filter((product) => {
     if (!productMatchesQuery(product, query)) return false;
-    if (categoryFilter === ALL_CATEGORIES) return true;
+    if (searching || categoryFilter === ALL_CATEGORIES) return true;
     if (categoryFilter === OTHER_CATEGORY) return categoryKey(product) == null;
     return categoryKey(product) === String(categoryFilter);
   });

@@ -20,18 +20,27 @@ test('teste apresenta instruções, falha de pop-up e relatório copiável sem c
   expect((await screen.findByLabelText('Relatório para suporte')).value).toContain('"state": "error"');
   expect(screen.getByRole('status')).toHaveTextContent(/copie o relatório/i);
 });
-test('abrir a janela não é impressão concluída', () => {
+test('na conta mostra só o botão Imprimir, sem o diagnóstico', () => {
   saveSession('test', { storeId: 3 });
   process.env.REACT_APP_THERMAL_PRINT_SCOPE = 'all';
   const doc = document.implementation.createHTMLDocument();
   const popup = { document: doc, focus: jest.fn(), print: jest.fn(), close: jest.fn() };
   jest.spyOn(window, 'open').mockReturnValue(popup);
   render(<ThermalPrintPanel account={{ orders: [{ id: 9, products: [{ name: 'Café', quantity: 1, value: 4 }] }] }} placeLabel="Comanda 21" />);
-  fireEvent.click(screen.getByRole('button', { name: 'Imprimir comanda 80 mm' }));
+  expect(screen.queryByText(/Impressão térmica USB/)).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Resultado no papel')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Copiar relatório de teste' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
   expect(popup.print).toHaveBeenCalledTimes(1);
   expect(popup.close).not.toHaveBeenCalled();
-  expect(screen.getByRole('status')).toHaveTextContent(/não confirma que o papel saiu/);
-  expect(screen.getByText(/não cobra, não fecha a conta/i)).toBeInTheDocument();
   expect(doc.documentElement.innerHTML).toContain('Comanda 21');
   expect(doc.documentElement.innerHTML).toContain('NÃO É COMPROVANTE DE PAGAMENTO');
+});
+test('na conta, falha ao abrir a impressão aparece como erro', () => {
+  saveSession('test', { storeId: 3 });
+  process.env.REACT_APP_THERMAL_PRINT_SCOPE = 'all';
+  jest.spyOn(window, 'open').mockReturnValue(null);
+  render(<ThermalPrintPanel account={{ orders: [{ id: 9, products: [{ name: 'Café', quantity: 1, value: 4 }] }] }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
+  expect(screen.getByRole('alert')).toHaveTextContent(/Permita pop-ups/);
 });

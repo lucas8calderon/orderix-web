@@ -19,7 +19,8 @@ export function tableFloorStatus(table) {
       tone: 'info',
       detail: people,
       canDelete: false,
-      primaryLabel: 'Ver conta',
+      primaryLabel: 'Cobrar',
+      secondaryLabel: 'Lançar mais',
       placeOrder: false,
     };
   }
@@ -41,7 +42,8 @@ export function comandaFloorStatus(comanda) {
       tone: 'info',
       detail: 'Atendimento avulso',
       canDelete: false,
-      primaryLabel: 'Ver conta',
+      primaryLabel: 'Cobrar',
+      secondaryLabel: 'Lançar mais',
       placeOrder: false,
     };
   }

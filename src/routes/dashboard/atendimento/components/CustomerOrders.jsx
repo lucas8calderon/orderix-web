@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
   Button,
@@ -14,11 +15,14 @@ import {
 } from '@mui/material';
 import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
+import { StatusBadge } from '../../../../commons/components/StatusBadge';
 import { formatCurrency } from '../../../../services/accessControl';
+import { PAYMENT_METHOD_LABELS } from '../../../../services/paymentConfigService';
 import { formatOrderDisplayCode } from '../../../../services/salesChannel';
 import { accountSubtotal, countAccountItems } from '../utils/accountTotals';
 import { listCustomerOrders } from '../service/customerOrderService';
 import { isOpenCounterOrder } from '../pos/counterOrders';
+import { kitchenStatusLabel } from '../utils/deliveryOrderView';
 
 const STATUS_FILTERS = [
   { id: 'ACTIVE', label: 'Abertos', apiStatus: 'ACTIVE' },
@@ -38,15 +42,25 @@ function normalizeSearch(value) {
 function paymentLabel(order) {
   const status = String(order?.status || '').toUpperCase();
   if (status === 'CLOSED') {
-    return order?.paymentMethod ? `Pago (${order.paymentMethod})` : 'Pago';
+    const method = PAYMENT_METHOD_LABELS[order?.paymentMethod] || order?.paymentMethod;
+    return method ? `Pago · ${method}` : 'Pago';
   }
   if (status === 'CANCELLED') {
     return 'Cancelado';
   }
-  return 'Pagamento: Pendente';
+  return 'A cobrar';
 }
 
-export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
+function statusBadge(order) {
+  const status = String(order?.status || '').toUpperCase();
+  if (status === 'CLOSED') return { label: 'Finalizado', tone: 'success' };
+  if (status === 'CANCELLED') return { label: 'Cancelado', tone: 'danger' };
+  if (status === 'HELD') return { label: 'Aguardando pagamento', tone: 'warning' };
+  const kitchen = String(order?.kitchenStatus || '').toUpperCase();
+  return { label: kitchenStatusLabel(order), tone: kitchen === 'READY' ? 'success' : 'info' };
+}
+
+export function CustomerOrders({ onOpenAccount, onPlaceOrder, onCountChange, floorVersion = 0 }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,7 +82,9 @@ export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }
         if (activeFilter.apiStatus === 'CLOSED') {
           setOrders(list);
         } else {
-          setOrders(list.filter(isOpenCounterOrder));
+          const open = list.filter(isOpenCounterOrder);
+          setOrders(open);
+          if (!activeFilter.kitchenStatus) onCountChange?.(open.length);
         }
         setError('');
       })
@@ -120,7 +136,13 @@ export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }
         <Typography variant="h5" component="h2" className="atendimento-section-title">
           Pedido por Cliente
         </Typography>
-        <Button onClick={() => onPlaceOrder?.({ kind: 'customer' })} sx={{ textTransform: 'none' }}>
+        <Button
+          variant="contained"
+          disableElevation
+          startIcon={<AddIcon />}
+          onClick={() => onPlaceOrder?.({ kind: 'customer' })}
+          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
+        >
           Novo pedido
         </Button>
       </Box>
@@ -163,19 +185,22 @@ export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }
           const total = accountSubtotal({ orders: [order] });
           const items = countAccountItems({ orders: [order] });
           const code = formatOrderDisplayCode(order);
+          const badge = statusBadge(order);
+          const openTarget = {
+            kind: 'customer',
+            id: order.id,
+            number: code || order.id,
+            customerName: order.customerName,
+            customerIdentificationNote: order.customerIdentificationNote,
+          };
           return (
             <Grid item key={order.id} xs={12} sm={6} md={4} lg={3}>
-              <Card elevation={0} sx={{ height: '100%', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+              <Card elevation={0} sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
                 <CardActionArea
+                  sx={{ flex: 1, display: 'flex', alignItems: 'stretch', justifyContent: 'flex-start' }}
                   onClick={() => {
                     if (!cancelled && !closed) {
-                      onOpenAccount?.({
-                        kind: 'customer',
-                        id: order.id,
-                        number: code || order.id,
-                        customerName: order.customerName,
-                        customerIdentificationNote: order.customerIdentificationNote,
-                      });
+                      onOpenAccount?.(openTarget);
                     }
                   }}
                   disabled={cancelled || closed}
@@ -187,11 +212,14 @@ export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }
                         : `Abrir pedido ${code} de ${order.customerName || 'cliente'}`
                   }
                 >
-                  <CardContent>
-                    <Typography variant="h6">
-                      #{code} — {order.customerName || 'Cliente'}
-                    </Typography>
-                    <Typography color="text.secondary">Tipo: Pedido por Cliente</Typography>
+                  <CardContent sx={{ width: '100%' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 0.5 }}>
+                      <Typography variant="h6" sx={{ minWidth: 0 }} noWrap>
+                        {order.customerName || 'Cliente'}
+                      </Typography>
+                      <StatusBadge label={badge.label} tone={badge.tone} />
+                    </Box>
+                    <Typography color="text.secondary" variant="body2">#{code}</Typography>
                     {order.customerIdentificationNote ? (
                       <Typography variant="body2" color="text.secondary">
                         {order.customerIdentificationNote}
@@ -203,12 +231,20 @@ export function CustomerOrders({ onOpenAccount, onPlaceOrder, floorVersion = 0 }
                         : `${items} ${items === 1 ? 'item' : 'itens'} · ${formatCurrency(total)}`}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                      {order.kitchenStatus || order.status || 'ACTIVE'}
-                      {' · '}
                       {paymentLabel(order)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>
+                {!cancelled && !closed ? (
+                  <Box sx={{ display: 'flex', gap: 0.5, px: 1, py: 0.5, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Button size="small" variant="contained" disableElevation onClick={() => onOpenAccount?.(openTarget)} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}>
+                      Cobrar
+                    </Button>
+                    <Button size="small" onClick={() => onPlaceOrder?.(openTarget)} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                      Adicionar itens
+                    </Button>
+                  </Box>
+                ) : null}
               </Card>
             </Grid>
           );

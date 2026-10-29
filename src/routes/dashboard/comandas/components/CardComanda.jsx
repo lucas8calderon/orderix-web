@@ -15,6 +15,7 @@ export function CardComanda({ comanda, onOpen, onPlace, canManage = true }) {
       statusLabel={status.label}
       statusTone={status.tone}
       primaryLabel={status.primaryLabel}
+      secondaryLabel={status.secondaryLabel}
       onPrimary={status.placeOrder ? onPlace : onOpen}
       canDelete={status.canDelete}
       canManage={canManage}

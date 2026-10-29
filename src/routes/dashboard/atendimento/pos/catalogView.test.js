@@ -1,4 +1,11 @@
-import { buildCategoryChips, filterCatalogProducts, productMatchesQuery, productNeedsCustomization } from './catalogView';
+import {
+  buildCategoryChips,
+  countProductsByCategory,
+  filterCatalogProducts,
+  groupProductsByCategory,
+  productMatchesQuery,
+  productNeedsCustomization,
+} from './catalogView';
 
 const cafe = { id: 4, name: 'Café', sku: 'CAF-1', value: 5, categoryId: 1, categoryName: 'Bebidas' };
 const batata = { id: 1, name: 'Barca de Batata', value: 50, categoryId: 10, categoryName: 'Porções' };
@@ -23,5 +30,18 @@ describe('catálogo do PDV', () => {
       mandatoryGroups: [],
       variations: [{ id: 2, name: 'Grande', price: 12, available: false }],
     })).toBe(false);
+  });
+
+  it('busca em todas as categorias mesmo com uma categoria escolhida', () => {
+    expect(filterCatalogProducts([cafe, batata], { categoryFilter: '10' }).map((item) => item.id)).toEqual([1]);
+    expect(filterCatalogProducts([cafe, batata], { query: 'cafe', categoryFilter: '10' }).map((item) => item.id)).toEqual([4]);
+  });
+
+  it('agrupa e conta produtos na ordem das categorias', () => {
+    const avulso = { id: 7, name: 'Avulso', value: 1 };
+    const chips = [{ id: '1', name: 'Bebidas' }, { id: '10', name: 'Porções' }];
+    expect(groupProductsByCategory([batata, avulso, cafe], chips).map((group) => [group.name, group.products.length]))
+      .toEqual([['Bebidas', 1], ['Porções', 1], ['Outros', 1]]);
+    expect(countProductsByCategory([batata, avulso, cafe])).toEqual({ all: 3, others: 1, 1: 1, 10: 1 });
   });
 });

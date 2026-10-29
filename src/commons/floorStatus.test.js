@@ -11,6 +11,7 @@ describe('status de mesa e comanda', () => {
     expect(occupied.label).toBe('Em uso');
     expect(occupied.canDelete).toBe(false);
     expect(occupied.detail).toBe('4 pessoas');
+    expect(occupied).toEqual(expect.objectContaining({ primaryLabel: 'Cobrar', secondaryLabel: 'Lançar mais' }));
 
     expect(tableFloorStatus({ capacity: 1, isAvailable: true }).label).toBe('Disponível');
   });

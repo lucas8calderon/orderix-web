@@ -1,4 +1,5 @@
 import { EmptyState } from '../../../commons/components/EmptyState';
+import { FloorFilterBar, filterFloorItems } from '../../../commons/components/FloorFilterBar';
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
@@ -79,6 +80,8 @@ export function Tables({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
   }, [floorVersion, fetchTable]);
 
   const [openAddTable, setOpenAddTable] = useState(false);
+  const [floorFilter, setFloorFilter] = useState('all');
+  const [floorQuery, setFloorQuery] = useState('');
   const [openQRCodeDialog, setOpenQRCodeDialog] = useState(false);
   const [selectedTableForQR, setSelectedTableForQR] = useState(null);
 
@@ -142,6 +145,12 @@ export function Tables({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
     }
   }, [successSavingTable]);
 
+  const floorTables = tables
+    .filter((table) => table.number !== 999)
+    .slice()
+    .sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0));
+  const visibleTables = filterFloorItems(floorTables, { status: floorFilter, query: floorQuery });
+
   return (
     <>
       {loading && !loadingToDelete && (
@@ -204,16 +213,26 @@ export function Tables({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
         </Button>
         )}
       </Box>
-      {!loading && tables.filter((table) => table.number !== 999).length === 0 && (
+      {!loading && floorTables.length === 0 && (
         <EmptyState title="Nenhuma mesa cadastrada" description={canManage ? 'Cadastre as mesas do salão para organizar o atendimento.' : 'Peça ao administrador para cadastrar as mesas do salão.'} actionLabel={canManage ? 'Cadastrar mesa' : undefined} onAction={() => setHandleAddNewTable(true)} />
       )}
-      <Grid container spacing={2}>
-        {tables
-          .filter((table) => table.number !== 999)
-          .slice()
-          .sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0))
+      {floorTables.length > 0 ? (
+        <FloorFilterBar
+          items={floorTables}
+          status={floorFilter}
+          onStatus={setFloorFilter}
+          query={floorQuery}
+          onQuery={setFloorQuery}
+          searchLabel="Buscar mesa pelo número"
+        />
+      ) : null}
+      {floorTables.length > 0 && visibleTables.length === 0 ? (
+        <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>Nenhuma mesa neste filtro.</Typography>
+      ) : null}
+      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+        {visibleTables
           .map((table) => (
-            <Grid item key={table.id} xs={12} sm={6} md={4} lg={3} xl={2}>
+            <Grid item key={table.id} xs={6} sm={4} md={3} lg={3} xl={2}>
               <CardTable table={table} onShowQRCode={handleShowQRCode} onOpen={() => handleSelectedTable(table)} onPlace={() => onPlaceOrder?.({ kind: 'table', id: table.id, number: table.number })} canManage={canManage} />
             </Grid>
           ))}

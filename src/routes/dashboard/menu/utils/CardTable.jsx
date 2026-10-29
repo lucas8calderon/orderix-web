@@ -13,6 +13,7 @@ export function CardTable({ table, onOpen, onPlace, onShowQRCode, canManage = tr
       statusLabel={status.label}
       statusTone={status.tone}
       primaryLabel={status.primaryLabel}
+      secondaryLabel={status.secondaryLabel}
       onPrimary={status.placeOrder ? onPlace : onOpen}
       canDelete={status.canDelete}
       canManage={canManage}

@@ -20,25 +20,31 @@ import { resolveMenuImage } from '../../menu/utils/defaultMenuImage';
 import { productNeedsCustomization } from './catalogView';
 import { lineDetails, lineTotal, lineUnitPrice } from './cartMath';
 
+/**
+ * Carrinho do PDV. Uma ação principal (cobrar ou enviar) e, no balcão,
+ * uma secundária para enviar sem cobrar. O rascunho é salvo sozinho.
+ */
 export function OrderCart({
+  title = 'Pedido balcão',
   lines,
   totals,
   saving,
   error,
-  printEnabled,
+  notice,
   hasDraft,
+  customer,
+  observation,
+  onObservation,
+  primary,
+  secondary,
+  draftHint,
   onChangeQty,
   onObservationLine,
   onRemove,
   onEdit,
-  onFinalize,
-  onSend,
-  onSave,
-  onPrint,
   onClear,
 }) {
   const [confirmClear, setConfirmClear] = useState(false);
-  const blocked = saving || lines.length === 0;
 
   const requestClear = () => {
     if (!hasDraft || saving) return;
@@ -48,7 +54,7 @@ export function OrderCart({
   return (
     <Box
       component="section"
-      aria-label="Pedido balcão"
+      aria-label={title}
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -62,10 +68,7 @@ export function OrderCart({
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1.5, borderBottom: '1px solid var(--color-border)' }}>
         <ShoppingCartOutlinedIcon sx={{ color: 'var(--color-primary)' }} />
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 800, lineHeight: 1.2 }}>Pedido Balcão</Typography>
-          <Typography variant="caption" color="text.secondary">Balcão</Typography>
-        </Box>
+        <Typography sx={{ fontWeight: 800, lineHeight: 1.2, flex: 1, minWidth: 0 }} noWrap>{title}</Typography>
         <Button
           color="error"
           size="small"
@@ -79,9 +82,41 @@ export function OrderCart({
       </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto', px: 2, py: 1.5 }}>
+        {notice}
+        {customer ? (
+          <Box sx={{ display: 'grid', gap: 1, mb: 1.5 }}>
+            <TextField
+              size="small"
+              label={customer.label}
+              placeholder={customer.placeholder}
+              value={customer.name}
+              onChange={(event) => customer.onName(event.target.value)}
+              disabled={customer.locked || saving}
+              required={customer.required}
+            />
+            {customer.onNote ? (
+              <TextField
+                size="small"
+                label="Identificação visual (opcional)"
+                placeholder="Ex.: camiseta azul, mesa da janela"
+                value={customer.note}
+                onChange={(event) => customer.onNote(event.target.value.slice(0, 120))}
+                disabled={saving}
+              />
+            ) : null}
+            <TextField
+              size="small"
+              label="Observação do pedido (opcional)"
+              placeholder="Ex.: para viagem"
+              value={observation}
+              onChange={(event) => onObservation(event.target.value)}
+              disabled={saving}
+            />
+          </Box>
+        ) : null}
         {lines.length === 0 ? (
           <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-            Nenhum item neste pedido.
+            Toque nos produtos para adicionar.
           </Typography>
         ) : (
           <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
@@ -94,7 +129,7 @@ export function OrderCart({
                     component="img"
                     src={resolveMenuImage(line.product?.image)}
                     alt=""
-                    sx={{ width: 52, height: 52, borderRadius: '10px', objectFit: 'cover', bgcolor: 'var(--color-surface-muted, #f8fafc)' }}
+                    sx={{ width: 48, height: 48, borderRadius: '10px', objectFit: 'cover', bgcolor: 'var(--color-surface-muted, #f8fafc)' }}
                   />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
@@ -120,11 +155,11 @@ export function OrderCart({
                     />
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 0.75 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <IconButton aria-label={`Diminuir ${name}`} size="small" onClick={() => onChangeQty?.(line.key, -1)} disabled={saving}>
+                        <IconButton aria-label={`Diminuir ${name}`} onClick={() => onChangeQty?.(line.key, -1)} disabled={saving} sx={{ border: '1px solid var(--color-border)' }}>
                           <RemoveIcon fontSize="small" />
                         </IconButton>
-                        <Typography aria-label={`Quantidade de ${name}`} sx={{ minWidth: 20, textAlign: 'center' }}>{line.quantity}</Typography>
-                        <IconButton aria-label={`Aumentar ${name}`} size="small" onClick={() => onChangeQty?.(line.key, 1)} disabled={saving}>
+                        <Typography aria-label={`Quantidade de ${name}`} sx={{ minWidth: 24, textAlign: 'center', fontWeight: 700 }}>{line.quantity}</Typography>
+                        <IconButton aria-label={`Aumentar ${name}`} onClick={() => onChangeQty?.(line.key, 1)} disabled={saving} sx={{ border: '1px solid var(--color-border)' }}>
                           <AddIcon fontSize="small" />
                         </IconButton>
                       </Box>
@@ -132,7 +167,7 @@ export function OrderCart({
                     </Box>
                     {productNeedsCustomization(line.product) ? (
                       <Button size="small" onClick={() => onEdit?.(line)} disabled={saving} sx={{ textTransform: 'none', px: 0 }}>
-                        Alterar
+                        Alterar opções
                       </Button>
                     ) : null}
                   </Box>
@@ -147,28 +182,27 @@ export function OrderCart({
         {error ? (
           <Typography role="alert" color="error" sx={{ mb: 1 }}>{error}</Typography>
         ) : null}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-          <Typography color="text.secondary">{totals.itemCount} {totals.itemCount === 1 ? 'item' : 'itens'}</Typography>
-          <Typography>{formatCurrency(totals.subtotal)}</Typography>
-        </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-          Desconto e taxa de serviço entram na cobrança deste canal.
-        </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1.5 }}>
-          <Typography sx={{ fontWeight: 800 }}>Total</Typography>
+          <Typography sx={{ fontWeight: 800 }}>
+            Total
+            <Typography component="span" color="text.secondary" sx={{ fontWeight: 400, ml: 1, fontSize: 14 }}>
+              {totals.itemCount} {totals.itemCount === 1 ? 'item' : 'itens'}
+            </Typography>
+          </Typography>
           <Typography sx={{ fontWeight: 800, fontSize: 22 }}>{formatCurrency(totals.total)}</Typography>
         </Box>
         <Button
           fullWidth
           variant="contained"
-          disabled={blocked}
-          onClick={onFinalize}
+          disabled={saving || primary.disabled}
+          onClick={primary.onClick}
+          aria-keyshortcuts="Control+Enter"
           sx={{
             textTransform: 'none',
             fontWeight: 800,
+            fontSize: 16,
             borderRadius: '12px',
-            py: 1.25,
-            mb: 1,
+            py: 1.4,
             '&:not(.Mui-disabled)': {
               backgroundColor: 'var(--color-success)',
               color: '#fff',
@@ -179,36 +213,38 @@ export function OrderCart({
             },
           }}
         >
-          {saving ? 'Enviando...' : 'Finalizar pedido'}
+          {saving ? 'Enviando...' : primary.label}
         </Button>
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
-          <Button variant="outlined" onClick={onSave} disabled={!hasDraft || saving} sx={{ textTransform: 'none', borderRadius: '10px' }}>
-            Salvar
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={onPrint}
-            disabled={!printEnabled || saving}
-            aria-label="Imprimir"
-            title={printEnabled ? 'Abrir a comanda para impressão' : 'Disponível depois que o pedido for enviado'}
-            sx={{ textTransform: 'none', borderRadius: '10px' }}
-          >
-            Imprimir
-          </Button>
-          <Button variant="outlined" color="error" onClick={requestClear} disabled={!hasDraft || saving} sx={{ textTransform: 'none', borderRadius: '10px' }}>
-            Cancelar
-          </Button>
-        </Box>
-        <Button fullWidth onClick={onSend} disabled={blocked} sx={{ textTransform: 'none', mt: 0.5 }}>
-          Enviar pedido
-        </Button>
+        {secondary ? (
+          <>
+            <Button
+              fullWidth
+              variant="outlined"
+              disabled={saving || secondary.disabled}
+              onClick={secondary.onClick}
+              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.1, mt: 1 }}
+            >
+              {secondary.label}
+            </Button>
+            {secondary.hint ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, textAlign: 'center' }}>
+                {secondary.hint}
+              </Typography>
+            ) : null}
+          </>
+        ) : null}
+        {draftHint && hasDraft ? (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75, textAlign: 'center' }}>
+            {draftHint}
+          </Typography>
+        ) : null}
       </Box>
 
       <Dialog open={confirmClear} onClose={() => setConfirmClear(false)} aria-labelledby="clear-cart-title">
         <DialogTitle id="clear-cart-title">Limpar pedido?</DialogTitle>
         <DialogContent>
           <Typography>
-            Os itens deste rascunho serão descartados. Pedidos já enviados não são cancelados.
+            Os itens ainda não enviados serão descartados. Pedidos já enviados não são cancelados.
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { CheckoutDialog, getCloseAccountConfirmCopy } from './CheckoutDialog';
+import { cashChange, CheckoutDialog, getCloseAccountConfirmCopy } from './CheckoutDialog';
 import {
   closeComandaAccount,
   closeCounterOrder,
@@ -69,7 +69,7 @@ async function renderCheckout(target = tableTarget) {
   );
   expect(await screen.findByText(/Café/)).toBeInTheDocument();
   await waitFor(() => {
-    expect(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
   });
 }
 
@@ -81,7 +81,7 @@ describe('getCloseAccountConfirmCopy', () => {
     }).title).toBe('Confirma que o pagamento foi realizado?');
     expect(getCloseAccountConfirmCopy(comandaTarget, {
       paymentMode: 'ORDER_ONLY',
-    }).title).toBe('Liberar comanda?');
+    }).title).toBe('Finalizar comanda?');
     expect(getCloseAccountConfirmCopy(
       { kind: 'delivery', number: '0033', fulfillment: 'PICKUP' },
       { paymentMode: 'MANUAL_CONFIRMATION', totalLabel: 'R$ 12,00' },
@@ -111,7 +111,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
   it('abre o diálogo de confirmação da mesa sem chamar a API', async () => {
     await renderCheckout(tableTarget);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
 
     expect(await screen.findByRole('heading', { name: 'Confirma que o pagamento foi realizado?' })).toBeInTheDocument();
     expect(screen.getByText(/o Weper não processou esta transação/i)).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
   it('cancela e não dispara pagamento nem fechamento', async () => {
     await renderCheckout(tableTarget);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     expect(await screen.findByRole('heading', { name: 'Confirma que o pagamento foi realizado?' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
@@ -137,7 +137,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
   it('confirma pagamento externo e fecha a mesa', async () => {
     await renderCheckout(tableTarget);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => {
@@ -152,7 +152,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
   it('mostra o aviso de comanda e fecha só após confirmar', async () => {
     await renderCheckout(comandaTarget);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
 
     expect(await screen.findByRole('heading', { name: 'Confirma que o pagamento foi realizado?' })).toBeInTheDocument();
     expect(confirmExternalPayment).not.toHaveBeenCalled();
@@ -198,9 +198,9 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     expect(await screen.findByText(/Café/)).toBeInTheDocument();
     expect(screen.queryByText(/Suco/)).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
 
     await waitFor(() => {
@@ -259,9 +259,9 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     expect(screen.getByText(/Retirada #0033 — Lucas Calderon/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Adicionar produtos' })).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /^Confirmar pagamento/ })).toBeEnabled();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     expect(await screen.findByText(/pedido de retirada 0033/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
 
@@ -286,7 +286,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
       />,
     );
     expect(await screen.findByText('Taxa de entrega')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento e liberar' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
     expect(await screen.findByText(/pagamento de R\$\s*15,00 foi realizado fora do Weper/)).toBeInTheDocument();
     expect(screen.getByText(/pedido de entrega 0040 será fechado/)).toBeInTheDocument();
   });
@@ -299,8 +299,8 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     jest.spyOn(window, 'open').mockReturnValue(popup);
     try {
       await renderCheckout(tableTarget);
-      expect(screen.getByText(/não cobra, não fecha a conta/i)).toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button', { name: 'Imprimir comanda 80 mm' }));
+      expect(screen.queryByText(/Impressão térmica USB/)).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
       expect(popup.print).toHaveBeenCalledTimes(1);
       expect(popup.close).not.toHaveBeenCalled();
       expect(doc.documentElement.innerHTML).toContain('Mesa 12');
@@ -308,7 +308,6 @@ describe('CheckoutDialog confirmação de fechamento', () => {
       expect(doc.documentElement.innerHTML).toContain('1x');
       expect(doc.documentElement.innerHTML).toContain('NÃO É DOCUMENTO FISCAL');
       expect(doc.documentElement.innerHTML).toContain('NÃO É COMPROVANTE DE PAGAMENTO');
-      expect(screen.getByRole('status')).toHaveTextContent(/não confirma que o papel saiu/);
       expect(confirmExternalPayment).not.toHaveBeenCalled();
       expect(closeTableAccount).not.toHaveBeenCalled();
     } finally {
@@ -355,6 +354,48 @@ describe('CheckoutDialog confirmação de fechamento', () => {
 
     await waitFor(() => {
       expect(closeCounterOrder).toHaveBeenCalledTimes(1);
+    });
+    expect(confirmExternalPayment).not.toHaveBeenCalled();
+  });
+});
+
+describe('CheckoutDialog forma de pagamento', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAccountApis();
+    confirmExternalPayment.mockResolvedValue({ data: { id: 'pay-1', status: 'PAID_EXTERNALLY' } });
+  });
+
+  it('calcula o troco em dinheiro', () => {
+    expect(cashChange(37.5, '50')).toEqual({ change: 12.5, missing: 0 });
+    expect(cashChange(37.5, '20,00')).toEqual({ change: 0, missing: 17.5 });
+    expect(cashChange(37.5, '')).toBeNull();
+  });
+
+  it('em "Somente lançar" também registra a forma de pagamento escolhida', async () => {
+    getStorePaymentConfig.mockResolvedValue({
+      data: {
+        acceptedMethods: ['PIX', 'CASH'],
+        serviceFeePercent: 0.1,
+        tablePaymentMode: 'ORDER_ONLY',
+        comandaPaymentMode: 'ORDER_ONLY',
+      },
+    });
+    render(<CheckoutDialog open target={tableTarget} onClose={jest.fn()} onPaid={jest.fn()} />);
+    expect(await screen.findByText(/Café/)).toBeInTheDocument();
+    const finish = await screen.findByRole('button', { name: /^Finalizar/ });
+    fireEvent.click(await screen.findByRole('button', { name: 'Dinheiro' }));
+    fireEvent.change(screen.getByLabelText('Valor recebido'), { target: { value: '100' } });
+    expect(screen.getByText(/Troco:/)).toBeInTheDocument();
+    fireEvent.click(finish);
+    expect(await screen.findByText(/Forma de pagamento: Dinheiro/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    await waitFor(() => {
+      expect(closeTableAccount).toHaveBeenCalledWith(
+        tableTarget.id,
+        expect.objectContaining({ paymentMethod: 'CASH' }),
+        expect.any(String),
+      );
     });
     expect(confirmExternalPayment).not.toHaveBeenCalled();
   });

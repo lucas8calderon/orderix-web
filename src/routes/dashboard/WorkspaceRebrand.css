@@ -123,3 +123,12 @@
 @media(max-width:700px) { .weper-establishment .payment-channel-timing { display: block; }.weper-establishment .payment-channel-timing>.setting-label { margin-bottom: 20px; }.weper-establishment .settings-card .card-header { flex-wrap: wrap; }.weper-establishment .settings-card .save-button { min-width: 100px; } }
 
 .workspace-data-error { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; }
+
+/* Celular: categorias de Configurações em uma linha rolável, sem ocupar meia tela. */
+@media (max-width: 700px) {
+  .weper-establishment .settings-nav { position: sticky; top: 0; z-index: 5; margin: 0 -16px; padding: 8px 16px; background: var(--color-bg); }
+  .weper-establishment .settings-nav__track { display: flex; grid-template-columns: none; overflow-x: auto; gap: 8px; scrollbar-width: none; }
+  .weper-establishment .settings-nav__tab { flex: 0 0 auto; min-height: 40px; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
+  .weper-establishment .settings-nav__label { display: none; }
+  .weper-establishment .settings-nav__label-short { display: inline; }
+}

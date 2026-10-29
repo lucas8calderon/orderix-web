@@ -462,3 +462,47 @@ describe('useSettingsState delivery branding', () => {
     expect(result.current.settings.asaasApiKeyLength).toBe(18);
   });
 });
+
+describe('useSettingsState alterações pendentes', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    settingsStorage.getPaymentConfig.mockResolvedValue({ paymentMethods: { PIX: true, VOUCHER: true } });
+    settingsStorage.getPublicMenuConfig.mockResolvedValue({});
+    settingsStorage.getHoursConfig.mockResolvedValue({ schedule: [] });
+    settingsStorage.getDeliveryConfig.mockResolvedValue({ deliveryEnabled: true, deliveryFee: 5 });
+  });
+
+  it('marca alteração, descarta e limpa ao salvar só a seção gravada', async () => {
+    settingsStorage.updatePaymentConfig.mockResolvedValue({ paymentMethods: { PIX: true, VOUCHER: false } });
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.isDirty).toBe(false);
+
+    act(() => result.current.updateSetting('paymentMethods', 'VOUCHER', false));
+    expect(result.current.isDirty).toBe(true);
+    act(() => result.current.discardChanges());
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.settings.paymentMethods.VOUCHER).toBe(true);
+
+    act(() => {
+      result.current.updateSetting('paymentMethods', 'VOUCHER', false);
+      result.current.updateSetting('deliveryFee', null, 9);
+    });
+    await act(async () => {
+      await result.current.saveSettings('paymentMethods');
+    });
+    // A taxa de entrega é do Delivery: continua pendente depois de salvar os pagamentos.
+    expect(result.current.isDirty).toBe(true);
+    act(() => result.current.discardChanges());
+    expect(result.current.settings.deliveryFee).toBe(5);
+    expect(result.current.settings.paymentMethods.VOUCHER).toBe(false);
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it('ignora permissões, que ainda não vão para o servidor', async () => {
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.updatePermission('garcom', 'viewDashboard', true));
+    expect(result.current.isDirty).toBe(false);
+  });
+});

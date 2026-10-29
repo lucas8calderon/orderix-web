@@ -1,4 +1,5 @@
 import { EmptyState } from '../../../commons/components/EmptyState';
+import { FloorFilterBar, filterFloorItems } from '../../../commons/components/FloorFilterBar';
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
@@ -33,6 +34,9 @@ export function Comandas({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
 
   const { comandas, loading, error, emptyResult, fetchComandas } = useGetComandas();
   const canManage = canManageFloor(getCurrentUser());
+  const [floorFilter, setFloorFilter] = useState('all');
+  const [floorQuery, setFloorQuery] = useState('');
+  const visibleComandas = filterFloorItems(comandas, { status: floorFilter, query: floorQuery });
   const {
     successSavingComanda,
     errorSavingComanda,
@@ -188,9 +192,22 @@ export function Comandas({ onOpenAccount, onPlaceOrder, floorVersion = 0 }) {
         <EmptyState title="Nenhuma comanda cadastrada" description={canManage ? 'Cadastre as comandas para organizar o atendimento.' : 'Peça ao administrador para cadastrar as comandas.'} actionLabel={canManage ? 'Cadastrar comanda' : undefined} onAction={() => setHandleAddNewComanda(true)} />
       )}
 
-      <Grid container spacing={2}>
-        {comandas.map((comanda) => (
-          <Grid item key={comanda.id} xs={12} sm={6} md={4} lg={3} xl={2}>
+      {comandas.length > 0 ? (
+        <FloorFilterBar
+          items={comandas}
+          status={floorFilter}
+          onStatus={setFloorFilter}
+          query={floorQuery}
+          onQuery={setFloorQuery}
+          searchLabel="Buscar comanda pelo número"
+        />
+      ) : null}
+      {comandas.length > 0 && visibleComandas.length === 0 ? (
+        <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>Nenhuma comanda neste filtro.</Typography>
+      ) : null}
+      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+        {visibleComandas.map((comanda) => (
+          <Grid item key={comanda.id} xs={6} sm={4} md={3} lg={3} xl={2}>
             <CardComanda comanda={comanda} onOpen={() => handleSelectedComanda(comanda)} onPlace={() => onPlaceOrder?.({ kind: 'comanda', id: comanda.id, number: comanda.number })} canManage={canManage} />
           </Grid>
         ))}

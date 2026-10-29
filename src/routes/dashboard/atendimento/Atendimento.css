@@ -122,6 +122,44 @@
 
 .counter-pos__catalog {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Busca e categorias acompanham a rolagem do catálogo. */
+.counter-pos__filters {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+  background: var(--color-bg);
+}
+
+.counter-mode-toggle .MuiToggleButton-root {
+  text-transform: none;
+  font-weight: 700;
+  padding: 8px 18px;
+  gap: 8px;
+}
+
+.counter-mode-toggle .Mui-selected {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+
+.counter-mode-toggle__count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 22px;
+  background: var(--status-warning-bg, #fef3c7);
+  color: var(--status-warning-text, #92400e);
 }
 
 .counter-pos__cart {
@@ -237,6 +275,31 @@
   margin-top: 2px;
 }
 
+.checkout-items {
+  border: 1px solid var(--color-border);
+  border-radius: 12px !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.checkout-items::before {
+  display: none;
+}
+
+.checkout-total {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.checkout-cash {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+}
+
 .checkout-summary {
   display: flex;
   flex-direction: column;
@@ -250,6 +313,8 @@
 
 .checkout-payments .MuiToggleButton-root {
   text-transform: none;
+  min-height: 44px;
+  font-weight: 700;
   border-radius: 8px !important;
   border: 1px solid var(--color-border) !important;
   color: var(--color-text-primary) !important;
@@ -260,4 +325,33 @@
   background-color: var(--color-primary) !important;
   color: var(--color-on-primary) !important;
   border-color: var(--color-primary) !important;
+}
+
+.floor-filter .MuiToggleButton-root {
+  text-transform: none;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+.floor-filter .Mui-selected {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+
+.atendimento-tab-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  background: var(--status-warning-bg, #fef3c7);
+  color: var(--status-warning-text, #92400e);
+}
+
+.atendimento-modes .Mui-selected .atendimento-tab-count {
+  background: #fff;
+  color: var(--color-primary);
 }

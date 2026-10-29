@@ -1,6 +1,16 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ThermalPrintPanel } from '../../../printing/ThermalPrintPanel';
-import { Alert, Portal, Snackbar } from '@mui/material';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Portal,
+  Snackbar,
+} from '@mui/material';
 import {
   Inventory2Outlined as InventoryIcon,
   SettingsOutlined as SettingsIcon,
@@ -30,6 +40,16 @@ import { SettingsSectionCard } from './components/SettingsSectionCard';
 import './Settings.css';
 import { SettingsFinder } from './components/SettingsFinder';
 
+// Seções com um único botão Salvar: a barra de alterações pendentes pode salvar por ele.
+const SECTION_SAVE_TARGET = {
+  horarios: 'hours',
+  vendas: 'paymentMethods',
+  pagamentos: 'paymentMethods',
+  integracoes: 'paymentMethods',
+  taxas: 'serviceFee',
+  'cardapio-digital': 'publicMenu',
+};
+
 export function Settings() {
   const navigate = useNavigate();
   const params = useParams();
@@ -49,17 +69,41 @@ export function Settings() {
     updateSetting,
     updatePermission,
     saveSettings,
+    isDirty,
+    discardChanges,
     getPaymentMethodLabel,
     getProfileLabel,
     getPermissionLabel,
   } = useSettingsState();
+  const [pendingSection, setPendingSection] = useState(null);
 
   const sliderStyles = useSliderStyles();
   const switchStyles = useSwitchStyles();
 
   const goToSection = useCallback((sectionId) => {
+    if (isDirty && sectionId !== activeSection) {
+      setPendingSection(sectionId);
+      return;
+    }
     navigate(settingsSectionPath(sectionId));
-  }, [navigate]);
+  }, [navigate, isDirty, activeSection]);
+
+  const leaveWithoutSaving = () => {
+    const target = pendingSection;
+    setPendingSection(null);
+    discardChanges();
+    if (target) navigate(settingsSectionPath(target));
+  };
+
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const warn = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [isDirty]);
 
   const imageSaveQueued = useRef(false);
   const handleSettingChange = useCallback((section, key, value) => {
@@ -343,6 +387,43 @@ export function Settings() {
           </div>
         </>
       )}
+
+      {isDirty ? (
+        <div className="settings-unsaved-bar" role="region" aria-label="Alterações não salvas">
+          <span className="settings-unsaved-bar__text">Você tem alterações não salvas.</span>
+          <div className="settings-unsaved-bar__actions">
+            <Button onClick={discardChanges} disabled={saving} sx={{ textTransform: 'none', fontWeight: 700 }}>
+              Descartar
+            </Button>
+            {SECTION_SAVE_TARGET[activeSection] ? (
+              <Button
+                variant="contained"
+                disableElevation
+                onClick={() => saveSettings(SECTION_SAVE_TARGET[activeSection])}
+                disabled={saving}
+                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
+              >
+                {saving ? 'Salvando...' : 'Salvar alterações'}
+              </Button>
+            ) : (
+              <span className="settings-unsaved-bar__hint">Use o botão Salvar do card alterado.</span>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      <Dialog open={Boolean(pendingSection)} onClose={() => setPendingSection(null)} aria-labelledby="settings-leave-title">
+        <DialogTitle id="settings-leave-title">Sair sem salvar?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Você alterou configurações nesta tela e ainda não salvou. Se sair agora, as alterações serão descartadas.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingSection(null)} sx={{ textTransform: 'none' }}>Continuar editando</Button>
+          <Button color="error" onClick={leaveWithoutSaving} sx={{ textTransform: 'none' }}>Descartar e sair</Button>
+        </DialogActions>
+      </Dialog>
 
       {toastSnackbar}
     </div>

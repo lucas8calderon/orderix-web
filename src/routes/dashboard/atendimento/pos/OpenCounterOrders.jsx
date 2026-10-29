@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Box, Button, Card, CardActionArea, CardContent, Grid, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Grid, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
 import { StatusBadge } from '../../../../commons/components/StatusBadge';
@@ -15,7 +14,7 @@ import {
   isOpenCounterOrder,
 } from './counterOrders';
 
-export function OpenCounterOrders({ visible = true, floorVersion = 0, onBack, onOpenAccount }) {
+export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountChange, onOpenAccount }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,6 +50,11 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onBack, on
     };
   }, [visible, floorVersion]);
 
+  const activeCount = useMemo(() => orders.filter(isActiveCounterSale).length, [orders]);
+  useEffect(() => {
+    onCountChange?.(activeCount);
+  }, [activeCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const filtered = useMemo(() => {
     const source = filter === 'cancelled'
       ? orders.filter((order) => String(order?.status || '').toUpperCase() === 'CANCELLED')
@@ -60,14 +64,6 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onBack, on
 
   return (
     <Box>
-      <Box className="atendimento-section-header">
-        <Typography variant="h5" component="h2" className="atendimento-section-title">
-          Pedidos abertos
-        </Typography>
-        <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ textTransform: 'none' }}>
-          Nova venda
-        </Button>
-      </Box>
       <ToggleButtonGroup
         exclusive
         size="small"

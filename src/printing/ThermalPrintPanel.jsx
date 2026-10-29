@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
 import { Alert, Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import { diagnosticReport, openThermalPrint, TEST_ACCOUNT, thermalEnabled } from './thermalPrint';
 
@@ -38,6 +39,12 @@ export function ThermalPrintPanel({ account, placeLabel = '' }) {
     try { await navigator.clipboard.writeText(text); setMessage('Relatório copiado. Envie para o suporte Weper.'); }
     catch { setMessage('Selecione e copie o relatório abaixo para enviar ao suporte.'); }
   };
+  if (account) {
+    return <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+      <Button type="button" variant="outlined" startIcon={<PrintOutlinedIcon />} onClick={print} sx={{ textTransform: 'none' }}>Imprimir</Button>
+      {tone === 'error' && message && <Alert severity="error" role="alert">{message}</Alert>}
+    </Box>;
+  }
   return <Box sx={{ my: 2, p: 2, maxWidth: 880, border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
     <Typography component="h2" variant="h6">Impressão térmica USB — 80 mm</Typography>
     <Typography variant="body2">No Windows, instale o driver da KP-IM609 e imprima a página de teste do sistema. No Chrome ou Edge, selecione a impressora, papel 80 mm, escala 100%, margens nenhuma e desative cabeçalhos e rodapés.</Typography>

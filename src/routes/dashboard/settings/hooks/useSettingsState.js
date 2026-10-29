@@ -244,6 +244,38 @@ function apiErrorMessage(error, fallback, { saving = false } = {}) {
   return error?.message || fallback;
 }
 
+// Permissões e dados fiscais ainda não vão para o servidor; ficam fora do controle de alterações pendentes.
+function trackedSettings(settings) {
+  const { permissions, companyInfo, ...rest } = settings || {};
+  return rest;
+}
+
+export function settingsSnapshot(settings) {
+  return JSON.stringify(trackedSettings(settings));
+}
+
+// Campos gravados por cada botão Salvar. Pagamentos enviam a configuração de cobrança inteira.
+const SAVED_FIELDS = {
+  paymentMethods: Object.keys(DEFAULT_PAYMENT),
+  serviceFee: Object.keys(DEFAULT_PAYMENT),
+  onlinePayments: Object.keys(DEFAULT_PAYMENT),
+  publicMenu: Object.keys(DEFAULT_PUBLIC_MENU),
+  hours: [...Object.keys(DEFAULT_HOURS), 'deliveryEnabled'],
+  delivery: Object.keys(DEFAULT_DELIVERY),
+  companyInfo: Object.keys(DEFAULT_DELIVERY),
+};
+
+export function markSectionSaved(baseline, current, section) {
+  const fields = SAVED_FIELDS[section];
+  const saved = trackedSettings(current);
+  if (!baseline || !fields) return settingsSnapshot(current);
+  const next = { ...JSON.parse(baseline) };
+  fields.forEach((field) => {
+    if (field in saved) next[field] = saved[field];
+  });
+  return JSON.stringify(next);
+}
+
 export const useSettingsState = () => {
   const [settings, setSettings] = useState({
     ...DEFAULT_PAYMENT,
@@ -256,6 +288,7 @@ export const useSettingsState = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const [baseline, setBaseline] = useState(null);
   const settingsRef = useRef(settings);
   const serverImagesRef = useRef({ logo: '', cover: '' });
   settingsRef.current = settings;
@@ -282,7 +315,11 @@ export const useSettingsState = () => {
       .then(([payment, publicMenu, hours, delivery]) => {
         if (cancelled) return;
         rememberServerImages(delivery);
-        setSettings((prev) => ({ ...prev, ...payment, ...publicMenu, ...hours, ...delivery }));
+        setSettings((prev) => {
+          const next = { ...prev, ...payment, ...publicMenu, ...hours, ...delivery };
+          setBaseline(settingsSnapshot(next));
+          return next;
+        });
       })
       .catch((error) => {
         if (cancelled) return;
@@ -329,7 +366,7 @@ export const useSettingsState = () => {
     });
   }, []);
 
-  const saveSettings = useCallback(async (section, options = {}) => {
+  const saveSection = useCallback(async (section, options = {}) => {
     if (section === 'permissions') {
       showToast(
         'Configurações ainda não são salvas no servidor. Esta tela está em breve.',
@@ -492,6 +529,25 @@ export const useSettingsState = () => {
     }
   }, [showToast]);
 
+  const saveSettings = useCallback(async (section, options) => {
+    const ok = await saveSection(section, options);
+    if (ok) {
+      // Lê o estado já com a resposta do servidor aplicada (atualizações enfileiradas antes desta).
+      setSettings((prev) => {
+        setBaseline((current) => markSectionSaved(current, prev, section));
+        return prev;
+      });
+    }
+    return ok;
+  }, [saveSection]);
+
+  const isDirty = baseline != null && settingsSnapshot(settings) !== baseline;
+
+  const discardChanges = useCallback(() => {
+    if (baseline == null) return;
+    setSettings((prev) => ({ ...prev, ...JSON.parse(baseline) }));
+  }, [baseline]);
+
   const labels = useMemo(() => ({
     sectionTitles: {
       serviceFee: 'Taxa de Serviço',
@@ -534,6 +590,8 @@ export const useSettingsState = () => {
     updateSetting,
     updatePermission,
     saveSettings,
+    isDirty,
+    discardChanges,
     getSectionTitle,
     getPaymentMethodLabel,
     getProfileLabel,
