@@ -32,6 +32,7 @@ const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTra
 const DeliveryOrdersPage = lazy(() => import('./routes/public-delivery/DeliveryOrdersPage'));
 const DeliveryAccountPage = lazy(() => import('./routes/public-delivery/DeliveryAccountPage'));
 const PartnersPage = lazy(() => import('./routes/partners/PartnersPage'));
+const DeliveryLandingPage = lazy(() => import('./routes/home/DeliveryLandingPage'));
 const PartnerLoginPage = lazy(() => import('./routes/partners/PartnerLoginPage'));
 const PartnerRecoveryPage = lazy(() => import('./routes/partners/PartnerRecoveryPage'));
 const PartnerResetPasswordPage = lazy(() => import('./routes/partners/PartnerResetPasswordPage'));
@@ -168,6 +169,14 @@ function App() {
             <Route path={PATHS.PARTNERS_PAYOUTS} element={<PartnerPayoutsPage />} />
           </Route>
           <Route path="/parceiros/*" element={<Navigate to={PATHS.PARTNERS} replace />} />
+          <Route
+            path={PATHS.DELIVERY_LANDING}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <DeliveryLandingPage />
+              </Suspense>
+            )}
+          />
           <Route
             path={PATHS.DEMO}
             element={(

@@ -98,6 +98,8 @@ export const PATHS = {
   PUBLIC_DELIVERY_ORDER: '/delivery/pedido/:publicToken',
   DEMO: '/demo',
   DEMO_SLUG: '/demo/:slug',
+  /** Página institucional do delivery próprio (não confundir com PUBLIC_DELIVERY, a loja do cliente). */
+  DELIVERY_LANDING: '/delivery-sem-comissao',
   PARTNERS: '/parceiros',
   PARTNERS_LOGIN: '/parceiros/login',
   PARTNERS_DASHBOARD: '/parceiros/dashboard',
@@ -218,6 +220,7 @@ export const PUBLIC_PATHS = [
   PATHS.PRIVACY,
   PATHS.TERMS,
   PATHS.DEMO,
+  PATHS.DELIVERY_LANDING,
   PATHS.PARTNERS,
   PATHS.PARTNERS_LOGIN,
   PATHS.PARTNERS_RECOVERY,

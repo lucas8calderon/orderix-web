@@ -57,6 +57,13 @@ test('solution tabs support keyboard navigation and update their accessible pane
   expect(screen.getByRole('tab', { name: 'Atendimento' })).toHaveAttribute('aria-selected', 'true');
 });
 
+test('sales channels tab and footer link to the delivery page', () => {
+  setup();
+  fireEvent.click(screen.getByRole('tab', { name: 'Canais de venda' }));
+  expect(screen.getByRole('link', { name: 'Ver o delivery sem comissão' })).toHaveAttribute('href', '/delivery-sem-comissao');
+  expect(screen.getByRole('link', { name: 'Delivery sem comissão' })).toHaveAttribute('href', '/delivery-sem-comissao');
+});
+
 test('public pricing table shows the amount without the internal plan code', () => {
   setup();
   fireEvent.click(screen.getByText(/Ver todas as faixas de preço/i));

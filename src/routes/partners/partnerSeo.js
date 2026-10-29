@@ -40,21 +40,26 @@ function setCanonical(href) {
   };
 }
 
-export function applyPartnerDocumentMeta() {
+/** Título, descrição, og:* e canonical de uma página institucional. Devolve a função que restaura os anteriores. */
+export function applyDocumentMeta({ title, description, canonical }) {
   if (typeof document === 'undefined') return () => {};
   const previousTitle = document.title;
-  document.title = PARTNER_PAGE_SEO.title;
+  document.title = title;
   const restores = [
     () => {
       document.title = previousTitle;
     },
-    setMeta('name', 'description', PARTNER_PAGE_SEO.description),
-    setMeta('property', 'og:title', PARTNER_PAGE_SEO.title),
-    setMeta('property', 'og:description', PARTNER_PAGE_SEO.description),
-    setMeta('property', 'og:url', PARTNER_PAGE_SEO.canonical),
-    setCanonical(PARTNER_PAGE_SEO.canonical),
+    setMeta('name', 'description', description),
+    setMeta('property', 'og:title', title),
+    setMeta('property', 'og:description', description),
+    setMeta('property', 'og:url', canonical),
+    setCanonical(canonical),
   ];
   return () => {
     restores.reverse().forEach((restore) => restore());
   };
+}
+
+export function applyPartnerDocumentMeta() {
+  return applyDocumentMeta(PARTNER_PAGE_SEO);
 }
