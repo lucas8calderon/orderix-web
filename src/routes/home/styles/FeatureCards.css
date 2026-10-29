@@ -1,0 +1,19 @@
+/* Seção "Funcionalidades" da home: um cartão por página de funcionalidade. */
+.wp-features-section{padding-top:0}
+.wp-feature-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.wp-feature-cards li{display:flex}
+.wp-feature-card{display:flex;flex-direction:column;width:100%;padding:26px 22px;background:#fff;border:1px solid var(--wp-border);border-radius:12px;transition:box-shadow .2s,border-color .2s}
+.wp-feature-card:hover{box-shadow:0 14px 30px #19346010;border-color:#9db9ee}
+.wp-feature-card .wp-feature-icon{margin-bottom:18px}
+.wp-site .wp-feature-card h3{font-size:17px;font-weight:600;letter-spacing:-.4px;margin-bottom:8px}
+.wp-feature-card p{font-size:13px;line-height:1.7;margin-bottom:18px!important;flex:1}
+.wp-feature-card .wp-text-link{font-size:12px}
+@media(max-width:1100px){.wp-feature-cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){
+  .wp-feature-cards{grid-template-columns:repeat(2,1fr);gap:10px}
+  .wp-feature-cards li:last-child:nth-child(odd){grid-column:1/-1}
+  .wp-feature-card{padding:18px 14px}
+  .wp-feature-card .wp-feature-icon{width:40px;height:40px;margin-bottom:14px}
+  .wp-site .wp-feature-card h3{font-size:15px}
+  .wp-feature-card p{font-size:12px}
+}

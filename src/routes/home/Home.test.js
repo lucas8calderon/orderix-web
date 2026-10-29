@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Home from './Home';
 import { openWhatsApp } from './landingAssets';
 import { PRICING_TIERS, formatPrice } from '../../config/pricingTiers';
+import { FEATURE_PAGES } from './features/featurePages';
 
 jest.mock('./landingAssets', () => ({
   openWhatsApp: jest.fn(),
@@ -55,6 +56,14 @@ test('solution tabs support keyboard navigation and update their accessible pane
   expect(screen.getByRole('tabpanel', { name: 'Gestão' })).toHaveTextContent('Faturamento, pedidos e ticket médio');
   fireEvent.keyDown(screen.getByRole('tab', { name: 'Gestão' }), { key: 'ArrowRight' });
   expect(screen.getByRole('tab', { name: 'Atendimento' })).toHaveAttribute('aria-selected', 'true');
+});
+
+test('features section shows one card per feature page and the menu reaches it', () => {
+  setup();
+  expect(screen.getByRole('link', { name: 'Funcionalidades' })).toHaveAttribute('href', '#funcionalidades');
+  const cards = document.querySelectorAll('#funcionalidades .wp-feature-card');
+  expect([...cards].map(card => card.getAttribute('href'))).toEqual(FEATURE_PAGES.map(page => page.path));
+  expect(screen.getByRole('link', { name: /Autoatendimento O cliente faz o pedido no tablet/ })).toHaveAttribute('href', '/autoatendimento');
 });
 
 test('sales channels tab and footer link to the delivery page', () => {

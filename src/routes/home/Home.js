@@ -8,6 +8,7 @@ import { PATHS } from '../../services/accessControl';
 import { capturePartnerRef } from '../../services/partnerReferral';
 import { LANDING_IMAGES, openWhatsApp, WHATSAPP_DISPLAY } from './landingAssets';
 import './styles/Rebrand.css';
+import './styles/FeatureCards.css';
 
 const SOLUTIONS = [
   { id: 'atendimento', label: 'Atendimento', Icon: Smartphone, title: 'O garçom lança o pedido no celular. A comanda não fica no papel.', text: 'Mesas, comandas e pedidos organizados no app Garçom. Sua equipe acompanha o atendimento sem depender de anotações soltas.', points: ['Pedidos pelo aplicativo Android', 'Mesas e comandas no mesmo fluxo', 'Informações que acompanham o atendimento'], stage: 'Do salão para a cozinha', steps: ['Mesa ou comanda', 'Pedido registrado', 'Preparo organizado'], more: { to: PATHS.WAITER_LANDING, label: 'Ver o app do garçom' } },
@@ -71,7 +72,7 @@ export default function Home() {
       <a href="#home" className="wp-logo" aria-label="Weper, início" onClick={() => setMenuOpen(false)}><WeperMark size={34} /></a>
       <button ref={menuButton} className="wp-menu-toggle" type="button" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="wp-navigation" onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X /> : <Menu />}</button>
       <nav id="wp-navigation" aria-label="Navegação principal" className={menuOpen ? 'wp-navigation is-open' : 'wp-navigation'}>
-        {[['solucoes', 'Soluções'], ['demo', 'Demonstração'], ['plans', 'Preços'], ['faq', 'Dúvidas']].map(([id, label]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>{label}</a>)}
+        {[['solucoes', 'Soluções'], ['funcionalidades', 'Funcionalidades'], ['demo', 'Demonstração'], ['plans', 'Preços'], ['faq', 'Dúvidas']].map(([id, label]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>{label}</a>)}
         <Link to={PATHS.PARTNERS} onClick={() => setMenuOpen(false)}>Parceiros</Link>
         <Link to="/login" className="wp-mobile-login">Já sou cliente <ArrowUpRight size={15} /></Link>
       </nav>
@@ -95,6 +96,11 @@ export default function Home() {
           if (next === null) return; event.preventDefault(); setActiveSolution(next); document.getElementById(`wp-tab-${SOLUTIONS[next].id}`)?.focus();
         }}><item.Icon size={19} />{item.label}</button>)}</div>
         <div id="wp-solution-panel" role="tabpanel" aria-labelledby={`wp-tab-${solution.id}`} className="wp-solution-panel"><div className="wp-solution-copy"><span className="wp-feature-icon"><solution.Icon size={25} /></span><h3>{solution.title}</h3><p>{solution.text}</p><ul>{solution.points.map(point => <li key={point}><CheckCircle2 size={18} />{point}</li>)}</ul>{solution.more ? <Link to={solution.more.to} className="wp-text-link">{solution.more.label} <ArrowRight size={17} /></Link> : <a href="#plans" className="wp-text-link">Conhecer a assinatura <ArrowRight size={17} /></a>}</div><div className="wp-flow-visual"><span className="wp-kicker">TUDO SE CONECTA</span><h3>{solution.stage}</h3><div className="wp-flow-line">{solution.steps.map((step, index) => <div key={step}><span>{String(index + 1).padStart(2, '0')}</span><strong>{step}</strong>{index < 2 ? <ChevronDown size={18} /> : <CheckCircle2 size={18} />}</div>)}</div><p>Uma informação. O próximo passo certo.</p></div></div>
+      </div></section>
+
+      <section id="funcionalidades" className="wp-section wp-features-section"><div className="wp-container">
+        <div className="wp-section-heading"><div><span className="wp-kicker">FUNCIONALIDADES</span><h2>Conheça cada parte<br /><em>da operação, em detalhe.</em></h2></div><p>Tudo vem na mesma assinatura. Abra a funcionalidade que mais pesa na sua rotina.</p></div>
+        <ul className="wp-feature-cards">{FEATURE_PAGES.map(page => <li key={page.path}><Link to={page.path} className="wp-feature-card"><span className="wp-feature-icon"><page.Icon size={22} /></span><h3>{page.label}</h3><p>{page.summary}</p><span className="wp-text-link" aria-hidden="true">Ver como funciona <ArrowRight size={16} /></span></Link></li>)}</ul>
       </div></section>
 
       <section className="wp-control-section"><div className="wp-container wp-control-grid"><div><span className="wp-kicker">TECNOLOGIA QUE CABE NA ROTINA</span><h2>Quem atende usa o app.<br />Quem gerencia abre o painel.</h2><p>O app acompanha a equipe no salão. O painel reúne as informações no computador. Cada pessoa com as ferramentas para fazer sua parte.</p><a href="#demo" className="wp-button wp-button--white">Ver o cardápio simulado <ArrowRight size={18} /></a></div><div className="wp-device-pair"><article><Smartphone size={30} /><span>01 / NA OPERAÇÃO</span><h3>Agilidade para atender</h3><p>App Garçom para Android, com mesas, comandas e pedidos.</p></article><article><Monitor size={30} /><span>02 / NA GESTÃO</span><h3>Clareza para decidir</h3><p>Painel web com catálogo, equipe e indicadores da loja.</p></article></div></div></section>
