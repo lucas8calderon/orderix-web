@@ -42,3 +42,8 @@
   .wp-delivery-steps li{padding:22px}
   .wp-delivery-result-total dd{font-size:26px}
 }
+
+/* Páginas de funcionalidade (FeaturePageLayout) */
+.wp-feature-list-text{font-size:14px;line-height:1.8;max-width:360px;margin-top:22px!important}
+.wp-feature-list{margin:0;align-self:center}
+.wp-feature-list li{font-size:14px}

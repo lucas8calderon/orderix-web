@@ -62,6 +62,11 @@ test('sales channels tab and footer link to the delivery page', () => {
   fireEvent.click(screen.getByRole('tab', { name: 'Canais de venda' }));
   expect(screen.getByRole('link', { name: 'Ver o delivery sem comissão' })).toHaveAttribute('href', '/delivery-sem-comissao');
   expect(screen.getByRole('link', { name: 'Delivery sem comissão' })).toHaveAttribute('href', '/delivery-sem-comissao');
+  fireEvent.click(screen.getByRole('tab', { name: 'Atendimento' }));
+  expect(screen.getByRole('link', { name: 'Ver o app do garçom' })).toHaveAttribute('href', '/app-garcom');
+  fireEvent.click(screen.getByRole('tab', { name: 'Cozinha' }));
+  expect(screen.getByRole('link', { name: 'Ver o painel da cozinha' })).toHaveAttribute('href', '/cozinha-kds');
+  expect(screen.getByRole('link', { name: 'Controle de estoque' })).toHaveAttribute('href', '/controle-de-estoque');
 });
 
 test('public pricing table shows the amount without the internal plan code', () => {

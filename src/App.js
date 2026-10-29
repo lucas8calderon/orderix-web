@@ -33,6 +33,16 @@ const DeliveryOrdersPage = lazy(() => import('./routes/public-delivery/DeliveryO
 const DeliveryAccountPage = lazy(() => import('./routes/public-delivery/DeliveryAccountPage'));
 const PartnersPage = lazy(() => import('./routes/partners/PartnersPage'));
 const DeliveryLandingPage = lazy(() => import('./routes/home/DeliveryLandingPage'));
+const WaiterLandingPage = lazy(() => import('./routes/home/features/WaiterLandingPage'));
+const KitchenLandingPage = lazy(() => import('./routes/home/features/KitchenLandingPage'));
+const InventoryLandingPage = lazy(() => import('./routes/home/features/InventoryLandingPage'));
+const SelfServiceLandingPage = lazy(() => import('./routes/home/features/SelfServiceLandingPage'));
+const FEATURE_LANDING_ROUTES = [
+  [PATHS.WAITER_LANDING, WaiterLandingPage],
+  [PATHS.KITCHEN_LANDING, KitchenLandingPage],
+  [PATHS.INVENTORY_LANDING, InventoryLandingPage],
+  [PATHS.SELF_SERVICE_LANDING, SelfServiceLandingPage],
+];
 const PartnerLoginPage = lazy(() => import('./routes/partners/PartnerLoginPage'));
 const PartnerRecoveryPage = lazy(() => import('./routes/partners/PartnerRecoveryPage'));
 const PartnerResetPasswordPage = lazy(() => import('./routes/partners/PartnerResetPasswordPage'));
@@ -177,6 +187,17 @@ function App() {
               </Suspense>
             )}
           />
+          {FEATURE_LANDING_ROUTES.map(([path, Page]) => (
+            <Route
+              key={path}
+              path={path}
+              element={(
+                <Suspense fallback={<RouteFallback />}>
+                  <Page />
+                </Suspense>
+              )}
+            />
+          ))}
           <Route
             path={PATHS.DEMO}
             element={(
