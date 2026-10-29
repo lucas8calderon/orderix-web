@@ -3,6 +3,7 @@ import {
   hydrateSavedSecretLengths,
   toPaymentPayload,
   toPaymentUi,
+  withoutDeliveryOnlinePayment,
   updateStorePaymentConfig,
 } from '../../../../services/paymentConfigService';
 import {
@@ -59,8 +60,9 @@ export const settingsStorage = {
     return toPaymentUi(response.data || {});
   },
 
-  async updatePaymentConfig(paymentUi) {
-    const payload = toPaymentPayload(paymentUi);
+  async updatePaymentConfig(paymentUi, { scope = 'all' } = {}) {
+    const full = toPaymentPayload(paymentUi);
+    const payload = scope === 'salon' ? withoutDeliveryOnlinePayment(full) : full;
     if (!payload.acceptedMethods.length) {
       const error = new Error('Selecione ao menos um meio de pagamento');
       error.code = 'PAYMENT_METHODS_REQUIRED';

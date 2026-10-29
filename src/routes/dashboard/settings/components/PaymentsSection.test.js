@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { PaymentsSection } from './PaymentsSection';
+import { channelPolicySummary, PaymentsSection, sameAsCounter } from './PaymentsSection';
 
 const baseSettings = {
   tableTiming: 'AFTER_KITCHEN',
@@ -87,5 +87,28 @@ describe('PaymentsSection', () => {
     renderSection();
     expect(screen.queryByText('Pagamentos online')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();
+  });
+});
+
+describe('PaymentsSection resumo e regra única', () => {
+  it('resume o que o caixa vê em cada canal', () => {
+    expect(channelPolicySummary('ORDER_ONLY')).toMatch(/registra a forma de pagamento/);
+    expect(channelPolicySummary('MANUAL_CONFIRMATION', 'BEFORE_KITCHEN')).toBe('Confirma o pagamento antes de ir para a cozinha.');
+    expect(channelPolicySummary('INTEGRATED_PAYMENT', 'AFTER_KITCHEN')).toMatch(/maquininha no fechamento/);
+  });
+
+  it('copia a regra do Balcão para Mesa e Comanda', () => {
+    const onSettingChange = jest.fn();
+    renderSection({ counterPaymentMode: 'ORDER_ONLY', counterTiming: 'AFTER_KITCHEN' }, onSettingChange);
+    fireEvent.click(screen.getByRole('button', { name: 'Usar a regra do Balcão em Mesa e Comanda' }));
+    expect(onSettingChange).toHaveBeenCalledWith('tablePaymentMode', null, 'ORDER_ONLY');
+    expect(onSettingChange).toHaveBeenCalledWith('comandaPaymentMode', null, 'ORDER_ONLY');
+    expect(onSettingChange).toHaveBeenCalledWith('comandaTiming', null, 'AFTER_KITCHEN');
+  });
+
+  it('desativa o atalho quando os canais já seguem o Balcão', () => {
+    renderSection();
+    expect(sameAsCounter(baseSettings)).toBe(true);
+    expect(screen.getByRole('button', { name: 'Usar a regra do Balcão em Mesa e Comanda' })).toBeDisabled();
   });
 });

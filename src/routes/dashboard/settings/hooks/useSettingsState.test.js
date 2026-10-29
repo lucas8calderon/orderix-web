@@ -414,7 +414,8 @@ describe('useSettingsState delivery branding', () => {
         pagbankEnvironment: 'sandbox',
         pagbankAccessToken: 'token-sandbox-loja-teste',
         onlinePixEnabled: false,
-      })
+      }),
+      { scope: 'all' },
     );
   });
 
@@ -456,7 +457,8 @@ describe('useSettingsState delivery branding', () => {
         asaasPublicKey: 'pub_asaas_12',
         asaasWebhookToken: 'whsec_loja',
         onlinePixEnabled: false,
-      })
+      }),
+      { scope: 'all' },
     );
     expect(result.current.settings.asaasApiKeyConfigured).toBe(true);
     expect(result.current.settings.asaasApiKeyLength).toBe(18);
@@ -504,5 +506,27 @@ describe('useSettingsState alterações pendentes', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.updatePermission('garcom', 'viewDashboard', true));
     expect(result.current.isDirty).toBe(false);
+  });
+});
+
+describe('useSettingsState escopo do salvar de pagamentos', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    settingsStorage.getPaymentConfig.mockResolvedValue({ paymentMethods: { PIX: true } });
+    settingsStorage.getPublicMenuConfig.mockResolvedValue({});
+    settingsStorage.getHoursConfig.mockResolvedValue({ schedule: [] });
+    settingsStorage.getDeliveryConfig.mockResolvedValue({ deliveryEnabled: true });
+    settingsStorage.updatePaymentConfig.mockResolvedValue({ paymentMethods: { PIX: true } });
+  });
+
+  it('salão grava sem o delivery online; pagamentos online gravam tudo', async () => {
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      await result.current.saveSettings('paymentMethods');
+      await result.current.saveSettings('onlinePayments');
+    });
+    expect(settingsStorage.updatePaymentConfig.mock.calls[0][1]).toEqual({ scope: 'salon' });
+    expect(settingsStorage.updatePaymentConfig.mock.calls[1][1]).toEqual({ scope: 'all' });
   });
 });

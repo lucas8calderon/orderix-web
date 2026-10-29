@@ -63,7 +63,6 @@ function storeStatus(settings) {
     { ok: paymentsReady, label: paymentsReady ? 'Pelo menos uma forma de pagamento ativa' : 'Nenhuma forma de pagamento ativa', section: 'vendas' },
     { ok: deliveryOn, label: deliveryOn ? 'Delivery configurado' : 'Delivery desligado', section: 'delivery' },
     { ok: menuOn, label: menuOn ? 'Cardápio digital publicado' : 'Cardápio digital não publicado', section: 'cardapio-digital' },
-    { ok: false, pending: true, label: 'Permissões disponíveis apenas como rascunho local', section: 'permissoes' },
   ];
 }
 

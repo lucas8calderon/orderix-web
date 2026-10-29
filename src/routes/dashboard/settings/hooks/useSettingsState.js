@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PAYMENT_METHOD_LABELS } from '../../../../services/paymentConfigService';
+import { isDeliveryOnlinePaymentField, PAYMENT_METHOD_LABELS } from '../../../../services/paymentConfigService';
 import { isValidStoreWhatsApp } from '../../../public-delivery/utils/neighborhoodWhatsApp';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../../../../utils/phoneInput';
 import { settingsStorage } from '../utils/settingsStorage';
@@ -254,10 +254,11 @@ export function settingsSnapshot(settings) {
   return JSON.stringify(trackedSettings(settings));
 }
 
-// Campos gravados por cada botão Salvar. Pagamentos enviam a configuração de cobrança inteira.
+// Campos gravados por cada botão Salvar. O salão não envia o pagamento online do Delivery.
+const SALON_PAYMENT_FIELDS = Object.keys(DEFAULT_PAYMENT).filter((key) => !isDeliveryOnlinePaymentField(key));
 const SAVED_FIELDS = {
-  paymentMethods: Object.keys(DEFAULT_PAYMENT),
-  serviceFee: Object.keys(DEFAULT_PAYMENT),
+  paymentMethods: SALON_PAYMENT_FIELDS,
+  serviceFee: SALON_PAYMENT_FIELDS,
   onlinePayments: Object.keys(DEFAULT_PAYMENT),
   publicMenu: Object.keys(DEFAULT_PUBLIC_MENU),
   hours: [...Object.keys(DEFAULT_HOURS), 'deliveryEnabled'],
@@ -501,7 +502,7 @@ export const useSettingsState = () => {
         asaasApiKey: paymentSettings.asaasApiKey,
         asaasPublicKey: paymentSettings.asaasPublicKey,
         asaasWebhookToken: paymentSettings.asaasWebhookToken,
-      });
+      }, { scope: section === 'onlinePayments' ? 'all' : 'salon' });
       setSettings((prev) => ({ ...prev, ...payment }));
       showToast(
         section === 'serviceFee'

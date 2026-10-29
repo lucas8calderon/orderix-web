@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Box,
+  Button,
   Typography,
   TextField,
   Switch,
@@ -40,6 +41,19 @@ export function PaymentsSection({
       onAction={() => onSave('paymentMethods')}
       actionDisabled={saving}
     >
+      <Box className="payment-channel-toolbar">
+        <Typography className="setting-hint" variant="body2">
+          Cada canal tem sua regra. Na maioria das lojas, as três são iguais.
+        </Typography>
+        <Button
+          size="small"
+          onClick={() => copyCounterPolicy(settings, onSettingChange)}
+          disabled={saving || sameAsCounter(settings)}
+          sx={{ textTransform: 'none', fontWeight: 700 }}
+        >
+          Usar a regra do Balcão em Mesa e Comanda
+        </Button>
+      </Box>
       <div className="payment-channel-grid">
       <ChannelPolicy
         title="Balcão"
@@ -116,6 +130,36 @@ export function PaymentsSection({
   );
 }
 
+const POLICY_KEYS = ['PaymentMode', 'Timing', 'PaymentProvider', 'FallbackMode'];
+
+function policyValue(settings, channel, key) {
+  return settings[`${channel}${key}`];
+}
+
+export function sameAsCounter(settings) {
+  return ['table', 'comanda'].every((channel) => POLICY_KEYS.every(
+    (key) => (policyValue(settings, channel, key) || '') === (policyValue(settings, 'counter', key) || ''),
+  ));
+}
+
+function copyCounterPolicy(settings, onSettingChange) {
+  ['table', 'comanda'].forEach((channel) => {
+    POLICY_KEYS.forEach((key) => {
+      onSettingChange(`${channel}${key}`, null, policyValue(settings, 'counter', key));
+    });
+  });
+}
+
+// Resumo em uma frase do que o caixa vai ver neste canal.
+export function channelPolicySummary(mode, timing) {
+  if (mode === 'ORDER_ONLY') return 'Só lança. No fechamento, registra a forma de pagamento.';
+  const before = timing === 'BEFORE_KITCHEN';
+  if (mode === 'INTEGRATED_PAYMENT') {
+    return before ? 'Cobra na maquininha antes de ir para a cozinha.' : 'Vai para a cozinha e cobra na maquininha no fechamento.';
+  }
+  return before ? 'Confirma o pagamento antes de ir para a cozinha.' : 'Vai para a cozinha e confirma o pagamento no fechamento.';
+}
+
 function changeMode(onSettingChange, channel, value) {
   onSettingChange(`${channel}PaymentMode`, null, value);
   if (value === 'INTEGRATED_PAYMENT') {
@@ -149,6 +193,9 @@ function ChannelPolicy({
   return (
     <Box className="payment-channel-timing">
       <Typography className="setting-label">{title}</Typography>
+      <Typography className="payment-channel-summary" variant="body2">
+        {channelPolicySummary(resolvedMode, timing)}
+      </Typography>
       <Box className="setting-item">
         <TextField
           select

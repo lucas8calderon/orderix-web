@@ -27,7 +27,7 @@ export const PAYMENT_MODE_OPTIONS = [
   {
     id: 'ORDER_ONLY',
     label: 'Somente lançar pedidos',
-    hint: 'O Weper só lança. Sem tela de pagamento. O momento da cobrança não se aplica.',
+    hint: 'O Weper não cobra. No fechamento, o caixa só registra a forma de pagamento usada, para os relatórios.',
   },
   {
     id: 'MANUAL_CONFIRMATION',
@@ -315,6 +315,18 @@ export function newSecretOrOmit(value) {
   if (isSecretInputMask(trimmed)) return undefined;
   if (/^configurado$/i.test(trimmed)) return undefined;
   return trimmed;
+}
+
+// Campos do pagamento online do Delivery. O salvar do salão não os envia: o servidor mantém
+// o que já está gravado e não revalida credenciais (ex.: Pix online sem token do Mercado Pago).
+export function isDeliveryOnlinePaymentField(key) {
+  return /^(online|mercadoPago|pagbank|asaas|deliveryOnline)/.test(String(key));
+}
+
+export function withoutDeliveryOnlinePayment(payload) {
+  return Object.fromEntries(
+    Object.entries(payload || {}).filter(([key]) => !isDeliveryOnlinePaymentField(key)),
+  );
 }
 
 export function toPaymentPayload(ui) {

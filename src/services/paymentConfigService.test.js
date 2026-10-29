@@ -385,3 +385,24 @@ describe('hydrateSavedSecretLengths', () => {
     expect(payload.mercadoPagoAccessToken).toBeUndefined();
   });
 });
+
+describe('salvar do salão sem o pagamento online do delivery', () => {
+  it('remove só os campos do delivery online', () => {
+    const { withoutDeliveryOnlinePayment } = require('./paymentConfigService');
+    expect(withoutDeliveryOnlinePayment({
+      acceptedMethods: ['PIX'],
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      onlinePixEnabled: true,
+      onlineCardEnabled: false,
+      mercadoPagoEnvironment: 'prod',
+      deliveryOnlineProvider: 'MERCADOPAGO',
+      pagbankEnvironment: 'prod',
+      asaasEnvironment: 'prod',
+      infinitePayHandle: 'loja',
+    })).toEqual({
+      acceptedMethods: ['PIX'],
+      counterPaymentMode: 'MANUAL_CONFIRMATION',
+      infinitePayHandle: 'loja',
+    });
+  });
+});

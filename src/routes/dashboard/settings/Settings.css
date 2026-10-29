@@ -1255,6 +1255,25 @@
   }
 }
 
+.payment-channel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.payment-channel-summary {
+  grid-column: 1 / -1;
+  margin: 2px 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--settings-primary, var(--color-primary));
+  background: color-mix(in srgb, var(--settings-primary, #2563eb) 8%, transparent);
+}
+
 /* Barra fixa de alterações pendentes: o Salvar fica sempre ao alcance, inclusive no celular. */
 .settings-unsaved-bar {
   position: sticky;
