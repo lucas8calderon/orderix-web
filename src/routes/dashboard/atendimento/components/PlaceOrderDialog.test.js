@@ -35,6 +35,10 @@ function categoryChipLabels() {
     .map((chip) => chip.getAttribute('aria-label'));
 }
 
+async function openCategory(name) {
+  fireEvent.click(await screen.findByRole('button', { name: `Ver produtos de ${name}` }));
+}
+
 function renderDialog(target, props = {}) {
   return render(<PlaceOrderDialog open target={target} onClose={jest.fn()} onPlaced={jest.fn()} {...props} />);
 }
@@ -66,6 +70,7 @@ describe('PlaceOrderDialog', () => {
     renderDialog({ kind: 'table', id: 8, number: 3 }, { onPlaced });
 
     expect(screen.getByText('Lançar em Mesa 3')).toBeInTheDocument();
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));
 
@@ -82,6 +87,7 @@ describe('PlaceOrderDialog', () => {
 
   it('lança na comanda pelo sentinela do balcão', async () => {
     renderDialog({ kind: 'comanda', id: 4, number: 12 });
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));
     await waitFor(() => {
@@ -95,6 +101,7 @@ describe('PlaceOrderDialog', () => {
 
   it('abre pedido de balcão sem exigir garçom nem guardar rascunho', async () => {
     renderDialog({ kind: 'counter' });
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.queryByRole('button', { name: 'Enviar sem cobrar' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));
@@ -121,8 +128,9 @@ describe('PlaceOrderDialog', () => {
     });
     renderDialog({ kind: 'table', id: 8, number: 3 });
 
-    expect(await screen.findByText('Barca de Batata')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Ver produtos de Porções' })).toBeInTheDocument();
     expect(categoryChipLabels()).toEqual(['Todas', 'Bebidas', 'Porções']);
+    await openCategory('Porções');
     expect(screen.getByRole('button', { name: 'Bebidas' })).toHaveTextContent('Bebidas · 2');
 
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar Barca de Batata' }));
@@ -146,7 +154,7 @@ describe('PlaceOrderDialog', () => {
     createCustomerOrder.mockResolvedValue({ data: { id: 30 } });
     const onPlaced = jest.fn();
     renderDialog({ kind: 'customer' }, { onPlaced });
-    await screen.findByRole('button', { name: 'Adicionar Café' });
+    await screen.findByRole('button', { name: 'Ver produtos de Bebidas' });
 
     expect(screen.getByRole('button', { name: 'Criar pedido' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Nome do cliente/), { target: { value: 'Joana' } });
@@ -166,6 +174,7 @@ describe('PlaceOrderDialog', () => {
   it('adiciona itens ao pedido por cliente existente sem trocar o nome', async () => {
     addCustomerOrderItems.mockResolvedValue({ data: {} });
     renderDialog({ kind: 'customer', id: 30, customerName: 'Joana' });
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.getByLabelText(/Nome do cliente/)).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));

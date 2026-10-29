@@ -81,6 +81,10 @@ const esgotado = {
 
 const menu = [cafe, batata, marmita, esgotado];
 
+async function openCategory(name) {
+  fireEvent.click(await screen.findByRole('button', { name: `Ver produtos de ${name}` }));
+}
+
 function renderPos(props = {}) {
   return render(<CounterPos onOpenAccount={jest.fn()} {...props} />);
 }
@@ -116,6 +120,7 @@ describe('PDV de balcão', () => {
   it('adiciona produto simples, mantém o carrinho ao filtrar e altera a quantidade', async () => {
     renderPos();
 
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.getByRole('status')).toHaveTextContent('Café adicionado ao pedido');
     expect(screen.getByLabelText('Quantidade de Café')).toHaveTextContent('1');
@@ -136,6 +141,7 @@ describe('PDV de balcão', () => {
 
   it('busca por SKU, indica indisponível e não inclui o produto', async () => {
     renderPos();
+    await openCategory('Bebidas');
     expect(await screen.findByRole('button', { name: 'Doce esgotado indisponível' })).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'caf-1' } });
@@ -148,6 +154,7 @@ describe('PDV de balcão', () => {
 
   it('abre personalização para variação e adicional e distingue os itens', async () => {
     renderPos();
+    await openCategory('Porções');
     fireEvent.click(await screen.findByRole('button', { name: 'Personalizar Strogonoff' }));
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar ao pedido' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Escolha uma variação de Strogonoff');
@@ -172,6 +179,7 @@ describe('PDV de balcão', () => {
     }));
     renderPos({ onOpenAccount });
 
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     const finish = screen.getByRole('button', { name: /^Cobrar/ });
     fireEvent.click(finish);
@@ -201,6 +209,7 @@ describe('PDV de balcão', () => {
   it('recupera o rascunho da loja e não mistura com outro estabelecimento', async () => {
     localStorage.setItem('weper.user', JSON.stringify({ storeId: 4 }));
     const view = renderPos();
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.getByLabelText('Quantidade de Café')).toBeInTheDocument();
     expect(screen.getByText('Rascunho salvo automaticamente neste caixa.')).toBeInTheDocument();
@@ -208,6 +217,7 @@ describe('PDV de balcão', () => {
 
     localStorage.setItem('weper.user', JSON.stringify({ storeId: 8 }));
     renderPos();
+    await openCategory('Bebidas');
     expect(await screen.findByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Quantidade de Café')).not.toBeInTheDocument();
 
@@ -219,6 +229,7 @@ describe('PDV de balcão', () => {
   it('envia sem cobrar e mostra o número do pedido com atalho para cobrar', async () => {
     const onOpenAccount = jest.fn();
     renderPos({ onOpenAccount });
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
     const cart = screen.getByRole('region', { name: 'Pedido balcão' });
@@ -228,10 +239,18 @@ describe('PDV de balcão', () => {
     expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 55, number: 55 });
   });
 
-  it('agrupa por categoria e busca no cardápio inteiro', async () => {
+  it('mostra primeiro os cards das categorias e abre os produtos ao tocar', async () => {
     renderPos();
-    expect(await screen.findByRole('heading', { name: 'Bebidas' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Ver produtos de Bebidas' })).toHaveTextContent('2 produtos');
+    expect(screen.getByRole('button', { name: 'Ver produtos de Porções' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Adicionar Café' })).not.toBeInTheDocument();
+
+    await openCategory('Porções');
     expect(screen.getByRole('heading', { name: 'Porções' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Adicionar Café' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Categorias' }));
+    expect(screen.getByRole('button', { name: 'Ver produtos de Bebidas' })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Porções' }));
     fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
     expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
@@ -240,6 +259,7 @@ describe('PDV de balcão', () => {
   it('trava o lançamento do usuário de caixa com o caixa fechado', async () => {
     renderPos({ launchBlocked: true });
     expect(await screen.findByRole('alert')).toHaveTextContent('O caixa está fechado');
+    await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.getByRole('button', { name: /^Cobrar/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Enviar sem cobrar' })).toBeDisabled();

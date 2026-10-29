@@ -2,7 +2,6 @@ import {
   buildCategoryChips,
   countProductsByCategory,
   filterCatalogProducts,
-  groupProductsByCategory,
   productMatchesQuery,
   productNeedsCustomization,
 } from './catalogView';
@@ -37,11 +36,14 @@ describe('catálogo do PDV', () => {
     expect(filterCatalogProducts([cafe, batata], { query: 'cafe', categoryFilter: '10' }).map((item) => item.id)).toEqual([4]);
   });
 
-  it('agrupa e conta produtos na ordem das categorias', () => {
-    const avulso = { id: 7, name: 'Avulso', value: 1 };
-    const chips = [{ id: '1', name: 'Bebidas' }, { id: '10', name: 'Porções' }];
-    expect(groupProductsByCategory([batata, avulso, cafe], chips).map((group) => [group.name, group.products.length]))
-      .toEqual([['Bebidas', 1], ['Porções', 1], ['Outros', 1]]);
+  it('conta produtos por categoria e escolhe a imagem do card', () => {
+    const avulso = { id: 7, name: 'Avulso', value: 1, image: 'avulso.png' };
     expect(countProductsByCategory([batata, avulso, cafe])).toEqual({ all: 3, others: 1, 1: 1, 10: 1 });
+    const result = buildCategoryChips(
+      [{ ...batata, image: 'batata.png' }, avulso, cafe],
+      [{ id: 10, name: 'Porções' }, { id: 1, name: 'Bebidas', image: 'bebidas.png' }],
+    );
+    expect(result.chips.map((chip) => [chip.name, chip.image])).toEqual([['Porções', 'batata.png'], ['Bebidas', 'bebidas.png']]);
+    expect(result.othersImage).toBe('avulso.png');
   });
 });

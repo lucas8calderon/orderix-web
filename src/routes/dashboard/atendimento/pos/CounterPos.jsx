@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Box, Button, Drawer } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Alert, Box, Button, Drawer, Typography } from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
@@ -24,9 +25,10 @@ import {
   canAddProduct,
   countProductsByCategory,
   filterCatalogProducts,
-  groupProductsByCategory,
+  OTHER_CATEGORY,
   productNeedsCustomization,
 } from './catalogView';
+import { CategoryGrid } from './CategoryGrid';
 import { clearCounterDraft, readCounterDraft, writeCounterDraft } from './counterDraft';
 import { OrderCart } from './OrderCart';
 import { ProductCategoryFilter } from './ProductCategoryFilter';
@@ -155,10 +157,14 @@ export function CounterPos({
     () => filterCatalogProducts(products, { query, categoryFilter }),
     [products, query, categoryFilter],
   );
-  const groups = useMemo(
-    () => (!searching && categoryFilter === ALL_CATEGORIES ? groupProductsByCategory(visible, categoryChips.chips) : null),
-    [visible, categoryChips, searching, categoryFilter],
-  );
+  // Sem busca e sem categoria escolhida, o PDV mostra primeiro os cards das categorias.
+  const showCategories = !searching && categoryFilter === ALL_CATEGORIES;
+  const categoryCards = useMemo(() => (
+    categoryChips.hasOthers
+      ? [...categoryChips.chips, { id: OTHER_CATEGORY, name: 'Outros', image: categoryChips.othersImage }]
+      : categoryChips.chips
+  ), [categoryChips]);
+  const selectedCategory = categoryCards.find((category) => category.id === categoryFilter);
   const totals = useMemo(() => cartTotals(lines), [lines]);
   const hasDraft = Boolean((!customerLocked && customerName.trim()) || observation.trim() || lines.length);
   const canSubmit = lines.length > 0 || (customerCreate && customerName.trim());
@@ -384,14 +390,31 @@ export function CounterPos({
         ) : null}
         {(loading || !loaded) && !catalogError ? <Loading loadingMessage="Carregando cardápio..." /> : null}
         {loaded && !loading && !catalogError ? (
+          showCategories ? (
+            <CategoryGrid categories={categoryCards} counts={counts} onSelect={setCategoryFilter} />
+          ) : (
+          <>
+          {selectedCategory && !searching ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => setCategoryFilter(ALL_CATEGORIES)}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                Categorias
+              </Button>
+              <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>{selectedCategory.name}</Typography>
+            </Box>
+          ) : null}
           <ProductGrid
             products={visible}
-            groups={groups}
             highlightedId={highlightedId}
             query={query}
             categorySelected={categoryFilter !== ALL_CATEGORIES}
             onAdd={addProduct}
           />
+          </>
+          )
         ) : null}
       </Box>
 

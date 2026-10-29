@@ -39,11 +39,14 @@ function categoriesInMenuOrder(categories) {
 
 export function buildCategoryChips(products, categories) {
   const usedIds = new Set();
+  const firstImage = new Map();
   let hasOthers = false;
   (products || []).forEach((product) => {
     const key = categoryKey(product);
     if (key == null) hasOthers = true;
     else usedIds.add(key);
+    const imageKey = key ?? OTHER_CATEGORY;
+    if (product?.image && !firstImage.has(imageKey)) firstImage.set(imageKey, product.image);
   });
 
   const chips = [];
@@ -52,7 +55,7 @@ export function buildCategoryChips(products, categories) {
     const id = String(category.id);
     if (!usedIds.has(id) || seen.has(id)) return;
     seen.add(id);
-    chips.push({ id, name: category.name || 'Sem nome' });
+    chips.push({ id, name: category.name || 'Sem nome', image: category.image || firstImage.get(id) || null });
   });
 
   const missing = [];
@@ -60,11 +63,11 @@ export function buildCategoryChips(products, categories) {
     const id = categoryKey(product);
     if (id == null || seen.has(id)) return;
     seen.add(id);
-    missing.push({ id, name: product.categoryName || 'Sem nome' });
+    missing.push({ id, name: product.categoryName || 'Sem nome', image: firstImage.get(id) || null });
   });
   missing.sort((left, right) => left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' }));
 
-  return { chips: [...chips, ...missing], hasOthers };
+  return { chips: [...chips, ...missing], hasOthers, othersImage: firstImage.get(OTHER_CATEGORY) || null };
 }
 
 export function countProductsByCategory(products) {
@@ -75,18 +78,6 @@ export function countProductsByCategory(products) {
     counts[key] = (counts[key] || 0) + 1;
   });
   return counts;
-}
-
-// Agrupa na ordem dos chips; produtos sem categoria vão para "Outros", no fim.
-export function groupProductsByCategory(products, chips) {
-  const groups = (chips || []).map((chip) => ({ id: chip.id, name: chip.name, products: [] }));
-  const byId = new Map(groups.map((group) => [group.id, group]));
-  const others = { id: OTHER_CATEGORY, name: 'Outros', products: [] };
-  (products || []).forEach((product) => {
-    const group = byId.get(categoryKey(product)) || others;
-    group.products.push(product);
-  });
-  return [...groups, others].filter((group) => group.products.length > 0);
 }
 
 export function productCode(product) {
