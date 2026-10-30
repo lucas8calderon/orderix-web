@@ -58,8 +58,17 @@ export default function DeliveryAccountBar({
     setMenuOpen(false);
   };
 
+  const authDialog = !onRequestAuth ? (
+    <DeliveryAuthDialog
+      open={authOpen}
+      onClose={() => setAuthOpen(false)}
+      onAuthenticated={(next) => setSession(next)}
+    />
+  ) : null;
+
   if (variant === 'header') {
     return (
+      <>
       <div className="delivery-account-bar is-header">
         {session ? (
           <>
@@ -93,6 +102,8 @@ export default function DeliveryAccountBar({
           </button>
         )}
       </div>
+      {authDialog}
+      </>
     );
   }
 
@@ -118,13 +129,7 @@ export default function DeliveryAccountBar({
           Entrar
         </button>
       )}
-      {!onRequestAuth ? (
-        <DeliveryAuthDialog
-          open={authOpen}
-          onClose={() => setAuthOpen(false)}
-          onAuthenticated={(next) => setSession(next)}
-        />
-      ) : null}
+      {authDialog}
     </div>
   );
 }

@@ -148,6 +148,23 @@ describe('PublicDelivery', () => {
     expect(screen.getByText('Bolo')).toBeInTheDocument();
   });
 
+  it('mostra o aviso de item adicionado no topo da tela', async () => {
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+      },
+    });
+
+    renderDelivery();
+    await userEvent.click(await screen.findByRole('button', { name: /adicionar pão francês/i }));
+    await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
+
+    const message = await screen.findByText('Adicionado ao carrinho');
+    expect(message.closest('.MuiSnackbar-root')).toHaveClass('MuiSnackbar-anchorOriginTopCenter');
+  });
+
   it('renderiza categorias e cardápio aberto', async () => {
     getDeliveryCatalog.mockResolvedValue({
       data: {
@@ -196,6 +213,23 @@ describe('PublicDelivery', () => {
 
     expect(await screen.findByRole('button', { name: /Ver meu último pedido/i })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: /navegação do delivery/i })).toBeInTheDocument();
+  });
+
+  it('abre o login pelo Entrar mesmo sem itens no carrinho', async () => {
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+      },
+    });
+
+    renderDelivery();
+    await userEvent.click(await screen.findByRole('button', { name: /^entrar$/i }));
+
+    expect(await screen.findByRole('heading', { name: /sua conta no delivery/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('Telefone')).toBeInTheDocument();
+    expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
   });
 
   it('pede login antes de preencher o endereço no checkout', async () => {

@@ -21,9 +21,9 @@ import { saveDeliveryCustomerSession } from '../../../services/deliveryCustomerS
 export default function DeliveryAuthDialog({ open, onClose, onAuthenticated, purpose }) {
   const [tab, setTab] = useState(0);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -31,36 +31,34 @@ export default function DeliveryAuthDialog({ open, onClose, onAuthenticated, pur
     if (open) {
       setError('');
       setPassword('');
+      setConfirmPassword('');
     }
   }, [open]);
 
   const submit = async () => {
     setError('');
-    if (tab === 1) {
-      if (!name.trim()) {
-        setError('Informe o nome.');
-        return;
-      }
-      if (!isValidBrazilianPhone(phone)) {
-        setError('Informe um telefone válido.');
-        return;
-      }
+    if (!isValidBrazilianPhone(phone)) {
+      setError('Informe um telefone válido.');
+      return;
     }
-    if (!email.trim() || !email.includes('@')) {
-      setError('Informe um e-mail válido.');
+    if (tab === 1 && !name.trim()) {
+      setError('Informe o nome.');
       return;
     }
     if (!password || password.length < 6) {
       setError('A senha precisa ter pelo menos 6 caracteres.');
       return;
     }
+    if (tab === 1 && password !== confirmPassword) {
+      setError('As senhas não conferem.');
+      return;
+    }
     setSubmitting(true);
     try {
       const response = tab === 0
-        ? await loginDeliveryCustomer({ email: email.trim(), password })
+        ? await loginDeliveryCustomer({ phone: phoneDigits(phone), password })
         : await registerDeliveryCustomer({
           name: name.trim(),
-          email: email.trim(),
           phone: phoneDigits(phone),
           password,
         });
@@ -91,40 +89,40 @@ export default function DeliveryAuthDialog({ open, onClose, onAuthenticated, pur
         </Tabs>
         {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
         {tab === 1 ? (
-          <>
-            <TextField
-              fullWidth
-              label="Nome"
-              sx={{ mb: 1.5 }}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Telefone"
-              sx={{ mb: 1.5 }}
-              value={phone}
-              placeholder="(11) 98888-8888"
-              inputProps={{ inputMode: 'tel', maxLength: 15 }}
-              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-            />
-          </>
+          <TextField
+            fullWidth
+            label="Nome"
+            sx={{ mb: 1.5 }}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         ) : null}
         <TextField
           fullWidth
-          label="E-mail"
-          type="email"
+          label="Telefone"
           sx={{ mb: 1.5 }}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={phone}
+          placeholder="(11) 98888-8888"
+          inputProps={{ inputMode: 'tel', maxLength: 15 }}
+          onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
         />
         <TextField
           fullWidth
           label="Senha"
           type="password"
+          sx={{ mb: tab === 1 ? 1.5 : 0 }}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {tab === 1 ? (
+          <TextField
+            fullWidth
+            label="Confirmar senha"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        ) : null}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>

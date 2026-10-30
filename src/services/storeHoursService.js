@@ -134,6 +134,28 @@ export function formatHoursRange(openingTime, closingTime) {
   return formatInterval({ open: openingTime, close: closingTime });
 }
 
+/** ISO 1=segunda … 7=domingo, no fuso local do Date (navegador). */
+export function localIsoWeekday(date = new Date()) {
+  const jsDay = date.getDay();
+  return jsDay === 0 ? 7 : jsDay;
+}
+
+/**
+ * Horário de hoje para a vitrine. Null quando não há agenda.
+ * Dia fechado devolve o aviso "Não abre hoje".
+ */
+export function formatTodayHours(schedule, now = new Date()) {
+  if (!Array.isArray(schedule) || schedule.length === 0) return null;
+  const day = normalizeSchedule(schedule).find((item) => item.weekday === localIsoWeekday(now));
+  if (!day?.enabled || !Array.isArray(day.intervals) || day.intervals.length === 0) {
+    return { label: 'Hoje', value: 'Não abre hoje' };
+  }
+  return {
+    label: 'Hoje',
+    value: day.intervals.map((interval) => `${interval.open}–${interval.close}`).join(', '),
+  };
+}
+
 function parseHm(value) {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || '').trim());
   if (!match) return null;

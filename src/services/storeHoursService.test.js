@@ -1,6 +1,7 @@
 import {
   createDefaultSchedule,
   formatDayHours,
+  formatTodayHours,
   isStoreOpenNow,
   toHoursPayload,
   toHoursUi,
@@ -103,6 +104,32 @@ describe('storeHoursService', () => {
       schedule,
       now: new Date('2026-09-22T20:00:00.000Z'), // Mon 17:00 BRT
     })).toBe(false);
+  });
+
+  it('formata o horário de hoje no weekday ISO e no fuso local', () => {
+    const schedule = [
+      {
+        weekday: 3,
+        enabled: true,
+        intervals: [
+          { open: '11:00', close: '14:00' },
+          { open: '18:00', close: '23:00' },
+        ],
+      },
+      { weekday: 7, enabled: false, intervals: [] },
+    ];
+
+    expect(formatTodayHours(schedule, new Date(2026, 8, 23, 15, 0, 0))).toEqual({
+      label: 'Hoje',
+      value: '11:00–14:00, 18:00–23:00',
+    });
+    expect(formatTodayHours(schedule, new Date(2026, 9, 4, 12, 0, 0))).toEqual({
+      label: 'Hoje',
+      value: 'Não abre hoje',
+    });
+    expect(formatTodayHours(schedule, new Date(2026, 8, 21, 12, 0, 0)).value).toBe('Não abre hoje');
+    expect(formatTodayHours([], new Date(2026, 8, 23, 15, 0, 0))).toBeNull();
+    expect(formatTodayHours(null)).toBeNull();
   });
 
   it('considera fechado fora do horário ou em dia desativado', () => {

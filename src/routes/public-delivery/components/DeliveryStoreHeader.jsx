@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import { formatCurrency } from '../../../services/accessControl';
+import { formatTodayHours } from '../../../services/storeHoursService';
 import { resolveDeliveryImage, storeInitials } from '../utils/resolveDeliveryImage';
 import { offersDelivery, offersPickup } from '../utils/fulfillmentModes';
 import { storeTypeLabel } from '../utils/catalogHighlights';
@@ -27,6 +29,7 @@ export default function DeliveryStoreHeader({
   const addressHint = hasAddress
     ? (offersPickup(fulfillmentModes) && !offersDelivery(fulfillmentModes) ? 'Retirada' : 'Endereço')
     : '';
+  const todayHours = formatTodayHours(catalog.schedule);
 
   return (
     <header className="delivery-store-header">
@@ -76,6 +79,15 @@ export default function DeliveryStoreHeader({
                 {addressOpen ? catalog.storeAddress : String(catalog.storeAddress).split(',')[0]}
               </span>
             </button>
+          ) : null}
+          {todayHours ? (
+            <span className="delivery-store-info-item delivery-store-hours" data-testid="delivery-today-hours">
+              <CalendarTodayOutlinedIcon fontSize="inherit" />
+              <span>
+                <strong>{todayHours.label}</strong>
+                {todayHours.value}
+              </span>
+            </span>
           ) : null}
           {catalog.estimatedMinutes ? (
             <span className="delivery-store-info-item">

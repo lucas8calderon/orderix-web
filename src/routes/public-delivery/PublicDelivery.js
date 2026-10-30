@@ -901,8 +901,13 @@ export default function PublicDelivery() {
         autoHideDuration={2200}
         onClose={() => setToast((prev) => ({ ...prev, open: false }))}
         message={toast.message}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{ bottom: { xs: totals.itemCount > 0 ? 88 : 24, sm: totals.itemCount > 0 ? 96 : 24 } }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{
+          top: {
+            xs: 'calc(16px + env(safe-area-inset-top, 0px))',
+            sm: 'calc(24px + env(safe-area-inset-top, 0px))',
+          },
+        }}
       />
 
       <Dialog

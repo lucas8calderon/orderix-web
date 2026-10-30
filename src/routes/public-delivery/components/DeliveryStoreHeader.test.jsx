@@ -38,4 +38,29 @@ describe('DeliveryStoreHeader', () => {
     );
     expect(screen.getByText('PB')).toBeInTheDocument();
   });
+
+  it('mostra o horário de hoje na faixa de endereço e previsão', () => {
+    render(
+      <DeliveryStoreHeader
+        catalog={{
+          storeName: 'Restaurante Sabrina',
+          open: true,
+          storeAddress: 'Rua dom Pedro I',
+          estimatedMinutes: 20,
+          schedule: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({
+            weekday,
+            enabled: true,
+            intervals: [{ open: '11:00', close: '22:00' }],
+          })),
+        }}
+      />
+    );
+
+    const hours = screen.getByTestId('delivery-today-hours');
+    expect(hours).toHaveTextContent('Hoje');
+    expect(hours).toHaveTextContent('11:00–22:00');
+    expect(screen.queryByText('Segunda-feira')).not.toBeInTheDocument();
+    expect(screen.getByText('Endereço')).toBeInTheDocument();
+    expect(screen.getByText('20 min')).toBeInTheDocument();
+  });
 });

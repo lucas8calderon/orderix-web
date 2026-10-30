@@ -213,6 +213,10 @@
   max-width: min(72vw, 280px);
 }
 
+.delivery-store-hours {
+  max-width: min(72vw, 240px);
+}
+
 /* Account */
 .delivery-account-bar {
   position: relative;
