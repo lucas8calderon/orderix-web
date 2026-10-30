@@ -16,3 +16,14 @@
 @media(prefers-reduced-motion:reduce){.wp-site *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .wp-invite-form{display:grid;gap:8px;max-width:420px;margin-top:24px}.wp-invite-form label{font-weight:600;color:var(--wp-ink)}.wp-invite-form input{display:block;width:100%;padding:12px 14px;border:1px solid var(--wp-border);border-radius:8px;font:inherit;color:var(--wp-ink);background:#fff}.wp-invite-form .wp-button{margin-top:8px;justify-self:start}
 .wp-product-photo{margin:0}.wp-product-photo img{display:block;width:100%;height:auto}.wp-product-photo figcaption{padding:10px 14px 12px;font-size:12px;line-height:1.4;color:#5e6c82}
+.wp-hero-intro{grid-column:1 / -1}
+.wp-hero h1.wp-hero-title{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:0.04em;font-size:clamp(36px,4.6vw,64px);font-weight:450;line-height:1.08;letter-spacing:-2.4px}
+.wp-hero-line{display:block}
+.wp-hero-line--lead{font-weight:450;color:#31445f}
+.wp-hero-line--typed{min-height:1.12em;font-weight:700;letter-spacing:-2.6px;color:var(--wp-ink)}
+.wp-hero-line--typed.is-brand{color:var(--wp-blue)}
+.wp-hero-caret{display:inline-block;width:3px;height:0.76em;margin-left:4px;border-radius:1px;background:currentColor;transform:translateY(0.08em);animation:wp-hero-caret 1.05s steps(1) infinite}
+@keyframes wp-hero-caret{0%,46%{opacity:1}50%,100%{opacity:0}}
+.wp-hero-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:900px){.wp-hero h1.wp-hero-title{font-size:clamp(36px,6.4vw,52px)}}
+@media(max-width:600px){.wp-hero h1.wp-hero-title{font-size:clamp(22px,calc((100vw - 48px) / 13.2),30px);letter-spacing:-1.3px}.wp-hero-line--typed{min-height:1.15em}}

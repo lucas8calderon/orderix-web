@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Menu, X, Smartphone, LayoutDashboard, UtensilsCrossed, ShoppingBag, ChefHat, Monitor, MessageCircle, CheckCircle2, Coffee, Pizza, Store, MoveRight } from 'lucide-react';
+import HeroTypewriter from './components/HeroTypewriter';
 import { WeperMark } from './components/WeperMark';
 import { FEATURE_PAGES } from './features/featurePages';
 import { PRICING_TIERS, formatPrice, getMinimumPrice, getMaximumPrice } from '../../config/pricingTiers';
@@ -80,8 +81,10 @@ export default function Home() {
     </div></header>
     <main id="wp-main">
       <section id="home" className="wp-hero"><div className="wp-container wp-hero-grid">
-        <div className="wp-hero-copy"><span className="wp-eyebrow"><span className="wp-blue-dot" /> Do pedido ao resultado</span>
-          <h1>Pedidos do salão e do delivery no mesmo sistema.</h1>
+        <div className="wp-hero-intro"><span className="wp-eyebrow"><span className="wp-blue-dot" /> Do pedido ao resultado</span>
+          <HeroTypewriter />
+        </div>
+        <div className="wp-hero-copy">
           <p>A equipe anota no app, a cozinha acompanha cada etapa e você vê o movimento do dia. A Weper cobra uma mensalidade, de {formatPrice(getMinimumPrice())} a {formatPrice(getMaximumPrice())}, conforme o volume processado. Não cobra comissão por pedido. Taxa de maquininha, Pix ou banco continua com quem processa o pagamento.</p>
           <div className="wp-actions"><a className="wp-button wp-button--primary" href="#plans">Ver a mensalidade <ArrowRight size={18} /></a><a className="wp-button wp-button--outline" href="#demo">Ver o cardápio que o cliente usa <ArrowRight size={18} /></a></div>
           <div className="wp-hero-assurance"><span><Check size={15} /> A partir de {formatPrice(getMinimumPrice())}/mês</span><span><Check size={15} /> A loja abre depois do pagamento</span></div>

@@ -30,7 +30,7 @@ test('selected price and contact context follow the central pricing configuratio
 
 test('hero explains the system and sends pricing and demo in place', () => {
   setup();
-  expect(screen.getByRole('heading', { level: 1, name: 'Pedidos do salão e do delivery no mesmo sistema.' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { level: 1, name: 'Seu estabelecimento precisa da Weper.' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Ver a mensalidade' })).toHaveAttribute('href', '#plans');
   expect(screen.getByRole('link', { name: 'Ver o cardápio que o cliente usa' })).toHaveAttribute('href', '#demo');
   expect(screen.getByText(/Não cobra comissão por pedido/)).toBeInTheDocument();
