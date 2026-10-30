@@ -25,6 +25,7 @@ import {
   canAddProduct,
   countProductsByCategory,
   filterCatalogProducts,
+  markUnavailableCategoryProducts,
   OTHER_CATEGORY,
   productNeedsCustomization,
 } from './catalogView';
@@ -147,15 +148,19 @@ export function CounterPos({
     return () => window.clearTimeout(timer);
   }, [highlightedId]);
 
-  const categoryChips = useMemo(
-    () => buildCategoryChips(products, categories),
+  const catalogProducts = useMemo(
+    () => markUnavailableCategoryProducts(products, categories),
     [products, categories],
   );
-  const counts = useMemo(() => countProductsByCategory(products), [products]);
+  const categoryChips = useMemo(
+    () => buildCategoryChips(catalogProducts, categories),
+    [catalogProducts, categories],
+  );
+  const counts = useMemo(() => countProductsByCategory(catalogProducts), [catalogProducts]);
   const searching = Boolean(query.trim());
   const visible = useMemo(
-    () => filterCatalogProducts(products, { query, categoryFilter }),
-    [products, query, categoryFilter],
+    () => filterCatalogProducts(catalogProducts, { query, categoryFilter }),
+    [catalogProducts, query, categoryFilter],
   );
   // Sem busca e sem categoria escolhida, o PDV mostra primeiro os cards das categorias.
   const showCategories = !searching && categoryFilter === ALL_CATEGORIES;
@@ -404,6 +409,22 @@ export function CounterPos({
                 Categorias
               </Button>
               <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>{selectedCategory.name}</Typography>
+              {selectedCategory.available === false ? (
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: '999px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: 'var(--status-danger-text)',
+                    bgcolor: 'var(--status-danger-bg)',
+                  }}
+                >
+                  Indisponível
+                </Box>
+              ) : null}
             </Box>
           ) : null}
           <ProductGrid

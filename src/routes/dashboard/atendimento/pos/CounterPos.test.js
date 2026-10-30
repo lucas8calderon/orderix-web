@@ -139,6 +139,28 @@ describe('PDV de balcão', () => {
     expect(screen.getByRole('button', { name: /^Cobrar/ })).toBeDisabled();
   });
 
+  it('mostra categoria inativa com tag e não deixa adicionar os produtos', async () => {
+    getAllCategories.mockResolvedValue({
+      data: [
+        { id: 10, name: 'Porções', sortOrder: 2, active: true },
+        { id: 1, name: 'Bebidas', sortOrder: 1, active: false },
+      ],
+    });
+    renderPos();
+
+    expect(await screen.findByRole('button', { name: 'Ver produtos de Bebidas, indisponível' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bebidas indisponível' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos de Bebidas, indisponível' }));
+
+    expect(await screen.findByRole('button', { name: 'Café indisponível' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Doce esgotado indisponível' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Café indisponível' }));
+    expect(screen.queryByLabelText('Quantidade de Café')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
+    expect(screen.getByRole('button', { name: 'Café indisponível' })).toBeDisabled();
+  });
+
   it('busca por SKU, indica indisponível e não inclui o produto', async () => {
     renderPos();
     await openCategory('Bebidas');

@@ -24,6 +24,30 @@ function categoryOrderValue(category) {
   return Number.isFinite(value) ? value : null;
 }
 
+export function unavailableCategoryIds(categories) {
+  const list = Array.isArray(categories) ? categories : [];
+  const inactive = new Set();
+  list.forEach((category) => {
+    if (category?.id == null || category.active !== false) return;
+    inactive.add(String(category.id));
+  });
+  list.forEach((category) => {
+    if (category?.id == null || category.parentId == null) return;
+    if (inactive.has(String(category.parentId))) inactive.add(String(category.id));
+  });
+  return inactive;
+}
+
+export function markUnavailableCategoryProducts(products, categories) {
+  const inactive = unavailableCategoryIds(categories);
+  if (inactive.size === 0) return products || [];
+  return (products || []).map((product) => {
+    const key = categoryKey(product);
+    if (!key || !inactive.has(key) || product?.sellable === false) return product;
+    return { ...product, sellable: false };
+  });
+}
+
 function categoriesInMenuOrder(categories) {
   const list = (Array.isArray(categories) ? categories : []).filter((category) => category?.id != null);
   if (!list.some((category) => categoryOrderValue(category) != null)) return list;
@@ -49,13 +73,19 @@ export function buildCategoryChips(products, categories) {
     if (product?.image && !firstImage.has(imageKey)) firstImage.set(imageKey, product.image);
   });
 
+  const inactive = unavailableCategoryIds(categories);
   const chips = [];
   const seen = new Set();
   categoriesInMenuOrder(categories).forEach((category) => {
     const id = String(category.id);
     if (!usedIds.has(id) || seen.has(id)) return;
     seen.add(id);
-    chips.push({ id, name: category.name || 'Sem nome', image: category.image || firstImage.get(id) || null });
+    chips.push({
+      id,
+      name: category.name || 'Sem nome',
+      image: category.image || firstImage.get(id) || null,
+      available: !inactive.has(id),
+    });
   });
 
   const missing = [];
@@ -63,7 +93,12 @@ export function buildCategoryChips(products, categories) {
     const id = categoryKey(product);
     if (id == null || seen.has(id)) return;
     seen.add(id);
-    missing.push({ id, name: product.categoryName || 'Sem nome', image: firstImage.get(id) || null });
+    missing.push({
+      id,
+      name: product.categoryName || 'Sem nome',
+      image: firstImage.get(id) || null,
+      available: !inactive.has(id),
+    });
   });
   missing.sort((left, right) => left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' }));
 

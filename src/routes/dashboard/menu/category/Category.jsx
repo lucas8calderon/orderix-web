@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   Chip,
+  FormControlLabel,
   IconButton,
   Snackbar,
   Switch,
@@ -512,15 +513,24 @@ function CategoryManageCard({
           >
             Subcategoria
           </Button>
-          <Tooltip title={isActive ? 'Desativar' : 'Ativar'}>
-            <Switch
-              size="small"
-              inputProps={{ 'aria-label': (isActive ? 'Desativar ' : 'Ativar ') + category.name }}
-              checked={isActive}
-              onChange={onToggle}
-              color="primary"
-            />
-          </Tooltip>
+          <FormControlLabel
+            className="category-active-toggle"
+            label=""
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            control={(
+              <Switch
+                size="small"
+                checked={isActive}
+                onChange={(event) => {
+                  event.stopPropagation();
+                  onToggle();
+                }}
+                inputProps={{ 'aria-label': `${isActive ? 'Desativar' : 'Ativar'} ${category.name}` }}
+                color="primary"
+              />
+            )}
+          />
           <IconButton
             size="small"
             aria-label={'Editar ' + category.name}

@@ -23,6 +23,24 @@
   flex-wrap: wrap;
 }
 
+/* O input do Switch fica deslocado (300% / left -100%). Dentro do card clicável o clique
+   acerta o card e o interruptor não muda. A área útil precisa cobrir o controle visível. */
+.category-card-actions .category-active-toggle {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+}
+
+.category-card-actions .category-active-toggle .MuiFormControlLabel-label {
+  display: none;
+}
+
+.category-card-actions .category-active-toggle .MuiSwitch-input {
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .category-filters .filter-chips-container {
   margin-top: 0;
 }

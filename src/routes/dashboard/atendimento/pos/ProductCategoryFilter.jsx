@@ -1,14 +1,17 @@
 import { Box, Chip } from '@mui/material';
 import { ALL_CATEGORIES, OTHER_CATEGORY } from './catalogView';
 
-function CategoryChip({ label, count, selected, onSelect }) {
+function CategoryChip({ label, count, selected, onSelect, unavailable = false }) {
+  const text = unavailable
+    ? `${label} · indisponível`
+    : (count != null ? `${label} · ${count}` : label);
   return (
     <Chip
-      label={count != null ? `${label} · ${count}` : label}
+      label={text}
       clickable
       variant={selected ? 'filled' : 'outlined'}
       aria-pressed={selected}
-      aria-label={label}
+      aria-label={unavailable ? `${label} indisponível` : label}
       onClick={onSelect}
       sx={{
         flex: '0 0 auto',
@@ -22,10 +25,10 @@ function CategoryChip({ label, count, selected, onSelect }) {
               '&:hover': { bgcolor: 'var(--color-primary-dark)' },
             }
           : {
-              color: 'var(--color-text-primary)',
-              borderColor: 'var(--color-border)',
+              color: unavailable ? 'var(--status-danger-text)' : 'var(--color-text-primary)',
+              borderColor: unavailable ? 'var(--status-danger-text)' : 'var(--color-border)',
               bgcolor: 'var(--color-surface)',
-              '&:hover': { bgcolor: 'var(--color-primary-soft)' },
+              '&:hover': { bgcolor: unavailable ? 'var(--status-danger-bg)' : 'var(--color-primary-soft)' },
             }),
       }}
     />
@@ -65,6 +68,7 @@ export function ProductCategoryFilter({ chips, hasOthers, value, onChange, count
             label={category.name}
             count={count(category.id)}
             selected={value === category.id}
+            unavailable={category.available === false}
             onSelect={() => onChange(category.id)}
           />
         ))}
