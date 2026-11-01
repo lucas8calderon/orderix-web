@@ -17,12 +17,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { useDialogResponsiveProps } from '../../../../commons/hooks/useResponsive';
 import { fileToCompressedDataUrl } from '../utils/compressImage';
 import { isUserProvidedImage } from '../utils/defaultMenuImage';
 import { buildCategoryTree } from '../utils/categoryTree';
+import { PricingAssistantDialog } from './PricingAssistantDialog';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -117,6 +119,7 @@ export function ProductFormDialog({
   const [form, setForm] = useState(emptyForm);
   const [imagePreview, setImagePreview] = useState('');
   const [imageError, setImageError] = useState('');
+  const [pricingOpen, setPricingOpen] = useState(false);
   const dialogProps = useDialogResponsiveProps({
     paperSx: { borderRadius: { xs: 0, sm: '16px' } },
   });
@@ -181,6 +184,7 @@ export function ProductFormDialog({
     setForm(emptyForm);
     setImagePreview('');
     setImageError('');
+    setPricingOpen(false);
     onClose();
   };
 
@@ -347,8 +351,32 @@ export function ProductFormDialog({
             inputMode: 'numeric',
             'aria-label': 'Preço em reais',
           }}
-          sx={{ mb: 2 }}
+          sx={{ mb: usingVariations ? 2 : 0.5 }}
         />
+
+        {!usingVariations ? (
+          <Button
+            onClick={() => setPricingOpen(true)}
+            startIcon={<CalculateOutlinedIcon sx={{ fontSize: 18 }} />}
+            sx={{
+              mb: 2,
+              px: 0.5,
+              py: 0.5,
+              minHeight: 0,
+              justifyContent: 'flex-start',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              color: 'var(--color-primary)',
+              '&:hover': {
+                backgroundColor: 'var(--color-primary-soft)',
+                color: 'var(--color-primary-dark)',
+              },
+            }}
+          >
+            Não sabe quanto cobrar? Calcule aqui
+          </Button>
+        ) : null}
 
         <Box sx={{ mb: 2 }}>
           <Typography component="h3" variant="subtitle2">Variações de preço</Typography>
@@ -735,6 +763,18 @@ export function ProductFormDialog({
           </Button>
         </Box>
       </DialogContent>
+
+      {pricingOpen ? (
+        <PricingAssistantDialog
+          open={pricingOpen}
+          onClose={() => setPricingOpen(false)}
+          currentPrice={form.value === '' ? null : Number(form.value)}
+          onApply={(price) => {
+            setForm((prev) => ({ ...prev, value: Number(price) }));
+            setPricingOpen(false);
+          }}
+        />
+      ) : null}
     </Dialog>
   );
 }

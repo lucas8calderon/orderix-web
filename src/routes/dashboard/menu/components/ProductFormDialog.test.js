@@ -130,4 +130,48 @@ describe('ProductFormDialog variations', () => {
       ],
     }));
   });
+
+  it('preenche o preço pelo assistente sem salvar o produto', () => {
+    const onSave = jest.fn();
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={onSave}
+        product={{ categoryId: 1 }}
+        categories={categories}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Não sabe quanto cobrar/i }));
+    expect(screen.getByText('Descubra quanto cobrar pelo seu produto')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Nome do custo 1'), { target: { value: 'Ingredientes' } });
+    typePrice(screen.getByLabelText('Valor do custo 1'), '2300');
+    fireEvent.change(screen.getByLabelText('Taxas e despesas variáveis em percentual'), {
+      target: { value: '5' },
+    });
+    typePrice(screen.getByLabelText('Preço ajustado em reais'), '4190');
+    fireEvent.click(screen.getByRole('button', { name: 'Usar este preço' }));
+
+    expect(screen.getByLabelText('Preço em reais')).toHaveValue('41,90');
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByText('Descubra quanto cobrar pelo seu produto')).not.toBeInTheDocument();
+  });
+
+  it('oculta o assistente quando o produto usa variações', () => {
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={jest.fn()}
+        product={{ categoryId: 1 }}
+        categories={categories}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /Não sabe quanto cobrar/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar variação' }));
+    expect(screen.queryByRole('button', { name: /Não sabe quanto cobrar/i })).not.toBeInTheDocument();
+  });
 });
