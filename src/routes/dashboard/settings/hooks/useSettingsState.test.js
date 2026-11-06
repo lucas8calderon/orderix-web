@@ -501,6 +501,23 @@ describe('useSettingsState alterações pendentes', () => {
     expect(result.current.isDirty).toBe(false);
   });
 
+  it('limpa a pendência ao salvar o Delivery depois de mudar o interruptor Delivery ativo', async () => {
+    settingsStorage.updateDeliveryConfig.mockImplementation(async (ui) => ({ ...ui, slug: 'loja' }));
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.updateSetting('deliveryEnabled', null, false);
+      result.current.updateSetting('deliveryFee', null, 7);
+    });
+    expect(result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await result.current.saveSettings('delivery');
+    });
+    expect(result.current.isDirty).toBe(false);
+  });
+
   it('ignora permissões, que ainda não vão para o servidor', async () => {
     const { result } = renderHook(() => useSettingsState());
     await waitFor(() => expect(result.current.loading).toBe(false));

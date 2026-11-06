@@ -256,14 +256,16 @@ export function settingsSnapshot(settings) {
 
 // Campos gravados por cada botão Salvar. O salão não envia o pagamento online do Delivery.
 const SALON_PAYMENT_FIELDS = Object.keys(DEFAULT_PAYMENT).filter((key) => !isDeliveryOnlinePaymentField(key));
+// O save do Delivery também grava o interruptor "Delivery ativo" e devolve slug/nome da loja.
+const DELIVERY_SAVED_FIELDS = [...Object.keys(DEFAULT_DELIVERY), 'deliveryEnabled', 'slug', 'storeName'];
 const SAVED_FIELDS = {
   paymentMethods: SALON_PAYMENT_FIELDS,
   serviceFee: SALON_PAYMENT_FIELDS,
   onlinePayments: Object.keys(DEFAULT_PAYMENT),
   publicMenu: Object.keys(DEFAULT_PUBLIC_MENU),
   hours: [...Object.keys(DEFAULT_HOURS), 'deliveryEnabled'],
-  delivery: Object.keys(DEFAULT_DELIVERY),
-  companyInfo: Object.keys(DEFAULT_DELIVERY),
+  delivery: DELIVERY_SAVED_FIELDS,
+  companyInfo: DELIVERY_SAVED_FIELDS,
 };
 
 export function markSectionSaved(baseline, current, section) {
