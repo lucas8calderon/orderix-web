@@ -8,6 +8,13 @@ jest.mock('./kitchenService', () => ({
   cancelKitchenOrder: jest.fn(),
 }));
 
+jest.mock('../../../printing/thermalPrint', () => ({
+  thermalEnabled: () => true,
+  openThermalPrint: jest.fn(() => ({ state: 'print_requested' })),
+  diagnosticReport: jest.fn(),
+  TEST_ACCOUNT: { orders: [] },
+}));
+
 jest.mock('react-beautiful-dnd', () => ({
   DragDropContext: ({ children }) => children,
   Droppable: ({ children }) => children({
@@ -26,6 +33,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { mapKitchenOrder } from './kitchenOrderMap';
 import { SALES_CHANNEL_FILTERS } from '../../../services/salesChannel';
 import { getKitchenOrders } from './kitchenService';
+import { openThermalPrint } from '../../../printing/thermalPrint';
 import { Kitchen } from './Kitchen';
 
 describe('Kitchen channel filters', () => {
@@ -170,6 +178,17 @@ describe('Kitchen filter chips', () => {
     expect(chip('Todos')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('#0001')).toBeInTheDocument();
     expect(screen.getByLabelText('Mostrar finalizados')).not.toBeChecked();
+  });
+
+  it('imprime a comanda do pedido aberto no card', async () => {
+    await renderKitchen();
+    fireEvent.click(screen.getByText('#0001'));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Imprimir' }));
+    expect(openThermalPrint).toHaveBeenCalledWith(
+      { orders: [orders[0]] },
+      expect.objectContaining({ test: false }),
+    );
   });
 
   it('combina Atrasados com um canal sem desligar o outro ao voltar só para o atraso', async () => {

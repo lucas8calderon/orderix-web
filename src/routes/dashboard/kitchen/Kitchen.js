@@ -44,6 +44,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
 import { cancelKitchenOrder, getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
 import { mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
+import { ThermalPrintPanel } from '../../../printing/ThermalPrintPanel';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import {
     SALES_CHANNEL_FILTERS,
@@ -782,6 +783,10 @@ export function Kitchen({ initialFilter }) {
                             ) : null}
                         </DialogContent>
                         <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap' }}>
+                            <ThermalPrintPanel
+                                account={selectedOrder.printAccount}
+                                placeLabel={selectedOrder.locationLabel}
+                            />
                             {selectedOrder.orderStatus !== 'CLOSED' && selectedOrder.orderStatus !== 'CANCELLED' ? (
                             <Button
                                 variant="outlined"

@@ -81,5 +81,7 @@ export function mapKitchenOrder(order) {
     onlinePayment: order.onlinePayment === true,
     paymentMethod: order.paymentMethod || '',
     customerIdentificationNote: identification,
+    // Pedido como veio da API, no formato da comanda térmica (o mesmo do atendimento).
+    printAccount: { orders: [order] },
   };
 }
