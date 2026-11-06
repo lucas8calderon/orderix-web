@@ -1,4 +1,5 @@
 import {
+  allNeighborhoodsFee,
   allNeighborhoodsFeeLabel,
   deliveryCoverageLabel,
   effectiveNeighborhoodFee,
@@ -46,6 +47,7 @@ describe('effective neighborhood fee', () => {
     expect(effectiveNeighborhoodFee('FREE_ALL', 8.5, false)).toBe(0);
     expect(effectiveNeighborhoodFee('ALL_NEIGHBORHOODS', 8.5, true, 10)).toBe(10);
     expect(effectiveNeighborhoodFee('ALL_NEIGHBORHOODS', 8.5, false, 0)).toBe(0);
+    expect(effectiveNeighborhoodFee('FREE_EVERYWHERE', 8.5, false, 10)).toBe(0);
     expect(moneyCents(8.5)).toBe(850);
   });
 });
@@ -59,6 +61,12 @@ describe('entrega em todos os bairros', () => {
     expect(hasServiceNeighborhood(open, { neighborhood: '  ' })).toBe(false);
     expect(hasServiceNeighborhood({ feeMode: 'PER_NEIGHBORHOOD' }, { neighborhood: 'Jardim Europa' })).toBe(false);
     expect(hasServiceNeighborhood({ feeMode: 'FREE_ALL' }, { neighborhoodId: 4 })).toBe(true);
+
+    const freeCity = { feeMode: 'FREE_EVERYWHERE', allNeighborhoodsFee: 10 };
+    expect(servesAllNeighborhoods(freeCity)).toBe(true);
+    expect(hasServiceNeighborhood(freeCity, { neighborhood: 'Jardim Europa' })).toBe(true);
+    expect(allNeighborhoodsFee(freeCity)).toBe(0);
+    expect(allNeighborhoodsFee(open)).toBe(10);
   });
 
   it('mostra a taxa única ou entrega grátis', () => {

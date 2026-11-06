@@ -65,7 +65,7 @@ describe('DeliveryNeighborhoodsSection', () => {
     );
 
     expect(await screen.findByText('Centro')).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Entregar em todos os bairros' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Taxa para todos os bairros' })).toBeChecked();
     expect(screen.getByLabelText('Taxa única para todos os bairros')).toHaveValue('10,00');
     expect(screen.getByText(/qualquer bairro é atendido, mesmo fora da lista/i)).toBeInTheDocument();
     expect(screen.getByText('R$ 8,50')).toBeInTheDocument();
@@ -76,6 +76,36 @@ describe('DeliveryNeighborhoodsSection', () => {
       target: { value: '0' },
     });
     expect(onSettingChange).toHaveBeenCalledWith('deliveryAllNeighborhoodsFee', null, 0);
+  });
+
+  it('deixa a cidade inteira grátis sem apagar a taxa fixa já cadastrada', async () => {
+    const onSettingChange = jest.fn();
+    render(
+      <DeliveryNeighborhoodsSection
+        settings={{
+          deliveryFeeMode: 'FREE_EVERYWHERE',
+          deliveryAllNeighborhoodsFee: 10,
+          storePhone: '11988887777',
+        }}
+        onSettingChange={onSettingChange}
+      />
+    );
+
+    expect(await screen.findByText('Centro')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^Grátis em todos os bairros$/ })).toBeChecked();
+    expect(screen.queryByLabelText('Taxa única para todos os bairros')).not.toBeInTheDocument();
+    expect(screen.getByText(/qualquer bairro é atendido e a entrega é grátis/i)).toBeInTheDocument();
+    expect(screen.getAllByText('Entrega grátis').length).toBeGreaterThan(0);
+    expect(screen.getByText('R$ 8,50')).toBeInTheDocument();
+    expect(screen.getByText('R$ 12,00')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Taxa para todos os bairros' }));
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryFeeMode', null, 'ALL_NEIGHBORHOODS');
+    expect(onSettingChange).not.toHaveBeenCalledWith(
+      'deliveryAllNeighborhoodsFee',
+      null,
+      expect.anything()
+    );
   });
 
   it('filtra a lista pelo nome do bairro', async () => {

@@ -29,10 +29,11 @@ export function servesAllNeighborhoods(catalogOrMode) {
   const mode = catalogOrMode && typeof catalogOrMode === 'object'
     ? catalogOrMode.feeMode
     : catalogOrMode;
-  return mode === 'ALL_NEIGHBORHOODS';
+  return mode === 'ALL_NEIGHBORHOODS' || mode === 'FREE_EVERYWHERE';
 }
 
 export function allNeighborhoodsFee(catalog) {
+  if (catalog?.feeMode === 'FREE_EVERYWHERE') return 0;
   return Number(catalog?.allNeighborhoodsFee || 0);
 }
 
@@ -45,8 +46,8 @@ export function hasServiceNeighborhood(catalog, address) {
 /** Taxa efetiva. Trocar o modo não altera a taxa cadastrada nem a marca de grátis. */
 export function effectiveNeighborhoodFee(mode, registeredFee, freeDelivery, openFee) {
   const registered = moneyCents(registeredFee);
+  if (mode === 'FREE_EVERYWHERE' || mode === 'FREE_ALL') return 0;
   if (mode === 'ALL_NEIGHBORHOODS') return moneyCents(openFee) / 100;
-  if (mode === 'FREE_ALL') return 0;
   if (mode === 'FREE_SELECTED' && freeDelivery) return 0;
   return registered / 100;
 }

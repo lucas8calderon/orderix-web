@@ -50,9 +50,14 @@ const FEE_MODES = [
     hint: 'Todos os bairros ativos ficam grátis. Bairros que não estão cadastrados não são atendidos.',
   },
   {
+    id: 'FREE_EVERYWHERE',
+    label: 'Grátis em todos os bairros',
+    hint: 'Atende qualquer bairro, mesmo os que não estão cadastrados. A entrega sai grátis.',
+  },
+  {
     id: 'ALL_NEIGHBORHOODS',
-    label: 'Entregar em todos os bairros',
-    hint: 'Atende qualquer bairro, mesmo os que não estão cadastrados. O valor abaixo é a taxa para todos. R$ 0,00 é entrega grátis.',
+    label: 'Taxa para todos os bairros',
+    hint: 'Atende qualquer bairro. O valor abaixo é a taxa fixa para todos.',
   },
 ];
 
@@ -180,7 +185,7 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
       <Box className="setting-item">
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
           A entrega passa a usar estes bairros. A taxa única da operação só vale enquanto não houver nenhum bairro cadastrado.
-          No modo entregar em todos os bairros, a taxa dessa modalidade vale inclusive para bairros que não estão na lista.
+          Grátis em todos os bairros e a taxa para todos os bairros valem inclusive para quem não está na lista.
           Trocar o modo não apaga as taxas nem a seleção de grátis. Salve o Delivery para aplicar o modo e a taxa.
         </Typography>
         {!isValidStoreWhatsApp(settings?.storePhone) ? (
@@ -222,6 +227,11 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
             Todos os bairros ativos desta loja estão com entrega grátis. Bairros fora da lista não são atendidos.
           </Alert>
         ) : null}
+        {mode === 'FREE_EVERYWHERE' ? (
+          <Alert severity="info" sx={{ mb: 1.5 }}>
+            Qualquer bairro é atendido e a entrega é grátis, mesmo fora da lista. A taxa fixa já cadastrada continua guardada.
+          </Alert>
+        ) : null}
         {mode === 'ALL_NEIGHBORHOODS' ? (
           <>
             <TextField
@@ -242,10 +252,10 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
                 inputMode: 'numeric',
                 'aria-label': 'Taxa única para todos os bairros',
               }}
-              helperText="R$ 0,00 é entrega grátis. O mesmo valor vale para qualquer bairro, cadastrado ou não."
+              helperText="Este valor vale para qualquer bairro, cadastrado ou não. Para deixar a cidade inteira grátis, use Grátis em todos os bairros."
             />
             <Alert severity="info" sx={{ mb: 1.5 }}>
-              Qualquer bairro é atendido, mesmo fora da lista. A taxa única vale para todos. Bairros e taxas já cadastrados continuam guardados.
+              Qualquer bairro é atendido, mesmo fora da lista. A taxa fixa vale para todos. Bairros e taxas já cadastrados continuam guardados.
             </Alert>
           </>
         ) : null}
@@ -363,7 +373,7 @@ function NeighborhoodTable({ rows, mode, openFee, onEdit, onToggle, onDelete }) 
       </Box>
       {rows.map((row) => {
         const offered = row.active !== false;
-        const effective = offered || mode === 'ALL_NEIGHBORHOODS'
+        const effective = offered || mode === 'ALL_NEIGHBORHOODS' || mode === 'FREE_EVERYWHERE'
           ? effectiveNeighborhoodFee(mode, row.fee, Boolean(row.freeDelivery), openFee)
           : null;
         return (
