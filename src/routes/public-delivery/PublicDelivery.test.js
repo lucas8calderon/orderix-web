@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import PublicDelivery from './PublicDelivery';
 import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
 import { readCart } from '../../services/deliveryCart';
-import { listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
+import { createDeliveryCustomerAddress, listDeliveryCustomerAddresses } from '../../services/deliveryCustomerService';
 import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodService';
 import { lookupCep } from '../../services/viaCepService';
 import {
@@ -442,7 +442,7 @@ describe('PublicDelivery', () => {
     expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
   });
 
-  it('pede o endereço antes do primeiro item quando a loja entrega por bairro', async () => {
+  it('na entrega por bairro adiciona o item e oferece continuar comprando ou finalizar com login', async () => {
     listPublicNeighborhoods.mockResolvedValue({
       data: [{ id: 4, name: 'Centro', city: 'São Paulo', state: 'SP', effectiveFee: 8.5 }],
     });
@@ -462,9 +462,130 @@ describe('PublicDelivery', () => {
     await userEvent.click(screen.getByRole('button', { name: /adicionar pão francês/i }));
     await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
 
+    expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
+    expect(readCart('padaria').items).toHaveLength(1);
+    expect(await screen.findByRole('button', { name: /continuar comprando/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /finalizar pedido/i }));
+    expect(await screen.findByRole('heading', { name: /entre ou crie uma conta/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
+  });
+
+  it('com conta logada, finalizar abre o endereço com os endereços salvos antes do checkout', async () => {
+    seedCustomerSession();
+    listDeliveryCustomerAddresses.mockResolvedValue({
+      data: [{
+        id: 9,
+        street: 'Avenida Paulista',
+        number: '1000',
+        neighborhood: 'Centro',
+        neighborhoodId: 4,
+        postalCode: '01310100',
+        city: 'São Paulo',
+        state: 'SP',
+        isDefault: true,
+      }],
+    });
+    listPublicNeighborhoods.mockResolvedValue({
+      data: [{ id: 4, name: 'Centro', city: 'São Paulo', state: 'SP', effectiveFee: 8.5 }],
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        usesNeighborhoodPricing: true,
+        phone: '11988887777',
+      },
+    });
+
+    renderDelivery();
+    await userEvent.click(await screen.findByRole('button', { name: /adicionar pão francês/i }));
+    await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /finalizar pedido/i }));
+
     expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
-    expect(screen.getByText(/não encontrou seu bairro/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /ver meu pedido/i })).not.toBeInTheDocument();
+    expect(await screen.findByText(/Avenida Paulista/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /não encontrou seu bairro/i })).toBeInTheDocument();
+  });
+
+  it('mostra a taxa única e aceita bairro fora da lista', async () => {
+    seedCustomerSession();
+    createDeliveryCustomerAddress.mockResolvedValue({
+      data: { id: 15, neighborhood: 'Jardim Europa', city: 'Campinas', state: 'SP' },
+    });
+    createDeliveryOrder.mockResolvedValue({
+      data: { id: 90, publicToken: 'tok-90', total: 11.5, deliveryFee: 10 },
+    });
+    lookupCep.mockResolvedValue({
+      postalCode: '13010-000',
+      street: 'Rua Exemplo',
+      city: 'Campinas',
+      state: 'SP',
+      neighborhood: 'Jardim Europa',
+    });
+    listPublicNeighborhoods.mockResolvedValue({
+      data: [{ id: 4, name: 'Centro', city: 'Campinas', state: 'SP', effectiveFee: 8.5 }],
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        usesNeighborhoodPricing: true,
+        feeMode: 'ALL_NEIGHBORHOODS',
+        allNeighborhoodsFee: 10,
+        deliveryFee: 4,
+        phone: '11988887777',
+        storeName: 'Padaria Belas Artes',
+      },
+    });
+
+    renderDelivery();
+    expect(await screen.findByText(/entregamos em qualquer bairro\. taxa de entrega: r\$ 10,00/i)).toBeInTheDocument();
+    expect(screen.queryByText('R$ 4,00')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /adicionar pão francês/i }));
+    await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /finalizar pedido/i }));
+    expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
+    expect(screen.queryByText(/não encontrou seu bairro/i)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/^CEP/i), { target: { value: '13010000' } });
+    expect(await screen.findByDisplayValue('Rua Exemplo')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/^número$/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/bairro fora da lista/i), { target: { value: 'Jardim Europa' } });
+    await userEvent.click(screen.getByRole('button', { name: /usar este endereço/i }));
+
+    expect(await screen.findByText(/entregamos em jardim europa • taxa de entrega: r\$ 10,00/i)).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Ana Cliente')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /confirmar pedido/i }));
+
+    await waitFor(() => expect(createDeliveryOrder).toHaveBeenCalled());
+    const payload = createDeliveryOrder.mock.calls[0][1];
+    expect(payload.neighborhood).toBe('Jardim Europa');
+    expect(payload.neighborhoodId).toBeNull();
+    expect(payload.expectedDeliveryFee).toBe(10);
+    expect(payload.city).toBe('Campinas');
+    expect(payload.state).toBe('SP');
+  }, 20000);
+
+  it('mostra entrega grátis no modo que atende qualquer bairro com taxa zero', async () => {
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        feeMode: 'ALL_NEIGHBORHOODS',
+        allNeighborhoodsFee: 0,
+        usesNeighborhoodPricing: false,
+        deliveryFee: 9,
+      },
+    });
+
+    renderDelivery();
+    expect(await screen.findByText('Grátis')).toBeInTheDocument();
+    expect(screen.queryByText('R$ 9,00')).not.toBeInTheDocument();
   });
 
   it('retirada não pede bairro mesmo com entrega por bairro configurada', async () => {

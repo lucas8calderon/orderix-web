@@ -7,6 +7,7 @@ import { formatCurrency } from '../../../services/accessControl';
 import { formatTodayHours } from '../../../services/storeHoursService';
 import { resolveDeliveryImage, storeInitials } from '../utils/resolveDeliveryImage';
 import { offersDelivery, offersPickup } from '../utils/fulfillmentModes';
+import { allNeighborhoodsFee, servesAllNeighborhoods } from '../utils/neighborhoodPlace';
 import { storeTypeLabel } from '../utils/catalogHighlights';
 
 export default function DeliveryStoreHeader({
@@ -23,8 +24,12 @@ export default function DeliveryStoreHeader({
   const hasAddress = Boolean(catalog.storeAddress && String(catalog.storeAddress).trim());
   const open = Boolean(catalog.open);
   const typeLabel = storeTypeLabel(catalog);
-  const fee = Number(catalog.deliveryFee || 0);
-  const showFee = offersDelivery(fulfillmentModes) && fee > 0 && !catalog.usesNeighborhoodPricing;
+  const openArea = servesAllNeighborhoods(catalog);
+  const fee = openArea ? allNeighborhoodsFee(catalog) : Number(catalog.deliveryFee || 0);
+  const showFee = offersDelivery(fulfillmentModes)
+    && !catalog.usesNeighborhoodPricing
+    && (openArea || fee > 0);
+  const freeOpenArea = openArea && fee === 0;
   const accountNode = accountSlot || account;
   const addressHint = hasAddress
     ? (offersPickup(fulfillmentModes) && !offersDelivery(fulfillmentModes) ? 'Retirada' : 'Endereço')
@@ -102,8 +107,8 @@ export default function DeliveryStoreHeader({
             <span className="delivery-store-info-item">
               <LocalShippingOutlinedIcon fontSize="inherit" />
               <span>
-                <strong>Taxa</strong>
-                {formatCurrency(fee)}
+                <strong>{freeOpenArea ? 'Entrega' : 'Taxa'}</strong>
+                {freeOpenArea ? 'Grátis' : formatCurrency(fee)}
               </span>
             </span>
           ) : null}

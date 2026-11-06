@@ -6,7 +6,10 @@ export function readServiceAddress(slug) {
     const raw = window.sessionStorage.getItem(storageKey(slug));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.neighborhoodId) return null;
+    if (!parsed) return null;
+    const listed = parsed.neighborhoodId != null && parsed.neighborhoodId !== '';
+    const typedOpen = Boolean(parsed.openArea) && String(parsed.neighborhood || '').trim();
+    if (!listed && !typedOpen) return null;
     return parsed;
   } catch {
     return null;

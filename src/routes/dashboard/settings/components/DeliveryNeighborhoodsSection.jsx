@@ -9,6 +9,7 @@ import {
   DialogTitle,
   FormControlLabel,
   IconButton,
+  InputAdornment,
   MenuItem,
   Switch,
   TextField,
@@ -47,6 +48,11 @@ const FEE_MODES = [
     id: 'FREE_ALL',
     label: 'Grátis em todos os bairros atendidos',
     hint: 'Todos os bairros ativos ficam grátis. Bairros que não estão cadastrados não são atendidos.',
+  },
+  {
+    id: 'ALL_NEIGHBORHOODS',
+    label: 'Entregar em todos os bairros',
+    hint: 'Atende qualquer bairro, mesmo os que não estão cadastrados. O valor abaixo é a taxa para todos. R$ 0,00 é entrega grátis.',
   },
 ];
 
@@ -174,7 +180,8 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
       <Box className="setting-item">
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
           A entrega passa a usar estes bairros. A taxa única da operação só vale enquanto não houver nenhum bairro cadastrado.
-          Trocar o modo não apaga as taxas nem a seleção de grátis. Salve o Delivery para aplicar o modo.
+          No modo entregar em todos os bairros, a taxa dessa modalidade vale inclusive para bairros que não estão na lista.
+          Trocar o modo não apaga as taxas nem a seleção de grátis. Salve o Delivery para aplicar o modo e a taxa.
         </Typography>
         {!isValidStoreWhatsApp(settings?.storePhone) ? (
           <Alert severity="warning" role="status" sx={{ mb: 1.5 }}>
@@ -215,6 +222,33 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
             Todos os bairros ativos desta loja estão com entrega grátis. Bairros fora da lista não são atendidos.
           </Alert>
         ) : null}
+        {mode === 'ALL_NEIGHBORHOODS' ? (
+          <>
+            <TextField
+              label="Taxa única para todos os bairros"
+              placeholder="0,00"
+              value={formatCurrencyInput(settings?.deliveryAllNeighborhoodsFee ?? 0)}
+              onChange={(event) => {
+                const parsed = parseCurrencyInput(event.target.value);
+                onSettingChange('deliveryAllNeighborhoodsFee', null, parsed === '' ? 0 : parsed);
+              }}
+              sx={{ mb: 1.5, maxWidth: 360 }}
+              fullWidth
+              autoComplete="off"
+              InputProps={{
+                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+              }}
+              inputProps={{
+                inputMode: 'numeric',
+                'aria-label': 'Taxa única para todos os bairros',
+              }}
+              helperText="R$ 0,00 é entrega grátis. O mesmo valor vale para qualquer bairro, cadastrado ou não."
+            />
+            <Alert severity="info" sx={{ mb: 1.5 }}>
+              Qualquer bairro é atendido, mesmo fora da lista. A taxa única vale para todos. Bairros e taxas já cadastrados continuam guardados.
+            </Alert>
+          </>
+        ) : null}
 
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
           <TextField
@@ -235,6 +269,7 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
           <NeighborhoodTable
             rows={filtered}
             mode={mode}
+            openFee={settings?.deliveryAllNeighborhoodsFee}
             onEdit={openEdit}
             onToggle={toggleActive}
             onDelete={remove}
@@ -311,7 +346,7 @@ export function DeliveryNeighborhoodsSection({ settings, onSettingChange }) {
   );
 }
 
-function NeighborhoodTable({ rows, mode, onEdit, onToggle, onDelete }) {
+function NeighborhoodTable({ rows, mode, openFee, onEdit, onToggle, onDelete }) {
   return (
     <Box sx={{ display: 'grid', gap: 1 }}>
       <Box
@@ -328,8 +363,8 @@ function NeighborhoodTable({ rows, mode, onEdit, onToggle, onDelete }) {
       </Box>
       {rows.map((row) => {
         const offered = row.active !== false;
-        const effective = offered
-          ? effectiveNeighborhoodFee(mode, row.fee, Boolean(row.freeDelivery))
+        const effective = offered || mode === 'ALL_NEIGHBORHOODS'
+          ? effectiveNeighborhoodFee(mode, row.fee, Boolean(row.freeDelivery), openFee)
           : null;
         return (
           <Box

@@ -52,6 +52,7 @@ describe('deliveryService helpers', () => {
       acceptPaymentOnDelivery: true,
       deliveryFee: 5,
       feeMode: 'PER_NEIGHBORHOOD',
+      allNeighborhoodsFee: 0,
       minOrder: 20,
       estimatedMinutes: null,
       address: 'Rua A, 10',
@@ -82,6 +83,7 @@ describe('deliveryService helpers', () => {
       acceptPaymentOnDelivery: true,
       deliveryFee: 0,
       feeMode: 'PER_NEIGHBORHOOD',
+      allNeighborhoodsFee: 0,
       minOrder: 0,
       estimatedMinutes: null,
       address: null,
@@ -152,6 +154,7 @@ describe('deliveryService helpers', () => {
       acceptPaymentOnDelivery: true,
       deliveryFee: 3.5,
       feeMode: 'PER_NEIGHBORHOOD',
+      allNeighborhoodsFee: 0,
       minOrder: 10,
       estimatedMinutes: 30,
       address: 'Rua B, 2',
@@ -237,5 +240,22 @@ describe('deliveryService helpers', () => {
     expect(url.startsWith('https://wa.me/5511988887777?text=')).toBe(true);
     expect(toDeliverySettingsPayload({ storePhone: '123' }).phone).toBe('123');
     expect(neighborhoodWhatsAppUrl('123', 'Padaria Sol', 'Centro')).toBeNull();
+  });
+
+  it('leva a taxa única de todos os bairros da API para o payload', () => {
+    const ui = toDeliverySettingsUi({
+      enabled: true,
+      feeMode: 'ALL_NEIGHBORHOODS',
+      allNeighborhoodsFee: 10,
+      deliveryFee: 4,
+    });
+    expect(ui.deliveryFeeMode).toBe('ALL_NEIGHBORHOODS');
+    expect(ui.deliveryAllNeighborhoodsFee).toBe(10);
+    expect(ui.deliveryFee).toBe(4);
+    expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
+      feeMode: 'ALL_NEIGHBORHOODS',
+      allNeighborhoodsFee: 10,
+      deliveryFee: 4,
+    }));
   });
 });

@@ -145,6 +145,7 @@ const DEFAULT_DELIVERY = {
   acceptPayOnPickup: true,
   acceptPrepaidPickup: true,
   deliveryFeeMode: 'PER_NEIGHBORHOOD',
+  deliveryAllNeighborhoodsFee: 0,
   storePhone: '',
 };
 
@@ -192,6 +193,7 @@ function deliveryPayloadFrom(current, savedImages = {}) {
     acceptPrepaidPickup: current.acceptPrepaidPickup !== false,
     deliveryFee: current.deliveryFee,
     deliveryFeeMode: current.deliveryFeeMode || 'PER_NEIGHBORHOOD',
+    deliveryAllNeighborhoodsFee: current.deliveryAllNeighborhoodsFee,
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
     storeAddress: current.storeAddress,

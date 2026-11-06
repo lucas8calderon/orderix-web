@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DeliveryNeighborhoodsSection } from './DeliveryNeighborhoodsSection';
 import { listStoreNeighborhoods } from '../../../../services/deliveryNeighborhoodService';
@@ -49,6 +49,33 @@ describe('DeliveryNeighborhoodsSection', () => {
 
     expect(await screen.findByText(/todos os bairros ativos desta loja estão com entrega grátis/i)).toBeInTheDocument();
     expect(screen.getByText(/whatsapp da loja pendente/i)).toBeInTheDocument();
+  });
+
+  it('cobra a taxa única em todos os bairros e mantém a taxa cadastrada', async () => {
+    const onSettingChange = jest.fn();
+    render(
+      <DeliveryNeighborhoodsSection
+        settings={{
+          deliveryFeeMode: 'ALL_NEIGHBORHOODS',
+          deliveryAllNeighborhoodsFee: 10,
+          storePhone: '11988887777',
+        }}
+        onSettingChange={onSettingChange}
+      />
+    );
+
+    expect(await screen.findByText('Centro')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Entregar em todos os bairros' })).toBeChecked();
+    expect(screen.getByLabelText('Taxa única para todos os bairros')).toHaveValue('10,00');
+    expect(screen.getByText(/qualquer bairro é atendido, mesmo fora da lista/i)).toBeInTheDocument();
+    expect(screen.getByText('R$ 8,50')).toBeInTheDocument();
+    expect(screen.getByText('R$ 12,00')).toBeInTheDocument();
+    expect(screen.getAllByText('R$ 10,00').length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText('Taxa única para todos os bairros'), {
+      target: { value: '0' },
+    });
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryAllNeighborhoodsFee', null, 0);
   });
 
   it('filtra a lista pelo nome do bairro', async () => {

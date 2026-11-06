@@ -1,10 +1,13 @@
 import {
+  allNeighborhoodsFeeLabel,
   deliveryCoverageLabel,
   effectiveNeighborhoodFee,
+  hasServiceNeighborhood,
   matchNeighborhood,
   moneyCents,
   placeKey,
   selectionStillValid,
+  servesAllNeighborhoods,
 } from './neighborhoodPlace';
 
 describe('neighborhood place matching', () => {
@@ -41,7 +44,31 @@ describe('effective neighborhood fee', () => {
     expect(effectiveNeighborhoodFee('FREE_SELECTED', 8.5, true)).toBe(0);
     expect(effectiveNeighborhoodFee('FREE_SELECTED', 8.5, false)).toBe(8.5);
     expect(effectiveNeighborhoodFee('FREE_ALL', 8.5, false)).toBe(0);
+    expect(effectiveNeighborhoodFee('ALL_NEIGHBORHOODS', 8.5, true, 10)).toBe(10);
+    expect(effectiveNeighborhoodFee('ALL_NEIGHBORHOODS', 8.5, false, 0)).toBe(0);
     expect(moneyCents(8.5)).toBe(850);
+  });
+});
+
+describe('entrega em todos os bairros', () => {
+  it('reconhece o modo e aceita bairro fora da lista só nele', () => {
+    const open = { feeMode: 'ALL_NEIGHBORHOODS', allNeighborhoodsFee: 10 };
+    expect(servesAllNeighborhoods(open)).toBe(true);
+    expect(servesAllNeighborhoods({ feeMode: 'FREE_ALL' })).toBe(false);
+    expect(hasServiceNeighborhood(open, { neighborhood: 'Jardim Europa' })).toBe(true);
+    expect(hasServiceNeighborhood(open, { neighborhood: '  ' })).toBe(false);
+    expect(hasServiceNeighborhood({ feeMode: 'PER_NEIGHBORHOOD' }, { neighborhood: 'Jardim Europa' })).toBe(false);
+    expect(hasServiceNeighborhood({ feeMode: 'FREE_ALL' }, { neighborhoodId: 4 })).toBe(true);
+  });
+
+  it('mostra a taxa única ou entrega grátis', () => {
+    const format = (value) => `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
+    expect(allNeighborhoodsFeeLabel(10, format)).toBe(
+      'Entregamos em qualquer bairro. Taxa de entrega: R$ 10,00.'
+    );
+    expect(allNeighborhoodsFeeLabel(0, format)).toBe(
+      'Entregamos em qualquer bairro. A entrega é grátis.'
+    );
   });
 });
 

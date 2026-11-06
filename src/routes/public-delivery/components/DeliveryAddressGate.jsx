@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AddLocationAltOutlinedIcon from '@mui/icons-material/AddLocationAltOutlined';
 import {
   Alert,
   Box,
@@ -22,10 +23,13 @@ import { listPublicNeighborhoods } from '../../../services/deliveryNeighborhoodS
 import { cepDigits, formatCepInput, isValidCep } from '../../../utils/cepInput';
 import { CEP_NOT_FOUND, lookupCep } from '../../../services/viaCepService';
 import {
+  allNeighborhoodsFee,
+  allNeighborhoodsFeeLabel,
   deliveryCoverageLabel,
   matchNeighborhood,
   placeKey,
   selectionStillValid,
+  servesAllNeighborhoods,
 } from '../utils/neighborhoodPlace';
 import {
   isValidStoreWhatsApp,
@@ -63,12 +67,16 @@ export default function DeliveryAddressGate({
   const [error, setError] = useState('');
   const [asking, setAsking] = useState(false);
   const [requestedName, setRequestedName] = useState('');
+  const [customNeighborhood, setCustomNeighborhood] = useState('');
+  const openArea = servesAllNeighborhoods(catalog);
+  const flatFee = allNeighborhoodsFee(catalog);
 
   useEffect(() => {
     if (!open) return;
     setError('');
     setAsking(false);
     setRequestedName('');
+    setCustomNeighborhood(initial?.openArea && !initial?.neighborhoodId ? (initial.neighborhood || '') : '');
     setNeighborhoods([]);
     setForm(initial ? {
       ...emptyForm,
@@ -208,11 +216,31 @@ export default function DeliveryAddressGate({
       setError('Preencha CEP, rua, número, cidade e UF.');
       return;
     }
-    if (!selected) {
-      setError('Escolha um bairro atendido nesta cidade. Sem isso a entrega não é concluída.');
+    const typedName = customNeighborhood.trim();
+    if (!selected && !(openArea && typedName)) {
+      setError(openArea
+        ? 'Escolha um bairro da lista ou escreva o nome do seu bairro.'
+        : 'Escolha um bairro atendido nesta cidade. Sem isso a entrega não é concluída.');
       return;
     }
     setError('');
+    if (openArea && !selected) {
+      onConfirm({
+        addressId: form.addressId || '',
+        postalCode: cepDigits(form.postalCode),
+        street: form.street.trim(),
+        number: form.number.trim(),
+        complement: form.complement.trim(),
+        reference: form.reference.trim(),
+        city: form.city.trim(),
+        state: form.state.trim().toUpperCase(),
+        neighborhoodId: null,
+        neighborhood: typedName,
+        effectiveFee: flatFee,
+        openArea: true,
+      });
+      return;
+    }
     onConfirm({
       addressId: form.addressId || '',
       postalCode: cepDigits(form.postalCode),
@@ -224,7 +252,8 @@ export default function DeliveryAddressGate({
       state: selected.state,
       neighborhoodId: selected.id,
       neighborhood: selected.name,
-      effectiveFee: Number(selected.effectiveFee || 0),
+      effectiveFee: openArea ? flatFee : Number(selected.effectiveFee || 0),
+      openArea,
     });
   };
 
@@ -248,8 +277,15 @@ export default function DeliveryAddressGate({
       <DialogTitle>Onde você quer receber?</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Escolha o bairro onde o endereço realmente fica. A lista mostra somente os bairros ativos desta loja nesta cidade e UF.
+          {openArea
+            ? 'Informe o endereço. Se o bairro não estiver na lista, escreva o nome. A taxa é a mesma em qualquer bairro.'
+            : 'Escolha o bairro onde o endereço realmente fica. A lista mostra somente os bairros ativos desta loja nesta cidade e UF.'}
         </Typography>
+        {openArea ? (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {allNeighborhoodsFeeLabel(flatFee, formatCurrency)}
+          </Alert>
+        ) : null}
         {addresses.length > 0 ? (
           <FormControl sx={{ mb: 2 }}>
             <Typography variant="subtitle2">Endereços salvos</Typography>
@@ -348,35 +384,76 @@ export default function DeliveryAddressGate({
           disabled={!form.city.trim() || form.state.trim().length !== 2}
           helperText={loadingAreas
             ? 'Buscando bairros atendidos...'
-            : 'Escolha o bairro onde o endereço realmente fica. Só entram bairros ativos desta loja nesta cidade.'}
-          onChange={(event) => setForm((prev) => ({
-            ...prev,
-            neighborhoodId: event.target.value,
-            addressId: '',
-          }))}
+            : openArea
+              ? 'Se o seu bairro aparecer aqui, escolha. Se não aparecer, escreva o nome abaixo.'
+              : 'Escolha o bairro onde o endereço realmente fica. Só entram bairros ativos desta loja nesta cidade.'}
+          onChange={(event) => {
+            setCustomNeighborhood('');
+            setForm((prev) => ({
+              ...prev,
+              neighborhoodId: event.target.value,
+              addressId: '',
+            }));
+          }}
           sx={{ mb: 1 }}
         >
-          {neighborhoods.map((item) => (
-            <MenuItem key={item.id} value={String(item.id)}>
-              {item.name}
-              {' · '}
-              {Number(item.effectiveFee) === 0 ? 'Entrega grátis' : formatCurrency(item.effectiveFee)}
-            </MenuItem>
-          ))}
+          {neighborhoods.map((item) => {
+            const itemFee = openArea ? flatFee : item.effectiveFee;
+            return (
+              <MenuItem key={item.id} value={String(item.id)}>
+                {item.name}
+                {' · '}
+                {Number(itemFee) === 0 ? 'Entrega grátis' : formatCurrency(itemFee)}
+              </MenuItem>
+            );
+          })}
         </TextField>
-        {selected ? (
+        {openArea ? (
+          <TextField
+            fullWidth
+            label="Bairro fora da lista"
+            value={customNeighborhood}
+            onChange={(event) => {
+              setCustomNeighborhood(event.target.value);
+              setForm((prev) => ({ ...prev, neighborhoodId: '', addressId: '' }));
+            }}
+            helperText="Use quando o bairro não aparecer na lista. A taxa não muda."
+            sx={{ mb: 1.5 }}
+          />
+        ) : null}
+        {(selected || (openArea && customNeighborhood.trim())) ? (
           <Alert severity="success" sx={{ mb: 1.5 }}>
-            {deliveryCoverageLabel(selected.name, selected.effectiveFee, formatCurrency)}
+            {deliveryCoverageLabel(
+              selected ? selected.name : customNeighborhood.trim(),
+              openArea ? flatFee : selected.effectiveFee,
+              formatCurrency,
+            )}
           </Alert>
         ) : null}
         {form.city.trim() && form.state.trim().length === 2 && !loadingAreas && neighborhoods.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Nenhum bairro ativo desta loja nesta cidade. Sem um bairro da lista, o endereço não é atendido.
+            {openArea
+              ? 'Nenhum bairro cadastrado nesta cidade. Escreva o nome do bairro. A entrega continua disponível.'
+              : 'Nenhum bairro ativo desta loja nesta cidade. Sem um bairro da lista, o endereço não é atendido.'}
           </Typography>
         ) : null}
 
-        <Button size="small" onClick={() => setAsking((prev) => !prev)} sx={{ mb: 1 }}>
-          Não encontrou seu bairro?
+        {openArea ? null : (
+        <>
+        <Button
+          variant="outlined"
+          fullWidth
+          startIcon={<AddLocationAltOutlinedIcon />}
+          aria-expanded={asking}
+          onClick={() => setAsking((prev) => !prev)}
+          sx={{ mb: 1.5, py: 1.25, justifyContent: 'flex-start', textAlign: 'left', borderStyle: 'dashed' }}
+        >
+          <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
+            <span>Não encontrou seu bairro?</span>
+            <Typography component="span" variant="caption" color="text.secondary" sx={{ textTransform: 'none', fontWeight: 400 }}>
+              Toque aqui para pedir que a loja passe a entregar nele.
+            </Typography>
+          </Box>
         </Button>
         {asking ? (
           <Box sx={{ mb: 1.5 }}>
@@ -401,6 +478,8 @@ export default function DeliveryAddressGate({
             ) : null}
           </Box>
         ) : null}
+        </>
+        )}
         <TextField
           fullWidth
           label="Referência"
@@ -412,7 +491,11 @@ export default function DeliveryAddressGate({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Agora não</Button>
-        <Button variant="contained" onClick={confirm} disabled={!selected}>
+        <Button
+          variant="contained"
+          onClick={confirm}
+          disabled={openArea ? !(selected || customNeighborhood.trim()) : !selected}
+        >
           Usar este endereço
         </Button>
       </DialogActions>

@@ -77,7 +77,14 @@ import {
 import { productTags, resolveDeliveryImage } from './utils/resolveDeliveryImage';
 import DeliveryAddressGate from './components/DeliveryAddressGate';
 import { listPublicNeighborhoods } from '../../services/deliveryNeighborhoodService';
-import { deliveryCoverageLabel, moneyCents } from './utils/neighborhoodPlace';
+import {
+  allNeighborhoodsFee,
+  allNeighborhoodsFeeLabel,
+  deliveryCoverageLabel,
+  hasServiceNeighborhood,
+  moneyCents,
+  servesAllNeighborhoods,
+} from './utils/neighborhoodPlace';
 import { clearServiceAddress, readServiceAddress, writeServiceAddress } from './utils/serviceAddress';
 import WeperPlatformPromo, { WEPER_PLATFORM_NOTE_DELIVERY } from '../../components/WeperPlatformPromo';
 import './PublicDelivery.css';
@@ -141,7 +148,7 @@ export default function PublicDelivery() {
   const [pixCreating, setPixCreating] = useState(false);
   const [serviceAddress, setServiceAddress] = useState(() => readServiceAddress(slug));
   const [addressGateOpen, setAddressGateOpen] = useState(false);
-  const pendingAddRef = useRef(null);
+  const checkoutAfterAddressRef = useRef(false);
 
   useEffect(() => {
     const sync = () => setCustomer(readDeliveryCustomerSession());
@@ -223,7 +230,9 @@ export default function PublicDelivery() {
   }, [slug]);
 
   useEffect(() => {
-    if (!serviceAddress?.neighborhoodId) return;
+    const listed = Boolean(serviceAddress?.neighborhoodId);
+    const typedOpen = Boolean(serviceAddress?.openArea) && String(serviceAddress?.neighborhood || '').trim();
+    if (!listed && !typedOpen) return;
     setCheckout((prev) => ({
       ...prev,
       addressId: serviceAddress.addressId ? String(serviceAddress.addressId) : prev.addressId,
@@ -232,7 +241,7 @@ export default function PublicDelivery() {
       number: serviceAddress.number || '',
       complement: serviceAddress.complement || '',
       neighborhood: serviceAddress.neighborhood || '',
-      neighborhoodId: serviceAddress.neighborhoodId,
+      neighborhoodId: serviceAddress.neighborhoodId || '',
       city: serviceAddress.city || '',
       state: serviceAddress.state || '',
       reference: serviceAddress.reference || '',
@@ -241,27 +250,49 @@ export default function PublicDelivery() {
   }, [serviceAddress]);
 
   useEffect(() => {
+    if (!catalog || servesAllNeighborhoods(catalog)) return;
+    if (serviceAddress?.openArea && !serviceAddress?.neighborhoodId) {
+      clearServiceAddress(slug);
+      setServiceAddress(null);
+    }
+  }, [catalog, serviceAddress, slug]);
+
+  useEffect(() => {
     if (!catalog?.usesNeighborhoodPricing || !serviceAddress?.neighborhoodId || !serviceAddress.city || !serviceAddress.state) {
       return undefined;
     }
+    const openArea = servesAllNeighborhoods(catalog);
     let cancelled = false;
     listPublicNeighborhoods(slug, { state: serviceAddress.state, city: serviceAddress.city })
       .then((response) => {
         if (cancelled) return;
         const match = (response.data || []).find((item) => String(item.id) === String(serviceAddress.neighborhoodId));
         if (!match) {
+          if (openArea && String(serviceAddress.neighborhood || '').trim()) {
+            const next = {
+              ...serviceAddress,
+              neighborhoodId: '',
+              openArea: true,
+              effectiveFee: allNeighborhoodsFee(catalog),
+            };
+            writeServiceAddress(slug, next);
+            setServiceAddress(next);
+            return;
+          }
           clearServiceAddress(slug);
           setServiceAddress(null);
           setToast({ open: true, message: 'Este bairro não está mais disponível para entrega. Escolha outro.' });
           return;
         }
-        if (moneyCents(match.effectiveFee) !== moneyCents(serviceAddress.effectiveFee)) {
+        const nextFee = openArea ? allNeighborhoodsFee(catalog) : Number(match.effectiveFee || 0);
+        if (moneyCents(nextFee) !== moneyCents(serviceAddress.effectiveFee) || (openArea && match.name !== serviceAddress.neighborhood)) {
           const next = {
             ...serviceAddress,
             neighborhood: match.name,
             city: match.city,
             state: match.state,
-            effectiveFee: Number(match.effectiveFee || 0),
+            effectiveFee: nextFee,
+            openArea: openArea || serviceAddress.openArea,
           };
           writeServiceAddress(slug, next);
           setServiceAddress(next);
@@ -269,7 +300,7 @@ export default function PublicDelivery() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [catalog?.usesNeighborhoodPricing, slug, serviceAddress]);
+  }, [catalog, slug, serviceAddress]);
 
   useEffect(() => {
     if (!checkoutOpen || !customer) return;
@@ -279,7 +310,9 @@ export default function PublicDelivery() {
       if (!next.customerPhone) next.customerPhone = formatPhoneInput(customer.phone || '');
       const preferred = addresses.find((item) => item.isDefault) || addresses[0];
       const alreadyTypingAddress = Boolean(cepDigits(next.postalCode));
-      if (preferred && !next.addressId && next.fulfillment === 'DELIVERY' && !alreadyTypingAddress && !serviceAddress?.neighborhoodId) {
+      const hasArea = Boolean(serviceAddress?.neighborhoodId)
+        || (Boolean(serviceAddress?.openArea) && String(serviceAddress?.neighborhood || '').trim());
+      if (preferred && !next.addressId && next.fulfillment === 'DELIVERY' && !alreadyTypingAddress && !hasArea) {
         next.addressId = String(preferred.id);
         next.postalCode = formatCepInput(preferred.postalCode || '');
         next.street = preferred.street || '';
@@ -373,9 +406,13 @@ export default function PublicDelivery() {
 
   const featuredProducts = useMemo(() => collectFeaturedProducts(catalog), [catalog]);
   const promoBanners = useMemo(() => collectPromoBanners(catalog), [catalog]);
-  const quotedFee = catalog?.usesNeighborhoodPricing
-    ? Number(serviceAddress?.effectiveFee || 0)
-    : catalog?.deliveryFee;
+  const openArea = servesAllNeighborhoods(catalog);
+  const flatFee = allNeighborhoodsFee(catalog);
+  const quotedFee = openArea
+    ? flatFee
+    : catalog?.usesNeighborhoodPricing
+      ? Number(serviceAddress?.effectiveFee || 0)
+      : catalog?.deliveryFee;
   const totals = cartTotals(cart, {
     deliveryFee: quotedFee,
     fulfillment: checkout.fulfillment,
@@ -423,20 +460,16 @@ export default function PublicDelivery() {
       extras,
       mandatorySelections,
     };
-    const needsAddress = Boolean(catalog?.usesNeighborhoodPricing)
-      && checkout.fulfillment === 'DELIVERY'
-      && offersDelivery(fulfillmentModes)
-      && !serviceAddress?.neighborhoodId;
-    if (needsAddress) {
-      pendingAddRef.current = item;
-      setSelected(null);
-      setAddressGateOpen(true);
-      return;
-    }
     setCart((prev) => addCartItem(prev, item));
     setSelected(null);
     setToast({ open: true, message: 'Adicionado ao carrinho' });
+    // Sem endereço ainda: o carrinho oferece continuar comprando ou finalizar (login e depois endereço).
+    if (needsServiceAddress()) setCartOpen(true);
   };
+
+  const needsServiceAddress = () => Boolean(catalog?.usesNeighborhoodPricing)
+    && deliverySelected
+    && !hasServiceNeighborhood(catalog, serviceAddress);
 
   const acceptServiceAddress = async (draft) => {
     let next = { ...draft };
@@ -467,20 +500,28 @@ export default function PublicDelivery() {
     writeServiceAddress(slug, next);
     setServiceAddress(next);
     setAddressGateOpen(false);
-    if (pendingAddRef.current) {
-      const pending = pendingAddRef.current;
-      pendingAddRef.current = null;
-      setCart((prev) => addCartItem(prev, pending));
-      setToast({ open: true, message: 'Adicionado ao carrinho' });
+    if (checkoutAfterAddressRef.current) {
+      checkoutAfterAddressRef.current = false;
+      showCheckout();
     }
   };
 
-  const openAuthenticatedCheckout = () => {
+  const showCheckout = () => {
     setCheckout((prev) => ({
       ...prev,
       ...defaultCheckoutPayment(catalog, prev.fulfillment),
     }));
     setCheckoutOpen(true);
+  };
+
+  // Na entrega por bairro, o endereço vem depois do login: a conta já traz os endereços salvos.
+  const openAuthenticatedCheckout = () => {
+    if (needsServiceAddress()) {
+      checkoutAfterAddressRef.current = true;
+      setAddressGateOpen(true);
+      return;
+    }
+    showCheckout();
   };
 
   const beginCheckout = () => {
@@ -497,8 +538,10 @@ export default function PublicDelivery() {
     if (!customer) return 'Entre ou crie uma conta para continuar.';
     if (!checkout.customerName.trim()) return 'Informe o nome.';
     if (!isValidBrazilianPhone(checkout.customerPhone)) return 'Informe um telefone válido.';
-    if (deliverySelected && catalog?.usesNeighborhoodPricing && !serviceAddress?.neighborhoodId) {
-      return 'Escolha o endereço e um bairro atendido antes de confirmar.';
+    if (deliverySelected && catalog?.usesNeighborhoodPricing && !hasServiceNeighborhood(catalog, serviceAddress)) {
+      return openArea
+        ? 'Informe o endereço e o bairro antes de confirmar.'
+        : 'Escolha o endereço e um bairro atendido antes de confirmar.';
     }
     if (deliverySelected) {
       if (!isValidCep(checkout.postalCode)) return 'Informe um CEP válido.';
@@ -535,7 +578,7 @@ export default function PublicDelivery() {
       setCheckoutError(message);
       return;
     }
-    if (catalog?.usesNeighborhoodPricing && deliverySelected && serviceAddress?.neighborhoodId) {
+    if (!openArea && catalog?.usesNeighborhoodPricing && deliverySelected && serviceAddress?.neighborhoodId) {
       try {
         const fresh = await listPublicNeighborhoods(slug, {
           state: checkout.state,
@@ -589,11 +632,15 @@ export default function PublicDelivery() {
         city: checkout.city,
         state: checkout.state,
         reference: checkout.reference,
-        neighborhoodId: catalog?.usesNeighborhoodPricing && deliverySelected
-          ? Number(serviceAddress?.neighborhoodId)
-          : null,
-        expectedDeliveryFee: catalog?.usesNeighborhoodPricing && deliverySelected
-          ? Number(serviceAddress?.effectiveFee || 0)
+        neighborhoodId: !deliverySelected
+          ? null
+          : (openArea
+            ? (serviceAddress?.neighborhoodId ? Number(serviceAddress.neighborhoodId) : null)
+            : (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId
+              ? Number(serviceAddress.neighborhoodId)
+              : null)),
+        expectedDeliveryFee: deliverySelected && (openArea || (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId))
+          ? Number(openArea ? flatFee : (serviceAddress?.effectiveFee || 0))
           : null,
         addressId: checkout.addressId ? Number(checkout.addressId) : null,
         saveAddress: Boolean(customer) && deliverySelected && !checkout.addressId && checkout.saveAddress,
@@ -780,14 +827,27 @@ export default function PublicDelivery() {
                     severity="success"
                     action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Trocar</Button>}
                   >
-                    {deliveryCoverageLabel(serviceAddress.neighborhood, serviceAddress.effectiveFee, formatCurrency)}
+                    {deliveryCoverageLabel(
+                      serviceAddress.neighborhood,
+                      openArea ? flatFee : serviceAddress.effectiveFee,
+                      formatCurrency,
+                    )}
+                  </Alert>
+                ) : openArea ? (
+                  <Alert
+                    severity="info"
+                    action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Informar endereço</Button>}
+                  >
+                    {allNeighborhoodsFeeLabel(flatFee, formatCurrency)}
+                    {' '}
+                    Informe o endereço para continuar.
                   </Alert>
                 ) : (
                   <Alert
                     severity="info"
                     action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Informar endereço</Button>}
                   >
-                    Informe o endereço para saber se entregamos e quanto custa. O cardápio continua visível, e o endereço é obrigatório ao adicionar o primeiro item.
+                    Informe o endereço para saber se entregamos e quanto custa. Você pode montar o pedido antes; o endereço é pedido ao finalizar, depois de entrar na conta.
                   </Alert>
                 )}
               </Box>
@@ -1116,7 +1176,11 @@ export default function PublicDelivery() {
                 {serviceAddress?.neighborhood ? (
                   <>
                     <Alert severity="success" sx={{ mb: 1 }}>
-                      {deliveryCoverageLabel(serviceAddress.neighborhood, serviceAddress.effectiveFee, formatCurrency)}
+                      {deliveryCoverageLabel(
+                        serviceAddress.neighborhood,
+                        openArea ? flatFee : serviceAddress.effectiveFee,
+                        formatCurrency,
+                      )}
                     </Alert>
                     <Button onClick={() => setAddressGateOpen(true)}>Trocar endereço</Button>
                   </>
@@ -1128,6 +1192,11 @@ export default function PublicDelivery() {
               </Box>
             ) : (
             <>
+              {openArea ? (
+                <Alert severity="info" sx={{ mb: 1.5 }}>
+                  {allNeighborhoodsFeeLabel(flatFee, formatCurrency)}
+                </Alert>
+              ) : null}
               {addresses.length > 0 ? (
                 <FormControl sx={{ mb: 1.5 }}>
                   <Typography variant="subtitle2">Endereço de entrega</Typography>
@@ -1354,7 +1423,7 @@ export default function PublicDelivery() {
       <DeliveryAddressGate
         open={addressGateOpen}
         onClose={() => {
-          pendingAddRef.current = null;
+          checkoutAfterAddressRef.current = false;
           setAddressGateOpen(false);
         }}
         onConfirm={acceptServiceAddress}
