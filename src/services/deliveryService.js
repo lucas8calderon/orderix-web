@@ -1,6 +1,14 @@
 import axios from 'axios';
 import { API_BASE_URL, SETTINGS_SAVE_TIMEOUT_MS } from './apiConfig';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../utils/phoneInput';
+import { deliveryEstimateForSave } from '../routes/public-delivery/utils/deliveryEstimate';
+
+export {
+  deliveryEstimateForSave,
+  formatDeliveryEstimateLabel,
+  formatStoreEstimateSummary,
+  readDeliveryEstimateRange,
+} from '../routes/public-delivery/utils/deliveryEstimate';
 
 const SETTINGS_URL = `${API_BASE_URL}/stores/me/delivery`;
 
@@ -56,6 +64,18 @@ function paymentOptionsFromApi(data = {}) {
   };
 }
 
+function estimateFieldsFromApi(data = {}) {
+  const blank = (value) => value == null || String(value).trim() === '';
+  const legacy = blank(data.estimatedMinutes) ? '' : data.estimatedMinutes;
+  const min = blank(data.estimatedMinutesMin) ? legacy : data.estimatedMinutesMin;
+  const max = blank(data.estimatedMinutesMax) ? min : data.estimatedMinutesMax;
+  return {
+    deliveryEstimatedMinutes: min,
+    deliveryEstimatedMinutesMin: min,
+    deliveryEstimatedMinutesMax: max,
+  };
+}
+
 export function toDeliverySettingsUi(data = {}) {
   return {
     deliveryEnabled: Boolean(data.enabled),
@@ -66,7 +86,7 @@ export function toDeliverySettingsUi(data = {}) {
     deliveryFeeMode: data.feeMode || 'PER_NEIGHBORHOOD',
     deliveryAllNeighborhoodsFee: Number(data.allNeighborhoodsFee || 0),
     storePhone: formatStoreWhatsAppInput(data.phone),
-    deliveryEstimatedMinutes: data.estimatedMinutes == null ? '' : data.estimatedMinutes,
+    ...estimateFieldsFromApi(data),
     deliveryMinOrder: Number(data.minOrder || 0),
     slug: data.slug || '',
     storeName: data.storeName || '',
@@ -104,7 +124,10 @@ export function brandingValueForSave(current, saved) {
 }
 
 export function toDeliverySettingsPayload(ui = {}) {
-  const eta = ui.deliveryEstimatedMinutes;
+  const eta = deliveryEstimateForSave(ui);
+  if (eta.error) {
+    throw new Error(eta.error);
+  }
   const address = (ui.storeAddress || '').trim();
   const offersDelivery = ui.offersDelivery == null ? true : Boolean(ui.offersDelivery);
   const offersPickup = ui.offersPickup == null ? true : Boolean(ui.offersPickup);
@@ -125,7 +148,9 @@ export function toDeliverySettingsPayload(ui = {}) {
     feeMode: ui.deliveryFeeMode || 'PER_NEIGHBORHOOD',
     allNeighborhoodsFee: Number(ui.deliveryAllNeighborhoodsFee || 0),
     minOrder: Number(ui.deliveryMinOrder || 0),
-    estimatedMinutes: eta === '' || eta == null ? null : Number(eta),
+    estimatedMinutes: eta.estimatedMinutes ?? null,
+    estimatedMinutesMin: eta.estimatedMinutesMin ?? null,
+    estimatedMinutesMax: eta.estimatedMinutesMax ?? null,
     address: address || null,
     logoUrl: brandingField(ui.deliveryLogoUrl),
     coverUrl: brandingField(ui.deliveryCoverUrl),

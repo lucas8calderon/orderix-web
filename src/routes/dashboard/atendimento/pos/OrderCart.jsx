@@ -51,6 +51,42 @@ export function OrderCart({
     setConfirmClear(true);
   };
 
+  const customerFields = customer ? (
+    <Box sx={{ display: 'grid', gap: 1, mb: 1.5 }}>
+      <TextField
+        size="small"
+        label={customer.label}
+        placeholder={customer.placeholder}
+        value={customer.name}
+        onChange={(event) => customer.onName(event.target.value)}
+        disabled={customer.locked || saving}
+        required={customer.required}
+        error={Boolean(customer.error)}
+        helperText={customer.error || undefined}
+        inputRef={customer.inputRef}
+        FormHelperTextProps={customer.error ? { role: 'alert' } : undefined}
+      />
+      {customer.onNote ? (
+        <TextField
+          size="small"
+          label="Identificação visual (opcional)"
+          placeholder="Ex.: camiseta azul, mesa da janela"
+          value={customer.note}
+          onChange={(event) => customer.onNote(event.target.value.slice(0, 120))}
+          disabled={saving}
+        />
+      ) : null}
+      <TextField
+        size="small"
+        label="Observação do pedido (opcional)"
+        placeholder="Ex.: para viagem"
+        value={observation}
+        onChange={(event) => onObservation(event.target.value)}
+        disabled={saving}
+      />
+    </Box>
+  ) : null;
+
   return (
     <Box
       component="section"
@@ -83,37 +119,7 @@ export function OrderCart({
 
       <Box sx={{ flex: 1, overflow: 'auto', px: 2, py: 1.5 }}>
         {notice}
-        {customer ? (
-          <Box sx={{ display: 'grid', gap: 1, mb: 1.5 }}>
-            <TextField
-              size="small"
-              label={customer.label}
-              placeholder={customer.placeholder}
-              value={customer.name}
-              onChange={(event) => customer.onName(event.target.value)}
-              disabled={customer.locked || saving}
-              required={customer.required}
-            />
-            {customer.onNote ? (
-              <TextField
-                size="small"
-                label="Identificação visual (opcional)"
-                placeholder="Ex.: camiseta azul, mesa da janela"
-                value={customer.note}
-                onChange={(event) => customer.onNote(event.target.value.slice(0, 120))}
-                disabled={saving}
-              />
-            ) : null}
-            <TextField
-              size="small"
-              label="Observação do pedido (opcional)"
-              placeholder="Ex.: para viagem"
-              value={observation}
-              onChange={(event) => onObservation(event.target.value)}
-              disabled={saving}
-            />
-          </Box>
-        ) : null}
+        {customer && !customer.afterItems ? customerFields : null}
         {lines.length === 0 ? (
           <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
             Toque nos produtos para adicionar.
@@ -179,6 +185,7 @@ export function OrderCart({
       </Box>
 
       <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid var(--color-border)' }}>
+        {customer?.afterItems ? customerFields : null}
         {error ? (
           <Typography role="alert" color="error" sx={{ mb: 1 }}>{error}</Typography>
         ) : null}

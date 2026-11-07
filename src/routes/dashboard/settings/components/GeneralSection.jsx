@@ -24,7 +24,7 @@ import {
   WEEKDAY_OPTIONS,
 } from '../../../../services/storeHoursService';
 import { buildPublicMenuUrl } from '../../../../services/publicMenuService';
-import { buildDeliveryUrl, isBrandingImage } from '../../../../services/deliveryService';
+import { buildDeliveryUrl, formatStoreEstimateSummary, isBrandingImage } from '../../../../services/deliveryService';
 import { formatCurrencyInput } from '../../../../utils/currencyInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
@@ -86,10 +86,10 @@ export function GeneralSection({ settings, onNavigate }) {
                   color={openNow ? 'success' : 'default'}
                   className="status-chip"
                 />
-                {settings?.deliveryEstimatedMinutes ? (
+                {formatStoreEstimateSummary(settings) ? (
                   <Typography className="overview-store__eta" variant="body2">
                     <TimeIcon fontSize="inherit" />
-                    {settings.deliveryEstimatedMinutes} min
+                    {formatStoreEstimateSummary(settings)}
                   </Typography>
                 ) : null}
               </Box>
@@ -175,8 +175,8 @@ export function GeneralSection({ settings, onNavigate }) {
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Taxa {formatMoney(settings?.deliveryFee)} · Mínimo {formatMoney(settings?.deliveryMinOrder)}
-          {settings?.deliveryEstimatedMinutes
-            ? ` · ${settings.deliveryEstimatedMinutes} min`
+          {formatStoreEstimateSummary(settings)
+            ? ` · ${formatStoreEstimateSummary(settings)}`
             : ''}
         </Typography>
         {deliveryUrl ? (
@@ -201,9 +201,7 @@ export function GeneralSection({ settings, onNavigate }) {
           <div>
             <span className="overview-fact__label">Tempo estimado</span>
             <strong>
-              {settings?.deliveryEstimatedMinutes
-                ? `${settings.deliveryEstimatedMinutes} min`
-                : '—'}
+              {formatStoreEstimateSummary(settings) || '—'}
             </strong>
           </div>
           <div>

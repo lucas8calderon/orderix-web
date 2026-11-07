@@ -18,6 +18,12 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&a
 const text = value => String(value ?? '').trim();
 const money = value => formatCurrency(value);
 
+function filled(value) {
+  const normalized = text(value);
+  if (!normalized || normalized === '-' || normalized === '—' || normalized === '–') return '';
+  return normalized;
+}
+
 function formatQty(value) {
   const number = Number(value);
   const qty = Number.isFinite(number) && number > 0 ? number : 1;
@@ -38,17 +44,72 @@ function orderHeading(order) {
   return { title, codeLine };
 }
 
+function fulfillmentMode(order) {
+  const explicit = String(order?.deliveryFulfillment || '').trim().toUpperCase();
+  if (explicit === 'DELIVERY' || explicit === 'PICKUP') return explicit;
+  const source = String(order?.orderSource || '').trim().toUpperCase();
+  if (source === 'PICKUP') return 'PICKUP';
+  if (source === 'DELIVERY') return 'DELIVERY';
+  return '';
+}
+
+function formatDeliveryAddress(order) {
+  const street = [filled(order?.deliveryStreet), filled(order?.deliveryNumber)].filter(Boolean).join(', ');
+  const city = [filled(order?.deliveryCity), filled(order?.deliveryState)].filter(Boolean).join('/');
+  return [street, filled(order?.deliveryNeighborhood), city].filter(Boolean).join(' · ');
+}
+
+function fulfillmentBlock(order) {
+  const mode = fulfillmentMode(order);
+  if (mode === 'PICKUP') {
+    return `<p><strong>RETIRADA NA LOJA</strong></p><p>O pedido será retirado na loja.</p>`;
+  }
+  if (mode !== 'DELIVERY') return '';
+  const address = formatDeliveryAddress(order);
+  const complement = filled(order?.deliveryComplement);
+  const reference = filled(order?.deliveryReference);
+  return [
+    address ? `<p>Entrega: ${escape(address)}</p>` : '',
+    complement ? `<p>Complemento: ${escape(complement)}</p>` : '',
+    reference ? `<p>Referência: ${escape(reference)}</p>` : '',
+  ].join('');
+}
+
+function placeRepeatsOrder(place, orders) {
+  const normalized = text(place).replace(/\s+/g, ' ').toLowerCase();
+  if (!normalized) return false;
+  return (orders || []).some((order) => {
+    const id = order?.id == null || order.id === '' ? '' : String(order.id).trim();
+    if (!id) return false;
+    return normalized === `pedido ${id}` || normalized === `pedido #${id}`;
+  });
+}
+
+function orderPrintTotal(order) {
+  const raw = order?.totalAmount;
+  if (raw != null && raw !== '') {
+    const value = Number(raw);
+    if (Number.isFinite(value)) return value;
+  }
+  return (order?.products || []).reduce((sum, product) => sum + productLineTotal(product), 0);
+}
+
+function accountPrintTotal(orders) {
+  return (orders || []).reduce((sum, order) => sum + orderPrintTotal(order), 0);
+}
+
 export function receiptHtml(account, { test = false, placeLabel = '' } = {}) {
   const orders = account?.orders || [];
   if (!orders.length || !orders.some(o => o.products?.length)) throw new Error('Não há itens carregados para imprimir.');
-  const storeName = text(getCurrentUser()?.storeName);
   const place = text(placeLabel);
+  const showPlace = place && !placeRepeatsOrder(place, orders);
   const body = orders.map(order => {
     const heading = orderHeading(order);
     const cancelled = String(order?.status || '').toUpperCase() === 'CANCELLED';
     const reason = text(order?.cancelReason);
     return `<section><h2>${escape(heading.title)}</h2>
     ${heading.codeLine ? `<p>${escape(heading.codeLine)}</p>` : ''}
+    ${fulfillmentBlock(order)}
     ${cancelled ? `<strong>Cancelado${reason ? `: ${escape(reason)}` : ''}</strong>` : ''}
     ${(order.products || []).map(product => {
       const extras = product.extras || [];
@@ -65,53 +126,70 @@ export function receiptHtml(account, { test = false, placeLabel = '' } = {}) {
     }).join('')}
     ${text(order?.observation) ? `<p><strong>Observação do pedido:</strong> ${escape(order.observation)}</p>` : ''}</section>`;
   }).join('');
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Weper — comanda 80 mm</title><style>
+  const total = accountPrintTotal(orders);
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Comanda</title><style>
     @page { margin: 0; } * { box-sizing: border-box; }
     html, body { width: 80mm; margin: 0; } body { padding: 4mm; color: #000; background: #fff; font: 12pt/1.35 monospace; overflow-wrap: anywhere; }
     h1 { font-size: 16pt; } h2 { font-size: 13pt; } p { margin: 2mm 0; white-space: pre-wrap; overflow-wrap: anywhere; } section { border-top: 1px dashed; padding-top: 2mm; } article { margin: 3mm 0; }
     .line { display: flex; align-items: flex-start; gap: 2mm; justify-content: space-between; } .line strong { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; } .line span { flex: 0 0 auto; white-space: nowrap; }
-    nav { font: 11pt sans-serif; margin-bottom: 5mm; } @media print { nav { display: none; } }
-    </style></head><body><nav><button id="print" type="button">Imprimir</button><p>Selecione a KP-IM609, papel 80 mm, escala 100%, margens nenhuma e desative cabeçalhos e rodapés. Cancelar esta janela não imprime. Feche a aba ao terminar.</p></nav>
-    <h1>WEPER${test ? ' — TESTE' : ''}</h1>
-    ${storeName ? `<p>${escape(storeName)}</p>` : ''}
-    <p><strong>COMANDA</strong></p>
-    <p>NÃO É DOCUMENTO FISCAL</p>
-    <p>NÃO É COMPROVANTE DE PAGAMENTO</p>
-    ${place ? `<p>${escape(place)}</p>` : ''}
-    ${body}<p>Fim da comanda${test ? ' · Confira se todas as linhas saíram.' : ''}</p></body></html>`;
+    </style></head><body>
+    <p><strong>COMANDA</strong>${test ? ' — TESTE' : ''}</p>
+    ${showPlace ? `<p>${escape(place)}</p>` : ''}
+    ${body}
+    <div class="line"><strong>TOTAL</strong><span>${escape(money(total))}</span></div>
+    <p>Fim da comanda${test ? ' · Confira se todas as linhas saíram.' : ''}</p></body></html>`;
 }
 
+function removeFrame(frame) {
+  try { frame.remove(); } catch { /* o iframe já saiu do documento */ }
+}
+
+/**
+ * Chrome e Edge sempre abrem o diálogo em print() numa janela normal.
+ * Não há API web para escolher a impressora USB. O trabalho sai num iframe
+ * desta página, sem aba nova. Com o Chrome iniciado em --kiosk-printing,
+ * o mesmo print() vai direto para a impressora padrão.
+ */
 export function openThermalPrint(account, options = {}) {
   if (!thermalEnabled()) throw new Error('Impressão térmica desativada para esta loja.');
   const html = receiptHtml(account, options);
-  const popup = window.open('', '_blank');
-  if (!popup) throw new Error('Permita pop-ups para a Weper e tente novamente.');
-  try {
-    popup.document.open();
-    popup.document.write(html);
-    popup.document.close();
-  } catch {
-    try { popup.close(); } catch { /* a janela já estava inacessível */ }
-    throw new Error('Não foi possível abrir a impressão. Tente novamente.');
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.setAttribute('title', 'Comanda');
+  frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:80mm;height:200mm;border:0;';
+  document.body.appendChild(frame);
+  const win = frame.contentWindow;
+  const doc = frame.contentDocument || win?.document;
+  if (!win || !doc) {
+    removeFrame(frame);
+    throw new Error('Não foi possível imprimir neste navegador.');
   }
-  try { popup.opener = null; } catch { /* segue mesmo se o navegador impedir a alteração */ }
   try {
-    const button = popup.document.getElementById('print');
-    if (button) {
-      button.addEventListener('click', () => {
-        try { popup.focus(); } catch { /* o diálogo ainda pode abrir */ }
-        try { popup.print(); } catch { /* o botão continua na janela */ }
-      });
-    }
-  } catch { /* a janela já tem o conteúdo para imprimir */ }
-  // print() permanece neste clique para o navegador permitir o diálogo.
-  // Abrir, fechar ou afterprint não comprovam papel, spooler nem cancelamento.
-  try { popup.focus(); } catch { /* a janela segue aberta */ }
-  try {
-    popup.print();
+    doc.open();
+    doc.write(html);
+    doc.close();
   } catch {
-    throw new Error('A janela abriu, mas o diálogo não apareceu. Use o botão Imprimir nessa janela.');
+    removeFrame(frame);
+    throw new Error('Não foi possível preparar a comanda. Tente novamente.');
   }
+  if (typeof win.print !== 'function') {
+    removeFrame(frame);
+    throw new Error('Não foi possível imprimir neste navegador.');
+  }
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    removeFrame(frame);
+  };
+  try { win.addEventListener('afterprint', finish); } catch { /* o diálogo ainda pode abrir */ }
+  try {
+    win.print();
+  } catch {
+    finish();
+    throw new Error('Não foi possível enviar a comanda para a impressora.');
+  }
+  frame.dataset.printed = '1';
   return { version: PRINT_VERSION, time: new Date().toISOString(), state: 'print_requested' };
 }
 

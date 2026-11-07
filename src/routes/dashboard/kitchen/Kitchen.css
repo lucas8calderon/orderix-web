@@ -23,7 +23,28 @@
   color: var(--color-text-secondary);
 }
 
-/* Filter Section */
+/* Filter Section
+   A página (window) é quem rola: header da loja sticky no topo e colunas
+   mais altas que a viewport. O bloco gruda abaixo desse header. */
+.kitchen-filters-sticky {
+  position: sticky;
+  top: 76px;
+  z-index: 20;
+  background: var(--color-bg);
+  display: flow-root;
+}
+
+.kitchen-filters-sticky::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 12px;
+  background: var(--color-bg);
+  pointer-events: none;
+}
+
 .filter-section {
   background: var(--color-surface);
   padding: 20px;
@@ -32,6 +53,12 @@
   margin-bottom: 24px;
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
+}
+
+@media (max-width: 700px) {
+  .kitchen-filters-sticky {
+    top: 64px;
+  }
 }
 
 /* Floating Refresh Button */
@@ -57,6 +84,12 @@
 
 .kanban-board {
   margin-top: 24px;
+}
+
+.kitchen-order-card.is-new-focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 16px;
 }
 
 .orders-container {

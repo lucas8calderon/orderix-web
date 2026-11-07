@@ -20,11 +20,13 @@ export function fulfillmentLabel(order) {
 }
 
 export function isOpenDeliveryOrder(order) {
-  return String(order?.status || '').toUpperCase() === 'ACTIVE';
+  const status = String(order?.status || '').toUpperCase();
+  return status === 'ACTIVE' || status === 'HELD';
 }
 
 export function isPendingStoreCharge(order) {
   if (!isOpenDeliveryOrder(order)) return false;
+  if (String(order?.status || '').toUpperCase() === 'HELD') return true;
   return order?.onlinePayment !== true;
 }
 

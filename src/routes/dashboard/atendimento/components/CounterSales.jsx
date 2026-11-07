@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CounterPos } from '../pos/CounterPos';
 import { OpenCounterOrders } from '../pos/OpenCounterOrders';
 
 export { isOpenCounterOrder } from '../pos/counterOrders';
 
-export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, active = true, cashClosed = false, cashBlocked = false }) {
+export function CounterSales({ onOpenAccount, onCountChange, floorVersion = 0, active = true, cashClosed = false, cashBlocked = false, openOrdersToken = 0 }) {
   const [mode, setMode] = useState('sale');
   const [openCount, setOpenCount] = useState(0);
   const [sentVersion, setSentVersion] = useState(0);
+
+  useEffect(() => {
+    if (openOrdersToken > 0) setMode('orders');
+  }, [openOrdersToken]);
 
   const handleCount = (count) => {
     setOpenCount(count);

@@ -15,7 +15,11 @@ import {
   DeliveryDiningOutlined as DeliveryIcon,
   ContentCopy as CopyIcon,
 } from '@mui/icons-material';
-import { buildDeliveryUrl } from '../../../../services/deliveryService';
+import {
+  buildDeliveryUrl,
+  deliveryEstimateForSave,
+  formatDeliveryEstimateLabel,
+} from '../../../../services/deliveryService';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput } from '../../../../utils/phoneInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
@@ -317,11 +321,33 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
             }}
           />
           <TextField
-            label="Tempo estimado (min)"
+            label="Tempo mínimo (min)"
             type="number"
-            value={settings?.deliveryEstimatedMinutes ?? ''}
-            onChange={(e) => onSettingChange('deliveryEstimatedMinutes', null, e.target.value)}
-            inputProps={{ min: 1, step: 1 }}
+            value={settings?.deliveryEstimatedMinutesMin ?? settings?.deliveryEstimatedMinutes ?? ''}
+            onChange={(e) => onSettingChange('deliveryEstimatedMinutesMin', null, e.target.value)}
+            inputProps={{
+              min: 1,
+              max: 240,
+              step: 1,
+              'aria-label': 'Tempo mínimo de entrega em minutos',
+            }}
+            fullWidth
+          />
+          <TextField
+            label="Tempo máximo (min)"
+            type="number"
+            value={settings?.deliveryEstimatedMinutesMax ?? settings?.deliveryEstimatedMinutes ?? ''}
+            onChange={(e) => onSettingChange('deliveryEstimatedMinutesMax', null, e.target.value)}
+            inputProps={{
+              min: 1,
+              max: 240,
+              step: 1,
+              'aria-label': 'Tempo máximo de entrega em minutos',
+            }}
+            error={Boolean(deliveryEstimateForSave(settings || {}).error)}
+            helperText={deliveryEstimateForSave(settings || {}).error
+              || formatDeliveryEstimateLabel(settings)
+              || 'O cliente vê no formato previsão: 30-65min'}
             fullWidth
           />
         </Box>

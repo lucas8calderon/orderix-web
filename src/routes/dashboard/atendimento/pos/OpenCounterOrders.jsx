@@ -8,10 +8,13 @@ import { getTableAccount } from '../service/accountService';
 import { accountSubtotal, countAccountItems } from '../utils/accountTotals';
 import {
   counterOrderMatches,
+  counterPaymentLabel,
   counterStatusLabel,
   elapsedLabel,
   isActiveCounterSale,
   isOpenCounterOrder,
+  matchesCounterPaymentFilter,
+  sortCounterOrdersNewestFirst,
 } from './counterOrders';
 
 export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountChange, onOpenAccount }) {
@@ -20,6 +23,7 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountCha
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('open');
+  const [paymentFilter, setPaymentFilter] = useState(null);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -59,24 +63,67 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountCha
     const source = filter === 'cancelled'
       ? orders.filter((order) => String(order?.status || '').toUpperCase() === 'CANCELLED')
       : orders.filter(isActiveCounterSale);
-    return source.filter((order) => counterOrderMatches(order, query));
-  }, [orders, filter, query]);
+    return sortCounterOrdersNewestFirst(source
+      .filter((order) => matchesCounterPaymentFilter(order, paymentFilter))
+      .filter((order) => counterOrderMatches(order, query)));
+  }, [orders, filter, paymentFilter, query]);
+
+  const emptyCopy = paymentFilter === 'paid'
+    ? (filter === 'cancelled'
+      ? {
+        title: 'Nenhum cancelamento pago',
+        description: 'Cancelamentos das últimas 24 horas que já tinham sido cobrados aparecem aqui.',
+      }
+      : {
+        title: 'Nenhum pedido pago em aberto',
+        description: 'Pedidos em aberto que já foram cobrados aparecem aqui. Os fechados continuam fora desta lista.',
+      })
+    : paymentFilter === 'unpaid'
+      ? (filter === 'cancelled'
+        ? {
+          title: 'Nenhum cancelamento sem pagamento',
+          description: 'Cancelamentos das últimas 24 horas que não chegaram a ser cobrados aparecem aqui.',
+        }
+        : {
+          title: 'Nenhum pedido em aberto sem pagamento',
+          description: 'Pedidos em aberto que ainda não foram cobrados aparecem aqui.',
+        })
+      : (filter === 'cancelled'
+        ? {
+          title: 'Nenhum cancelamento recente',
+          description: 'Cancelamentos das últimas 24 horas aparecem aqui.',
+        }
+        : {
+          title: 'Nenhum pedido aberto no balcão',
+          description: 'Pedidos finalizados e cancelados ficam fora desta lista.',
+        });
 
   return (
     <Box>
-      <ToggleButtonGroup
-        exclusive
-        size="small"
-        value={filter}
-        onChange={(_event, value) => {
-          if (value) setFilter(value);
-        }}
-        aria-label="Filtrar pedidos de balcão"
-        sx={{ mb: 2 }}
-      >
-        <ToggleButton value="open" sx={{ textTransform: 'none' }}>Em aberto</ToggleButton>
-        <ToggleButton value="cancelled" sx={{ textTransform: 'none' }}>Cancelados</ToggleButton>
-      </ToggleButtonGroup>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={filter}
+          onChange={(_event, value) => {
+            if (value) setFilter(value);
+          }}
+          aria-label="Filtrar pedidos de balcão"
+        >
+          <ToggleButton value="open" sx={{ textTransform: 'none' }}>Em aberto</ToggleButton>
+          <ToggleButton value="cancelled" sx={{ textTransform: 'none' }}>Cancelados</ToggleButton>
+        </ToggleButtonGroup>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={paymentFilter}
+          onChange={(_event, value) => setPaymentFilter(value)}
+          aria-label="Filtrar por pagamento"
+        >
+          <ToggleButton value="paid" sx={{ textTransform: 'none' }}>Pagos</ToggleButton>
+          <ToggleButton value="unpaid" sx={{ textTransform: 'none' }}>Não pagos</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       <TextField
         size="small"
         fullWidth
@@ -89,17 +136,13 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountCha
       {loading ? <Loading loadingMessage="Carregando pedidos de balcão..." /> : null}
       {!loading && error ? <EmptyState title="Não foi possível carregar o balcão" description={error} /> : null}
       {!loading && !error && filtered.length === 0 ? (
-        <EmptyState
-          title={filter === 'cancelled' ? 'Nenhum cancelamento recente' : 'Nenhum pedido aberto no balcão'}
-          description={filter === 'cancelled'
-            ? 'Cancelamentos das últimas 24 horas aparecem aqui.'
-            : 'Pedidos finalizados e cancelados ficam fora desta lista.'}
-        />
+        <EmptyState title={emptyCopy.title} description={emptyCopy.description} />
       ) : null}
       {!loading && !error ? (
         <Grid container spacing={2}>
           {filtered.map((order) => {
             const status = counterStatusLabel(order);
+            const payment = counterPaymentLabel(order);
             const cancelled = String(order.status || '').toUpperCase() === 'CANCELLED';
             const total = accountSubtotal({ orders: [order] });
             const items = countAccountItems({ orders: [order] });
@@ -116,7 +159,10 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountCha
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 1 }}>
                         <Typography variant="h6">Pedido {order.id}</Typography>
-                        <StatusBadge label={status.label} tone={status.tone} />
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          <StatusBadge label={payment.label} tone={payment.tone} />
+                          <StatusBadge label={status.label} tone={status.tone} />
+                        </Box>
                       </Box>
                       <Typography color="text.secondary">{order.customerName || 'Balcão'}</Typography>
                       <Typography sx={{ mt: 1 }}>

@@ -1,12 +1,12 @@
 # Impressão USB 80 mm — Weper Web
 
-Piloto da KP-IM609 pelo Chrome ou Edge, usando o driver do Windows e a janela de impressão. Não há ESC/POS direto nem impressão silenciosa. A validação física continua pendente até o cliente confirmar o papel.
+Piloto da KP-IM609 pelo Chrome ou Edge, usando o driver do Windows. O clique imprime num iframe da própria página, sem aba nova. Não há ESC/POS direto. No Chrome/Edge normal, `print()` ainda abre o diálogo do sistema; só fica silencioso se o navegador tiver sido iniciado com `--kiosk-printing`. A validação física continua pendente até o cliente confirmar o papel.
 
 ## Escopo
 
 Configurações → Visão Geral oferece o teste e o diagnóstico. Na cobrança de mesas, comandas, balcão, pedidos por cliente e delivery, a comanda usa os itens já carregados da conta e o título daquela tela (mesa, comanda, entrega ou retirada). Imprimir não cobra, não fecha a conta, não envia o pedido à cozinha e não aciona Bluetooth.
 
-O papel é uma comanda. Traz `COMANDA`, `NÃO É DOCUMENTO FISCAL` e `NÃO É COMPROVANTE DE PAGAMENTO`. O preço de cada item inclui adicionais pelo mesmo cálculo da cobrança. Não resume taxa, desconto, entrega nem pagamento, e não imprime telefone.
+O papel é uma comanda. Traz `COMANDA` e o `TOTAL` do pedido (`totalAmount`, ou a soma das linhas se o total não veio). Não traz a marca WEPER, o nome da loja nem os avisos de documento fiscal. Entrega imprime logradouro, complemento e referência quando existirem. Retirada destaca que o pedido será retirado na loja. Balcão não vira retirada. O preço de cada item inclui adicionais pelo mesmo cálculo da cobrança. Não resume taxa, desconto nem pagamento, e não imprime telefone.
 
 Cada pedido sai como na tela: `Pedido #id`, nome do cliente, quantidade, nome, grupos obrigatórios, extras com quantidade, observação do item e observação do pedido. Se o código legível for diferente do id, a linha `Código` aparece junto. Pedido cancelado leva o motivo. Nomes longos quebram dentro da área útil. Acentos permanecem porque a página é UTF-8.
 
@@ -51,15 +51,15 @@ Passos da liberação:
 ## Roteiro do cliente
 
 1. Instalar o driver indicado pelo fabricante e imprimir a página de teste do Windows. USB conectado e bobina de 80 mm.
-2. Entrar em `https://www.weper.com.br`, abrir Configurações → Visão Geral e usar Imprimir teste KP-IM609. Permitir pop-ups da Weper.
-3. Na janela, selecionar a KP-IM609, papel 80 mm, escala 100%, margens nenhuma e cabeçalhos/rodapés desativados. O conteúdo tem 80 mm de largura e reserva 4 mm de cada lado (72 mm úteis). O Chrome usado na validação ignora `size: 80mm auto`, então o formulário de 80 mm precisa ser escolhido no diálogo e no driver. Se a prévia mostrar A4, escolher antes o formulário de bobina. O comprimento vem do driver.
+2. Entrar em `https://www.weper.com.br`, abrir Configurações → Visão Geral e usar Imprimir teste KP-IM609. O clique não abre outra aba.
+3. No Chrome normal o diálogo do sistema ainda aparece: a página não escolhe a impressora. Se a EPSON (ou a KP-IM609) for a impressora padrão e o Chrome tiver sido aberto com `--kiosk-printing`, o trabalho sai sem esse diálogo. Papel 80 mm, escala 100%, margens nenhuma e cabeçalhos/rodapés desativados. O conteúdo tem 80 mm de largura e reserva 4 mm de cada lado (72 mm úteis). O Chrome usado na validação ignora `size: 80mm auto`, então o formulário de 80 mm precisa estar no driver. Se a prévia mostrar A4, escolher antes o formulário de bobina. O comprimento vem do driver.
 4. Conferir o fim da comanda, os acentos (`ação`, `pão`, `açúcar`, `café`), a quantidade e a quebra do nome longo. A faixa do teste não é pedido de cliente.
 5. Cancelar a janela de impressão. O painel não pode dizer que imprimiu. Escolher “Cancelei a impressão”, preencher a observação sem dados de clientes e copiar o relatório. O relatório não é enviado nem gravado sozinho.
-6. Abrir uma cobrança real e imprimir a comanda sem finalizar a venda. Conferir, contra a tela, mesa ou comanda, número do pedido, quantidades, adicionais, observações e nomes longos. O papel precisa dizer que não é documento fiscal nem comprovante de pagamento. A conta deve continuar aberta.
+6. Abrir uma cobrança real e imprimir a comanda sem finalizar a venda. Conferir, contra a tela, mesa ou comanda, um único número do pedido, quantidades, adicionais de cada linha, observações e nomes longos. Entrega mostra endereço, complemento e referência. A conta deve continuar aberta.
 7. Enviar o relatório manualmente ao suporte. Aceite físico: teste e comanda real completos, legíveis e sem corte, confirmados por quem está na impressora.
 
 ## Limitações
 
-Não há validação física da KP-IM609 nesta entrega. A janela não informa papel, erro de spooler ou cancelamento. `afterprint` e o fechamento da janela não contam como sucesso. Corte, gaveta e ESC/POS direto ficam de fora. Largura, paginação e alimentação dependem do driver. Se o teste remoto falhar de forma sistêmica, esvaziar a flag e republicar, ou restaurar o deploy `dep-dbgjbtt9el5s73b3gvvg`.
+Não há validação física da KP-IM609 nesta entrega. O clique não informa papel, erro de spooler ou cancelamento. `afterprint` não conta como sucesso. Corte, gaveta e ESC/POS direto ficam de fora. No Chrome/Edge normal o diálogo de impressão continua, porque a página não acessa a fila USB. Largura, paginação e alimentação dependem do driver. Se o teste remoto falhar de forma sistêmica, esvaziar a flag e republicar, ou restaurar o deploy `dep-dbgjbtt9el5s73b3gvvg`.
 
 Referências: https://developer.mozilla.org/en-US/docs/Web/API/Window/print e https://developer.mozilla.org/en-US/docs/Web/API/Window/afterprint_event

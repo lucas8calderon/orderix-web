@@ -149,6 +149,63 @@ describe('delivery no atendimento', () => {
     });
   });
 
+  it('lista retirada HELD sem pagamento para o caixa receber e fechar', async () => {
+    const heldPickup = {
+      id: 77,
+      status: 'HELD',
+      customerName: 'Cliente Retirada',
+      displayCode: '0077',
+      orderSource: 'PICKUP',
+      deliveryFulfillment: 'PICKUP',
+      kitchenStatus: 'NEW',
+      onlinePayment: false,
+      products: [{ id: 7, name: 'X-Burger', quantity: 1, value: 25 }],
+    };
+    const heldOnline = {
+      id: 32,
+      status: 'HELD',
+      customerName: 'Pix Pendente',
+      displayCode: '0032',
+      orderSource: 'PICKUP',
+      deliveryFulfillment: 'PICKUP',
+      kitchenStatus: 'NEW',
+      onlinePayment: true,
+      products: [{ id: 8, name: 'Suco', quantity: 1, value: 9 }],
+    };
+    listDeliveryOrders.mockResolvedValue({ data: [heldPickup, heldOnline, closed] });
+    const onOpenAccount = jest.fn();
+    render(<DeliveryOrders onOpenAccount={onOpenAccount} floorVersion={0} />);
+
+    expect(isOpenDeliveryOrder(heldPickup)).toBe(true);
+    expect(isOpenDeliveryOrder(heldOnline)).toBe(true);
+    expect(isPendingStoreCharge(heldPickup)).toBe(true);
+    expect(isPendingStoreCharge(heldOnline)).toBe(true);
+    expect(deliveryPaymentLabel(heldPickup)).toBe('Aguardando pagamento');
+    expect(deliveryPaymentLabel(heldOnline)).toBe('Aguardando pagamento online');
+
+    const pickupCard = await screen.findByRole('button', { name: /Receber pagamento do pedido 0077/ });
+    expect(pickupCard).toHaveTextContent('#0077');
+    expect(pickupCard).toHaveTextContent('Retirada');
+    expect(pickupCard).toHaveTextContent('Aguardando pagamento');
+    fireEvent.click(pickupCard);
+    expect(onOpenAccount).toHaveBeenCalledWith({
+      kind: 'delivery',
+      id: 77,
+      number: '0077',
+      customerName: 'Cliente Retirada',
+      fulfillment: 'PICKUP',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Receber pagamento do pedido 0032/ }));
+    expect(onOpenAccount).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'delivery',
+      id: 32,
+      number: '0032',
+      fulfillment: 'PICKUP',
+    }));
+    expect(screen.queryByText('Já Fechado')).not.toBeInTheDocument();
+  });
+
   it('mostra o erro da API', async () => {
     listDeliveryOrders.mockRejectedValue({ response: { data: { message: 'Falha ao listar' } } });
     render(<DeliveryOrders floorVersion={0} />);

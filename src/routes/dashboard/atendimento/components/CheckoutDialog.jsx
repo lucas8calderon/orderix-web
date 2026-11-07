@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { StatusBadge } from '../../../../commons/components/StatusBadge';
 import { useDialogResponsiveProps, useIsMobile } from '../../../../commons/hooks/useResponsive';
 import { formatCurrency } from '../../../../services/accessControl';
 import {
@@ -42,6 +43,7 @@ import {
   getCustomerOrder,
 } from '../service/customerOrderService';
 import { listDeliveryOrders } from '../service/deliveryOrderService';
+import { counterPaymentLabel } from '../pos/counterOrders';
 import { deliveryChargeParts } from '../utils/deliveryOrderView';
 import {
   closeComandaAccount,
@@ -155,6 +157,11 @@ export function getCloseAccountConfirmCopy(target, options = {}) {
     title: 'Confirma que o pagamento foi realizado?',
     description: `Confirma que o pagamento de ${totalLabel || 'R$ 0,00'} foi realizado fora do Weper?${methodNote} ${article === 'o' ? 'O' : 'A'} ${subject} será ${releaseVerb}. O Weper não processou esta transação.`,
   };
+}
+
+function CounterPaymentBadge({ order }) {
+  const payment = counterPaymentLabel(order);
+  return <StatusBadge label={payment.label} tone={payment.tone} />;
 }
 
 export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, onAddProducts }) {
@@ -510,6 +517,9 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                     fontWeight: 'bold',
                   }}
                 />
+                {target?.kind === 'counter' && account.orders?.[0] ? (
+                  <CounterPaymentBadge order={account.orders[0]} />
+                ) : null}
                 <Typography variant="body2" sx={{ color: 'var(--color-text-secondary)', flex: 1 }}>
                   {itemCount} {itemCount === 1 ? 'item' : 'itens'}
                   {(account.orders || []).length > 1 ? ` em ${(account.orders || []).length} pedidos` : ''}
@@ -530,10 +540,13 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                 <AccordionDetails sx={{ pt: 0 }}>
                 {(account.orders || []).map((order) => (
                   <Box key={order.id} className="checkout-order-block">
-                    <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
-                      Pedido #{order.id}
-                      {order.customerName ? ` · ${order.customerName}` : ''}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
+                      <Typography variant="body2" fontWeight="bold">
+                        Pedido #{order.id}
+                        {order.customerName ? ` · ${order.customerName}` : ''}
+                      </Typography>
+                      {target?.kind === 'counter' ? <CounterPaymentBadge order={order} /> : null}
+                    </Box>
                     {(order.products || []).map((product, index) => {
                       const quantity = Number(product.quantity) > 0 ? Number(product.quantity) : 1;
                       const selections = resolveMandatorySelections(product);

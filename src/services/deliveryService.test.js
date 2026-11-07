@@ -2,6 +2,8 @@ import {
   brandingValueForSave,
   buildDeliveryUrl,
   CLEARED_BRANDING_IMAGE,
+  deliveryEstimateForSave,
+  formatDeliveryEstimateLabel,
   toDeliverySettingsPayload,
   toDeliverySettingsUi,
 } from './deliveryService';
@@ -41,7 +43,14 @@ describe('deliveryService helpers', () => {
     expect(ui.acceptPayOnPickup).toBe(true);
     expect(ui.acceptPrepaidPickup).toBe(true);
     expect(ui.acceptPaymentOnDelivery).toBe(true);
-    expect(toDeliverySettingsPayload({ ...ui, deliveryEstimatedMinutes: '' })).toEqual({
+    expect(ui.deliveryEstimatedMinutesMin).toBe(40);
+    expect(ui.deliveryEstimatedMinutesMax).toBe(40);
+    expect(toDeliverySettingsPayload({
+      ...ui,
+      deliveryEstimatedMinutes: '',
+      deliveryEstimatedMinutesMin: '',
+      deliveryEstimatedMinutesMax: '',
+    })).toEqual({
       enabled: true,
       offersDelivery: true,
       offersPickup: true,
@@ -55,6 +64,8 @@ describe('deliveryService helpers', () => {
       allNeighborhoodsFee: 0,
       minOrder: 20,
       estimatedMinutes: null,
+      estimatedMinutesMin: null,
+      estimatedMinutesMax: null,
       address: 'Rua A, 10',
       logoUrl: 'https://cdn.example.com/logo.png',
       coverUrl: 'https://cdn.example.com/cover.jpg',
@@ -86,6 +97,8 @@ describe('deliveryService helpers', () => {
       allNeighborhoodsFee: 0,
       minOrder: 0,
       estimatedMinutes: null,
+      estimatedMinutesMin: null,
+      estimatedMinutesMax: null,
       address: null,
       logoUrl: null,
       coverUrl: null,
@@ -157,6 +170,8 @@ describe('deliveryService helpers', () => {
       allNeighborhoodsFee: 0,
       minOrder: 10,
       estimatedMinutes: 30,
+      estimatedMinutesMin: 30,
+      estimatedMinutesMax: 30,
       address: 'Rua B, 2',
       logoUrl: logo,
       coverUrl: cover,
@@ -257,5 +272,35 @@ describe('deliveryService helpers', () => {
       allNeighborhoodsFee: 10,
       deliveryFee: 4,
     }));
+  });
+
+  it('grava o intervalo de previsão e monta o texto do cliente', () => {
+    const ui = toDeliverySettingsUi({
+      enabled: true,
+      estimatedMinutes: 30,
+      estimatedMinutesMin: 30,
+      estimatedMinutesMax: 65,
+    });
+    expect(ui.deliveryEstimatedMinutesMin).toBe(30);
+    expect(ui.deliveryEstimatedMinutesMax).toBe(65);
+    expect(formatDeliveryEstimateLabel(ui)).toBe('previsão: 30-65min');
+    expect(formatDeliveryEstimateLabel({ estimatedMinutes: 30 })).toBe('previsão: 30min');
+    expect(toDeliverySettingsPayload(ui)).toEqual(expect.objectContaining({
+      estimatedMinutes: 30,
+      estimatedMinutesMin: 30,
+      estimatedMinutesMax: 65,
+    }));
+    expect(deliveryEstimateForSave({
+      deliveryEstimatedMinutesMin: 65,
+      deliveryEstimatedMinutesMax: 30,
+    }).error).toBe('O tempo mínimo não pode ser maior que o tempo máximo');
+    expect(deliveryEstimateForSave({
+      deliveryEstimatedMinutesMin: 0,
+      deliveryEstimatedMinutesMax: 30,
+    }).error).toBe('Tempo estimado deve ser um número inteiro entre 1 e 240 minutos');
+    expect(() => toDeliverySettingsPayload({
+      deliveryEstimatedMinutesMin: 10,
+      deliveryEstimatedMinutesMax: '',
+    })).toThrow('Informe o tempo mínimo e o tempo máximo');
   });
 });

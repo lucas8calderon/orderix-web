@@ -72,6 +72,9 @@ describe('PlaceOrderDialog', () => {
     expect(screen.getByText('Lançar em Mesa 3')).toBeInTheDocument();
     await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
+    const cart = screen.getByRole('region', { name: 'Mesa 3' });
+    const name = within(cart).getByLabelText('Nome do cliente (opcional)');
+    expect(name.compareDocumentPosition(within(cart).getByText('Café')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));
 
     await waitFor(() => {
@@ -104,13 +107,19 @@ describe('PlaceOrderDialog', () => {
     await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
     expect(screen.queryByRole('button', { name: 'Enviar sem cobrar' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome do cliente (opcional)')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));
+    expect(createFloorOrder).not.toHaveBeenCalled();
+    expect(screen.getByText('Informe o nome do cliente')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Nome do cliente/), { target: { value: 'Ana' } });
     fireEvent.click(screen.getByRole('button', { name: /^Enviar pedido/ }));
 
     await waitFor(() => {
       expect(createFloorOrder).toHaveBeenCalledWith(999, expect.objectContaining({
         tableId: 999,
         waiterId: 999,
-        customerName: 'Balcão',
+        customerName: 'Ana',
       }), expect.any(String));
     });
     expect(resolveOperatorWaiterId).not.toHaveBeenCalled();

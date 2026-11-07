@@ -129,7 +129,7 @@ describe('PublicDelivery', () => {
     );
     expect(screen.getByText('Pão francês')).toBeInTheDocument();
     expect(screen.getByText('Indisponível')).toBeInTheDocument();
-    expect(screen.getByText('40 min')).toBeInTheDocument();
+    expect(screen.getByText('previsão: 40min')).toBeInTheDocument();
     expect(screen.getByRole('heading', {
       name: /Seu estabelecimento também pode ter pedidos online/i,
     })).toBeInTheDocument();
@@ -245,8 +245,9 @@ describe('PublicDelivery', () => {
     await openCheckoutFromMenu();
 
     expect(await screen.findByRole('heading', { name: /entre ou crie uma conta/i })).toBeInTheDocument();
-    expect(screen.getByText(/para informar o endereço de entrega/i)).toBeInTheDocument();
+    expect(screen.getByText(/escolhe entrega ou retirada/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^entrega$/i })).not.toBeInTheDocument();
   });
 
   it('mostra endereço salvo depois do login', async () => {
@@ -399,6 +400,7 @@ describe('PublicDelivery', () => {
   });
 
   it('mostra o endereço da loja quando o cliente escolhe retirada', async () => {
+    seedCustomerSession();
     getDeliveryCatalog.mockResolvedValue({
       data: {
         ...closedCatalog,
@@ -411,20 +413,28 @@ describe('PublicDelivery', () => {
     });
 
     renderDelivery();
-    expect(await screen.findByText(/informe o endereço para saber se entregamos/i)).toBeInTheDocument();
-    expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
+    expect(await screen.findByText('Pão francês')).toBeInTheDocument();
+    expect(screen.queryByText(/informe o endereço para saber se entregamos/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^retirada$/i })).not.toBeInTheDocument();
+
+    await openCheckoutFromMenu();
+
+    expect(await screen.findByRole('radio', { name: /^entrega$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/retirada na loja/i)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('radio', { name: /^retirada$/i }));
 
-    expect(screen.getByText(/retire neste endereço/i)).toBeInTheDocument();
+    expect(screen.getByText('Retirada na loja')).toBeInTheDocument();
     expect(screen.getByText(/rua das flores, 100/i)).toBeInTheDocument();
     expect(screen.getByText(/centro, são paulo/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('radio', { name: /^entrega$/i }));
-    expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Retirada na loja')).not.toBeInTheDocument();
   });
 
   it('mantém o aviso de retirada quando a loja não cadastrou endereço', async () => {
+    seedCustomerSession();
     getDeliveryCatalog.mockResolvedValue({
       data: {
         ...closedCatalog,
@@ -437,9 +447,11 @@ describe('PublicDelivery', () => {
     });
 
     renderDelivery();
+    await openCheckoutFromMenu();
     await userEvent.click(await screen.findByRole('radio', { name: /^retirada$/i }));
+    expect(screen.getByText('Retirada na loja')).toBeInTheDocument();
     expect(screen.getByText(/retirada no local não precisa de bairro/i)).toBeInTheDocument();
-    expect(screen.queryByText(/retire neste endereço/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^CEP/i)).not.toBeInTheDocument();
   });
 
   it('na entrega por bairro adiciona o item e oferece continuar comprando ou finalizar com login', async () => {
@@ -458,20 +470,25 @@ describe('PublicDelivery', () => {
     });
 
     renderDelivery();
-    expect(await screen.findByText(/informe o endereço para saber se entregamos/i)).toBeInTheDocument();
+    expect(await screen.findByText('Pão francês')).toBeInTheDocument();
+    expect(screen.queryByText(/informe o endereço para saber se entregamos/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^entrega$/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /adicionar pão francês/i }));
     await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
 
     expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
     expect(readCart('padaria').items).toHaveLength(1);
-    expect(await screen.findByRole('button', { name: /continuar comprando/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /continuar comprando/i })).not.toBeInTheDocument();
+
+    await userEvent.click(await screen.findByRole('button', { name: /ver meu pedido/i }));
+    expect(screen.getByRole('button', { name: /continuar comprando/i })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /finalizar pedido/i }));
     expect(await screen.findByRole('heading', { name: /entre ou crie uma conta/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
   });
 
-  it('com conta logada, finalizar abre o endereço com os endereços salvos antes do checkout', async () => {
+  it('com conta logada, finalizar mostra entrega ou retirada e o endereço salvo', async () => {
     seedCustomerSession();
     listDeliveryCustomerAddresses.mockResolvedValue({
       data: [{
@@ -500,12 +517,16 @@ describe('PublicDelivery', () => {
     });
 
     renderDelivery();
-    await userEvent.click(await screen.findByRole('button', { name: /adicionar pão francês/i }));
-    await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
-    await userEvent.click(await screen.findByRole('button', { name: /finalizar pedido/i }));
+    expect(await screen.findByText('Pão francês')).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^entrega$/i })).not.toBeInTheDocument();
+    await openCheckoutFromMenu();
 
-    expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: /^entrega$/i })).toBeInTheDocument();
     expect(await screen.findByText(/Avenida Paulista/i)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /trocar endereço/i }));
+    expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /não encontrou seu bairro/i })).toBeInTheDocument();
   });
 
@@ -542,13 +563,14 @@ describe('PublicDelivery', () => {
     });
 
     renderDelivery();
-    expect(await screen.findByText(/entregamos em qualquer bairro\. taxa de entrega: r\$ 10,00/i)).toBeInTheDocument();
+    expect(await screen.findByText('Pão francês')).toBeInTheDocument();
+    expect(screen.queryByText(/entregamos em qualquer bairro\. taxa de entrega: r\$ 10,00/i)).not.toBeInTheDocument();
     expect(screen.queryByText('R$ 4,00')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /adicionar pão francês/i }));
-    await userEvent.click(screen.getByRole('button', { name: /adicionar ao carrinho/i }));
-    await userEvent.click(await screen.findByRole('button', { name: /finalizar pedido/i }));
+    await openCheckoutFromMenu();
+    await userEvent.click(await screen.findByRole('button', { name: /cadastrar endereço de entrega/i }));
     expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
+    expect(screen.getByText(/entregamos em qualquer bairro\. taxa de entrega: r\$ 10,00/i)).toBeInTheDocument();
     expect(screen.queryByText(/não encontrou seu bairro/i)).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/^CEP/i), { target: { value: '13010000' } });
@@ -559,7 +581,7 @@ describe('PublicDelivery', () => {
 
     expect(await screen.findByText(/entregamos em jardim europa • taxa de entrega: r\$ 10,00/i)).toBeInTheDocument();
     expect(await screen.findByDisplayValue('Ana Cliente')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /confirmar pedido/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /confirmar pedido/i }));
 
     await waitFor(() => expect(createDeliveryOrder).toHaveBeenCalled());
     const payload = createDeliveryOrder.mock.calls[0][1];

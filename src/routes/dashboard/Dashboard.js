@@ -13,6 +13,7 @@ import { getCurrentUser, logout } from '../../services/authService';
 import { canAccessRoute, getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
 import { AppShell } from '../../commons/components/AppShell';
 import { GraceBillingNotice } from './GraceBillingNotice';
+import { NewOrderAlert } from './newOrderAlert/NewOrderAlert';
 import weperLogo from '../../assets/images/weper-logo.png';
 import './Workspace.css';
 import './WorkspaceRebrand.css';
@@ -104,6 +105,7 @@ export default function Dashboard() {
         <div className="workspace-launchpad__links">{visibleItems.filter(item => ['atendimento', 'cozinha', 'produtos', 'configuracoes'].includes(item.slug)).map(item => <Link key={item.slug} to={item.path}>{item.icon}<span>{item.title}</span></Link>)}</div>
       </section>}
       {screens[selectedItem.slug]}
+      <NewOrderAlert />
     </AppShell>
   );
 }

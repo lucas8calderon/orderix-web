@@ -30,7 +30,7 @@ jest.mock('react-beautiful-dnd', () => ({
 }));
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import { mapKitchenOrder } from './kitchenOrderMap';
+import { mapKitchenOrder, sortKitchenOrdersNewestFirst } from './kitchenOrderMap';
 import { SALES_CHANNEL_FILTERS } from '../../../services/salesChannel';
 import { getKitchenOrders } from './kitchenService';
 import { openThermalPrint } from '../../../printing/thermalPrint';
@@ -105,6 +105,17 @@ function apiOrder(id, salesChannel, kitchenStatus, createdAt) {
   };
 }
 
+describe('ordem dos cards da cozinha', () => {
+  it('coloca o mais novo acima e desempata pelo id', () => {
+    const sorted = sortKitchenOrdersNewestFirst([
+      mapKitchenOrder(apiOrder(139, 'balcao', 'NEW', '2026-11-07T10:00:00')),
+      mapKitchenOrder(apiOrder(140, 'balcao', 'NEW', '2026-11-07T13:27:00')),
+      mapKitchenOrder(apiOrder(138, 'balcao', 'NEW', '2026-11-07T13:27:00')),
+    ]);
+    expect(sorted.map((order) => order.id)).toEqual([140, 138, 139]);
+  });
+});
+
 describe('Kitchen filter chips', () => {
   const orders = [
     apiOrder(1, 'mesa', 'NEW', minutesAgo(5)),
@@ -141,6 +152,19 @@ describe('Kitchen filter chips', () => {
   function chip(name) {
     return screen.getByRole('button', { name });
   }
+
+  it('mostra o pedido mais novo acima do mais velho na coluna Novo', async () => {
+    getKitchenOrders.mockResolvedValue({
+      data: [
+        apiOrder(139, 'balcao', 'NEW', '2026-11-07T10:00:00'),
+        apiOrder(140, 'balcao', 'NEW', '2026-11-07T13:27:00'),
+      ],
+    });
+    render(<Kitchen />);
+    const older = await screen.findByText('#0139');
+    const newer = screen.getByText('#0140');
+    expect(newer.compareDocumentPosition(older) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 
   it('seleciona Mesas e Comandas, volta para Todos e depois um canal', async () => {
     await renderKitchen();

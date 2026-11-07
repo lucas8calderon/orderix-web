@@ -3,7 +3,7 @@ import { isDeliveryOnlinePaymentField, PAYMENT_METHOD_LABELS } from '../../../..
 import { isValidStoreWhatsApp } from '../../../public-delivery/utils/neighborhoodWhatsApp';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../../../../utils/phoneInput';
 import { settingsStorage } from '../utils/settingsStorage';
-import { brandingValueForSave } from '../../../../services/deliveryService';
+import { brandingValueForSave, deliveryEstimateForSave } from '../../../../services/deliveryService';
 
 const MOCK_PERMISSIONS = {
   admin: {
@@ -133,6 +133,8 @@ const DEFAULT_HOURS = {
 const DEFAULT_DELIVERY = {
   deliveryFee: 0,
   deliveryEstimatedMinutes: '',
+  deliveryEstimatedMinutesMin: '',
+  deliveryEstimatedMinutesMax: '',
   deliveryMinOrder: 0,
   storeAddress: '',
   deliveryPublicPath: '',
@@ -196,6 +198,8 @@ function deliveryPayloadFrom(current, savedImages = {}) {
     deliveryAllNeighborhoodsFee: current.deliveryAllNeighborhoodsFee,
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
+    deliveryEstimatedMinutesMin: current.deliveryEstimatedMinutesMin,
+    deliveryEstimatedMinutesMax: current.deliveryEstimatedMinutesMax,
     storeAddress: current.storeAddress,
     storePhone: current.storePhone,
     deliveryLogoUrl: brandingValueForSave(current.deliveryLogoUrl, savedImages.logo),
@@ -385,6 +389,11 @@ export const useSettingsState = () => {
       const phone = storePhoneDigits(current.storePhone);
       if (phone && !isValidStoreWhatsApp(phone)) {
         showToast('Informe um WhatsApp válido com DDD', 'error');
+        return false;
+      }
+      const estimate = deliveryEstimateForSave(current);
+      if (estimate.error) {
+        showToast(estimate.error, 'error');
         return false;
       }
     }

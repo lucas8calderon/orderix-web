@@ -4,6 +4,7 @@ import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import { formatCurrency } from '../../../services/accessControl';
+import { formatDeliveryEstimateLabel } from '../utils/deliveryEstimate';
 import { formatTodayHours } from '../../../services/storeHoursService';
 import { resolveDeliveryImage, storeInitials } from '../utils/resolveDeliveryImage';
 import { offersDelivery, offersPickup } from '../utils/fulfillmentModes';
@@ -35,6 +36,7 @@ export default function DeliveryStoreHeader({
     ? (offersPickup(fulfillmentModes) && !offersDelivery(fulfillmentModes) ? 'Retirada' : 'Endereço')
     : '';
   const todayHours = formatTodayHours(catalog.schedule);
+  const estimateLabel = formatDeliveryEstimateLabel(catalog);
 
   return (
     <header className="delivery-store-header">
@@ -94,13 +96,10 @@ export default function DeliveryStoreHeader({
               </span>
             </span>
           ) : null}
-          {catalog.estimatedMinutes ? (
-            <span className="delivery-store-info-item">
+          {estimateLabel ? (
+            <span className="delivery-store-info-item" data-testid="delivery-estimate">
               <AccessTimeIcon fontSize="inherit" />
-              <span>
-                <strong>Previsão</strong>
-                {catalog.estimatedMinutes} min
-              </span>
+              <span>{estimateLabel}</span>
             </span>
           ) : null}
           {showFee ? (

@@ -1,5 +1,5 @@
 import { PageHeader } from '../../../commons/components/PageHeader';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -43,7 +43,8 @@ import { styled } from '@mui/material/styles';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './Kitchen.css';
 import { cancelKitchenOrder, getKitchenOrders, updateKitchenOrderStatus } from './kitchenService';
-import { mapKitchenOrder, orderTypeLabel } from './kitchenOrderMap';
+import { clearKitchenFocusId, FOCUS_NEW_ORDER_EVENT, peekKitchenFocusId } from '../newOrderAlert/openNewOrderDestination';
+import { mapKitchenOrder, orderTypeLabel, sortKitchenOrdersNewestFirst } from './kitchenOrderMap';
 import { ThermalPrintPanel } from '../../../printing/ThermalPrintPanel';
 import { useDialogResponsiveProps } from '../../../commons/hooks/useResponsive';
 import {
@@ -195,7 +196,7 @@ const ColumnHeader = styled(Box)(({ theme, status }) => ({
     borderBottom: '1px solid var(--color-border)'
 }));
 
-const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) => {
+const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo, focused = false }) => {
 
 
 
@@ -203,6 +204,9 @@ const OrderCard = ({ order, onStatusChange, index, onCardClick, getTimeAgo }) =>
         <Draggable draggableId={order.id.toString()} index={index}>
             {(provided, snapshot) => (
                 <div
+                    id={`kitchen-order-${order.id}`}
+                    tabIndex={-1}
+                    className={focused ? 'kitchen-order-card is-new-focus' : 'kitchen-order-card'}
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
@@ -324,6 +328,8 @@ export function Kitchen({ initialFilter }) {
     const [cancelling, setCancelling] = useState(false);
     const [filterState, setFilterState] = useState(() => createKitchenFilterState(initialFilter));
     const [showFinalized, setShowFinalized] = useState(readShowFinalizedPref);
+    const [pulseOrderId, setPulseOrderId] = useState(null);
+    const pendingFocusId = useRef(null);
     const orderDialogProps = useDialogResponsiveProps({
         paperSx: {
             backgroundColor: 'var(--color-surface-elevated)',
@@ -341,6 +347,38 @@ export function Kitchen({ initialFilter }) {
         }
     }, [initialFilter]);
 
+    const focusKitchenOrder = useCallback((orderId) => {
+        if (orderId == null || orderId === '') return;
+        const id = String(orderId);
+        pendingFocusId.current = id;
+        const node = document.getElementById(`kitchen-order-${id}`);
+        if (!node) return;
+        pendingFocusId.current = null;
+        clearKitchenFocusId(id);
+        if (typeof node.scrollIntoView === 'function') {
+            node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        if (typeof node.focus === 'function') node.focus();
+        setPulseOrderId(id);
+    }, []);
+
+    useEffect(() => {
+        const queued = peekKitchenFocusId() || pendingFocusId.current;
+        if (queued != null) focusKitchenOrder(queued);
+    }, [orders, focusKitchenOrder]);
+
+    useEffect(() => {
+        const onFocus = (event) => focusKitchenOrder(event.detail?.orderId ?? peekKitchenFocusId());
+        window.addEventListener(FOCUS_NEW_ORDER_EVENT, onFocus);
+        return () => window.removeEventListener(FOCUS_NEW_ORDER_EVENT, onFocus);
+    }, [focusKitchenOrder]);
+
+    useEffect(() => {
+        if (!pulseOrderId) return undefined;
+        const timer = window.setTimeout(() => setPulseOrderId(null), 2500);
+        return () => window.clearTimeout(timer);
+    }, [pulseOrderId]);
+
     const getTimeAgo = (date) => {
         const now = new Date();
         const diffInMinutes = Math.floor((now - date) / 60000);
@@ -355,7 +393,9 @@ export function Kitchen({ initialFilter }) {
     const selectedFilters = kitchenFilterSelection(filterState);
 
     const getOrdersByStatus = (status) => (
-        filterKitchenOrders(orders, filterState).filter((order) => order.status === status)
+        sortKitchenOrdersNewestFirst(
+            filterKitchenOrders(orders, filterState).filter((order) => order.status === status)
+        )
     );
 
     const finalizedCount = getOrdersByStatus('finalizado').length;
@@ -550,6 +590,7 @@ export function Kitchen({ initialFilter }) {
 
             {loadError && <Alert severity="warning" sx={{ mb: 2 }}>Não foi possível atualizar os pedidos. As informações abaixo podem estar desatualizadas. Use Atualizar para tentar novamente.</Alert>}
             {/* Filter Section */}
+            <Box className="kitchen-filters-sticky">
             <Box className="filter-section">
                 <Typography variant="h6" fontWeight="600" color="text.primary" mb={2}>
                     Filtros
@@ -622,6 +663,7 @@ export function Kitchen({ initialFilter }) {
                     </Typography>
                 ) : null}
             </Box>
+            </Box>
 
             {/* Kanban Board */}
             <DragDropContext onDragEnd={handleDragEnd}>
@@ -657,6 +699,7 @@ export function Kitchen({ initialFilter }) {
                                                     key={order.id}
                                                     order={order}
                                                     index={index}
+                                                    focused={String(pulseOrderId) === String(order.id)}
                                                     onStatusChange={handleStatusChange}
                                                     onCardClick={handleCardClick}
                                                     getTimeAgo={getTimeAgo}

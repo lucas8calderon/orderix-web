@@ -80,7 +80,7 @@ export default function DeliveryAuthDialog({ open, onClose, onAuthenticated, pur
       <DialogContent>
         {purpose === 'checkout' ? (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Para informar o endereço de entrega, entre na sua conta. Depois você usa um endereço salvo ou cadastra outro.
+            Entre na sua conta para finalizar o pedido. Depois você escolhe entrega ou retirada. Na entrega, usa um endereço salvo ou cadastra outro.
           </Typography>
         ) : null}
         <Tabs value={tab} onChange={(_, value) => { setTab(value); setError(''); }} sx={{ mb: 2 }}>

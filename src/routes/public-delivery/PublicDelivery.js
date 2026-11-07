@@ -140,6 +140,7 @@ export default function PublicDelivery() {
   const [pendingCheckout, setPendingCheckout] = useState(false);
   const [cepLookup, setCepLookup] = useState({ status: 'idle', message: '' });
   const lastLookedUpCep = useRef('');
+  const autoAppliedAddressRef = useRef(false);
   const [pixOpen, setPixOpen] = useState(false);
   const [pixPayment, setPixPayment] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
@@ -329,6 +330,44 @@ export default function PublicDelivery() {
   }, [checkoutOpen, customer, addresses]);
 
   useEffect(() => {
+    if (!checkoutOpen) {
+      autoAppliedAddressRef.current = false;
+      return;
+    }
+    if (autoAppliedAddressRef.current) return;
+    if (checkout.fulfillment !== 'DELIVERY' || !offersDelivery(fulfillmentModes)) return;
+    if (!catalog?.usesNeighborhoodPricing) return;
+    if (hasServiceNeighborhood(catalog, serviceAddress)) {
+      autoAppliedAddressRef.current = true;
+      return;
+    }
+    const preferred = addresses.find((item) => item.isDefault) || addresses[0];
+    if (!preferred) return;
+    const areaOpen = servesAllNeighborhoods(catalog);
+    const usable = areaOpen
+      ? Boolean(String(preferred.neighborhood || '').trim())
+      : Boolean(preferred.neighborhoodId);
+    if (!usable) return;
+    autoAppliedAddressRef.current = true;
+    const next = {
+      addressId: String(preferred.id),
+      postalCode: preferred.postalCode || '',
+      street: preferred.street || '',
+      number: preferred.number || '',
+      complement: preferred.complement || '',
+      reference: preferred.reference || '',
+      city: preferred.city || '',
+      state: preferred.state || '',
+      neighborhoodId: preferred.neighborhoodId || null,
+      neighborhood: preferred.neighborhood || '',
+      effectiveFee: areaOpen ? allNeighborhoodsFee(catalog) : Number(preferred.effectiveFee || 0),
+      openArea: areaOpen,
+    };
+    writeServiceAddress(slug, next);
+    setServiceAddress(next);
+  }, [checkoutOpen, checkout.fulfillment, fulfillmentModes, catalog, addresses, serviceAddress, slug]);
+
+  useEffect(() => {
     if (!checkoutOpen || checkout.fulfillment !== 'DELIVERY' || checkout.addressId) {
       setCepLookup({ status: 'idle', message: '' });
       return undefined;
@@ -463,13 +502,7 @@ export default function PublicDelivery() {
     setCart((prev) => addCartItem(prev, item));
     setSelected(null);
     setToast({ open: true, message: 'Adicionado ao carrinho' });
-    // Sem endereço ainda: o carrinho oferece continuar comprando ou finalizar (login e depois endereço).
-    if (needsServiceAddress()) setCartOpen(true);
   };
-
-  const needsServiceAddress = () => Boolean(catalog?.usesNeighborhoodPricing)
-    && deliverySelected
-    && !hasServiceNeighborhood(catalog, serviceAddress);
 
   const acceptServiceAddress = async (draft) => {
     let next = { ...draft };
@@ -514,13 +547,8 @@ export default function PublicDelivery() {
     setCheckoutOpen(true);
   };
 
-  // Na entrega por bairro, o endereço vem depois do login: a conta já traz os endereços salvos.
+  // Entrega ou retirada só depois da conta. O endereço de entrega vem em seguida, no checkout.
   const openAuthenticatedCheckout = () => {
-    if (needsServiceAddress()) {
-      checkoutAfterAddressRef.current = true;
-      setAddressGateOpen(true);
-      return;
-    }
     showCheckout();
   };
 
@@ -799,60 +827,6 @@ export default function PublicDelivery() {
               />
             ) : null}
 
-            {catalog.usesNeighborhoodPricing && offersDelivery(fulfillmentModes) ? (
-              <Box sx={{ mb: 2 }}>
-                {fulfillmentModes.length > 1 ? (
-                  <RadioGroup
-                    row
-                    value={checkout.fulfillment}
-                    onChange={(event) => setCheckout((prev) => ({ ...prev, fulfillment: event.target.value }))}
-                  >
-                    <FormControlLabel value="DELIVERY" control={<Radio />} label="Entrega" />
-                    <FormControlLabel value="PICKUP" control={<Radio />} label="Retirada" />
-                  </RadioGroup>
-                ) : null}
-                {checkout.fulfillment === 'PICKUP' ? (
-                  <Alert severity="info">
-                    {pickupAddress ? (
-                      <>
-                        Retire neste endereço
-                        <span className="delivery-pickup-menu-address">{pickupAddress}</span>
-                      </>
-                    ) : (
-                      'Retirada no local não precisa de bairro.'
-                    )}
-                  </Alert>
-                ) : serviceAddress?.neighborhood ? (
-                  <Alert
-                    severity="success"
-                    action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Trocar</Button>}
-                  >
-                    {deliveryCoverageLabel(
-                      serviceAddress.neighborhood,
-                      openArea ? flatFee : serviceAddress.effectiveFee,
-                      formatCurrency,
-                    )}
-                  </Alert>
-                ) : openArea ? (
-                  <Alert
-                    severity="info"
-                    action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Informar endereço</Button>}
-                  >
-                    {allNeighborhoodsFeeLabel(flatFee, formatCurrency)}
-                    {' '}
-                    Informe o endereço para continuar.
-                  </Alert>
-                ) : (
-                  <Alert
-                    severity="info"
-                    action={<Button color="inherit" size="small" onClick={() => setAddressGateOpen(true)}>Informar endereço</Button>}
-                  >
-                    Informe o endereço para saber se entregamos e quanto custa. Você pode montar o pedido antes; o endereço é pedido ao finalizar, depois de entrar na conta.
-                  </Alert>
-                )}
-              </Box>
-            ) : null}
-
             <DeliveryMenuSearch value={query} onChange={setQuery} />
 
             {!query.trim() && navCategories.length > 0 ? (
@@ -1120,7 +1094,7 @@ export default function PublicDelivery() {
                 </Button>
               )}
             >
-              Entre ou crie uma conta para informar o endereço de entrega.
+              Entre ou crie uma conta para finalizar o pedido. Depois você escolhe entrega ou retirada.
             </Alert>
           ) : null}
           {customer ? (
@@ -1150,10 +1124,14 @@ export default function PublicDelivery() {
               </RadioGroup>
             </FormControl>
           ) : null}
-          {!deliverySelected && catalog.storeAddress ? (
+          {!deliverySelected ? (
             <Box className="delivery-pickup-address" sx={{ mb: 2 }}>
               <Typography variant="subtitle2">Retirada na loja</Typography>
-              <Typography className="delivery-pickup-address-text">{catalog.storeAddress}</Typography>
+              {pickupAddress ? (
+                <Typography className="delivery-pickup-address-text">{pickupAddress}</Typography>
+              ) : (
+                <Typography variant="body2">Retirada no local não precisa de bairro.</Typography>
+              )}
             </Box>
           ) : null}
           <Typography variant="subtitle2" className="delivery-checkout-section-title">Seus dados</Typography>
@@ -1176,6 +1154,10 @@ export default function PublicDelivery() {
                 {serviceAddress?.neighborhood ? (
                   <>
                     <Alert severity="success" sx={{ mb: 1 }}>
+                      <div>
+                        {[serviceAddress.street, serviceAddress.number].filter(Boolean).join(', ')}
+                        {serviceAddress.neighborhood ? ` — ${serviceAddress.neighborhood}` : ''}
+                      </div>
                       {deliveryCoverageLabel(
                         serviceAddress.neighborhood,
                         openArea ? flatFee : serviceAddress.effectiveFee,

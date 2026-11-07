@@ -16,6 +16,7 @@ import { PageHeader } from '../../../commons/components/PageHeader';
 import { PageTabs } from '../../../commons/components/PageTabs';
 import { isCashier } from '../../../services/accessControl';
 import { getCurrentUser } from '../../../services/session';
+import { SHOW_OPEN_ORDERS_EVENT, takeOpenOrdersRequest } from '../newOrderAlert/openNewOrderDestination';
 
 function tabLabel(label, count) {
   if (!count) return label;
@@ -39,6 +40,7 @@ export function Atendimento() {
   const [floorVersion, setFloorVersion] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [cashState, setCashState] = useState({ known: false, open: false, version: 0 });
+  const [openOrdersToken, setOpenOrdersToken] = useState(0);
   const refreshTimerRef = useRef(null);
   // Usuário de caixa só lança produtos com o caixa aberto (o backend também valida).
   const cashBlocked = isCashier(getCurrentUser()) && cashState.known && !cashState.open;
@@ -50,6 +52,20 @@ export function Atendimento() {
     if (refreshTimerRef.current) {
       window.clearTimeout(refreshTimerRef.current);
     }
+  }, []);
+
+  useEffect(() => {
+    const openOrders = () => {
+      takeOpenOrdersRequest();
+      setTab('counter');
+      setOpenOrdersToken((value) => value + 1);
+    };
+    if (takeOpenOrdersRequest()) {
+      setTab('counter');
+      setOpenOrdersToken(1);
+    }
+    window.addEventListener(SHOW_OPEN_ORDERS_EVENT, openOrders);
+    return () => window.removeEventListener(SHOW_OPEN_ORDERS_EVENT, openOrders);
   }, []);
 
   const handlePaid = () => {
@@ -115,7 +131,7 @@ export function Atendimento() {
         </div>
 
         <div role="tabpanel" id="service-panel-counter" aria-labelledby="service-tab-counter" hidden={tab !== 'counter'} className="atendimento-section atendimento-section--pos">
-          <CounterSales active={tab === 'counter'} cashClosed={cashState.known && !cashState.open} cashBlocked={cashBlocked} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} />
+          <CounterSales active={tab === 'counter'} cashClosed={cashState.known && !cashState.open} cashBlocked={cashBlocked} onOpenAccount={setAccountTarget} onCountChange={countSetter('counter')} floorVersion={floorVersion} openOrdersToken={openOrdersToken} />
         </div>
 
         <div role="tabpanel" id="service-panel-customer" aria-labelledby="service-tab-customer" hidden={tab !== 'customer'} className="atendimento-section">

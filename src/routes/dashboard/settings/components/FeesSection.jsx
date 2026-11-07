@@ -3,6 +3,7 @@ import { Box, Typography, Tooltip, Chip, CircularProgress } from '@mui/material'
 import { PercentOutlined as PercentIcon } from '@mui/icons-material';
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { formatCurrencyInput } from '../../../../utils/currencyInput';
+import { formatStoreEstimateSummary } from '../../../../services/deliveryService';
 
 const LazySlider = lazy(() =>
   import('@mui/material/Slider').then((mod) => ({ default: mod.default }))
@@ -84,9 +85,7 @@ export function FeesSection({ settings, onSettingChange, onSave, onNavigate, sli
           <div>
             <span className="overview-fact__label">Tempo estimado</span>
             <strong>
-              {settings?.deliveryEstimatedMinutes
-                ? `${settings.deliveryEstimatedMinutes} min`
-                : '—'}
+              {formatStoreEstimateSummary(settings) || '—'}
             </strong>
           </div>
         </Box>

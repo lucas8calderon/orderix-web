@@ -77,12 +77,14 @@ export function CounterPos({
   const customerLocked = target?.kind === 'customer' && Boolean(target?.id);
   const compactCart = useMediaQuery('(max-width:1024px)');
   const searchRef = useRef(null);
+  const nameInputRef = useRef(null);
   const submitRef = useRef(false);
   const attemptRef = useRef({ key: '', signature: '' });
   const [ready, setReady] = useState(false);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
   const [customerName, setCustomerName] = useState(customerLocked ? target.customerName || '' : '');
+  const [nameError, setNameError] = useState('');
   const [customerNote, setCustomerNote] = useState(target?.customerIdentificationNote || '');
   const [observation, setObservation] = useState('');
   const [lines, setLines] = useState([]);
@@ -208,6 +210,7 @@ export function CounterPos({
 
   const resetDraft = () => {
     if (!customerLocked) setCustomerName('');
+    setNameError('');
     setCustomerNote('');
     setObservation('');
     setLines([]);
@@ -216,8 +219,18 @@ export function CounterPos({
     if (isCounter) clearCounterDraft();
   };
 
+  const changeCustomerName = (value) => {
+    setCustomerName(value);
+    if (value.trim()) setNameError('');
+  };
+
   const submit = async (intent) => {
     if (submitRef.current || !canSubmit || launchBlocked) return;
+    if (target?.kind === 'counter' && !customerName.trim()) {
+      setNameError('Informe o nome do cliente');
+      nameInputRef.current?.focus();
+      return;
+    }
     const signature = draftSignature(customerName, observation, lines);
     if (attemptRef.current.signature !== signature) {
       attemptRef.current = { key: newLineKey(), signature };
@@ -231,7 +244,9 @@ export function CounterPos({
         : null;
       const built = buildFloorOrderBody({
         target,
-        customerName: customerName.trim() || defaultCustomerName(target),
+        customerName: target?.kind === 'counter'
+          ? customerName.trim()
+          : (customerName.trim() || defaultCustomerName(target)),
         customerIdentificationNote: customerNote,
         observation,
         lines,
@@ -339,12 +354,15 @@ export function CounterPos({
       notice={notice}
       hasDraft={hasDraft}
       customer={{
-        label: customerCreate ? 'Nome do cliente' : 'Nome do cliente (opcional)',
+        label: customerCreate || target?.kind === 'counter' ? 'Nome do cliente' : 'Nome do cliente (opcional)',
         placeholder: isCounter ? 'Cliente balcão' : '',
         name: customerName,
-        onName: setCustomerName,
+        onName: changeCustomerName,
         locked: customerLocked,
-        required: customerCreate,
+        required: customerCreate || target?.kind === 'counter',
+        error: nameError,
+        inputRef: nameInputRef,
+        afterItems: target?.kind === 'counter',
         note: customerNote,
         onNote: customerCreate ? setCustomerNote : null,
       }}

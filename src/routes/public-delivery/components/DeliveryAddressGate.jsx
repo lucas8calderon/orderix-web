@@ -225,7 +225,7 @@ export default function DeliveryAddressGate({
     }
     setError('');
     if (openArea && !selected) {
-      onConfirm({
+      return onConfirm({
         addressId: form.addressId || '',
         postalCode: cepDigits(form.postalCode),
         street: form.street.trim(),
@@ -239,9 +239,8 @@ export default function DeliveryAddressGate({
         effectiveFee: flatFee,
         openArea: true,
       });
-      return;
     }
-    onConfirm({
+    return onConfirm({
       addressId: form.addressId || '',
       postalCode: cepDigits(form.postalCode),
       street: form.street.trim(),

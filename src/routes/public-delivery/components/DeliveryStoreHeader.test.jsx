@@ -61,6 +61,21 @@ describe('DeliveryStoreHeader', () => {
     expect(hours).toHaveTextContent('11:00–22:00');
     expect(screen.queryByText('Segunda-feira')).not.toBeInTheDocument();
     expect(screen.getByText('Endereço')).toBeInTheDocument();
-    expect(screen.getByText('20 min')).toBeInTheDocument();
+    expect(screen.getByText('previsão: 20min')).toBeInTheDocument();
+  });
+
+  it('mostra o intervalo mínimo e máximo', () => {
+    render(
+      <DeliveryStoreHeader
+        catalog={{
+          storeName: 'Restaurante Sabrina',
+          open: true,
+          estimatedMinutesMin: 30,
+          estimatedMinutesMax: 65,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('delivery-estimate')).toHaveTextContent('previsão: 30-65min');
   });
 });

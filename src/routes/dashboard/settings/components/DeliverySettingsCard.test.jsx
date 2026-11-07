@@ -40,6 +40,8 @@ describe('DeliverySettingsCard', () => {
 
     expect(screen.getByLabelText('Taxa de entrega em reais')).toHaveValue('5,50');
     expect(screen.getByLabelText('Pedido mínimo em reais')).toHaveValue('20,00');
+    expect(screen.getByLabelText('Tempo mínimo de entrega em minutos')).toHaveValue(40);
+    expect(screen.getByLabelText('Tempo máximo de entrega em minutos')).toHaveValue(40);
   });
 
   it('envia número decimal ao alterar a taxa de entrega', () => {

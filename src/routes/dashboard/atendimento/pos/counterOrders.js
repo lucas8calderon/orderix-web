@@ -14,6 +14,31 @@ export function isActiveCounterSale(order) {
   return status !== 'CLOSED' && status !== 'CANCELLED';
 }
 
+function recencyMillis(order) {
+  const time = Date.parse(order?.createdAt);
+  return Number.isFinite(time) ? time : null;
+}
+
+/** Mais novo no topo. Empate de createdAt (ou data ausente) desempata pelo id maior. */
+export function compareCounterOrdersNewestFirst(left, right) {
+  const leftTime = recencyMillis(left);
+  const rightTime = recencyMillis(right);
+  if (leftTime !== rightTime) {
+    if (leftTime == null) return 1;
+    if (rightTime == null) return -1;
+    return rightTime - leftTime;
+  }
+  const leftId = Number(left?.id);
+  const rightId = Number(right?.id);
+  const safeLeft = Number.isFinite(leftId) ? leftId : Number.NEGATIVE_INFINITY;
+  const safeRight = Number.isFinite(rightId) ? rightId : Number.NEGATIVE_INFINITY;
+  return safeRight - safeLeft;
+}
+
+export function sortCounterOrdersNewestFirst(orders) {
+  return [...(Array.isArray(orders) ? orders : [])].sort(compareCounterOrdersNewestFirst);
+}
+
 export function counterOrderMatches(order, query) {
   const needle = normalizeSearch(query).replace(/^#/, '');
   if (!needle) return true;
@@ -40,4 +65,21 @@ export function counterStatusLabel(order) {
   if (status === 'CLOSED') return { label: 'Finalizado', tone: 'neutral' };
   if (status === 'HELD') return { label: 'Aguardando pagamento', tone: 'warning' };
   return { label: 'Em aberto', tone: 'info' };
+}
+
+const SETTLED_PAYMENT_STATUSES = new Set(['APPROVED', 'PAID', 'PAID_EXTERNALLY']);
+
+export function isCounterOrderPaid(order) {
+  return SETTLED_PAYMENT_STATUSES.has(String(order?.paymentStatus || '').toUpperCase());
+}
+
+export function counterPaymentLabel(order) {
+  if (isCounterOrderPaid(order)) return { label: 'Pago', tone: 'success' };
+  return { label: 'Não pago', tone: 'warning' };
+}
+
+export function matchesCounterPaymentFilter(order, paymentFilter) {
+  if (paymentFilter !== 'paid' && paymentFilter !== 'unpaid') return true;
+  const paid = isCounterOrderPaid(order);
+  return paymentFilter === 'paid' ? paid : !paid;
 }

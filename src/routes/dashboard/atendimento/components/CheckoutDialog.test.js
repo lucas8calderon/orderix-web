@@ -204,6 +204,7 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     );
 
     expect(await screen.findByText(/Café/)).toBeInTheDocument();
+    expect(screen.getAllByText('Não pago').length).toBeGreaterThan(0);
     expect(screen.queryByText(/Suco/)).not.toBeInTheDocument();
     await choosePix('Dinheiro');
     fireEvent.click(screen.getByRole('button', { name: /^Confirmar pagamento/ }));
@@ -216,6 +217,36 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     });
     expect(closeTableAccount).not.toHaveBeenCalled();
     expect(getTableAccount).toHaveBeenCalledWith(999);
+  });
+
+  it('mostra pago no detalhe do balcão quando a cobertura já está quitada', async () => {
+    getTableAccount.mockResolvedValue({
+      data: {
+        status: 'ACTIVE',
+        orders: [
+          {
+            id: 23,
+            status: 'ACTIVE',
+            paymentStatus: 'APPROVED',
+            customerName: 'Carla',
+            products: [{ id: 7, name: 'Café', value: 5, quantity: 1 }],
+          },
+        ],
+      },
+    });
+
+    render(
+      <CheckoutDialog
+        open
+        target={{ kind: 'counter', id: 23, number: 23 }}
+        onClose={jest.fn()}
+        onPaid={jest.fn()}
+      />,
+    );
+
+    expect(await screen.findByText(/Café/)).toBeInTheDocument();
+    expect(screen.getAllByText('Pago').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Não pago')).not.toBeInTheDocument();
   });
 
   it('cobra a retirada no mesmo fechamento do balcão, com a taxa de entrega', async () => {
@@ -296,26 +327,35 @@ describe('CheckoutDialog confirmação de fechamento', () => {
     expect(screen.getByText(/pedido de entrega 0040 será fechado/)).toBeInTheDocument();
   });
 
-  it('imprime a comanda sem cobrar, fechar ou tratar a janela como sucesso', async () => {
+  it('imprime a comanda sem cobrar, fechar, abrir aba ou tratar o clique como sucesso', async () => {
     saveSession('test', { storeId: 8 });
     process.env.REACT_APP_THERMAL_PRINT_SCOPE = 'all';
-    const doc = document.implementation.createHTMLDocument();
-    const popup = { document: doc, focus: jest.fn(), print: jest.fn(), close: jest.fn() };
-    jest.spyOn(window, 'open').mockReturnValue(popup);
+    const probe = document.createElement('iframe');
+    document.body.appendChild(probe);
+    if (probe.contentWindow) {
+      Object.getPrototypeOf(probe.contentWindow).print = function print() {};
+    }
+    probe.remove();
+    const open = jest.spyOn(window, 'open');
     try {
       await renderCheckout(tableTarget);
       expect(screen.queryByText(/Impressão térmica USB/)).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
-      expect(popup.print).toHaveBeenCalledTimes(1);
-      expect(popup.close).not.toHaveBeenCalled();
-      expect(doc.documentElement.innerHTML).toContain('Mesa 12');
-      expect(doc.documentElement.innerHTML).toContain('Café');
-      expect(doc.documentElement.innerHTML).toContain('1x');
-      expect(doc.documentElement.innerHTML).toContain('NÃO É DOCUMENTO FISCAL');
-      expect(doc.documentElement.innerHTML).toContain('NÃO É COMPROVANTE DE PAGAMENTO');
+      expect(open).not.toHaveBeenCalled();
+      const frame = document.querySelector('iframe');
+      const html = frame.contentDocument.documentElement.innerHTML;
+      expect(frame.dataset.printed).toBe('1');
+      expect(html).toContain('Mesa 12');
+      expect(html).toContain('Café');
+      expect(html).toContain('1x');
+      expect(html).toContain('TOTAL');
+      expect(html).not.toContain('NÃO É DOCUMENTO FISCAL');
+      expect(html).not.toContain('NÃO É COMPROVANTE DE PAGAMENTO');
+      expect(html).not.toContain('WEPER');
       expect(confirmExternalPayment).not.toHaveBeenCalled();
       expect(closeTableAccount).not.toHaveBeenCalled();
     } finally {
+      document.querySelectorAll('iframe').forEach((frame) => frame.remove());
       clearSession();
       delete process.env.REACT_APP_THERMAL_PRINT_SCOPE;
       jest.restoreAllMocks();

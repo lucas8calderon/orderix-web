@@ -85,3 +85,29 @@ export function mapKitchenOrder(order) {
     printAccount: { orders: [order] },
   };
 }
+
+function recencyMillis(order) {
+  const value = order?.createdAt;
+  const time = value instanceof Date ? value.getTime() : Date.parse(value);
+  return Number.isFinite(time) ? time : null;
+}
+
+/** Mais novo no topo. Empate de createdAt (ou data ausente) desempata pelo id maior. */
+export function compareKitchenOrdersNewestFirst(left, right) {
+  const leftTime = recencyMillis(left);
+  const rightTime = recencyMillis(right);
+  if (leftTime !== rightTime) {
+    if (leftTime == null) return 1;
+    if (rightTime == null) return -1;
+    return rightTime - leftTime;
+  }
+  const leftId = Number(left?.id);
+  const rightId = Number(right?.id);
+  const safeLeft = Number.isFinite(leftId) ? leftId : Number.NEGATIVE_INFINITY;
+  const safeRight = Number.isFinite(rightId) ? rightId : Number.NEGATIVE_INFINITY;
+  return safeRight - safeLeft;
+}
+
+export function sortKitchenOrdersNewestFirst(orders) {
+  return [...(Array.isArray(orders) ? orders : [])].sort(compareKitchenOrdersNewestFirst);
+}

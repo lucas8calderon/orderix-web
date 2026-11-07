@@ -203,6 +203,7 @@ describe('PDV de balcão', () => {
 
     await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
+    fireEvent.change(screen.getByLabelText(/Nome do cliente/), { target: { value: 'Ana' } });
     const finish = screen.getByRole('button', { name: /^Cobrar/ });
     fireEvent.click(finish);
     fireEvent.click(finish);
@@ -215,13 +216,14 @@ describe('PDV de balcão', () => {
     expect(createFloorOrder).toHaveBeenCalledWith(999, expect.objectContaining({
       tableId: 999,
       waiterId: 999,
-      customerName: 'Balcão',
+      customerName: 'Ana',
       products: [expect.objectContaining({ id: 4, quantity: 1, observation: null })],
     }), expect.any(String));
     expect(screen.queryByLabelText('Quantidade de Café')).not.toBeInTheDocument();
 
     createFloorOrder.mockRejectedValue({ response: { data: { message: 'Sem estoque' } } });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar Café' }));
+    fireEvent.change(screen.getByLabelText(/Nome do cliente/), { target: { value: 'Ana' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Sem estoque');
     expect(screen.getByLabelText('Quantidade de Café')).toBeInTheDocument();
@@ -253,6 +255,7 @@ describe('PDV de balcão', () => {
     renderPos({ onOpenAccount });
     await openCategory('Bebidas');
     fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
+    fireEvent.change(screen.getByLabelText(/Nome do cliente/), { target: { value: 'Ana' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
     const cart = screen.getByRole('region', { name: 'Pedido balcão' });
     expect(await within(cart).findByText('Pedido 55 enviado.')).toBeInTheDocument();
@@ -276,6 +279,52 @@ describe('PDV de balcão', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Porções' }));
     fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
     expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
+  });
+
+  it('exige o nome do cliente e mostra os campos abaixo dos itens', async () => {
+    renderPos();
+    await openCategory('Bebidas');
+    fireEvent.click(await screen.findByRole('button', { name: 'Adicionar Café' }));
+
+    const cart = screen.getByRole('region', { name: 'Pedido balcão' });
+    const item = within(cart).getByText('Café');
+    const name = within(cart).getByLabelText(/Nome do cliente/);
+    const note = within(cart).getByLabelText('Observação do pedido (opcional)');
+    const total = within(cart).getByText(/^Total/);
+    expect(within(cart).queryByLabelText('Nome do cliente (opcional)')).not.toBeInTheDocument();
+    expect(item.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(name.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(note.compareDocumentPosition(total) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Cobrar/ }));
+    expect(createFloorOrder).not.toHaveBeenCalled();
+    expect(screen.getByText('Informe o nome do cliente')).toBeInTheDocument();
+    expect(screen.getByLabelText('Quantidade de Café')).toHaveTextContent('1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aumentar Café' }));
+    expect(screen.getByLabelText('Quantidade de Café')).toHaveTextContent('2');
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar' }));
+    expect(screen.getByRole('heading', { name: 'Limpar pedido?' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Limpar pedido?' })).not.toBeInTheDocument();
+    });
+
+    fireEvent.change(name, { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
+    fireEvent.keyDown(window, { key: 'Enter', ctrlKey: true });
+    expect(createFloorOrder).not.toHaveBeenCalled();
+    expect(screen.getByText('Informe o nome do cliente')).toBeInTheDocument();
+
+    fireEvent.change(name, { target: { value: 'Ana' } });
+    expect(screen.queryByText('Informe o nome do cliente')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar sem cobrar' }));
+    await waitFor(() => {
+      expect(createFloorOrder).toHaveBeenCalledWith(999, expect.objectContaining({
+        customerName: 'Ana',
+        observation: null,
+      }), expect.any(String));
+    });
   });
 
   it('trava o lançamento do usuário de caixa com o caixa fechado', async () => {
