@@ -11,6 +11,22 @@ export const ROLES = {
   PARTNER: 'PARTNER',
 };
 
+const ROLE_LABELS = {
+  [ROLES.MASTER]: 'Master',
+  [ROLES.SUPER_ADMIN]: 'Super administrador',
+  [ROLES.STORE_ADMIN]: 'Administrador',
+  [ROLES.ADMIN]: 'Administrador',
+  [ROLES.WAITER]: 'Garçom',
+  [ROLES.KITCHEN]: 'Cozinha',
+  [ROLES.CASHIER]: 'Caixa',
+  [ROLES.PARTNER]: 'Parceiro',
+};
+
+/** Nome do papel para exibir na interface; undefined quando o papel é desconhecido. */
+export function getRoleLabel(role) {
+  return ROLE_LABELS[role];
+}
+
 export const SUBSCRIPTION_STATUS = {
   ACTIVE: 'ACTIVE',
   PENDING: 'PENDING',

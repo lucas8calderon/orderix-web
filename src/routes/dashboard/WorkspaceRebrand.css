@@ -5,13 +5,10 @@
 .weper-establishment .weper-shell-context { display: flex; align-items: center; gap: 14px; }
 .weper-establishment .weper-shell-context-title { font-size: 15px !important; }
 .weper-establishment .weper-shell-context-hint { border-left: 1px solid var(--color-border); padding-left: 14px; }
-.weper-establishment .weper-shell-brand { min-height: 92px !important; }
-.weper-establishment .weper-shell-logo { width: 88px; }
-.weper-establishment .weper-shell-group-label { font-size: 10px; letter-spacing: .13em; padding-block: 12px; opacity: .8; }
-.weper-establishment .weper-nav-item { min-height: 51px; border-radius: 10px; margin-bottom: 4px; }
-.weper-establishment .weper-nav-item.Mui-selected { background: #2563eb; color: #fff; box-shadow: 0 5px 18px #00000015; }
-.weper-establishment .weper-nav-item.Mui-selected:hover { background: #1d4ed8; }
-.weper-establishment .weper-shell-account { padding: 18px 12px; margin-bottom: 0; }
+/* Menu lateral: o visual vem do AppShell.css. No dark, o item ativo segue azul sólido como antes. */
+html[data-theme="dark"] .weper-establishment .weper-nav-item.MuiListItemButton-root.Mui-selected { background: #2563eb; color: #fff; box-shadow: 0 5px 18px #00000015; }
+html[data-theme="dark"] .weper-establishment .weper-nav-item.MuiListItemButton-root.Mui-selected:hover { background: #1d4ed8; }
+html[data-theme="dark"] .weper-establishment .weper-nav-item.Mui-selected .weper-nav-icon { color: inherit; }
 .weper-establishment .weper-page-header { padding-bottom: 23px; border-bottom: 1px solid var(--color-border); margin-bottom: 24px; }
 .weper-establishment .weper-page-header h1, .weper-establishment .settings-title { font-size: 28px !important; letter-spacing: -.035em; font-weight: 700; }
 .weper-establishment .MuiButton-root { text-transform: none; border-radius: 9px; min-height: 38px; font-weight: 600; box-shadow: none; }
@@ -100,11 +97,6 @@
 @media(max-width:700px) { .weper-establishment .weper-shell-main { padding: 20px 16px; }.weper-establishment .weper-shell-toolbar { min-height: 64px !important; }.weper-establishment .weper-shell-context { display: block; }.weper-establishment .weper-shell-context-hint { border: 0; padding: 0; }.weper-establishment .weper-page-header h1,.weper-establishment .settings-title { font-size: 25px !important; }.workspace-launchpad { padding: 22px; }.workspace-launchpad__links a { flex-basis: 100px; }.weper-establishment .settings-nav__track { grid-template-columns: repeat(2,minmax(0,1fr)); }.weper-establishment .settings-hub-grid { grid-template-columns: 1fr; }.settings-finder { padding: 18px; }.settings-finder__results { grid-template-columns: 1fr; }.inventory-summary { gap: 8px; }.inventory-summary>div { padding: 14px 10px; }.inventory-summary span { font-size: 11px; }.inventory-product { align-items: flex-start; flex-direction: column; } }
 @media(prefers-reduced-motion:reduce) { .weper-establishment *, .weper-establishment *::after { transition: none !important; scroll-behavior: auto !important; } }
 
-/* Compact navigation keeps every module reachable on notebook screens. */
-.weper-establishment .weper-shell-brand { min-height: 76px !important; }
-.weper-establishment .weper-shell-group { margin-bottom: 8px; }
-.weper-establishment .weper-shell-group-label { padding-block: 8px; }
-.weper-establishment .weper-nav-item { min-height: 44px; }
 .weper-establishment .settings-nav__track { margin: 0; border: 0; }
 .weper-establishment .settings-card .card-header { padding-bottom: 20px; margin-bottom: 22px; border-bottom: 1px solid var(--color-border); align-items: flex-start; gap: 18px; }
 .weper-establishment .settings-card .card-title { font-size: 18px; font-weight: 650; }

@@ -37,6 +37,7 @@ import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
+import weperMark from '../../assets/images/weper-mark-w.png';
 import { logout } from '../../services/authService';
 import {
   PATHS,
@@ -384,6 +385,7 @@ export default function MasterDashboard() {
   return (
     <AppShell
       logo={weperLogo}
+      brandMark={weperMark}
       contextLabel="Weper Master"
       contextHint={ADMIN_TITLES[section]}
       groups={adminGroups}

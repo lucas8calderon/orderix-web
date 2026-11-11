@@ -10,11 +10,12 @@ import { WaiterHome } from './WaiterHome';
 import { Settings } from './settings/Settings';
 import InventoryPanel from './inventory/Inventory';
 import { getCurrentUser, logout } from '../../services/authService';
-import { canAccessRoute, getPostLoginPath, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
+import { canAccessRoute, getPostLoginPath, getRoleLabel, getVisibleDashboardItems, PATHS } from '../../services/accessControl';
 import { AppShell } from '../../commons/components/AppShell';
 import { GraceBillingNotice } from './GraceBillingNotice';
 import { NewOrderAlert } from './newOrderAlert/NewOrderAlert';
 import weperLogo from '../../assets/images/weper-logo.png';
+import weperMark from '../../assets/images/weper-mark-w.png';
 import './Workspace.css';
 import './WorkspaceRebrand.css';
 
@@ -91,10 +92,12 @@ export default function Dashboard() {
     <AppShell
       className="weper-establishment"
       logo={weperLogo}
+      brandMark={weperMark}
       contextLabel={user?.storeName || 'Weper'}
       contextHint={selectedItem.title}
       groups={groups}
       accountName={user?.name || 'Minha conta'}
+      accountRole={getRoleLabel(user?.role)}
       accountHint="Gestão do estabelecimento"
       onLogout={handleLogout}
       onNavigate={() => setNavIntent(null)}

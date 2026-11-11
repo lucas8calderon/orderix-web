@@ -5,16 +5,65 @@
   color: var(--color-text-primary);
 }
 
+/* ===== Menu lateral ===== */
+.weper-shell-drawer .MuiDrawer-paper {
+  box-sizing: border-box;
+  border-radius: 0;
+  overflow-x: hidden;
+  background: var(--shell-nav-bg);
+  background-image: none;
+  color: var(--shell-nav-text);
+  border-right: 1px solid var(--shell-nav-border);
+  box-shadow: none;
+  transition: width 200ms ease;
+}
+
+.weper-shell-backdrop.MuiBackdrop-root {
+  background-color: var(--color-overlay);
+}
+
 .weper-shell-nav {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 .weper-shell-brand {
-  min-height: 72px !important;
-  padding: 0 16px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  min-height: 72px;
+  padding: 0 12px 0 20px;
+  flex-shrink: 0;
+}
+
+.weper-shell-nav.is-collapsed .weper-shell-brand {
+  justify-content: center;
+  padding: 0;
+}
+
+.weper-shell-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.weper-shell-mark {
+  display: block;
+  height: 22px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.weper-shell-wordmark {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--shell-nav-text-strong);
 }
 
 .weper-shell-logo {
@@ -22,14 +71,78 @@
   display: block;
 }
 
-.weper-shell-menu {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 12px 12px;
+.weper-shell-toggle.MuiIconButton-root,
+.weper-shell-account-logout.MuiIconButton-root {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--shell-nav-icon);
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
-.weper-shell-group {
-  margin-bottom: 16px;
+.weper-shell-toggle.MuiIconButton-root:hover,
+.weper-shell-account-logout.MuiIconButton-root:hover {
+  background: var(--shell-nav-hover);
+  color: var(--shell-nav-text-strong);
+}
+
+.weper-shell-toggle svg,
+.weper-shell-account-logout svg {
+  font-size: 18px;
+}
+
+.weper-shell-brand-button.MuiIconButton-root {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  transition: background-color 200ms ease;
+}
+
+.weper-shell-brand-button.MuiIconButton-root:hover {
+  background: var(--shell-nav-hover);
+}
+
+.weper-shell-brand-button .weper-shell-mark {
+  height: 20px;
+  transition: opacity 180ms ease;
+}
+
+.weper-shell-brand-expand.MuiSvgIcon-root {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  font-size: 20px;
+  color: var(--shell-nav-text-strong);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.weper-shell-brand-button:hover .weper-shell-mark,
+.weper-shell-brand-button.Mui-focusVisible .weper-shell-mark {
+  opacity: 0;
+}
+
+.weper-shell-brand-button:hover .weper-shell-brand-expand,
+.weper-shell-brand-button.Mui-focusVisible .weper-shell-brand-expand {
+  opacity: 1;
+}
+
+.weper-shell-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 12px 16px;
+  scrollbar-width: thin;
+}
+
+.weper-shell-nav.is-collapsed .weper-shell-menu {
+  padding: 4px 14px 16px;
+}
+
+.weper-shell-group + .weper-shell-group {
+  margin-top: 12px;
 }
 
 .weper-shell-group-label {
@@ -37,53 +150,157 @@
   padding: 8px 12px;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  line-height: 1.4;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--color-sidebar-text);
+  white-space: nowrap;
+  color: var(--shell-nav-label);
 }
 
-.weper-nav-item {
-  min-height: 40px;
+.weper-shell-group-divider {
+  display: block;
+  width: 20px;
+  height: 1px;
+  margin: 0 auto 12px;
+  background: var(--shell-nav-divider);
+}
+
+.weper-shell-group:first-child .weper-shell-group-divider {
+  display: none;
+}
+
+.weper-nav-item.MuiListItemButton-root {
+  min-height: 44px;
   margin-bottom: 2px;
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  color: var(--color-sidebar-text);
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--shell-nav-text);
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
-.weper-nav-item.Mui-selected {
-  color: var(--color-sidebar-brand);
-  background: var(--color-sidebar-selected);
-}
-
-.weper-nav-item:hover {
-  background: var(--color-sidebar-hover);
-}
-
-.weper-nav-icon {
-  min-width: 32px;
-  color: inherit;
+.weper-nav-icon.MuiListItemIcon-root {
+  min-width: 0;
+  margin-right: 12px;
+  color: var(--shell-nav-icon);
+  transition: color 200ms ease;
 }
 
 .weper-nav-icon svg {
   font-size: 20px;
 }
 
+.weper-nav-label {
+  margin: 0;
+  min-width: 0;
+}
+
+.weper-nav-label .MuiTypography-root {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.weper-nav-item.MuiListItemButton-root:hover,
+.weper-nav-item.MuiListItemButton-root.Mui-focusVisible {
+  background: var(--shell-nav-hover);
+  color: var(--shell-nav-text-strong);
+}
+
+.weper-nav-item.MuiListItemButton-root:hover .weper-nav-icon {
+  color: var(--shell-nav-text-strong);
+}
+
+.weper-nav-item.MuiListItemButton-root.Mui-focusVisible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.weper-nav-item.MuiListItemButton-root.Mui-selected,
+.weper-nav-item.MuiListItemButton-root.Mui-selected:hover,
+.weper-nav-item.MuiListItemButton-root.Mui-selected.Mui-focusVisible {
+  background: var(--shell-nav-selected-bg);
+  color: var(--shell-nav-selected-text);
+}
+
+.weper-nav-item.Mui-selected .weper-nav-icon {
+  color: var(--shell-nav-selected-text);
+}
+
+.weper-nav-item.Mui-selected .weper-nav-label .MuiTypography-root {
+  font-weight: 600;
+}
+
+.weper-shell-nav.is-collapsed .weper-nav-item.MuiListItemButton-root {
+  justify-content: center;
+  padding: 0;
+}
+
+.weper-shell-nav.is-collapsed .weper-nav-icon.MuiListItemIcon-root {
+  margin-right: 0;
+}
+
 .weper-shell-account {
-  margin: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  flex-shrink: 0;
+  padding: 12px;
+  border-top: 1px solid var(--shell-nav-divider);
 }
 
-.weper-shell-account-name {
-  font-size: 13px !important;
-  color: var(--color-sidebar-strong) !important;
-  overflow-wrap: anywhere;
+.weper-shell-account-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 4px 6px 8px;
+  border-radius: 10px;
 }
 
-.weper-shell-account-hint {
-  margin-top: 4px !important;
-  font-size: 12px !important;
-  color: var(--color-sidebar-text) !important;
+.weper-shell-nav.is-collapsed .weper-shell-account-card {
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.weper-shell-account-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.weper-shell-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--shell-nav-avatar-bg);
+  color: var(--shell-nav-avatar-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.weper-shell-account-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.weper-shell-account-name.MuiTypography-root {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--shell-nav-text-strong);
+}
+
+.weper-shell-account-hint.MuiTypography-root {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--shell-nav-text-muted);
+}
+
+.weper-shell-toggle.MuiIconButton-root.Mui-focusVisible,
+.weper-shell-brand-button.MuiIconButton-root.Mui-focusVisible,
+.weper-shell-account-logout.MuiIconButton-root.Mui-focusVisible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .weper-shell-column {
