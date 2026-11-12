@@ -4,7 +4,7 @@
   --demo-accent-soft: var(--color-primary-soft);
   --demo-pad: 16px;
   --demo-max: 1200px;
-  --demo-banner-offset: 104px;
+  --demo-banner-offset: 0px;
   --demo-gutter: var(--demo-pad);
   min-height: 100vh;
   width: 100%;
@@ -858,7 +858,7 @@
   .demo-page,
   .demo-index {
     --demo-pad: 24px;
-    --demo-banner-offset: 56px;
+    --demo-banner-offset: 0px;
   }
 
   .demo-banner {

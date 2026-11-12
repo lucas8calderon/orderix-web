@@ -15,12 +15,10 @@ import {
   addAvailableProductToCart,
   filterDemoCategories,
   isDemoProductAvailable,
-  resetDemoExperience,
   simulateDemoOrder,
 } from './demoRepository';
 import { restoreDemoDocumentMeta, setDemoDocumentMeta } from './demoSeo';
 import { getDemoStore } from './demoStores';
-import DemoBanner from './components/DemoBanner';
 import DemoCartBar from './components/DemoCartBar';
 import DemoCartPanel from './components/DemoCartPanel';
 import DemoCategoryNav from './components/DemoCategoryNav';
@@ -204,25 +202,9 @@ export default function DemoStorePage() {
     }
   };
 
-  const resetDemo = () => {
-    resetDemoExperience(slug);
-    setCart({ items: [] });
-    setOrder(null);
-    setSelected(null);
-    setCartOpen(false);
-    setCheckoutOpen(false);
-    setQuery('');
-    setCheckout({
-      customerName: store?.settings?.defaultCustomerName || 'Visitante',
-      fulfillment: 'PICKUP',
-      paymentMethod: 'PIX',
-    });
-  };
-
   if (!store) {
     return (
       <div className="demo-page demo-page--empty">
-        <DemoBanner onReset={() => {}} />
         <div className="demo-empty">
           <h1>Demonstração não encontrada</h1>
           <p>Esse estabelecimento ainda não faz parte da vitrine Weper.</p>
@@ -238,7 +220,6 @@ export default function DemoStorePage() {
       className={`demo-page${totals.itemCount > 0 && !order ? ' has-cart-bar' : ''}`}
       style={{ '--demo-accent': store.accent, '--demo-accent-soft': store.accentSoft }}
     >
-      <DemoBanner onReset={resetDemo} />
       {order ? (
         <DemoSuccess
           order={order}

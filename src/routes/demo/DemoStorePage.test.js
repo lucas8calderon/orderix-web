@@ -37,7 +37,7 @@ describe('DemoStorePage', () => {
     renderStore('weper-burger');
 
     expect(screen.getByRole('heading', { name: 'Weper Burger' })).toBeInTheDocument();
-    expect(screen.getByText('Você está explorando uma demonstração da Weper.')).toBeInTheDocument();
+    expect(screen.queryByText('Você está explorando uma demonstração da Weper.')).not.toBeInTheDocument();
 
     const unavailable = screen.getByRole('button', { name: 'Veggie Weper indisponível' });
     expect(unavailable).toBeDisabled();
