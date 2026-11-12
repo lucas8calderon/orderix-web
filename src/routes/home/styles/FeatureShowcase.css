@@ -1,0 +1,119 @@
+/* Seção "Funcionalidades" da home: blocos alternados de texto e telas do produto em molduras CSS. */
+.wp-fs{padding-top:0;overflow-x:clip}
+.wp-fs .wp-section-heading{margin-bottom:8px}
+
+/* ---------- Bloco ---------- */
+.wp-fs-row{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"head visual" "body visual";column-gap:64px;align-items:center;padding:64px 0}
+.wp-fs-row.is-reversed{grid-template-columns:minmax(0,7fr) minmax(0,5fr);grid-template-areas:"visual head" "visual body"}
+.wp-fs-row + .wp-fs-row{border-top:1px solid #edf1f7}
+.wp-fs-head{grid-area:head;align-self:end}
+.wp-fs-body{grid-area:body;align-self:start}
+.wp-fs-visual{grid-area:visual}
+
+.wp-fs-head .wp-kicker{margin-bottom:14px}
+.wp-site .wp-fs-problem{font-size:14px;line-height:1.6;color:#7a8799;margin-bottom:10px;max-width:440px}
+.wp-site .wp-fs-head h3{font-size:clamp(26px,2.5vw,35px);line-height:1.18;letter-spacing:-1.1px;font-weight:650;margin-bottom:16px;max-width:470px}
+.wp-site .wp-fs-text{font-size:16px;line-height:1.7;max-width:470px}
+
+.wp-fs-points{list-style:none;margin:26px 0 30px;padding:0;display:grid;gap:12px}
+.wp-fs-points li{display:flex;align-items:flex-start;gap:10px;font-size:15px;line-height:1.5;color:var(--wp-ink)}
+.wp-fs-points svg{color:var(--wp-blue);margin-top:2px}
+
+.wp-fs-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px}
+.wp-fs-actions .wp-text-link{font-size:14px;min-height:44px}
+.wp-fs-actions .wp-fs-extra-link{flex-basis:100%;min-height:0;font-weight:550}
+
+/* ---------- Palco das telas ---------- */
+.wp-fs-visual{position:relative;display:flex;flex-direction:column;align-items:center;padding:48px 36px 28px;border-radius:24px;background:radial-gradient(120% 85% at 50% 0,#eaf1ff 0,#f5f7fb 62%)}
+.wp-fs-visual--phone{padding-top:40px}
+.wp-fs-visual--laptop{padding:44px 44px 28px}
+
+.wp-fs-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:26px}
+.wp-site .wp-fs-tabs button{min-height:40px;padding:8px 18px;border:1px solid var(--wp-border);border-radius:999px;background:#fff;color:#526078;font-size:13px;font-weight:600;transition:background .18s,color .18s,border-color .18s}
+.wp-site .wp-fs-tabs button:hover{border-color:#9db9ee;color:var(--wp-blue)}
+.wp-site .wp-fs-tabs button[aria-pressed=true]{background:var(--wp-blue);border-color:var(--wp-blue);color:#fff}
+
+/* ---------- Molduras ---------- */
+.wp-device{position:relative;width:100%}
+.wp-device__screen{position:relative;width:100%;overflow:hidden;background:#f5f7fb}
+.wp-device__screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;opacity:0;transition:opacity .6s ease}
+.wp-device__screen img.is-active{opacity:1}
+
+.wp-device--phone{width:min(280px,70vw);padding:11px;border-radius:44px;background:#101b30;box-shadow:inset 0 0 0 1px #2c3c5a,0 44px 70px -34px rgba(19,33,58,.5),0 14px 26px -14px rgba(19,33,58,.28)}
+.wp-device--phone::before{content:"";position:absolute;top:4px;left:50%;width:46px;height:4px;margin-left:-23px;border-radius:4px;background:#2c3c5a}
+.wp-device--phone .wp-device__screen{border-radius:33px}
+
+.wp-device--tablet{padding:14px;border-radius:26px;background:#101b30;box-shadow:inset 0 0 0 1px #2c3c5a,0 44px 70px -36px rgba(19,33,58,.5),0 14px 26px -14px rgba(19,33,58,.25)}
+.wp-device--tablet::before{content:"";position:absolute;top:50%;left:5px;width:5px;height:5px;margin-top:-2px;border-radius:50%;background:#2c3c5a}
+.wp-device--tablet .wp-device__screen{border-radius:12px}
+
+.wp-device--laptop{filter:drop-shadow(0 30px 34px rgba(19,33,58,.2))}
+.wp-device--laptop .wp-device__screen{border:10px solid #101b30;border-bottom-width:12px;border-radius:16px 16px 0 0}
+.wp-device__base{position:relative;height:14px;margin:0 -5.5%;border-radius:0 0 14px 14px;background:linear-gradient(#e6ebf2,#b7c1d0)}
+.wp-device__base::after{content:"";position:absolute;top:0;left:50%;width:14%;height:5px;margin-left:-7%;border-radius:0 0 8px 8px;background:#a5b0c2}
+
+/* ---------- Demonstração: do celular à cozinha ---------- */
+.wp-fs-stage{align-items:flex-start;padding:40px 28px 60px}
+.wp-fs-stage .wp-device--tablet{width:88%}
+.wp-fs-stage .wp-device{transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .55s ease}
+.wp-fs-stage .wp-device--phone{position:absolute;right:24px;bottom:30px;width:27%;min-width:0;padding:7px;border-radius:26px}
+.wp-fs-stage .wp-device--phone::before{display:none}
+.wp-fs-stage .wp-device--phone .wp-device__screen{border-radius:20px}
+.wp-fs-stage.is-focus-phone .wp-device--tablet{transform:scale(.965);filter:saturate(.55) brightness(.97)}
+.wp-fs-stage.is-focus-phone .wp-device--phone{transform:translateY(-8px) scale(1.04)}
+.wp-fs-stage.is-focus-tablet .wp-device--phone{transform:scale(.9) translateY(10px);filter:saturate(.55) brightness(.97)}
+.wp-site .wp-fs-note{position:absolute;left:28px;bottom:20px;font-size:11px;color:#7a8799}
+
+.wp-fs-steps{list-style:none;margin:22px 0 28px;padding:0;display:grid;gap:6px}
+.wp-site .wp-fs-steps button{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;border:1px solid transparent;border-radius:12px;background:none;text-align:left;color:var(--wp-ink);transition:background .2s,border-color .2s}
+.wp-site .wp-fs-steps button:hover{background:#f7f9fc}
+.wp-site .wp-fs-steps button.is-active{background:#f3f7ff;border-color:#d6e3fb}
+.wp-fs-step-number{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:#e8efff;color:var(--wp-blue);font-size:13px;font-weight:700;transition:background .2s,color .2s}
+.wp-site .wp-fs-steps button.is-active .wp-fs-step-number{background:var(--wp-blue);color:#fff}
+.wp-fs-steps strong{display:block;font-size:15px;font-weight:650;line-height:1.35}
+.wp-fs-steps small{display:block;font-size:13px;line-height:1.45;color:var(--wp-muted)}
+
+/* ---------- Entrada ao rolar ---------- */
+@media (prefers-reduced-motion:no-preference){
+  .wp-fs-row .wp-fs-head,.wp-fs-row .wp-fs-body,.wp-fs-row .wp-fs-visual{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+  .wp-fs-row .wp-fs-visual{transition-delay:.12s}
+  .wp-fs-row .wp-fs-body{transition-delay:.22s}
+  .wp-fs-row.is-visible .wp-fs-head,.wp-fs-row.is-visible .wp-fs-body,.wp-fs-row.is-visible .wp-fs-visual{opacity:1;transform:none}
+}
+
+/* ---------- Responsivo ---------- */
+@media(max-width:1100px){
+  .wp-fs-row{column-gap:44px;padding:56px 0}
+  .wp-fs-visual{padding:36px 24px 24px}
+  .wp-fs-visual--laptop{padding:36px 44px 24px}
+  .wp-fs-stage{padding:32px 24px 58px}
+}
+@media(max-width:900px){
+  .wp-fs-row,.wp-fs-row.is-reversed{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "visual" "body";row-gap:28px;padding:48px 0}
+  .wp-site .wp-fs-head h3,.wp-site .wp-fs-text,.wp-site .wp-fs-problem{max-width:620px}
+  .wp-fs-points{margin-top:0}
+  .wp-fs-steps{margin-top:0}
+  .wp-fs-actions .wp-fs-extra-link{min-height:44px}
+}
+@media(max-width:600px){
+  .wp-fs-row,.wp-fs-row.is-reversed{row-gap:22px;padding:40px 0}
+  .wp-site .wp-fs-head h3{font-size:25px;letter-spacing:-.8px}
+  .wp-site .wp-fs-text{font-size:15px}
+  .wp-fs-points li{font-size:14px}
+  .wp-fs-visual{margin-inline:-8px;padding:28px 14px 18px;border-radius:20px}
+  .wp-fs-visual--laptop{padding:28px 22px 18px}
+  .wp-fs-visual--phone{padding-top:28px}
+  .wp-device--phone{width:min(270px,74vw)}
+  .wp-device--tablet{padding:8px;border-radius:16px}
+  .wp-device--tablet .wp-device__screen{border-radius:8px}
+  .wp-device--laptop .wp-device__screen{aspect-ratio:6/5!important;border-width:7px;border-bottom-width:9px;border-radius:12px 12px 0 0}
+  .wp-device__base{height:10px;margin:0 -3%}
+  .wp-fs-stage{padding:22px 12px 54px}
+  .wp-fs-stage .wp-device--tablet{width:100%}
+  .wp-fs-stage .wp-device--phone{right:10px;bottom:30px;width:33%;padding:5px;border-radius:18px}
+  .wp-fs-stage .wp-device--phone .wp-device__screen{border-radius:14px}
+  .wp-site .wp-fs-note{left:14px;bottom:14px;font-size:10px}
+  .wp-fs-tabs{margin-top:18px}
+  .wp-site .wp-fs-tabs button{min-height:44px}
+  .wp-fs-actions .wp-button{width:100%}
+}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Home from './Home';
 import { openWhatsApp } from './landingAssets';
@@ -58,12 +58,34 @@ test('solution tabs support keyboard navigation and update their accessible pane
   expect(screen.getByRole('tab', { name: 'Atendimento' })).toHaveAttribute('aria-selected', 'true');
 });
 
-test('features section shows one card per feature page and the menu reaches it', () => {
+test('features section shows the product by module and the menu reaches it', () => {
   setup();
   expect(screen.getByRole('link', { name: 'Funcionalidades' })).toHaveAttribute('href', '#funcionalidades');
-  const cards = document.querySelectorAll('#funcionalidades .wp-feature-card');
-  expect([...cards].map(card => card.getAttribute('href'))).toEqual(FEATURE_PAGES.map(page => page.path));
-  expect(screen.getByRole('link', { name: /Autoatendimento O cliente faz o pedido no tablet/ })).toHaveAttribute('href', '/autoatendimento');
+  const section = document.getElementById('funcionalidades');
+  expect(within(section).getByRole('heading', { level: 2, name: /Tudo o que seu estabelecimento precisa/ })).toBeInTheDocument();
+  expect(within(section).getAllByRole('heading', { level: 3 }).map(heading => heading.textContent)).toEqual([
+    'Do pedido à cozinha, tudo conectado.',
+    'Seu delivery. Sua marca. Seus clientes.',
+    'Mais agilidade no atendimento, menos confusão na operação.',
+    'Entenda seus números e controle o que sai da loja.',
+    'O pedido sai da mesa direto para a cozinha.',
+  ]);
+  const hrefs = [...section.querySelectorAll('a')].map(link => link.getAttribute('href'));
+  FEATURE_PAGES.forEach(page => expect(hrefs).toContain(page.path));
+  expect(hrefs).toContain('/demo/weper-burger');
+  expect(within(section).getByRole('link', { name: 'Quero meu delivery próprio' })).toHaveAttribute('href', '#plans');
+});
+
+test('features section shows one real screen per device and switches on request', () => {
+  setup();
+  const section = document.getElementById('funcionalidades');
+  expect(within(section).getByRole('img', { name: /PDV do balcão/ })).toBeInTheDocument();
+  fireEvent.click(within(section).getByRole('button', { name: 'Estoque' }));
+  expect(within(section).getByRole('button', { name: 'Estoque' })).toHaveAttribute('aria-pressed', 'true');
+  expect(within(section).getByRole('img', { name: /Estoque: saldo de cada produto/ })).toBeInTheDocument();
+  fireEvent.click(within(section).getByRole('button', { name: /O pedido chega à cozinha/ }));
+  expect(within(section).getByRole('button', { name: /O pedido chega à cozinha/ })).toHaveAttribute('aria-current', 'step');
+  expect(within(section).getByRole('img', { name: /aparece na coluna Novo/ })).toBeInTheDocument();
 });
 
 test('sales channels tab and footer link to the delivery page', () => {
