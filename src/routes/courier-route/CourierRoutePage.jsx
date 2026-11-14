@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Button, Container, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from '@mui/material';
 import {
   apiErrorMessage,
   confirmPublicDeliveryStop,
@@ -25,7 +34,8 @@ export default function CourierRoutePage() {
   const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState('');
   const [outcome, setOutcome] = useState('');
-  const [pin, setPin] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingStopId, setPendingStopId] = useState(null);
   const [formError, setFormError] = useState('');
   const [attemptKey, setAttemptKey] = useState('');
   const [sending, setSending] = useState(false);
@@ -80,30 +90,27 @@ export default function CourierRoutePage() {
     };
   }, [token]);
 
-  const begin = (nextOutcome) => {
+  const begin = (nextOutcome, stopId) => {
     setOutcome(nextOutcome);
-    setPin('');
+    setPendingStopId(stopId);
     setFormError('');
     setAttemptKey(newIdempotencyKey());
+    setDialogOpen(true);
+  };
+
+  const cancel = () => {
+    if (sending) return;
+    setDialogOpen(false);
   };
 
   const submit = async () => {
-    if (!/^\d{6}$/.test(pin.trim())) {
-      setFormError('Informe o PIN de 6 dígitos.');
-      return;
-    }
-    const current = (route?.stops || []).find((stop) => stop.id === route.currentStopId);
-    if (!current || !token) return;
+    if (!pendingStopId || !token || !outcome) return;
     setSending(true);
     setFormError('');
     try {
-      const response = await confirmPublicDeliveryStop(token, current.id, {
-        pin: pin.trim(),
-        outcome,
-      }, attemptKey);
+      const response = await confirmPublicDeliveryStop(token, pendingStopId, { outcome }, attemptKey);
       setRoute(response.data);
-      setOutcome('');
-      setPin('');
+      setDialogOpen(false);
     } catch (err) {
       setFormError(apiErrorMessage(err, 'Não foi possível confirmar a parada.'));
     } finally {
@@ -183,10 +190,10 @@ export default function CourierRoutePage() {
                           </Button>
                         </>
                       ) : null}
-                      <Button variant="contained" onClick={() => begin('DELIVERED')} sx={{ textTransform: 'none', background: '#2563EB' }}>
+                      <Button variant="contained" onClick={() => begin('DELIVERED', stop.id)} sx={{ textTransform: 'none', background: '#2563EB' }}>
                         Confirmar entrega
                       </Button>
-                      <Button variant="text" onClick={() => begin('FAILED')} sx={{ textTransform: 'none' }}>
+                      <Button variant="text" onClick={() => begin('FAILED', stop.id)} sx={{ textTransform: 'none' }}>
                         Não foi possível entregar
                       </Button>
                     </Box>
@@ -197,28 +204,40 @@ export default function CourierRoutePage() {
             {!current && route.status === 'COMPLETED' ? (
               <Typography sx={{ fontWeight: 700, mt: 1 }}>Rota concluída.</Typography>
             ) : null}
-            {outcome ? (
-              <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="PIN da rota"
-                  value={pin}
-                  onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                  inputProps={{ inputMode: 'numeric', maxLength: 6, 'aria-label': 'PIN da rota' }}
-                  fullWidth
-                />
-                {formError ? <Typography color="error" sx={{ mt: 1 }}>{formError}</Typography> : null}
-                <Button
-                  variant="contained"
-                  onClick={submit}
-                  disabled={sending}
-                  sx={{ mt: 1.5, textTransform: 'none', background: '#2563EB' }}
-                >
-                  {sending ? 'Enviando...' : 'Enviar PIN'}
-                </Button>
-              </Box>
-            ) : null}
           </Box>
         ) : null}
+        <Dialog
+          open={dialogOpen}
+          onClose={() => {
+            if (!sending) setDialogOpen(false);
+          }}
+          fullWidth
+          maxWidth="xs"
+          aria-labelledby="courier-stop-dialog-title"
+          PaperProps={{ sx: { m: 2, width: 'calc(100% - 32px)' } }}
+        >
+          <DialogTitle id="courier-stop-dialog-title" sx={{ fontWeight: 800, pr: 2 }}>
+            {outcome === 'FAILED' ? 'Não foi possível entregar?' : 'Confirmar esta entrega?'}
+          </DialogTitle>
+          {formError ? (
+            <DialogContent>
+              <Typography color="error">{formError}</Typography>
+            </DialogContent>
+          ) : null}
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button onClick={cancel} disabled={sending} sx={{ textTransform: 'none' }}>
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              onClick={submit}
+              disabled={sending}
+              sx={{ textTransform: 'none', background: '#2563EB' }}
+            >
+              {sending ? 'Enviando...' : 'Confirmar'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );

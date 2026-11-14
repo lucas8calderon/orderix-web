@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import CourierRoutePage from './CourierRoutePage';
 import { confirmPublicDeliveryStop, getPublicDeliveryRoute } from '../../services/deliveryRouteApi';
@@ -62,7 +62,7 @@ describe('página do motoboy', () => {
     expect(getPublicDeliveryRoute).not.toHaveBeenCalled();
   });
 
-  it('abre mapa só da parada atual e exige o PIN', async () => {
+  it('abre mapa só da parada atual e o pop-up cancelado não confirma', async () => {
     getPublicDeliveryRoute.mockResolvedValue({ data: route });
     renderPage('/rotas/token-publico');
 
@@ -78,8 +78,47 @@ describe('página do motoboy', () => {
     expect(confirmPublicDeliveryStop).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrega' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Enviar PIN' }));
-    expect(screen.getByText('Informe o PIN de 6 dígitos.')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Confirmar esta entrega?' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('PIN da rota')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(confirmPublicDeliveryStop).not.toHaveBeenCalled();
+  });
+
+  it('confirma a entrega sem PIN', async () => {
+    getPublicDeliveryRoute.mockResolvedValue({ data: route });
+    confirmPublicDeliveryStop.mockResolvedValue({
+      data: {
+        ...route,
+        finishedCount: 1,
+        currentStopId: 10,
+        stops: [{ ...route.stops[0], status: 'DELIVERED' }, route.stops[1]],
+      },
+    });
+    renderPage('/rotas/token-publico');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    await waitFor(() => expect(confirmPublicDeliveryStop).toHaveBeenCalledTimes(1));
+    expect(confirmPublicDeliveryStop).toHaveBeenCalledWith(
+      'token-publico',
+      9,
+      { outcome: 'DELIVERED' },
+      '11111111-1111-4111-8111-111111111111',
+    );
+    expect(await screen.findByText('Entregue')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('pede confirmação antes de marcar que não foi possível entregar', async () => {
+    getPublicDeliveryRoute.mockResolvedValue({ data: route });
+    renderPage('/rotas/token-publico');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Não foi possível entregar' }));
+    expect(screen.getByRole('dialog', { name: 'Não foi possível entregar?' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(confirmPublicDeliveryStop).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 });
