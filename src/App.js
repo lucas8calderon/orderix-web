@@ -6,6 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Home from './routes/home/Home';
 import SignupPage from './routes/billing/SignupPage';
 import SignupReturnPage from './routes/billing/SignupReturnPage';
+import MercadoPagoReturnPage from './routes/dashboard/settings/MercadoPagoReturnPage';
 import AcceptInvitePage from './routes/billing/AcceptInvitePage';
 import Login from './routes/login/Login';
 import ForgotPassword from './routes/login/ForgotPassword';
@@ -264,6 +265,7 @@ function App() {
 
           <Route path={PATHS.APP} element={<StoreLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="configuracoes/mercado-pago/retorno" element={<MercadoPagoReturnPage />} />
             <Route path=":section/*" element={<Dashboard />} />
           </Route>
 

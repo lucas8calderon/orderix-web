@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Box,
   Typography,
   TextField,
@@ -12,9 +13,11 @@ import {
 import { CreditCardOutlined as CreditCardIcon } from '@mui/icons-material';
 import {
   CLEAR_STORED_SECRET,
+  disconnectMercadoPagoOAuth,
   isClearStoredSecret,
   isSecretInputMask,
   secretInputMask,
+  startMercadoPagoOAuth,
   testAsaasConnection,
   testPagBankConnection,
 } from '../../../../services/paymentConfigService';
@@ -71,6 +74,13 @@ export function OnlineDeliveryPayments({
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState('');
   const [pixPausedForMissingToken, setPixPausedForMissingToken] = useState(false);
+  const oauthAvailable = Boolean(settings.mercadoPagoOauthAvailable);
+  const manualConnection = settings.mercadoPagoConnectionType === 'MANUAL';
+  // Loja que já colou as chaves continua vendo os campos; as outras só abrem se pedirem.
+  const [manualOpen, setManualOpen] = useState(manualConnection);
+  useEffect(() => {
+    if (manualConnection) setManualOpen(true);
+  }, [manualConnection]);
   const pagbankTokenInputRef = useRef(null);
   const asaasKeyInputRef = useRef(null);
   const tokenStored = Boolean(settings.pagbankAccessTokenConfigured);
@@ -386,31 +396,44 @@ export function OnlineDeliveryPayments({
               <MenuItem value="prod">Produção</MenuItem>
             </TextField>
           ) : null}
-          <SecretField
-            label="Access Token"
-            value={settings.mercadoPagoAccessToken}
-            configuredLength={settings.mercadoPagoAccessTokenLength}
-            configured={accessConfigured && isUnsetSecret(settings.mercadoPagoAccessToken)}
-            saving={saving}
-            onChange={(value) => onSettingChange('mercadoPagoAccessToken', null, value)}
-          />
-          <SecretField
-            label="Public Key"
-            value={settings.mercadoPagoPublicKey}
-            configuredLength={settings.mercadoPagoPublicKeyLength}
-            configured={publicKeyConfigured && isUnsetSecret(settings.mercadoPagoPublicKey)}
-            saving={saving}
-            onChange={(value) => onSettingChange('mercadoPagoPublicKey', null, value)}
-          />
-          <SecretField
-            label="Webhook secret"
-            value={settings.mercadoPagoWebhookSecret}
-            configuredLength={settings.mercadoPagoWebhookSecretLength}
-            configured={hasMercadoPagoWebhookSecret(settings, environment)
-              && isUnsetSecret(settings.mercadoPagoWebhookSecret)}
-            saving={saving}
-            onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
-          />
+          {oauthAvailable ? (
+            <MercadoPagoConnect
+              settings={settings}
+              onSettingChange={onSettingChange}
+              saving={saving}
+              manualOpen={manualOpen}
+              onToggleManual={() => setManualOpen((prev) => !prev)}
+            />
+          ) : null}
+          {!oauthAvailable || manualOpen ? (
+            <>
+              <SecretField
+                label="Access Token"
+                value={settings.mercadoPagoAccessToken}
+                configuredLength={settings.mercadoPagoAccessTokenLength}
+                configured={accessConfigured && isUnsetSecret(settings.mercadoPagoAccessToken)}
+                saving={saving}
+                onChange={(value) => onSettingChange('mercadoPagoAccessToken', null, value)}
+              />
+              <SecretField
+                label="Public Key"
+                value={settings.mercadoPagoPublicKey}
+                configuredLength={settings.mercadoPagoPublicKeyLength}
+                configured={publicKeyConfigured && isUnsetSecret(settings.mercadoPagoPublicKey)}
+                saving={saving}
+                onChange={(value) => onSettingChange('mercadoPagoPublicKey', null, value)}
+              />
+              <SecretField
+                label="Webhook secret"
+                value={settings.mercadoPagoWebhookSecret}
+                configuredLength={settings.mercadoPagoWebhookSecretLength}
+                configured={hasMercadoPagoWebhookSecret(settings, environment)
+                  && isUnsetSecret(settings.mercadoPagoWebhookSecret)}
+                saving={saving}
+                onChange={(value) => onSettingChange('mercadoPagoWebhookSecret', null, value)}
+              />
+            </>
+          ) : null}
         </Box>
       ) : null}
       <FormControlLabel
@@ -440,6 +463,8 @@ export function OnlineDeliveryPayments({
             ? 'Digite a API key Asaas da loja e clique em Salvar para ligar o Pix online.'
             : pagbank
               ? 'Digite o token da conta PagBank e clique em Salvar para ligar o Pix online.'
+              : oauthAvailable
+                ? 'Clique em Conectar com Mercado Pago para ligar o Pix online.'
               : environment === 'prod'
                 ? 'Digite o Access Token da loja e clique em Salvar para ligar o Pix online.'
                 : 'Selecione Teste (com MERCADO_PAGO_ACCESS_TOKEN no servidor) ou digite o Access Token e clique em Salvar.'}
@@ -464,6 +489,8 @@ export function OnlineDeliveryPayments({
             ? 'Salve a API key Asaas da loja antes de ligar o cartão online.'
             : pagbank
               ? 'Salve o token e teste a conexão para guardar a chave pública antes de ligar o cartão.'
+              : !accessConfigured && oauthAvailable
+                ? 'Clique em Conectar com Mercado Pago para ligar o cartão online.'
               : !accessConfigured
                 ? 'Access Token e Public Key são necessários para ligar o cartão online.'
                 : environment === 'prod'
@@ -472,6 +499,103 @@ export function OnlineDeliveryPayments({
         </Typography>
       ) : null}
     </SettingsSectionCard>
+  );
+}
+
+const MERCADO_PAGO_DISCONNECTED = {
+  mercadoPagoConnectionType: '',
+  mercadoPagoAccountId: '',
+  mercadoPagoConfigured: false,
+  mercadoPagoAccessTokenConfigured: false,
+  mercadoPagoStoreAccessTokenConfigured: false,
+  mercadoPagoPublicKeyConfigured: false,
+  mercadoPagoWebhookSecretConfigured: false,
+  mercadoPagoAccessTokenLength: 0,
+  mercadoPagoPublicKeyLength: 0,
+  mercadoPagoWebhookSecretLength: 0,
+  onlinePixEnabled: false,
+  onlineCardEnabled: false,
+};
+
+/**
+ * "Conectar com Mercado Pago": a loja autoriza a Weper na página do próprio Mercado Pago
+ * e não precisa copiar Access Token, Public Key nem cadastrar webhook.
+ */
+function MercadoPagoConnect({ settings, onSettingChange, saving, manualOpen, onToggleManual }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const connected = settings.mercadoPagoConnectionType === 'OAUTH';
+  const manual = settings.mercadoPagoConnectionType === 'MANUAL';
+
+  const connect = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await startMercadoPagoOAuth();
+      const url = response?.data?.url;
+      if (!url) throw new Error('missing url');
+      window.location.assign(url);
+    } catch (failure) {
+      setError(failure?.response?.data?.message || 'Não foi possível abrir o Mercado Pago. Tente de novo.');
+      setBusy(false);
+    }
+  };
+
+  const disconnect = async () => {
+    if (!window.confirm('Desconectar o Mercado Pago? O Pix e o cartão online do Delivery param de funcionar até você conectar de novo.')) {
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      await disconnectMercadoPagoOAuth();
+      Object.entries(MERCADO_PAGO_DISCONNECTED).forEach(([key, value]) => onSettingChange(key, null, value));
+    } catch (failure) {
+      setError(failure?.response?.data?.message || 'Não foi possível desconectar. Tente de novo.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
+      {connected ? (
+        <>
+          <Alert severity="success" sx={{ width: '100%' }}>
+            Mercado Pago conectado
+            {settings.mercadoPagoAccountId ? ` (conta nº ${settings.mercadoPagoAccountId})` : ''}
+            . O dinheiro das vendas cai direto nessa conta.
+          </Alert>
+          <Button type="button" variant="outlined" color="error" onClick={disconnect} disabled={busy || saving}>
+            {busy ? 'Desconectando...' : 'Desconectar'}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Typography className="setting-hint" variant="body2">
+            Clique no botão, entre na conta Mercado Pago da loja e autorize. Não precisa copiar chave nem cadastrar webhook.
+          </Typography>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={connect}
+            disabled={busy || saving}
+            sx={{ bgcolor: '#009EE3', '&:hover': { bgcolor: '#0087C2' } }}
+          >
+            {busy ? 'Abrindo o Mercado Pago...' : 'Conectar com Mercado Pago'}
+          </Button>
+          {manual ? (
+            <Typography className="setting-hint" variant="body2">
+              Esta loja já funciona com as chaves abaixo. Conectar pelo botão substitui essas chaves.
+            </Typography>
+          ) : null}
+        </>
+      )}
+      {error ? <Alert severity="error" sx={{ width: '100%' }}>{error}</Alert> : null}
+      <Button type="button" size="small" onClick={onToggleManual} aria-expanded={manualOpen}>
+        {manualOpen ? 'Ocultar configuração manual' : 'Configuração manual (avançado)'}
+      </Button>
+    </Box>
   );
 }
 

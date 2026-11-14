@@ -58,6 +58,51 @@ describe('OnlineDeliveryPayments', () => {
     expect(screen.getByLabelText('Cartão de crédito online')).toBeDisabled();
   });
 
+  it('sem o aplicativo no servidor, não mostra o botão Conectar e mantém os campos manuais', () => {
+    renderSection({ mercadoPagoOauthAvailable: false });
+    expect(screen.queryByRole('button', { name: 'Conectar com Mercado Pago' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Access Token')).toBeInTheDocument();
+  });
+
+  it('com o aplicativo no servidor, mostra o botão Conectar e esconde as chaves até a loja pedir', () => {
+    renderSection({ mercadoPagoOauthAvailable: true });
+    expect(screen.getByRole('button', { name: 'Conectar com Mercado Pago' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();
+    expect(screen.getByText(/Clique em Conectar com Mercado Pago para ligar o Pix online/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configuração manual (avançado)' }));
+    expect(screen.getByLabelText('Access Token')).toBeInTheDocument();
+    expect(screen.getByLabelText('Webhook secret')).toBeInTheDocument();
+  });
+
+  it('loja que já colou as chaves continua vendo os campos manuais ao lado do botão', () => {
+    renderSection({
+      mercadoPagoOauthAvailable: true,
+      mercadoPagoConnectionType: 'MANUAL',
+      mercadoPagoStoreAccessTokenConfigured: true,
+      mercadoPagoAccessTokenLength: 32,
+    });
+    expect(screen.getByRole('button', { name: 'Conectar com Mercado Pago' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Access Token')).toHaveValue(secretInputMask(32));
+    expect(screen.getByText(/Conectar pelo botão substitui essas chaves/)).toBeInTheDocument();
+  });
+
+  it('loja conectada vê a conta e o botão Desconectar, sem campos de chave', () => {
+    renderSection({
+      mercadoPagoOauthAvailable: true,
+      mercadoPagoConnectionType: 'OAUTH',
+      mercadoPagoAccountId: '241983636',
+      mercadoPagoStoreAccessTokenConfigured: true,
+      mercadoPagoPublicKeyConfigured: true,
+    });
+    expect(screen.getByText(/Mercado Pago conectado \(conta nº 241983636\)/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desconectar' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Conectar com Mercado Pago' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Access Token')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Pix online')).toBeEnabled();
+    expect(screen.getByLabelText('Cartão de crédito online')).toBeEnabled();
+  });
+
   it('mostra máscara com length exato quando já configurado e não coloca token da API', () => {
     renderSection({
       mercadoPagoConfigured: true,

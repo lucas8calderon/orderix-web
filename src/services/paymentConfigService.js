@@ -150,6 +150,22 @@ export function testAsaasConnection() {
   return axios.post(`${PAYMENT_CONFIG_URL}/asaas/test`);
 }
 
+const MERCADO_PAGO_OAUTH_URL = `${PAYMENT_CONFIG_URL}/mercadopago/oauth`;
+
+/** Devolve { url } com o endereço de autorização do Mercado Pago para a loja logada. */
+export function startMercadoPagoOAuth() {
+  return axios.post(`${MERCADO_PAGO_OAUTH_URL}/start`);
+}
+
+/** Conclui a conexão com o code e o state devolvidos pelo Mercado Pago. */
+export function completeMercadoPagoOAuth(code, state) {
+  return axios.post(`${MERCADO_PAGO_OAUTH_URL}/complete`, { code, state });
+}
+
+export function disconnectMercadoPagoOAuth() {
+  return axios.delete(MERCADO_PAGO_OAUTH_URL);
+}
+
 export function serviceFeePercentToUi(percent) {
   const n = Number(percent);
   if (!Number.isFinite(n)) return 10;
@@ -214,6 +230,9 @@ export function toPaymentUi(dto = {}) {
     mercadoPagoServerTestCredentialsAvailable: Boolean(dto.mercadoPagoServerTestCredentialsAvailable),
     mercadoPagoServerTestPublicKeyAvailable: Boolean(dto.mercadoPagoServerTestPublicKeyAvailable),
     mercadoPagoEnvironment: dto.mercadoPagoEnvironment === 'test' ? 'test' : 'prod',
+    mercadoPagoOauthAvailable: Boolean(dto.mercadoPagoOauthAvailable),
+    mercadoPagoConnectionType: dto.mercadoPagoConnectionType === 'OAUTH' ? 'OAUTH' : (dto.mercadoPagoConnectionType === 'MANUAL' ? 'MANUAL' : ''),
+    mercadoPagoAccountId: dto.mercadoPagoAccountId ? String(dto.mercadoPagoAccountId) : '',
     mercadoPagoAccessTokenLength: Number(dto.accessTokenLength) || 0,
     mercadoPagoPublicKeyLength: Number(dto.publicKeyLength) || 0,
     mercadoPagoWebhookSecretLength: Number(dto.webhookSecretLength) || 0,
