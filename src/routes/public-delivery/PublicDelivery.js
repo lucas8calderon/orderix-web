@@ -733,6 +733,7 @@ export default function PublicDelivery() {
       if (onlineCard && response.data?.id) {
         setCardOrder({
           orderId: response.data.id,
+          orderCode: response.data.displayCode,
           publicToken,
           amount: response.data.total ?? totals.total,
         });
@@ -1361,6 +1362,7 @@ export default function PublicDelivery() {
         open={cardOpen}
         slug={slug}
         orderId={cardOrder?.orderId}
+        orderCode={cardOrder?.orderCode}
         amount={cardOrder?.amount}
         publicKey={
           catalog?.onlinePaymentProvider === 'PAGBANK'

@@ -93,7 +93,7 @@ describe('pedidos abertos do balcão', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Em aberto' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 10' }));
-    expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 10, number: 10 });
+    expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 10, number: '10' });
   });
 
   it('lista o pedido mais novo antes do mais velho', async () => {

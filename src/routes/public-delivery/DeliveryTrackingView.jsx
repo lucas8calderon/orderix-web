@@ -136,7 +136,7 @@ export default function DeliveryTrackingView({
       <header className="dt-header">
         <div className="dt-header-main">
           <Typography className="dt-order-title" component="h1">
-            Pedido #{order.id}
+            Pedido #{order.displayCode || order.id}
           </Typography>
           <Typography className="dt-store-name">{order.storeName || 'Estabelecimento'}</Typography>
           <Typography className="dt-subtitle">{subtitle}</Typography>

@@ -1,6 +1,7 @@
 import {
   formatOrderDisplayCode,
   kitchenLocationLabel,
+  orderNumberLabel,
   resolveSalesChannel,
   salesChannelLabel,
   isSalesChannel,
@@ -31,5 +32,18 @@ describe('salesChannel', () => {
   it('formata código e local do KDS para pedido por cliente', () => {
     expect(formatOrderDisplayCode({ id: 42 })).toBe('0042');
     expect(kitchenLocationLabel({ orderSource: 'CUSTOMER_ORDER', id: 42, customerName: 'Rafael' })).toBe('#0042');
+  });
+
+  it('mostra o número diário da loja no lugar do id interno do sistema', () => {
+    const lojaNova = { id: 166, displayCode: '1', tableId: 999, waiterId: 999 };
+    expect(orderNumberLabel(lojaNova)).toBe('1');
+    expect(formatOrderDisplayCode(lojaNova)).toBe('1');
+    expect(kitchenLocationLabel(lojaNova)).toBe('Pedido 1');
+    expect(kitchenLocationLabel({ ...lojaNova, orderSource: 'CUSTOMER_ORDER' })).toBe('#1');
+  });
+
+  it('pedido sem número diário continua mostrando o id', () => {
+    expect(orderNumberLabel({ id: 166 })).toBe('166');
+    expect(orderNumberLabel({})).toBe('');
   });
 });

@@ -5,6 +5,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
 import { formatCurrency } from '../../../../services/accessControl';
+import { orderNumberLabel } from '../../../../services/salesChannel';
 import { channelPaymentMode, getStorePaymentConfig, toPaymentUi } from '../../../../services/paymentConfigService';
 import { createFloorOrder, resolveOperatorWaiterId } from '../service/accountService';
 import { addCustomerOrderItems, createCustomerOrder } from '../service/customerOrderService';
@@ -274,11 +275,11 @@ export function CounterPos({
         return;
       }
       onSent?.(created);
-      const number = created?.id ? ` ${created.id}` : '';
+      const number = created?.id ? ` ${orderNumberLabel(created)}` : '';
       if (intent === 'checkout' && created?.id) {
         setLastOrder(null);
         setLive(`Pedido${number} aberto para pagamento.`);
-        onOpenAccount?.({ kind: 'counter', id: created.id, number: created.id });
+        onOpenAccount?.({ kind: 'counter', id: created.id, number: orderNumberLabel(created) });
       } else {
         setLastOrder(created?.id ? created : null);
         setLive(`Pedido${number} enviado.`);
@@ -321,7 +322,7 @@ export function CounterPos({
           color="inherit"
           size="small"
           onClick={() => {
-            onOpenAccount?.({ kind: 'counter', id: lastOrder.id, number: lastOrder.id });
+            onOpenAccount?.({ kind: 'counter', id: lastOrder.id, number: orderNumberLabel(lastOrder) });
             setLastOrder(null);
           }}
           sx={{ textTransform: 'none', fontWeight: 700 }}
@@ -330,7 +331,7 @@ export function CounterPos({
         </Button>
       )}
     >
-      Pedido {lastOrder.id} enviado{holdsKitchen ? ', aguardando pagamento' : ''}.
+      Pedido {orderNumberLabel(lastOrder)} enviado{holdsKitchen ? ', aguardando pagamento' : ''}.
     </Alert>
   ) : null;
 

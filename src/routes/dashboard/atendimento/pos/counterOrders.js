@@ -43,8 +43,9 @@ export function counterOrderMatches(order, query) {
   const needle = normalizeSearch(query).replace(/^#/, '');
   if (!needle) return true;
   const name = normalizeSearch(order?.customerName);
-  const id = normalizeSearch(order?.id);
-  return name.includes(needle) || id.includes(needle);
+  // A busca segue o número que aparece no card: a contagem do dia, ou o id nos pedidos sem ela.
+  const number = normalizeSearch(order?.displayCode || order?.id);
+  return name.includes(needle) || number.includes(needle);
 }
 
 export function elapsedLabel(value, now = Date.now()) {

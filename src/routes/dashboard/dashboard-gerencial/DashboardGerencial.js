@@ -354,7 +354,7 @@ export function DashboardGerencial({ onNavigate }) {
                 </div>
                 {overview.recentOrders.map((order) => (
                   <div key={order.id} className="overview-orders-row" role="row">
-                    <span role="cell" className="overview-order-id">#{order.id}</span>
+                    <span role="cell" className="overview-order-id">#{order.displayCode || order.id}</span>
                     <span role="cell">{order.source || '—'}</span>
                     <span role="cell" className="overview-order-amount">{Number(order.amount) > 0 ? formatCurrency(order.amount) : '—'}</span>
                     <span role="cell">

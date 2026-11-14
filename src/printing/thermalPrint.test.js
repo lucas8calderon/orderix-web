@@ -78,8 +78,9 @@ test('comanda espelha a tela: nome longo, acentos, adicionais, observação e c�
       }],
     }],
   }, { placeLabel: 'Mesa 12' });
-  expect(html).toContain('Pedido #41 · João');
-  expect(html).toContain('Código 0041');
+  expect(html).toContain('Pedido #0041 · João');
+  expect(html).not.toContain('Pedido #41 ');
+  expect(html).not.toContain('Código 0041');
   expect(html).toContain('Mesa 12');
   expect(html).toContain('Pão de queijo com nome extremamente longo para a bobina de 80 mm');
   expect(html).toContain('2x');

@@ -4,6 +4,7 @@ import { EmptyState } from '../../../../commons/components/EmptyState';
 import { Loading } from '../../../../commons/components/Loading';
 import { StatusBadge } from '../../../../commons/components/StatusBadge';
 import { formatCurrency } from '../../../../services/accessControl';
+import { orderNumberLabel } from '../../../../services/salesChannel';
 import { getTableAccount } from '../service/accountService';
 import { accountSubtotal, countAccountItems } from '../utils/accountTotals';
 import {
@@ -152,13 +153,13 @@ export function OpenCounterOrders({ visible = true, floorVersion = 0, onCountCha
                 <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid var(--color-border)', height: '100%' }}>
                   <CardActionArea
                     disabled={cancelled}
-                    onClick={() => onOpenAccount?.({ kind: 'counter', id: order.id, number: order.id })}
-                    aria-label={cancelled ? `Pedido ${order.id} cancelado` : `Abrir pedido ${order.id}`}
+                    onClick={() => onOpenAccount?.({ kind: 'counter', id: order.id, number: orderNumberLabel(order) })}
+                    aria-label={cancelled ? `Pedido ${orderNumberLabel(order)} cancelado` : `Abrir pedido ${orderNumberLabel(order)}`}
                     sx={{ height: '100%', alignItems: 'stretch' }}
                   >
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 1 }}>
-                        <Typography variant="h6">Pedido {order.id}</Typography>
+                        <Typography variant="h6">Pedido {orderNumberLabel(order)}</Typography>
                         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                           <StatusBadge label={payment.label} tone={payment.tone} />
                           <StatusBadge label={status.label} tone={status.tone} />

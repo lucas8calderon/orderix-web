@@ -119,6 +119,7 @@ export default function DeliveryCardCheckout({
   open,
   slug,
   orderId,
+  orderCode,
   amount,
   publicKey,
   provider = 'MERCADOPAGO',
@@ -421,7 +422,7 @@ export default function DeliveryCardCheckout({
           <Box className="delivery-card-result" role="status">
             <Typography variant="h6">Pagamento aprovado</Typography>
             <Typography>Recebemos seu pagamento.</Typography>
-            <Typography>Pedido #{orderId}</Typography>
+            <Typography>Pedido #{orderCode || orderId}</Typography>
             <Button variant="contained" onClick={() => onApproved(payment)}>Acompanhar pedido</Button>
           </Box>
         ) : null}

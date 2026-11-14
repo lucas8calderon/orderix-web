@@ -211,7 +211,7 @@ describe('PDV de balcão', () => {
 
     resolveRequest({ data: { orders: [{ id: 55 }] } });
     await waitFor(() => {
-      expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 55, number: 55 });
+      expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 55, number: '55' });
     });
     expect(createFloorOrder).toHaveBeenCalledWith(999, expect.objectContaining({
       tableId: 999,
@@ -261,7 +261,7 @@ describe('PDV de balcão', () => {
     expect(await within(cart).findByText('Pedido 55 enviado.')).toBeInTheDocument();
     expect(onOpenAccount).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Cobrar / imprimir' }));
-    expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 55, number: 55 });
+    expect(onOpenAccount).toHaveBeenCalledWith({ kind: 'counter', id: 55, number: '55' });
   });
 
   it('mostra primeiro os cards das categorias e abre os produtos ao tocar', async () => {

@@ -1,6 +1,6 @@
 import { getCurrentUser } from '../services/session';
 import { formatCurrency } from '../services/accessControl';
-import { formatOrderDisplayCode } from '../services/salesChannel';
+import { orderNumberLabel } from '../services/salesChannel';
 import { productLineTotal, resolveMandatorySelections } from '../routes/dashboard/atendimento/utils/accountTotals';
 
 export const PRINT_VERSION = 'usb-browser-80mm-v1';
@@ -36,12 +36,11 @@ export const TEST_ACCOUNT = { orders: [{ id: 'TESTE', customerName: 'Cliente de 
 ], observation: 'Comanda de teste — não preparar.' }] };
 
 function orderHeading(order) {
-  const id = order?.id == null || order.id === '' ? '' : String(order.id);
-  const code = formatOrderDisplayCode(order);
   const customer = text(order?.customerName);
-  const title = `${id ? `Pedido #${id}` : (code ? `Pedido #${code}` : 'Pedido')}${customer ? ` · ${customer}` : ''}`;
-  const codeLine = code && id && code !== id ? `Código ${code}` : '';
-  return { title, codeLine };
+  // O número que a loja lê na comanda é o do dia (displayCode). O id interno só aparece quando não há código.
+  const number = orderNumberLabel(order);
+  const title = `${number ? `Pedido #${number}` : 'Pedido'}${customer ? ` · ${customer}` : ''}`;
+  return { title, codeLine: '' };
 }
 
 function fulfillmentMode(order) {
@@ -80,8 +79,8 @@ function placeRepeatsOrder(place, orders) {
   if (!normalized) return false;
   return (orders || []).some((order) => {
     const id = order?.id == null || order.id === '' ? '' : String(order.id).trim();
-    if (!id) return false;
-    return normalized === `pedido ${id}` || normalized === `pedido #${id}`;
+    return [id, orderNumberLabel(order)].filter(Boolean)
+      .some((value) => normalized === `pedido ${value}`.toLowerCase() || normalized === `pedido #${value}`.toLowerCase());
   });
 }
 

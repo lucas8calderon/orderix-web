@@ -71,6 +71,14 @@ export function formatOrderDisplayCode(order) {
   return String(id);
 }
 
+/** Número do pedido que a loja lê: a contagem do dia (displayCode). Sem ela, o id interno. */
+export function orderNumberLabel(order) {
+  if (order?.displayCode) {
+    return String(order.displayCode);
+  }
+  return order?.id == null || order.id === '' ? '' : String(order.id);
+}
+
 export function kitchenLocationLabel(order) {
   const channel = resolveSalesChannel(order);
   if (channel === 'pedido_cliente') {
@@ -85,7 +93,7 @@ export function kitchenLocationLabel(order) {
     return number != null && number !== '' ? `Comanda ${number}` : 'Comanda';
   }
   if (channel === 'balcao') {
-    return order?.id != null ? `Pedido ${order.id}` : 'Balcão';
+    return order?.id != null ? `Pedido ${orderNumberLabel(order)}` : 'Balcão';
   }
   const number = order?.tableNumber;
   return number != null && number !== '' ? `Mesa ${number}` : 'Mesa';

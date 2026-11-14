@@ -44,6 +44,7 @@ import {
 } from '../service/customerOrderService';
 import { listDeliveryOrders } from '../service/deliveryOrderService';
 import { counterPaymentLabel } from '../pos/counterOrders';
+import { orderNumberLabel } from '../../../../services/salesChannel';
 import { deliveryChargeParts } from '../utils/deliveryOrderView';
 import {
   closeComandaAccount,
@@ -542,7 +543,7 @@ export function CheckoutDialog({ open, target, refreshKey = 0, onClose, onPaid, 
                   <Box key={order.id} className="checkout-order-block">
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
                       <Typography variant="body2" fontWeight="bold">
-                        Pedido #{order.id}
+                        Pedido #{orderNumberLabel(order)}
                         {order.customerName ? ` · ${order.customerName}` : ''}
                       </Typography>
                       {target?.kind === 'counter' ? <CounterPaymentBadge order={order} /> : null}
