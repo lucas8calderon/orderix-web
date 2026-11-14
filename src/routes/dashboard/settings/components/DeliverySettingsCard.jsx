@@ -20,7 +20,9 @@ import {
   deliveryEstimateForSave,
   formatDeliveryEstimateLabel,
 } from '../../../../services/deliveryService';
+import { formatCurrency } from '../../../../services/accessControl';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
+import { simulateRadiusFee } from '../utils/radiusDeliveryFee';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput } from '../../../../utils/phoneInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { DeliveryNeighborhoodsSection } from './DeliveryNeighborhoodsSection';
@@ -122,6 +124,17 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
   saving,
 }) {
   const [copyHint, setCopyHint] = useState('');
+  const [sampleKm, setSampleKm] = useState('');
+  const radiusMode = settings?.deliveryPricingMethod === 'BY_RADIUS';
+  const radiusPreview = useMemo(
+    () => simulateRadiusFee({
+      distanceKm: sampleKm,
+      maxKm: settings?.deliveryRadiusMaxKm,
+      pricePerKm: settings?.deliveryRadiusPricePerKm,
+      minimumFee: settings?.deliveryRadiusMinimumFee,
+    }),
+    [sampleKm, settings?.deliveryRadiusMaxKm, settings?.deliveryRadiusPricePerKm, settings?.deliveryRadiusMinimumFee]
+  );
   const publicUrl = useMemo(
     () => buildDeliveryUrl(settings?.slug),
     [settings?.slug]
@@ -143,6 +156,21 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
   const handleMoneyChange = (key) => (event) => {
     const parsed = parseCurrencyInput(event.target.value);
     onSettingChange(key, null, parsed === '' ? 0 : parsed);
+  };
+
+  const handleOptionalMoney = (key) => (event) => {
+    const parsed = parseCurrencyInput(event.target.value);
+    onSettingChange(key, null, parsed === '' ? null : parsed);
+  };
+
+  const handleKmChange = (key) => (event) => {
+    const raw = event.target.value;
+    if (raw === '') {
+      onSettingChange(key, null, null);
+      return;
+    }
+    const value = Number(raw);
+    onSettingChange(key, null, Number.isFinite(value) ? value : null);
   };
 
   return (
@@ -284,7 +312,7 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
             multiline
             minRows={2}
             placeholder="Rua, número, bairro, cidade"
-            helperText="Exibido no cardápio quando o cliente escolhe retirada e no acompanhamento do pedido."
+            helperText="Exibido na retirada e no acompanhamento. Na entrega por raio, este texto é o endereço de origem."
           />
         </Box>
 
@@ -353,6 +381,116 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
         </Box>
       </DeliveryGroup>
 
+      <DeliveryGroup title="Taxa de entrega">
+        <Box className="setting-item">
+          <FormControl>
+            <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+              Como calcular
+            </Typography>
+            <RadioGroup
+              value={radiusMode ? 'BY_RADIUS' : 'NEIGHBORHOOD'}
+              onChange={(e) => onSettingChange('deliveryPricingMethod', null, e.target.value)}
+            >
+              <FormControlLabel value="NEIGHBORHOOD" control={<Radio />} label="Por bairro" />
+              <FormControlLabel value="BY_RADIUS" control={<Radio />} label="Por raio (km)" />
+            </RadioGroup>
+          </FormControl>
+          <Typography variant="caption" color="text.secondary" display="block">
+            Trocar o método guarda a configuração do outro.
+          </Typography>
+        </Box>
+        {radiusMode ? (
+          <>
+            <Box className="setting-item">
+              <TextField
+                label="Endereço de origem"
+                value={settings?.storeAddress ?? ''}
+                onChange={(e) => onSettingChange('storeAddress', null, e.target.value)}
+                fullWidth
+                multiline
+                minRows={2}
+                placeholder="Rua, número, bairro, cidade"
+                helperText="É o endereço da loja. A latitude e a longitude ficam vazias até haver geolocalização interna."
+                inputProps={{ 'aria-label': 'Endereço de origem da entrega' }}
+              />
+            </Box>
+            <Box className="delivery-ops-grid">
+              <TextField
+                label="Distância máxima (km)"
+                type="number"
+                value={settings?.deliveryRadiusMaxKm ?? ''}
+                onChange={handleKmChange('deliveryRadiusMaxKm')}
+                fullWidth
+                inputProps={{
+                  min: 0.1,
+                  step: 0.1,
+                  inputMode: 'decimal',
+                  'aria-label': 'Distância máxima em quilômetros',
+                }}
+              />
+              <TextField
+                label="Valor por km"
+                placeholder="0,00"
+                value={formatCurrencyInput(settings?.deliveryRadiusPricePerKm)}
+                onChange={handleMoneyChange('deliveryRadiusPricePerKm')}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                }}
+                inputProps={{
+                  inputMode: 'numeric',
+                  'aria-label': 'Valor por quilômetro',
+                }}
+              />
+              <TextField
+                label="Taxa mínima"
+                placeholder="opcional"
+                value={formatCurrencyInput(settings?.deliveryRadiusMinimumFee)}
+                onChange={handleOptionalMoney('deliveryRadiusMinimumFee')}
+                fullWidth
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                }}
+                inputProps={{
+                  inputMode: 'numeric',
+                  'aria-label': 'Taxa mínima da entrega por raio',
+                }}
+                helperText="Opcional. A taxa fica pelo menos neste valor."
+              />
+            </Box>
+            <Box className="setting-item">
+              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                Simular taxa
+              </Typography>
+              <TextField
+                label="Distância (km)"
+                type="number"
+                value={sampleKm}
+                onChange={(e) => setSampleKm(e.target.value)}
+                fullWidth
+                inputProps={{
+                  min: 0,
+                  step: 0.1,
+                  inputMode: 'decimal',
+                  'aria-label': 'Distância simulada em quilômetros',
+                }}
+                helperText="Conta local, sem mapa. O checkout não cobra enquanto a distância da rua for desconhecida."
+              />
+              <Typography variant="body2" role="status" sx={{ mt: 1 }}>
+                {radiusPreview.status === 'ok' ? `Taxa simulada: ${formatCurrency(radiusPreview.fee)}` : null}
+                {radiusPreview.status === 'out' ? 'Fora da área de entrega' : null}
+                {radiusPreview.status === 'invalid' ? 'Informe a distância máxima e o valor por km para simular.' : null}
+              </Typography>
+            </Box>
+          </>
+        ) : null}
+      </DeliveryGroup>
+
+      {radiusMode ? (
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+          Os bairros abaixo continuam salvos e voltam a valer no método Por bairro.
+        </Typography>
+      ) : null}
       <DeliveryNeighborhoodsSection settings={settings} onSettingChange={onSettingChange} />
     </SettingsSectionCard>
   );

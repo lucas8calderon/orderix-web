@@ -151,6 +151,10 @@ const DEFAULT_DELIVERY = {
   acceptPrepaidPickup: true,
   deliveryFeeMode: 'PER_NEIGHBORHOOD',
   deliveryAllNeighborhoodsFee: 0,
+  deliveryPricingMethod: 'NEIGHBORHOOD',
+  deliveryRadiusMaxKm: null,
+  deliveryRadiusPricePerKm: null,
+  deliveryRadiusMinimumFee: null,
   storePhone: '',
 };
 
@@ -199,6 +203,10 @@ function deliveryPayloadFrom(current, savedImages = {}) {
     deliveryFee: current.deliveryFee,
     deliveryFeeMode: current.deliveryFeeMode || 'PER_NEIGHBORHOOD',
     deliveryAllNeighborhoodsFee: current.deliveryAllNeighborhoodsFee,
+    deliveryPricingMethod: current.deliveryPricingMethod || 'NEIGHBORHOOD',
+    deliveryRadiusMaxKm: current.deliveryRadiusMaxKm,
+    deliveryRadiusPricePerKm: current.deliveryRadiusPricePerKm,
+    deliveryRadiusMinimumFee: current.deliveryRadiusMinimumFee,
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
     deliveryEstimatedMinutesMin: current.deliveryEstimatedMinutesMin,
@@ -208,6 +216,19 @@ function deliveryPayloadFrom(current, savedImages = {}) {
     deliveryLogoUrl: brandingValueForSave(current.deliveryLogoUrl, savedImages.logo),
     deliveryCoverUrl: brandingValueForSave(current.deliveryCoverUrl, savedImages.cover),
   };
+}
+
+function radiusSettingsError(current) {
+  if (current?.deliveryPricingMethod !== 'BY_RADIUS') return '';
+  const max = Number(current.deliveryRadiusMaxKm);
+  if (!(max > 0)) return 'Informe a distância máxima em km, maior que zero.';
+  if (current.deliveryRadiusPricePerKm == null || current.deliveryRadiusPricePerKm === '' || Number(current.deliveryRadiusPricePerKm) < 0) {
+    return 'Informe o valor por km, maior ou igual a zero.';
+  }
+  if (current.deliveryRadiusMinimumFee != null && current.deliveryRadiusMinimumFee !== '' && Number(current.deliveryRadiusMinimumFee) < 0) {
+    return 'A taxa mínima deve ser maior ou igual a zero.';
+  }
+  return '';
 }
 
 function slowSaveMessage(saving) {
@@ -397,6 +418,11 @@ export const useSettingsState = () => {
       const estimate = deliveryEstimateForSave(current);
       if (estimate.error) {
         showToast(estimate.error, 'error');
+        return false;
+      }
+      const radiusError = radiusSettingsError(current);
+      if (radiusError) {
+        showToast(radiusError, 'error');
         return false;
       }
     }

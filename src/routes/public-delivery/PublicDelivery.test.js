@@ -628,6 +628,38 @@ describe('PublicDelivery', () => {
     expect(await screen.findByText('Retirada na loja')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /onde você quer receber/i })).not.toBeInTheDocument();
   });
+
+  it('não deixa finalizar entrega por raio sem distância viária', async () => {
+    seedCustomerSession();
+    createDeliveryOrder.mockClear();
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        pricingMethod: 'BY_RADIUS',
+        deliveryFee: 9,
+        fulfillmentModes: ['DELIVERY', 'PICKUP'],
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    const dialog = await screen.findByRole('dialog', { name: /finalizar pedido/i });
+    expect(within(dialog).getByText(
+      'Não foi possível calcular a taxa de entrega. Verifique o endereço e tente novamente.'
+    )).toBeInTheDocument();
+    expect(within(dialog).getByText('Indisponível')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /confirmar pedido/i })).toBeDisabled();
+    expect(createDeliveryOrder).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('radio', { name: /^retirada$/i }));
+    expect(screen.queryByText(
+      'Não foi possível calcular a taxa de entrega. Verifique o endereço e tente novamente.'
+    )).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /confirmar pedido/i })).toBeEnabled();
+  });
 });
 
 const pickupBase = {

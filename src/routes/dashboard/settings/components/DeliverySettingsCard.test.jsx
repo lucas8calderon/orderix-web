@@ -213,4 +213,53 @@ describe('DeliverySettingsCard', () => {
     fireEvent.change(field, { target: { value: '' } });
     expect(onSettingChange).toHaveBeenCalledWith('storePhone', null, '__cleared_store_phone__');
   });
+
+  it('simula a taxa por raio sem apagar o método por bairro', () => {
+    const onSettingChange = jest.fn();
+    renderCard(
+      <DeliverySettingsCard
+        settings={{
+          ...baseSettings,
+          deliveryPricingMethod: 'BY_RADIUS',
+          deliveryFeeMode: 'PER_NEIGHBORHOOD',
+          deliveryRadiusMaxKm: 6.5,
+          deliveryRadiusPricePerKm: 2,
+          deliveryRadiusMinimumFee: 5,
+          storeAddress: 'Rua das Flores, 10',
+        }}
+        onSettingChange={onSettingChange}
+        onSave={jest.fn()}
+        switchStyles={{}}
+        saving={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Endereço de origem da entrega')).toHaveValue('Rua das Flores, 10');
+    expect(screen.getByRole('heading', { name: /bairros atendidos/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
+      target: { value: '6.5' },
+    });
+    expect(screen.getByText(/Taxa simulada: R\$\s*13,00/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
+      target: { value: '2' },
+    });
+    expect(screen.getByText(/Taxa simulada: R\$\s*5,00/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Distância máxima em quilômetros'), {
+      target: { value: '8' },
+    });
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryRadiusMaxKm', null, 8);
+
+    fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
+      target: { value: '7' },
+    });
+    expect(screen.getByText('Fora da área de entrega')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: /^por bairro$/i }));
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryPricingMethod', null, 'NEIGHBORHOOD');
+    expect(onSettingChange).not.toHaveBeenCalledWith('deliveryFeeMode', null, expect.anything());
+    expect(onSettingChange).not.toHaveBeenCalledWith('deliveryRadiusMaxKm', null, null);
+  });
 });
