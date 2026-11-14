@@ -1,7 +1,18 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ThermalPrintPanel } from './ThermalPrintPanel';
 import { saveSession, clearSession } from '../services/session';
+import { ensureDeliveryReceiptRoute } from '../services/deliveryRouteApi';
+
+jest.mock('../services/deliveryRouteApi', () => ({
+  ensureDeliveryReceiptRoute: jest.fn(),
+  apiErrorMessage: (error, fallback) => error?.response?.data?.message || fallback,
+}));
+
+jest.mock('qrcode', () => ({
+  __esModule: true,
+  default: { toDataURL: jest.fn(async () => 'data:image/png;base64,QUJD') },
+}));
 
 function installIframePrint() {
   const probe = document.createElement('iframe');
@@ -57,6 +68,43 @@ test('na conta mostra só o botão Imprimir, sem o diagnóstico e sem aba nova',
   expect(frame.contentDocument.documentElement.innerHTML).toContain('Comanda 21');
   expect(frame.contentDocument.documentElement.innerHTML).not.toContain('NÃO É COMPROVANTE DE PAGAMENTO');
   expect(frame.contentDocument.documentElement.innerHTML).not.toContain('WEPER');
+});
+test('imprimir entrega coloca o QR na comanda e não o telefone', async () => {
+  saveSession('test', { storeId: 3 });
+  process.env.REACT_APP_THERMAL_PRINT_SCOPE = 'all';
+  ensureDeliveryReceiptRoute.mockResolvedValue({
+    data: { publicUrl: 'https://www.weper.com.br/rotas/token-somente', storeName: 'Weper Burger' },
+  });
+  render(<ThermalPrintPanel account={{
+    orders: [{
+      id: 158,
+      displayCode: '0158',
+      customerName: 'João Silva',
+      customerPhone: '11977776666',
+      deliveryFulfillment: 'DELIVERY',
+      createdAt: '2026-11-14T20:35:00',
+      deliveryStreet: 'Rua das Flores',
+      deliveryNumber: '120',
+      deliveryNeighborhood: 'Centro',
+      deliveryCity: 'São Paulo',
+      deliveryState: 'SP',
+      deliveryFee: 5,
+      totalAmount: 55,
+      products: [{ name: 'X-Burger', quantity: 2, value: 25 }],
+    }],
+  }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
+  await waitFor(() => {
+    expect(document.querySelector('iframe')?.dataset.printed).toBe('1');
+  });
+  const html = document.querySelector('iframe').contentDocument.documentElement.innerHTML;
+  expect(html).toContain('src="data:image/png;base64,QUJD"');
+  expect(html).toContain('WEPER BURGER');
+  expect(html).toContain('PEDIDO #0158');
+  expect(html).toContain('Escaneie para abrir a rota');
+  expect(html).not.toContain('11977776666');
+  expect(html).not.toContain('token-somente');
+  expect(ensureDeliveryReceiptRoute).toHaveBeenCalledWith(158);
 });
 test('na conta, falha ao imprimir aparece como erro', () => {
   saveSession('test', { storeId: 3 });

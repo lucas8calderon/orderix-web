@@ -1,5 +1,16 @@
-import { diagnosticReport, openThermalPrint, receiptHtml, TEST_ACCOUNT, thermalEnabled } from './thermalPrint';
+import { diagnosticReport, loadDeliveryReceiptOptions, openThermalPrint, receiptHtml, TEST_ACCOUNT, thermalEnabled } from './thermalPrint';
 import { saveSession, clearSession } from '../services/session';
+import { ensureDeliveryReceiptRoute } from '../services/deliveryRouteApi';
+
+jest.mock('../services/deliveryRouteApi', () => ({
+  ensureDeliveryReceiptRoute: jest.fn(),
+  apiErrorMessage: (error, fallback) => error?.response?.data?.message || fallback,
+}));
+
+jest.mock('qrcode', () => ({
+  __esModule: true,
+  default: { toDataURL: jest.fn(async () => 'data:image/png;base64,QUJD') },
+}));
 
 function installIframePrint() {
   const probe = document.createElement('iframe');
@@ -139,27 +150,57 @@ test('dois itens do mesmo produto não compartilham adicional nem observação',
   expect(html).not.toContain('WEPER');
 });
 test('entrega mostra endereço, complemento e referência; retirada não inventa endereço', () => {
+  const qr = 'data:image/png;base64,QUJD';
   const delivery = receiptHtml({
     orders: [{
-      id: 20,
-      customerName: 'Ana',
+      id: 158,
+      displayCode: '0158',
+      customerName: 'João Silva',
+      customerPhone: '11999998888',
       deliveryFulfillment: 'DELIVERY',
       orderSource: 'DELIVERY',
+      createdAt: '2026-11-14T20:35:00',
       deliveryStreet: 'Rua das Flores',
-      deliveryNumber: '100',
+      deliveryNumber: '120',
       deliveryNeighborhood: 'Centro',
-      deliveryCity: 'Campinas',
+      deliveryCity: 'São Paulo',
       deliveryState: 'SP',
-      deliveryComplement: 'apto 12',
+      deliveryComplement: 'Casa 2',
       deliveryReference: 'portão azul',
-      totalAmount: 40,
-      products: [{ name: 'Suco', quantity: 1, value: 40 }],
+      deliveryFee: 5,
+      totalAmount: 55,
+      products: [{ name: 'X-Burger', quantity: 2, value: 25 }],
     }],
+  }, {
+    storeName: 'Weper Burger',
+    routeQrByOrderId: { 158: qr },
   });
-  expect(delivery).toContain('Entrega: Rua das Flores, 100 · Centro · Campinas/SP');
-  expect(delivery).toContain('Complemento: apto 12');
-  expect(delivery).toContain('Referência: portão azul');
+  expect(delivery).toContain('WEPER BURGER');
+  expect(delivery).toContain('PEDIDO #0158');
+  expect(delivery).toContain('14/11/2026 - 20:35');
+  expect(delivery).toContain('ENTREGA');
+  expect(delivery).toContain('Cliente: João Silva');
+  expect(delivery).toContain('Rua das Flores, 120');
+  expect(delivery).toContain('Centro - São Paulo/SP');
+  expect(delivery).toContain('Compl.: Casa 2');
+  expect(delivery).toContain('Ref.: portão azul');
+  expect(delivery).toContain('2x X-Burger');
+  expect(delivery).toContain('Taxa entrega');
+  expect(delivery).toContain('5,00');
+  expect(delivery).toContain('TOTAL');
+  expect(delivery).toContain('55,00');
+  expect(delivery).toContain('ROTA DE ENTREGA');
+  expect(delivery).toContain('Escaneie para abrir a rota');
+  expect(delivery).toContain(`src="${qr}"`);
+  expect(delivery).toContain('class="qr"');
+  expect(delivery).toContain('margin: 4mm auto');
+  expect(delivery).not.toContain('[QR CODE]');
+  expect(delivery).not.toContain('11999998888');
   expect(delivery).not.toContain('RETIRADA NA LOJA');
+  expect(delivery).not.toContain('COMANDA');
+  expect(delivery).not.toContain('Fim da comanda');
+  expect(delivery).toContain('width: 80mm');
+  expect(delivery).toContain('@page { margin: 0; }');
 
   const missingDetails = receiptHtml({
     orders: [{
@@ -173,9 +214,10 @@ test('entrega mostra endereço, complemento e referência; retirada não inventa
       products: [{ name: 'Suco', quantity: 1, value: 10 }],
     }],
   });
-  expect(missingDetails).toContain('Entrega: Rua das Flores, 100');
-  expect(missingDetails).not.toContain('Complemento:');
-  expect(missingDetails).not.toContain('Referência:');
+  expect(missingDetails).toContain('Rua das Flores, 100');
+  expect(missingDetails).toContain('ENTREGA');
+  expect(missingDetails).not.toContain('Compl.:');
+  expect(missingDetails).not.toContain('Ref.:');
   expect(missingDetails).not.toContain('null');
 
   const pickup = receiptHtml({
@@ -195,6 +237,60 @@ test('entrega mostra endereço, complemento e referência; retirada não inventa
   expect(pickup).not.toContain('Rua que não deve sair');
   expect(pickup).not.toContain('Complemento:');
   expect(pickup).not.toContain('apto 9');
+});
+test('o QR da entrega recebe só a URL e a comanda não repete o link', async () => {
+  const QRCode = (await import('qrcode')).default;
+  ensureDeliveryReceiptRoute.mockResolvedValue({
+    data: {
+      publicUrl: 'https://www.weper.com.br/rotas/abc',
+      storeName: 'Weper Burger',
+    },
+  });
+  const account = {
+    orders: [{
+      id: 158,
+      displayCode: '0158',
+      customerName: 'João',
+      customerPhone: '11988887777',
+      deliveryFulfillment: 'DELIVERY',
+      deliveryStreet: 'Rua das Flores',
+      deliveryNumber: '120',
+      products: [{ name: 'X-Burger', quantity: 1, value: 10 }],
+    }],
+  };
+  const options = await loadDeliveryReceiptOptions(account);
+  expect(ensureDeliveryReceiptRoute).toHaveBeenCalledWith(158);
+  expect(QRCode.toDataURL).toHaveBeenCalledWith(
+    'https://www.weper.com.br/rotas/abc',
+    expect.objectContaining({ margin: 2, width: 280 }),
+  );
+  const html = receiptHtml(account, options);
+  expect(html).toContain('src="data:image/png;base64,QUJD"');
+  expect(html).not.toContain('https://www.weper.com.br/rotas/abc');
+  expect(html).not.toContain('11988887777');
+
+  ensureDeliveryReceiptRoute.mockResolvedValue({
+    data: { publicUrl: 'https://www.weper.com.br/rotas/abc?telefone=11988887777' },
+  });
+  await expect(loadDeliveryReceiptOptions(account)).rejects.toThrow('QR');
+});
+test('entrega sem QR não abre a impressão; balcão continua sem a rota', () => {
+  saveSession('test', { storeId: 1 });
+  process.env.REACT_APP_THERMAL_PRINT_SCOPE = 'all';
+  const delivery = {
+    orders: [{
+      id: 9,
+      deliveryFulfillment: 'DELIVERY',
+      products: [{ name: 'X-Burger', quantity: 1, value: 10 }],
+    }],
+  };
+  expect(() => openThermalPrint(delivery)).toThrow('QR');
+  const counter = openThermalPrint(TEST_ACCOUNT);
+  expect(counter.state).toBe('print_requested');
+  const html = document.querySelector('iframe').contentDocument.documentElement.innerHTML;
+  expect(html).toContain('COMANDA');
+  expect(html).not.toContain('ROTA DE ENTREGA');
+  expect(html).not.toContain('<img');
 });
 test('flag impede a impressão e o clique não abre aba', () => {
   const open = jest.spyOn(window, 'open');

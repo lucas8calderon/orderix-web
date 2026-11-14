@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
 import { Alert, Box, Button, MenuItem, TextField, Typography } from '@mui/material';
-import { diagnosticReport, openThermalPrint, TEST_ACCOUNT, thermalEnabled } from './thermalPrint';
+import {
+  diagnosticReport,
+  isDeliveryReceiptAccount,
+  loadDeliveryReceiptOptions,
+  openThermalPrint,
+  TEST_ACCOUNT,
+  thermalEnabled,
+} from './thermalPrint';
 
 const RESULTS = [
   'Ainda não testei',
@@ -18,12 +25,11 @@ export function ThermalPrintPanel({ account, placeLabel = '' }) {
   const [message, setMessage] = useState('');
   const [tone, setTone] = useState('info');
   const [report, setReport] = useState('');
+  const [busy, setBusy] = useState(false);
   if (!thermalEnabled()) return null;
-  const print = () => {
-    setResult('Ainda não testei');
-    setReport('');
+  const finishPrint = (target, extra = {}) => {
     try {
-      setAttempt(openThermalPrint(account || TEST_ACCOUNT, { test: !account, placeLabel: account ? placeLabel : '' }));
+      setAttempt(openThermalPrint(target, { test: !account, placeLabel: account ? placeLabel : '', ...extra }));
       setTone('info');
       setMessage('A janela de impressão foi aberta. Isso não confirma que o papel saiu. Se você cancelar essa janela, nada é impresso: escolha "Cancelei a impressão".');
     } catch (error) {
@@ -31,6 +37,25 @@ export function ThermalPrintPanel({ account, placeLabel = '' }) {
       setTone('error');
       setMessage(error.message);
     }
+  };
+  const print = () => {
+    if (busy) return;
+    setResult('Ainda não testei');
+    setReport('');
+    const target = account || TEST_ACCOUNT;
+    if (account && isDeliveryReceiptAccount(account)) {
+      setBusy(true);
+      loadDeliveryReceiptOptions(account)
+        .then((extra) => finishPrint(target, extra))
+        .catch((error) => {
+          setAttempt({ state: 'error', time: new Date().toISOString() });
+          setTone('error');
+          setMessage(error.message || 'Não foi possível gerar o QR da rota.');
+        })
+        .finally(() => setBusy(false));
+      return;
+    }
+    finishPrint(target);
   };
   const copy = async () => {
     const text = diagnosticReport({ result, notes, attempt });
@@ -41,7 +66,7 @@ export function ThermalPrintPanel({ account, placeLabel = '' }) {
   };
   if (account) {
     return <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-      <Button type="button" variant="outlined" startIcon={<PrintOutlinedIcon />} onClick={print} sx={{ textTransform: 'none' }}>Imprimir</Button>
+      <Button type="button" variant="outlined" startIcon={<PrintOutlinedIcon />} onClick={print} disabled={busy} sx={{ textTransform: 'none' }}>Imprimir</Button>
       {tone === 'error' && message && <Alert severity="error" role="alert">{message}</Alert>}
     </Box>;
   }

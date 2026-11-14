@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DeliveryOrders } from './DeliveryOrders';
 import { listDeliveryOrders } from '../service/deliveryOrderService';
-import { listDeliveryRoutes } from '../../../../services/deliveryRouteApi';
 import {
   deliveryPaymentLabel,
   isDeliveryRouteEligible,
@@ -12,16 +11,6 @@ import {
 
 jest.mock('../service/deliveryOrderService', () => ({
   listDeliveryOrders: jest.fn(),
-}));
-
-jest.mock('../../../../services/deliveryRouteApi', () => ({
-  listDeliveryRoutes: jest.fn(() => Promise.resolve({ data: { storeName: 'Loja', originAddress: 'Rua da Loja, 10', routes: [] } })),
-  createDeliveryRoute: jest.fn(),
-  confirmDeliveryRoute: jest.fn(),
-  cancelDeliveryRoute: jest.fn(),
-  getDeliveryRoute: jest.fn(),
-  newIdempotencyKey: () => '11111111-1111-4111-8111-111111111111',
-  apiErrorMessage: (error, fallback) => error?.response?.data?.message || fallback,
 }));
 
 jest.mock('react-beautiful-dnd', () => ({
@@ -225,7 +214,7 @@ describe('delivery no atendimento', () => {
     expect(screen.queryByText('Já Fechado')).not.toBeInTheDocument();
   });
 
-  it('seleciona só entrega pronta e mostra a barra até trocar de aba', async () => {
+  it('não oferece seleção de rota nem rotas recentes', async () => {
     const pronto = {
       id: 70,
       status: 'ACTIVE',
@@ -241,33 +230,17 @@ describe('delivery no atendimento', () => {
       products: [{ id: 9, name: 'Pizza', quantity: 1, value: 30 }],
     };
     listDeliveryOrders.mockResolvedValue({ data: [pronto, entrega, pickup] });
-    listDeliveryRoutes.mockResolvedValue({ data: { storeName: 'Loja', originAddress: 'Rua da Loja, 10', routes: [] } });
-    const onOpenAccount = jest.fn();
-    const view = render(<DeliveryOrders onOpenAccount={onOpenAccount} floorVersion={0} active />);
+    render(<DeliveryOrders onOpenAccount={jest.fn()} floorVersion={0} active />);
 
-    const checkbox = await screen.findByRole('checkbox', { name: 'Selecionar pedido 0070 para a rota' });
-    expect(screen.queryByRole('checkbox', { name: /0040/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox', { name: /0033/ })).not.toBeInTheDocument();
-    fireEvent.click(checkbox);
-    expect(onOpenAccount).not.toHaveBeenCalled();
-    expect(screen.getByRole('region', { name: 'Pedidos selecionados para a rota' })).toHaveTextContent('1 pedido selecionado');
-    expect(screen.getByRole('button', { name: 'Gerar rota de entrega' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Gerar rota de entrega' }));
-    expect(await screen.findByText('Planejar rota de entrega')).toBeInTheDocument();
-    expect(screen.getByText('Organize suas entregas e reduza deslocamentos.')).toBeInTheDocument();
-    expect(screen.getByText(/A ordem é manual/)).toBeInTheDocument();
-    expect(screen.getByText(/não mostra distância nem tempo/i)).toBeInTheDocument();
-    expect(screen.queryByText(/\d+\s*km/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /recalcular/i })).not.toBeInTheDocument();
-
-    view.rerender(<DeliveryOrders onOpenAccount={onOpenAccount} floorVersion={0} active={false} />);
-    await waitFor(() => {
-      expect(screen.queryByRole('region', { name: 'Pedidos selecionados para a rota' })).not.toBeInTheDocument();
-    });
+    expect(await screen.findByText('#0070')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Gerar rota de entrega' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rotas recentes' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Pedidos selecionados para a rota' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/pedido selecionado/i)).not.toBeInTheDocument();
   });
 
-  it('mostra checkbox em entrega nova com endereço e esconde entregue ou sem rua', async () => {
+  it('lista entregas sem checkbox, inclusive sem rua', async () => {
     const novo = {
       id: 1,
       status: 'ACTIVE',
@@ -319,10 +292,11 @@ describe('delivery no atendimento', () => {
     listDeliveryOrders.mockResolvedValue({ data: [novo, saiu, semRua] });
     render(<DeliveryOrders onOpenAccount={jest.fn()} floorVersion={0} active />);
 
-    expect(await screen.findByRole('checkbox', { name: 'Selecionar pedido 1 para a rota' })).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox', { name: /0001/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox', { name: /pedido 3/ })).not.toBeInTheDocument();
-    expect(screen.getByText('Informe o endereço para incluir na rota')).toBeInTheDocument();
+    expect(await screen.findByText('#1')).toBeInTheDocument();
+    expect(screen.getByText('#0001')).toBeInTheDocument();
+    expect(screen.getByText('#3')).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByText('Informe o endereço para incluir na rota')).not.toBeInTheDocument();
   });
 
   it('mostra o erro da API', async () => {

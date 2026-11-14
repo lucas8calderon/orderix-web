@@ -13,6 +13,10 @@ export function getDeliveryRoute(routeId) {
   return axios.get(`${API_BASE_URL}/delivery/routes/${routeId}`);
 }
 
+export function ensureDeliveryReceiptRoute(orderId) {
+  return axios.post(`${API_BASE_URL}/delivery/orders/${orderId}/receipt-route`);
+}
+
 export function createDeliveryRoute(body, idempotencyKey) {
   return axios.post(`${API_BASE_URL}/delivery/routes`, body, idempotencyHeaders(idempotencyKey));
 }

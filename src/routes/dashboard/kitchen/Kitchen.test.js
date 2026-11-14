@@ -13,6 +13,16 @@ jest.mock('../../../printing/thermalPrint', () => ({
   openThermalPrint: jest.fn(() => ({ state: 'print_requested' })),
   diagnosticReport: jest.fn(),
   TEST_ACCOUNT: { orders: [] },
+  isDeliveryReceiptAccount: (account) => {
+    const orders = account?.orders || [];
+    return orders.length > 0 && orders.every((order) => {
+      const fulfillment = String(order?.deliveryFulfillment || '').toUpperCase();
+      if (fulfillment === 'DELIVERY') return true;
+      if (fulfillment === 'PICKUP') return false;
+      return String(order?.orderSource || '').toUpperCase() === 'DELIVERY';
+    });
+  },
+  loadDeliveryReceiptOptions: jest.fn(async () => ({})),
 }));
 
 jest.mock('react-beautiful-dnd', () => ({
