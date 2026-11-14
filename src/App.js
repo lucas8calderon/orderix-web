@@ -30,6 +30,7 @@ const SubscriptionBlocked = lazy(() => import('./routes/subscription/Subscriptio
 const PublicMenu = lazy(() => import('./routes/public-menu/PublicMenu'));
 const PublicDelivery = lazy(() => import('./routes/public-delivery/PublicDelivery'));
 const DeliveryTracking = lazy(() => import('./routes/public-delivery/DeliveryTracking'));
+const CourierRoutePage = lazy(() => import('./routes/courier-route/CourierRoutePage'));
 const DeliveryOrdersPage = lazy(() => import('./routes/public-delivery/DeliveryOrdersPage'));
 const DeliveryAccountPage = lazy(() => import('./routes/public-delivery/DeliveryAccountPage'));
 const PartnersPage = lazy(() => import('./routes/partners/PartnersPage'));
@@ -228,6 +229,22 @@ function App() {
             element={(
               <Suspense fallback={<RouteFallback />}>
                 <DeliveryTracking />
+              </Suspense>
+            )}
+          />
+          <Route
+            path="/rotas"
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <CourierRoutePage />
+              </Suspense>
+            )}
+          />
+          <Route
+            path={PATHS.COURIER_ROUTE}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <CourierRoutePage />
               </Suspense>
             )}
           />

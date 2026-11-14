@@ -27,8 +27,13 @@ function isPublicBillingApi(config) {
   return url.includes('/api/public/billing');
 }
 
+function isPublicRouteApi(config) {
+  const url = `${config?.baseURL || ''}${config?.url || ''}`;
+  return url.includes('/api/public/routes');
+}
+
 axios.interceptors.request.use((config) => {
-  if (isPublicPartnerApi(config) || isPublicBillingApi(config)) {
+  if (isPublicPartnerApi(config) || isPublicBillingApi(config) || isPublicRouteApi(config)) {
     // Contratação e parceiro públicos não carregam JWT de outra sessão.
     if (config.headers?.Authorization) {
       delete config.headers.Authorization;
@@ -80,7 +85,7 @@ axios.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
-      if (isPublicPartnerApi(error.config || {}) || isPublicBillingApi(error.config || {})) {
+      if (isPublicPartnerApi(error.config || {}) || isPublicBillingApi(error.config || {}) || isPublicRouteApi(error.config || {})) {
         // Falha anônima na contratação/parceiro: não manda para /login.
         return Promise.reject(error);
       }
@@ -113,7 +118,8 @@ axios.interceptors.response.use(
         const path = window.location.pathname;
         const onPublicMenu = path === PATHS.PUBLIC_MENU || path.startsWith(`${PATHS.PUBLIC_MENU}/`);
         const onPublicDelivery = path === PATHS.PUBLIC_DELIVERY || path.startsWith(`${PATHS.PUBLIC_DELIVERY}/`);
-        if (!onPublicMenu && !onPublicDelivery) {
+        const onCourierRoute = path === '/rotas' || path.startsWith('/rotas/');
+        if (!onPublicMenu && !onPublicDelivery && !onCourierRoute) {
           window.location.assign(PATHS.SUBSCRIPTION_BLOCKED);
         }
       }

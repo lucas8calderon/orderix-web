@@ -143,7 +143,7 @@ export function Atendimento() {
         </div>
 
         <div role="tabpanel" id="service-panel-delivery" aria-labelledby="service-tab-delivery" hidden={tab !== 'delivery'} className="atendimento-section">
-          <DeliveryOrders onOpenAccount={setAccountTarget} onCountChange={countSetter('delivery')} floorVersion={floorVersion} />
+          <DeliveryOrders active={tab === 'delivery'} onOpenAccount={setAccountTarget} onCountChange={countSetter('delivery')} floorVersion={floorVersion} />
         </div>
       </Container>
 

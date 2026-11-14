@@ -112,6 +112,7 @@ export const PATHS = {
   PUBLIC_DELIVERY_ACCOUNT: '/delivery/:slug/conta',
   PUBLIC_DELIVERY_ORDERS: '/delivery/:slug/conta/pedidos',
   PUBLIC_DELIVERY_ORDER: '/delivery/pedido/:publicToken',
+  COURIER_ROUTE: '/rotas/:token',
   DEMO: '/demo',
   DEMO_SLUG: '/demo/:slug',
   /** Página institucional do delivery próprio (não confundir com PUBLIC_DELIVERY, a loja do cliente). */
@@ -394,6 +395,8 @@ export function isPublicPath(path) {
     || normalized.startsWith(`${PATHS.PUBLIC_MENU}/`)
     || normalized === PATHS.PUBLIC_DELIVERY
     || normalized.startsWith(`${PATHS.PUBLIC_DELIVERY}/`)
+    || normalized === '/rotas'
+    || normalized.startsWith('/rotas/')
     || normalized === PATHS.DEMO
     || normalized.startsWith(`${PATHS.DEMO}/`);
 }

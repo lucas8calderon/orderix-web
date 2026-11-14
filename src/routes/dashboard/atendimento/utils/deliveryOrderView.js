@@ -15,6 +15,37 @@ export function isPickupOrder(order) {
   return String(order?.orderSource || '').toUpperCase() === 'PICKUP';
 }
 
+/** Pedido que pode entrar numa rota: entrega pronta, em aberto, com rua e número. */
+export function isDeliveryRouteEligible(order) {
+  const fulfillment = String(order?.deliveryFulfillment || '').toUpperCase();
+  const source = String(order?.orderSource || '').toUpperCase();
+  const delivery = fulfillment === 'DELIVERY' || (!fulfillment && source === 'DELIVERY');
+  if (!delivery) return false;
+  if (String(order?.status || '').toUpperCase() !== 'ACTIVE') return false;
+  if (String(order?.kitchenStatus || '').toUpperCase() !== 'READY') return false;
+  if (!String(order?.deliveryStreet || '').trim() || !String(order?.deliveryNumber || '').trim()) return false;
+  return true;
+}
+
+export function deliveryAddressParts(order) {
+  const street = [order?.deliveryStreet, order?.deliveryNumber]
+    .map((part) => String(part || '').trim())
+    .filter(Boolean)
+    .join(', ');
+  const neighborhood = String(order?.deliveryNeighborhood || '').trim();
+  const complement = String(order?.deliveryComplement || '').trim();
+  const city = [order?.deliveryCity, order?.deliveryState]
+    .map((part) => String(part || '').trim())
+    .filter(Boolean)
+    .join('/');
+  return {
+    street,
+    neighborhood,
+    complement,
+    line: [street, neighborhood, city].filter(Boolean).join(' — '),
+  };
+}
+
 export function fulfillmentLabel(order) {
   return isPickupOrder(order) ? 'Retirada' : 'Entrega';
 }

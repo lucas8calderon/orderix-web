@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DeliveryOrders } from './DeliveryOrders';
 import { listDeliveryOrders } from '../service/deliveryOrderService';
+import { listDeliveryRoutes } from '../../../../services/deliveryRouteApi';
 import {
   deliveryPaymentLabel,
   isOpenDeliveryOrder,
@@ -9,6 +10,22 @@ import {
 
 jest.mock('../service/deliveryOrderService', () => ({
   listDeliveryOrders: jest.fn(),
+}));
+
+jest.mock('../../../../services/deliveryRouteApi', () => ({
+  listDeliveryRoutes: jest.fn(() => Promise.resolve({ data: { storeName: 'Loja', originAddress: 'Rua da Loja, 10', routes: [] } })),
+  createDeliveryRoute: jest.fn(),
+  confirmDeliveryRoute: jest.fn(),
+  cancelDeliveryRoute: jest.fn(),
+  getDeliveryRoute: jest.fn(),
+  newIdempotencyKey: () => '11111111-1111-4111-8111-111111111111',
+  apiErrorMessage: (error, fallback) => error?.response?.data?.message || fallback,
+}));
+
+jest.mock('react-beautiful-dnd', () => ({
+  DragDropContext: ({ children }) => children,
+  Droppable: ({ children }) => children({ innerRef: jest.fn(), droppableProps: {}, placeholder: null }, {}),
+  Draggable: ({ children }) => children({ innerRef: jest.fn(), draggableProps: {}, dragHandleProps: {} }, { isDragging: false }),
 }));
 
 const pickup = {
@@ -204,6 +221,48 @@ describe('delivery no atendimento', () => {
       fulfillment: 'PICKUP',
     }));
     expect(screen.queryByText('Já Fechado')).not.toBeInTheDocument();
+  });
+
+  it('seleciona só entrega pronta e mostra a barra até trocar de aba', async () => {
+    const pronto = {
+      id: 70,
+      status: 'ACTIVE',
+      customerName: 'Rota Pronta',
+      displayCode: '0070',
+      orderSource: 'DELIVERY',
+      deliveryFulfillment: 'DELIVERY',
+      kitchenStatus: 'READY',
+      deliveryStreet: 'Rua das Flores',
+      deliveryNumber: '100',
+      deliveryNeighborhood: 'Centro',
+      onlinePayment: false,
+      products: [{ id: 9, name: 'Pizza', quantity: 1, value: 30 }],
+    };
+    listDeliveryOrders.mockResolvedValue({ data: [pronto, entrega, pickup] });
+    listDeliveryRoutes.mockResolvedValue({ data: { storeName: 'Loja', originAddress: 'Rua da Loja, 10', routes: [] } });
+    const onOpenAccount = jest.fn();
+    const view = render(<DeliveryOrders onOpenAccount={onOpenAccount} floorVersion={0} active />);
+
+    const checkbox = await screen.findByRole('checkbox', { name: 'Selecionar pedido 0070 para a rota' });
+    expect(screen.queryByRole('checkbox', { name: /0040/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /0033/ })).not.toBeInTheDocument();
+    fireEvent.click(checkbox);
+    expect(onOpenAccount).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: 'Pedidos selecionados para a rota' })).toHaveTextContent('1 pedido selecionado');
+    expect(screen.getByRole('button', { name: 'Gerar rota de entrega' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar rota de entrega' }));
+    expect(await screen.findByText('Planejar rota de entrega')).toBeInTheDocument();
+    expect(screen.getByText('Organize suas entregas e reduza deslocamentos.')).toBeInTheDocument();
+    expect(screen.getByText(/A ordem é manual/)).toBeInTheDocument();
+    expect(screen.getByText(/não mostra distância nem tempo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\d+\s*km/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /recalcular/i })).not.toBeInTheDocument();
+
+    view.rerender(<DeliveryOrders onOpenAccount={onOpenAccount} floorVersion={0} active={false} />);
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'Pedidos selecionados para a rota' })).not.toBeInTheDocument();
+    });
   });
 
   it('mostra o erro da API', async () => {
