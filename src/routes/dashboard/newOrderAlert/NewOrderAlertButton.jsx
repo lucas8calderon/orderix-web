@@ -18,6 +18,11 @@ export function NewOrderAlertButton({ count, toastOpen, onOpen, onDismissToast }
             right: 24,
             bottom: 96,
             zIndex: 1200,
+            // O Fab tem z-index próprio (theme.zIndex.fab) e cobria o número.
+            '& .MuiBadge-badge': {
+              zIndex: (theme) => theme.zIndex.fab + 1,
+              border: '2px solid #fff',
+            },
           }}
         >
           <Tooltip title="Pedidos novos">
