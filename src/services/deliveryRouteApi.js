@@ -38,8 +38,8 @@ export function confirmPublicDeliveryStop(token, stopId, body, idempotencyKey) {
 }
 
 export function newIdempotencyKey() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
+  if (window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
     const random = Math.floor(Math.random() * 16);
