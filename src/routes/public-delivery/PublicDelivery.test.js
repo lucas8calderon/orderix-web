@@ -528,6 +528,7 @@ describe('PublicDelivery', () => {
     await userEvent.click(screen.getByRole('button', { name: /trocar endereço/i }));
     expect(await screen.findByRole('heading', { name: /onde você quer receber/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /não encontrou seu bairro/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /^bairro$/i })).toBeInTheDocument();
   });
 
   it('mostra a taxa única e aceita bairro fora da lista', async () => {

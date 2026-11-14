@@ -6,6 +6,20 @@ import {
   salesChannelLabel,
 } from '../../../services/salesChannel';
 
+const PAYMENT_LABELS = {
+  PIX: 'PIX',
+  CREDIT: 'Crédito',
+  DEBIT: 'Débito',
+  CASH: 'Dinheiro',
+  VOUCHER: 'Vale',
+  OTHER: 'Outro',
+};
+
+export function kitchenPaymentLabel(method) {
+  const key = String(method || '').trim().toUpperCase();
+  return PAYMENT_LABELS[key] || String(method || '').trim();
+}
+
 const KITCHEN_TO_UI = {
   NEW: 'novo',
   IN_PREPARATION: 'em_producao',
@@ -57,7 +71,7 @@ export function mapKitchenOrder(order) {
     order.orderSource === 'PICKUP' ? 'Retirada no local' : '',
     order.customerPhone ? `Tel: ${order.customerPhone}` : '',
     address,
-    order.paymentMethod ? `Pagamento: ${order.paymentMethod}` : '',
+    order.paymentMethod ? `Pagamento: ${kitchenPaymentLabel(order.paymentMethod)}` : '',
     order.deliveryChangeFor ? `Troco para R$ ${Number(order.deliveryChangeFor).toFixed(2)}` : '',
   ].filter(Boolean).join(' · ');
   const identification = (order.customerIdentificationNote || '').trim();

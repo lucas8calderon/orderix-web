@@ -57,6 +57,20 @@ describe('Kitchen channel filters', () => {
     expect(mapped.notes).toContain('ID: Camiseta vermelha');
   });
 
+  it('mostra a forma de pagamento em português na observação', () => {
+    const notesFor = (paymentMethod) => mapKitchenOrder({
+      id: 159,
+      orderSource: 'PICKUP',
+      paymentMethod,
+      kitchenStatus: 'NEW',
+      products: [],
+    }).notes;
+    expect(notesFor('CASH')).toContain('Pagamento: Dinheiro');
+    expect(notesFor('CREDIT')).toContain('Pagamento: Crédito');
+    expect(notesFor('DEBIT')).toContain('Pagamento: Débito');
+    expect(notesFor('PIX')).toContain('Pagamento: PIX');
+  });
+
   it('classifica pedido de garçom mesmo com mesa', () => {
     const mapped = mapKitchenOrder({
       id: 1,

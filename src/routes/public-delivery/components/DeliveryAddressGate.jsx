@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import AddLocationAltOutlinedIcon from '@mui/icons-material/AddLocationAltOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   CircularProgress,
@@ -12,7 +14,6 @@ import {
   FormControl,
   FormControlLabel,
   InputAdornment,
-  MenuItem,
   Radio,
   RadioGroup,
   TextField,
@@ -35,6 +36,15 @@ import {
   isValidStoreWhatsApp,
   neighborhoodWhatsAppUrl,
 } from '../utils/neighborhoodWhatsApp';
+
+/** Busca sem diferenciar acento nem maiúscula: "ipe" encontra "Jardim Ipê". */
+function searchKey(text) {
+  return String(text || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
 const emptyForm = {
   addressId: '',
@@ -375,38 +385,55 @@ export default function DeliveryAddressGate({
             }))}
           />
         </Box>
-        <TextField
-          select
+        <Autocomplete
           fullWidth
-          label="Bairro"
-          value={selectionStillValid(neighborhoods, form.neighborhoodId) ? String(form.neighborhoodId) : ''}
+          options={neighborhoods}
+          value={selected}
           disabled={!form.city.trim() || form.state.trim().length !== 2}
-          helperText={loadingAreas
-            ? 'Buscando bairros atendidos...'
-            : openArea
-              ? 'Se o seu bairro aparecer aqui, escolha. Se não aparecer, escreva o nome abaixo.'
-              : 'Escolha o bairro onde o endereço realmente fica. Só entram bairros ativos desta loja nesta cidade.'}
-          onChange={(event) => {
+          loading={loadingAreas}
+          getOptionLabel={(item) => item?.name || ''}
+          isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+          filterOptions={(options, state) => {
+            const query = searchKey(state.inputValue);
+            return query ? options.filter((item) => searchKey(item.name).includes(query)) : options;
+          }}
+          noOptionsText="Nenhum bairro encontrado"
+          loadingText="Buscando bairros atendidos..."
+          openText="Abrir lista"
+          closeText="Fechar lista"
+          clearText="Limpar"
+          onChange={(_event, item) => {
             setCustomNeighborhood('');
             setForm((prev) => ({
               ...prev,
-              neighborhoodId: event.target.value,
+              neighborhoodId: item ? String(item.id) : '',
               addressId: '',
             }));
           }}
-          sx={{ mb: 1 }}
-        >
-          {neighborhoods.map((item) => {
+          renderOption={(props, item) => {
             const itemFee = openArea ? flatFee : item.effectiveFee;
             return (
-              <MenuItem key={item.id} value={String(item.id)}>
+              <li {...props} key={item.id}>
                 {item.name}
                 {' · '}
                 {Number(itemFee) === 0 ? 'Entrega grátis' : formatCurrency(itemFee)}
-              </MenuItem>
+              </li>
             );
-          })}
-        </TextField>
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Bairro"
+              placeholder="Digite para buscar o bairro"
+              helperText={loadingAreas
+                ? 'Buscando bairros atendidos...'
+                : openArea
+                  ? 'Se o seu bairro aparecer aqui, escolha. Se não aparecer, escreva o nome abaixo.'
+                  : 'Digite para buscar e escolha o bairro onde o endereço realmente fica. Só entram bairros ativos desta loja nesta cidade.'}
+            />
+          )}
+          sx={{ mb: 1 }}
+        />
         {openArea ? (
           <TextField
             fullWidth
@@ -464,7 +491,16 @@ export default function DeliveryAddressGate({
               onChange={(event) => setRequestedName(event.target.value)}
               sx={{ mb: 1 }}
             />
-            <Button variant="outlined" onClick={sendWhatsApp}>
+            <Button
+              variant="contained"
+              startIcon={<WhatsAppIcon />}
+              onClick={sendWhatsApp}
+              sx={{
+                bgcolor: '#128C7E',
+                color: '#fff',
+                '&:hover': { bgcolor: '#0E7469' },
+              }}
+            >
               Enviar solicitação pelo WhatsApp
             </Button>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
