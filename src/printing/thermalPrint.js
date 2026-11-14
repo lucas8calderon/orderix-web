@@ -163,6 +163,42 @@ function deliveryFeeAmount(order) {
   return Number.isFinite(fee) && fee > 0 ? fee : 0;
 }
 
+const RECEIPT_PAYMENT_LABELS = {
+  PIX: 'Pix',
+  CASH: 'Dinheiro',
+  CREDIT: 'Cartão de crédito',
+  DEBIT: 'Cartão de débito',
+  VOUCHER: 'Vale',
+  OTHER: 'Outro',
+};
+
+function isSettledCoverage(status) {
+  const raw = String(status || '').toUpperCase();
+  return raw === 'APPROVED' || raw === 'PAID' || raw === 'PAID_EXTERNALLY';
+}
+
+function receiptPaymentLabel(order) {
+  const key = String(order?.paymentMethod || '').trim().toUpperCase();
+  return RECEIPT_PAYMENT_LABELS[key] || '';
+}
+
+/** Cobertura quitada no ledger, ou a cobrança combinada na entrega/retirada. A forma escolhida sozinha não quita. */
+function paymentReceiptHtml(order) {
+  const method = receiptPaymentLabel(order);
+  if (isSettledCoverage(order?.paymentStatus)) {
+    const title = method ? `Pago · ${method}` : 'Pago';
+    return `<p class="pay"><strong>${escape(title)}</strong></p>`;
+  }
+  const collectOnFulfillment = order?.onlinePayment !== true;
+  const moment = collectOnFulfillment ? fulfillmentMode(order) : '';
+  const title = moment === 'DELIVERY'
+    ? 'A receber na entrega'
+    : moment === 'PICKUP'
+      ? 'A receber na retirada'
+      : 'Não pago';
+  return `<p class="pay"><strong>${escape(title)}</strong></p>${method ? `<p class="pay">${escape(method)}</p>` : ''}`;
+}
+
 function deliveryOrderBlock(order, options) {
   const number = orderNumberLabel(order);
   const when = formatReceiptWhen(order?.createdAt);
@@ -189,6 +225,7 @@ function deliveryOrderBlock(order, options) {
     ${text(order?.observation) ? `<p><strong>Observação do pedido:</strong> ${escape(order.observation)}</p>` : ''}
     <div class="line"><span>Taxa entrega</span><span>${escape(money(fee))}</span></div>
     <div class="line"><strong>TOTAL</strong><span>${escape(money(orderPrintTotal(order)))}</span></div>
+    ${paymentReceiptHtml(order)}
     <h3 class="center route-title">ROTA DE ENTREGA</h3>
     ${qr ? `<img class="qr" src="${escape(qr)}" alt="QR Code da rota" width="280" height="280" />` : ''}
     <p class="center">Escaneie para abrir a rota</p>
@@ -200,6 +237,7 @@ const CLASSIC_STYLE = `<style>
     html, body { width: 80mm; margin: 0; } body { padding: 4mm; color: #000; background: #fff; font: 12pt/1.35 monospace; overflow-wrap: anywhere; }
     h1 { font-size: 16pt; } h2 { font-size: 13pt; } p { margin: 2mm 0; white-space: pre-wrap; overflow-wrap: anywhere; } section { border-top: 1px dashed; padding-top: 2mm; } article { margin: 3mm 0; }
     .line { display: flex; align-items: flex-start; gap: 2mm; justify-content: space-between; } .line strong { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; } .line span { flex: 0 0 auto; white-space: nowrap; }
+    p.pay { margin: 2mm 0 0; text-align: center; } p.pay + p.pay { margin-top: 0; }
     </style>`;
 
 const DELIVERY_STYLE = `<style>
@@ -216,6 +254,7 @@ const DELIVERY_STYLE = `<style>
     .line strong, .line span:first-child { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
     .line span:last-child { flex: 0 0 auto; white-space: nowrap; }
     img.qr { display: block; width: 48mm; height: 48mm; max-width: 100%; margin: 4mm auto; page-break-inside: avoid; break-inside: avoid; }
+    p.pay { margin: 2mm 0 0; text-align: center; } p.pay + p.pay { margin-top: 0; }
     </style>`;
 
 function deliveryReceiptHtml(account, options) {
@@ -285,11 +324,16 @@ export function receiptHtml(account, options = {}) {
     ${text(order?.observation) ? `<p><strong>Observação do pedido:</strong> ${escape(order.observation)}</p>` : ''}</section>`;
   }).join('');
   const total = accountPrintTotal(orders);
+  const payment = orders
+    .filter((order) => fulfillmentMode(order))
+    .map((order) => paymentReceiptHtml(order))
+    .join('');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Comanda</title>${CLASSIC_STYLE}</head><body>
     <p><strong>COMANDA</strong>${test ? ' — TESTE' : ''}</p>
     ${showPlace ? `<p>${escape(place)}</p>` : ''}
     ${body}
     <div class="line"><strong>TOTAL</strong><span>${escape(money(total))}</span></div>
+    ${payment}
     <p>Fim da comanda${test ? ' · Confira se todas as linhas saíram.' : ''}</p></body></html>`;
 }
 

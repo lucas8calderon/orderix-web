@@ -107,6 +107,8 @@ test('comanda espelha a tela: nome longo, acentos, adicionais, observação e c�
   expect(html).toContain('TOTAL');
   expect(html).toContain('99,00');
   expect(html).not.toContain('PIX');
+  expect(html).not.toContain('Pago');
+  expect(html).not.toContain('A receber');
   expect(html).not.toContain('12,34');
   expect(html).not.toContain('WEPER');
   expect(html).not.toContain('NÃO É DOCUMENTO FISCAL');
@@ -237,6 +239,107 @@ test('entrega mostra endereço, complemento e referência; retirada não inventa
   expect(pickup).not.toContain('Rua que não deve sair');
   expect(pickup).not.toContain('Complemento:');
   expect(pickup).not.toContain('apto 9');
+});
+
+function deliveryPrintOrder(extra) {
+  return {
+    id: 158,
+    displayCode: '0158',
+    customerName: 'João Silva',
+    deliveryFulfillment: 'DELIVERY',
+    orderSource: 'DELIVERY',
+    deliveryStreet: 'Rua das Flores',
+    deliveryNumber: '120',
+    totalAmount: 55,
+    products: [{ name: 'X-Burger', quantity: 1, value: 50 }],
+    ...extra,
+  };
+}
+
+function paymentComesAfterTotal(html, label) {
+  const totalAt = html.indexOf('TOTAL');
+  const payAt = html.indexOf(label);
+  expect(totalAt).toBeGreaterThanOrEqual(0);
+  expect(payAt).toBeGreaterThan(totalAt);
+  return payAt;
+}
+
+test('comanda de entrega mostra pago com Pix, a receber e a forma', () => {
+  const paid = receiptHtml({
+    orders: [deliveryPrintOrder({
+      paymentStatus: 'PAID',
+      paymentMethod: 'PIX',
+      onlinePayment: true,
+    })],
+  });
+  paymentComesAfterTotal(paid, 'Pago · Pix');
+  expect(paid.indexOf('Pago · Pix')).toBeLessThan(paid.indexOf('ROTA DE ENTREGA'));
+  expect(paid).not.toContain('A receber');
+  expect(paid).not.toContain('Dinheiro');
+
+  const cash = receiptHtml({
+    orders: [deliveryPrintOrder({
+      paymentStatus: null,
+      paymentMethod: 'CASH',
+      onlinePayment: false,
+    })],
+  });
+  paymentComesAfterTotal(cash, 'A receber na entrega');
+  expect(cash.indexOf('A receber na entrega')).toBeLessThan(cash.indexOf('ROTA DE ENTREGA'));
+  expect(cash).toContain('Dinheiro');
+  expect(cash).not.toContain('Pago');
+
+  const pickup = receiptHtml({
+    orders: [{
+      id: 22,
+      customerName: 'Ana',
+      deliveryFulfillment: 'PICKUP',
+      orderSource: 'PICKUP',
+      paymentMethod: 'DEBIT',
+      onlinePayment: false,
+      products: [{ name: 'Suco', quantity: 1, value: 10 }],
+    }],
+  });
+  paymentComesAfterTotal(pickup, 'A receber na retirada');
+  expect(pickup).toContain('Cartão de débito');
+  expect(pickup).toContain('COMANDA');
+  expect(pickup).not.toContain('ROTA DE ENTREGA');
+  expect(pickup).not.toContain('Pago');
+  expect(pickup).not.toContain('A receber na entrega');
+
+  const noMethod = receiptHtml({
+    orders: [deliveryPrintOrder({
+      paymentMethod: null,
+      onlinePayment: false,
+    })],
+  });
+  paymentComesAfterTotal(noMethod, 'A receber na entrega');
+  expect(noMethod).not.toContain('Pix');
+  expect(noMethod).not.toContain('Dinheiro');
+  expect(noMethod).not.toContain('Cartão');
+  expect(noMethod).not.toContain('Pago');
+
+  const paidWithoutMethod = receiptHtml({
+    orders: [deliveryPrintOrder({
+      paymentStatus: 'APPROVED',
+      paymentMethod: '',
+      onlinePayment: true,
+    })],
+  });
+  expect(paidWithoutMethod).toContain('>Pago<');
+  expect(paidWithoutMethod).not.toContain('Pago ·');
+  expect(paidWithoutMethod).not.toContain('Pix');
+
+  const onlinePending = receiptHtml({
+    orders: [deliveryPrintOrder({
+      paymentMethod: 'PIX',
+      onlinePayment: true,
+    })],
+  });
+  expect(onlinePending).toContain('Não pago');
+  expect(onlinePending).toContain('Pix');
+  expect(onlinePending).not.toContain('A receber na entrega');
+  expect(onlinePending).not.toContain('Pago ·');
 });
 test('o QR da entrega recebe só a URL e a comanda não repete o link', async () => {
   const QRCode = (await import('qrcode')).default;
