@@ -27,6 +27,8 @@ import { simulateRadiusFee } from '../utils/radiusDeliveryFee';
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput } from '../../../../utils/phoneInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { DeliveryNeighborhoodsSection } from './DeliveryNeighborhoodsSection';
+import { RadiusCoverageIllustration } from './RadiusCoverageIllustration';
+import { StoreOriginAddressFields } from './StoreOriginAddressFields';
 
 function ChannelPaymentOptions({
   title,
@@ -402,19 +404,10 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
         </Box>
         {radiusMode ? (
           <>
-            <Box className="setting-item">
-              <TextField
-                label="Endereço de origem"
-                value={settings?.storeAddress ?? ''}
-                onChange={(e) => onSettingChange('storeAddress', null, e.target.value)}
-                fullWidth
-                multiline
-                minRows={2}
-                placeholder="Rua, número, bairro, cidade"
-                helperText="É o endereço da loja. A latitude e a longitude ficam vazias até haver geolocalização interna."
-                inputProps={{ 'aria-label': 'Endereço de origem da entrega' }}
-              />
-            </Box>
+            <StoreOriginAddressFields
+              storeAddress={settings?.storeAddress ?? ''}
+              onStoreAddressChange={(value) => onSettingChange('storeAddress', null, value)}
+            />
             <Box className="delivery-ops-grid">
               <TextField
                 label="Distância máxima (km)"
@@ -482,6 +475,10 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
                 {radiusPreview.status === 'out' ? 'Fora da área de entrega' : null}
                 {radiusPreview.status === 'invalid' ? 'Informe a distância máxima e o valor por km para simular.' : null}
               </Typography>
+              <RadiusCoverageIllustration
+                distanceKm={sampleKm}
+                maxKm={settings?.deliveryRadiusMaxKm}
+              />
             </Box>
           </>
         ) : null}

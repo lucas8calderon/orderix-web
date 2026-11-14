@@ -239,17 +239,25 @@ describe('DeliverySettingsCard', () => {
     );
 
     expect(screen.getByLabelText('Endereço de origem da entrega')).toHaveValue('Rua das Flores, 10');
+    expect(screen.getByLabelText('CEP do endereço de origem')).toBeInTheDocument();
+    expect(screen.getByText(/figura ilustrativa/i)).toBeInTheDocument();
+    expect(screen.queryByText(/linha reta/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/haversine/i)).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /bairros atendidos/i })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
       target: { value: '6.5' },
     });
     expect(screen.getByText(/Taxa simulada: R\$\s*13,00/)).toBeInTheDocument();
+    expect(screen.getByText('6,5 km')).toBeInTheDocument();
+    expect(screen.getByRole('figure')).toHaveAttribute('data-zone', 'edge');
 
     fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
       target: { value: '2' },
     });
     expect(screen.getByText(/Taxa simulada: R\$\s*5,00/)).toBeInTheDocument();
+    expect(screen.getByRole('figure')).toHaveAttribute('data-zone', 'inside');
+    expect(screen.getByText('2 km')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Distância máxima em quilômetros'), {
       target: { value: '8' },
@@ -260,6 +268,8 @@ describe('DeliverySettingsCard', () => {
       target: { value: '7' },
     });
     expect(screen.getByText('Fora da área de entrega')).toBeInTheDocument();
+    expect(screen.getByRole('figure')).toHaveAttribute('data-zone', 'outside');
+    expect(screen.getByText(/fora do círculo/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('radio', { name: /^por bairro$/i }));
     expect(onSettingChange).toHaveBeenCalledWith('deliveryPricingMethod', null, 'NEIGHBORHOOD');
