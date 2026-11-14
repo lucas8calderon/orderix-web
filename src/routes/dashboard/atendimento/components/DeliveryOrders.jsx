@@ -12,6 +12,7 @@ import {
   fulfillmentLabel,
   isDeliveryRouteEligible,
   isOpenDeliveryOrder,
+  needsDeliveryRouteAddress,
   isPendingStoreCharge,
   isPickupOrder,
   kitchenStatusLabel,
@@ -110,6 +111,7 @@ export function DeliveryOrders({ onOpenAccount, onCountChange, floorVersion = 0,
           const pending = isPendingStoreCharge(order);
           const pickup = isPickupOrder(order);
           const eligible = isDeliveryRouteEligible(order);
+          const missingAddress = !eligible && needsDeliveryRouteAddress(order);
           const selected = selectedIds.includes(order.id);
           const lines = summarizeOrderItems(order);
           const total = deliveryOrderTotal(order);
@@ -152,6 +154,11 @@ export function DeliveryOrders({ onOpenAccount, onCountChange, floorVersion = 0,
                 {' · '}
                 {deliveryPaymentLabel(order)}
               </Typography>
+              {missingAddress ? (
+                <Typography variant="body2" color="warning.main" sx={{ mt: 0.5 }}>
+                  Informe o endereço para incluir na rota
+                </Typography>
+              ) : null}
             </CardContent>
           );
 

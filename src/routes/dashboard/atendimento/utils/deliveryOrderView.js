@@ -15,16 +15,37 @@ export function isPickupOrder(order) {
   return String(order?.orderSource || '').toUpperCase() === 'PICKUP';
 }
 
-/** Pedido que pode entrar numa rota: entrega pronta, em aberto, com rua e número. */
-export function isDeliveryRouteEligible(order) {
+const ROUTE_KITCHEN_STATUSES = new Set(['NEW', 'IN_PREPARATION', 'READY']);
+
+function isDeliveryFulfillment(order) {
   const fulfillment = String(order?.deliveryFulfillment || '').toUpperCase();
   const source = String(order?.orderSource || '').toUpperCase();
-  const delivery = fulfillment === 'DELIVERY' || (!fulfillment && source === 'DELIVERY');
-  if (!delivery) return false;
+  return fulfillment === 'DELIVERY' || (!fulfillment && source === 'DELIVERY');
+}
+
+function routeKitchenStatus(order) {
+  return String(order?.kitchenStatus || 'NEW').toUpperCase();
+}
+
+function hasStreetAndNumber(order) {
+  return Boolean(String(order?.deliveryStreet || '').trim() && String(order?.deliveryNumber || '').trim());
+}
+
+/** Entrega em aberto, ainda na loja (novo, em produção ou feito), com rua e número. */
+export function isDeliveryRouteEligible(order) {
+  if (!isDeliveryFulfillment(order)) return false;
   if (String(order?.status || '').toUpperCase() !== 'ACTIVE') return false;
-  if (String(order?.kitchenStatus || '').toUpperCase() !== 'READY') return false;
-  if (!String(order?.deliveryStreet || '').trim() || !String(order?.deliveryNumber || '').trim()) return false;
+  if (!ROUTE_KITCHEN_STATUSES.has(routeKitchenStatus(order))) return false;
+  if (!hasStreetAndNumber(order)) return false;
   return true;
+}
+
+/** Entrega que entraria na rota se tivesse rua e número. */
+export function needsDeliveryRouteAddress(order) {
+  if (!isDeliveryFulfillment(order)) return false;
+  if (String(order?.status || '').toUpperCase() !== 'ACTIVE') return false;
+  if (!ROUTE_KITCHEN_STATUSES.has(routeKitchenStatus(order))) return false;
+  return !hasStreetAndNumber(order);
 }
 
 export function deliveryAddressParts(order) {

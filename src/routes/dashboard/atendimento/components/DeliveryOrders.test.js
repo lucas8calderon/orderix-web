@@ -4,8 +4,10 @@ import { listDeliveryOrders } from '../service/deliveryOrderService';
 import { listDeliveryRoutes } from '../../../../services/deliveryRouteApi';
 import {
   deliveryPaymentLabel,
+  isDeliveryRouteEligible,
   isOpenDeliveryOrder,
   isPendingStoreCharge,
+  needsDeliveryRouteAddress,
 } from '../utils/deliveryOrderView';
 
 jest.mock('../service/deliveryOrderService', () => ({
@@ -263,6 +265,64 @@ describe('delivery no atendimento', () => {
     await waitFor(() => {
       expect(screen.queryByRole('region', { name: 'Pedidos selecionados para a rota' })).not.toBeInTheDocument();
     });
+  });
+
+  it('mostra checkbox em entrega nova com endereço e esconde entregue ou sem rua', async () => {
+    const novo = {
+      id: 1,
+      status: 'ACTIVE',
+      customerName: 'Duds',
+      displayCode: '1',
+      orderSource: 'DELIVERY',
+      deliveryFulfillment: 'DELIVERY',
+      kitchenStatus: 'NEW',
+      deliveryStreet: 'Rua das Flores',
+      deliveryNumber: '100',
+      onlinePayment: false,
+      products: [{ id: 1, name: 'teste', quantity: 1, value: 2 }],
+    };
+    const saiu = {
+      id: 2,
+      status: 'ACTIVE',
+      customerName: 'Ana',
+      displayCode: '0001',
+      orderSource: 'DELIVERY',
+      deliveryFulfillment: 'DELIVERY',
+      kitchenStatus: 'DELIVERED',
+      deliveryStreet: 'Rua A',
+      deliveryNumber: '10',
+      onlinePayment: false,
+      products: [{ id: 2, name: 'X-Burger', quantity: 1, value: 42 }],
+    };
+    const semRua = {
+      id: 3,
+      status: 'ACTIVE',
+      customerName: 'Sem Endereço',
+      displayCode: '3',
+      orderSource: 'DELIVERY',
+      deliveryFulfillment: 'DELIVERY',
+      kitchenStatus: 'NEW',
+      deliveryStreet: ' ',
+      deliveryNumber: '',
+      onlinePayment: false,
+      products: [{ id: 3, name: 'teste', quantity: 1, value: 2 }],
+    };
+
+    expect(isDeliveryRouteEligible(novo)).toBe(true);
+    expect(isDeliveryRouteEligible({ ...novo, kitchenStatus: 'IN_PREPARATION', deliveryFulfillment: null })).toBe(true);
+    expect(isDeliveryRouteEligible(saiu)).toBe(false);
+    expect(isDeliveryRouteEligible(semRua)).toBe(false);
+    expect(needsDeliveryRouteAddress(semRua)).toBe(true);
+    expect(needsDeliveryRouteAddress(saiu)).toBe(false);
+    expect(needsDeliveryRouteAddress(novo)).toBe(false);
+
+    listDeliveryOrders.mockResolvedValue({ data: [novo, saiu, semRua] });
+    render(<DeliveryOrders onOpenAccount={jest.fn()} floorVersion={0} active />);
+
+    expect(await screen.findByRole('checkbox', { name: 'Selecionar pedido 1 para a rota' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /0001/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /pedido 3/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Informe o endereço para incluir na rota')).toBeInTheDocument();
   });
 
   it('mostra o erro da API', async () => {
