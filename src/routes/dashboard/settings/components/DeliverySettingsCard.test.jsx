@@ -75,7 +75,11 @@ describe('DeliverySettingsCard', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
+    const saveButtons = screen.getAllByRole('button', { name: /^salvar$/i });
+    expect(saveButtons.length).toBeGreaterThan(1);
+    fireEvent.click(saveButtons[0]);
+    fireEvent.click(saveButtons[saveButtons.length - 1]);
+    expect(onSave).toHaveBeenCalledTimes(2);
     expect(onSave).toHaveBeenCalledWith('delivery');
   });
 
@@ -261,5 +265,9 @@ describe('DeliverySettingsCard', () => {
     expect(onSettingChange).toHaveBeenCalledWith('deliveryPricingMethod', null, 'NEIGHBORHOOD');
     expect(onSettingChange).not.toHaveBeenCalledWith('deliveryFeeMode', null, expect.anything());
     expect(onSettingChange).not.toHaveBeenCalledWith('deliveryRadiusMaxKm', null, null);
+
+    expect(screen.getByText(/o checkout ainda não cobra estas taxas/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /usar por bairro/i }));
+    expect(onSettingChange).toHaveBeenCalledWith('deliveryPricingMethod', null, 'NEIGHBORHOOD');
   });
 });

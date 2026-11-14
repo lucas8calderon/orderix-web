@@ -660,6 +660,51 @@ describe('PublicDelivery', () => {
     )).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /confirmar pedido/i })).toBeEnabled();
   });
+
+  it('cobra a taxa para todos os bairros depois de sair do raio', async () => {
+    seedCustomerSession();
+    createDeliveryOrder.mockResolvedValue({
+      data: { id: 91, publicToken: 'tok-91', total: 9.5, deliveryFee: 8 },
+    });
+    getDeliveryCatalog.mockResolvedValue({
+      data: {
+        ...closedCatalog,
+        open: true,
+        acceptingOrders: true,
+        pricingMethod: 'NEIGHBORHOOD',
+        feeMode: 'ALL_NEIGHBORHOODS',
+        allNeighborhoodsFee: 8,
+        deliveryFee: 0,
+        usesNeighborhoodPricing: false,
+        fulfillmentModes: ['DELIVERY', 'PICKUP'],
+      },
+    });
+
+    renderDelivery();
+    await openCheckoutFromMenu();
+
+    const dialog = await screen.findByRole('dialog', { name: /finalizar pedido/i });
+    expect(within(dialog).getByText(/entregamos em qualquer bairro\. taxa de entrega: r\$ 8,00/i)).toBeInTheDocument();
+    expect(within(dialog).queryByText(
+      'Não foi possível calcular a taxa de entrega. Verifique o endereço e tente novamente.'
+    )).not.toBeInTheDocument();
+    expect(within(dialog).getByText('R$ 8,00')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /confirmar pedido/i })).toBeEnabled();
+
+    fireEvent.change(within(dialog).getByLabelText(/^CEP/i), { target: { value: '08597-705' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Rua/i), { target: { value: 'Rua José Candido de Carvalho' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Número/i), { target: { value: '122' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Bairro/i), { target: { value: 'Jardim Moraes' } });
+    fireEvent.change(within(dialog).getByLabelText(/^Cidade/i), { target: { value: 'Itaquaquecetuba' } });
+    fireEvent.change(within(dialog).getByLabelText(/^UF/i), { target: { value: 'SP' } });
+    await userEvent.click(within(dialog).getByRole('button', { name: /confirmar pedido/i }));
+
+    await waitFor(() => expect(createDeliveryOrder).toHaveBeenCalled());
+    const payload = createDeliveryOrder.mock.calls[0][1];
+    expect(payload.expectedDeliveryFee).toBe(8);
+    expect(payload.neighborhood).toBe('Jardim Moraes');
+    expect(payload.fulfillment).toBe('DELIVERY');
+  });
 });
 
 const pickupBase = {

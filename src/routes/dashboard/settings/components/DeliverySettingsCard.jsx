@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
   Typography,
   Button,
@@ -487,11 +488,30 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
       </DeliveryGroup>
 
       {radiusMode ? (
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-          Os bairros abaixo continuam salvos e voltam a valer no método Por bairro.
-        </Typography>
+        <Alert severity="warning" sx={{ mb: 1 }}>
+          O checkout ainda não cobra estas taxas. O método ativo é Por raio (km) e, sem a distância da rua, a entrega fica indisponível para o cliente.
+          Os bairros continuam salvos. Escolha Por bairro e salve para a taxa passar a valer.
+          <Box sx={{ mt: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => onSettingChange('deliveryPricingMethod', null, 'NEIGHBORHOOD')}
+            >
+              Usar Por bairro
+            </Button>
+          </Box>
+        </Alert>
       ) : null}
       <DeliveryNeighborhoodsSection settings={settings} onSettingChange={onSettingChange} />
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+        <Button
+          variant="contained"
+          onClick={() => onSave('delivery')}
+          disabled={saving}
+        >
+          {saving ? 'Salvando...' : 'Salvar'}
+        </Button>
+      </Box>
     </SettingsSectionCard>
   );
 });

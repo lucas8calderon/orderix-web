@@ -288,6 +288,21 @@ export function settingsSnapshot(settings) {
 const SALON_PAYMENT_FIELDS = Object.keys(DEFAULT_PAYMENT).filter((key) => !isDeliveryOnlinePaymentField(key));
 // O save do Delivery também grava o interruptor "Delivery ativo" e devolve slug/nome da loja.
 const DELIVERY_SAVED_FIELDS = [...Object.keys(DEFAULT_DELIVERY), 'deliveryEnabled', 'slug', 'storeName'];
+
+/** True quando algum campo gravado pelo Salvar do Delivery difere do último snapshot. */
+export function deliveryFieldsDirty(baseline, settings) {
+  if (baseline == null || settings == null) return false;
+  let previous;
+  try {
+    previous = JSON.parse(baseline);
+  } catch {
+    return false;
+  }
+  const current = trackedSettings(settings);
+  return DELIVERY_SAVED_FIELDS.some(
+    (field) => JSON.stringify(previous[field]) !== JSON.stringify(current[field])
+  );
+}
 const SAVED_FIELDS = {
   paymentMethods: SALON_PAYMENT_FIELDS,
   serviceFee: SALON_PAYMENT_FIELDS,
@@ -585,6 +600,7 @@ export const useSettingsState = () => {
   }, [saveSection]);
 
   const isDirty = baseline != null && settingsSnapshot(settings) !== baseline;
+  const deliveryDirty = deliveryFieldsDirty(baseline, settings);
 
   const discardChanges = useCallback(() => {
     if (baseline == null) return;
@@ -634,6 +650,7 @@ export const useSettingsState = () => {
     updatePermission,
     saveSettings,
     isDirty,
+    deliveryDirty,
     discardChanges,
     getSectionTitle,
     getPaymentMethodLabel,
