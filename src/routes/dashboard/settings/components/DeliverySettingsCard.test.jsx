@@ -75,11 +75,7 @@ describe('DeliverySettingsCard', () => {
       />
     );
 
-    const saveButtons = screen.getAllByRole('button', { name: /^salvar$/i });
-    expect(saveButtons.length).toBeGreaterThan(1);
-    fireEvent.click(saveButtons[0]);
-    fireEvent.click(saveButtons[saveButtons.length - 1]);
-    expect(onSave).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: /salvar/i }));
     expect(onSave).toHaveBeenCalledWith('delivery');
   });
 
@@ -216,68 +212,5 @@ describe('DeliverySettingsCard', () => {
 
     fireEvent.change(field, { target: { value: '' } });
     expect(onSettingChange).toHaveBeenCalledWith('storePhone', null, '__cleared_store_phone__');
-  });
-
-  it('simula a taxa por raio sem apagar o método por bairro', () => {
-    const onSettingChange = jest.fn();
-    renderCard(
-      <DeliverySettingsCard
-        settings={{
-          ...baseSettings,
-          deliveryPricingMethod: 'BY_RADIUS',
-          deliveryFeeMode: 'PER_NEIGHBORHOOD',
-          deliveryRadiusMaxKm: 6.5,
-          deliveryRadiusPricePerKm: 2,
-          deliveryRadiusMinimumFee: 5,
-          storeAddress: 'Rua das Flores, 10',
-        }}
-        onSettingChange={onSettingChange}
-        onSave={jest.fn()}
-        switchStyles={{}}
-        saving={false}
-      />
-    );
-
-    expect(screen.getByLabelText('Endereço de origem da entrega')).toHaveValue('Rua das Flores, 10');
-    expect(screen.getByLabelText('CEP do endereço de origem')).toBeInTheDocument();
-    expect(screen.getByText(/figura ilustrativa/i)).toBeInTheDocument();
-    expect(screen.queryByText(/linha reta/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/haversine/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /bairros atendidos/i })).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
-      target: { value: '6.5' },
-    });
-    expect(screen.getByText(/Taxa simulada: R\$\s*13,00/)).toBeInTheDocument();
-    expect(screen.getByText('6,5 km')).toBeInTheDocument();
-    expect(screen.getByRole('figure')).toHaveAttribute('data-zone', 'edge');
-
-    fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
-      target: { value: '2' },
-    });
-    expect(screen.getByText(/Taxa simulada: R\$\s*5,00/)).toBeInTheDocument();
-    expect(screen.getByRole('figure')).toHaveAttribute('data-zone', 'inside');
-    expect(screen.getByText('2 km')).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText('Distância máxima em quilômetros'), {
-      target: { value: '8' },
-    });
-    expect(onSettingChange).toHaveBeenCalledWith('deliveryRadiusMaxKm', null, 8);
-
-    fireEvent.change(screen.getByLabelText('Distância simulada em quilômetros'), {
-      target: { value: '7' },
-    });
-    expect(screen.getByText('Fora da área de entrega')).toBeInTheDocument();
-    expect(screen.getByRole('figure')).toHaveAttribute('data-zone', 'outside');
-    expect(screen.getByText(/fora do círculo/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('radio', { name: /^por bairro$/i }));
-    expect(onSettingChange).toHaveBeenCalledWith('deliveryPricingMethod', null, 'NEIGHBORHOOD');
-    expect(onSettingChange).not.toHaveBeenCalledWith('deliveryFeeMode', null, expect.anything());
-    expect(onSettingChange).not.toHaveBeenCalledWith('deliveryRadiusMaxKm', null, null);
-
-    expect(screen.getByText(/o checkout ainda não cobra estas taxas/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /usar por bairro/i }));
-    expect(onSettingChange).toHaveBeenCalledWith('deliveryPricingMethod', null, 'NEIGHBORHOOD');
   });
 });

@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { deliveryFieldsDirty, settingsSnapshot, useSettingsState } from './useSettingsState';
+import { useSettingsState } from './useSettingsState';
 import { settingsStorage } from '../utils/settingsStorage';
 import { toDeliverySettingsPayload, toDeliverySettingsUi } from '../../../../services/deliveryService';
 import { CLEARED_STORE_PHONE } from '../../../../utils/phoneInput';
@@ -545,30 +545,5 @@ describe('useSettingsState escopo do salvar de pagamentos', () => {
     });
     expect(settingsStorage.updatePaymentConfig.mock.calls[0][1]).toEqual({ scope: 'salon' });
     expect(settingsStorage.updatePaymentConfig.mock.calls[1][1]).toEqual({ scope: 'all' });
-  });
-});
-
-describe('deliveryFieldsDirty', () => {
-  it('detecta a troca para por bairro e ignora campo de pagamento online', () => {
-    const saved = {
-      deliveryPricingMethod: 'BY_RADIUS',
-      deliveryFeeMode: 'ALL_NEIGHBORHOODS',
-      deliveryAllNeighborhoodsFee: 0,
-      mercadoPagoAccessToken: '',
-      permissions: { admin: { manageSettings: true } },
-      companyInfo: { companyName: 'Loja' },
-    };
-    const baseline = settingsSnapshot(saved);
-
-    expect(deliveryFieldsDirty(baseline, saved)).toBe(false);
-    expect(deliveryFieldsDirty(baseline, {
-      ...saved,
-      deliveryPricingMethod: 'NEIGHBORHOOD',
-      deliveryAllNeighborhoodsFee: 8,
-    })).toBe(true);
-    expect(deliveryFieldsDirty(baseline, {
-      ...saved,
-      mercadoPagoAccessToken: 'token-novo',
-    })).toBe(false);
   });
 });

@@ -27,8 +27,7 @@ export default function DeliveryStoreHeader({
   const typeLabel = storeTypeLabel(catalog);
   const openArea = servesAllNeighborhoods(catalog);
   const fee = openArea ? allNeighborhoodsFee(catalog) : Number(catalog.deliveryFee || 0);
-  const showFee = catalog.pricingMethod !== 'BY_RADIUS'
-    && offersDelivery(fulfillmentModes)
+  const showFee = offersDelivery(fulfillmentModes)
     && !catalog.usesNeighborhoodPricing
     && (openArea || fee > 0);
   const freeOpenArea = openArea && fee === 0;

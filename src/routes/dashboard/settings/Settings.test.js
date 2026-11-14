@@ -194,20 +194,6 @@ describe('Settings page navigation', () => {
     expect(await screen.findByText(/dados fiscais e empresa/i)).toBeInTheDocument();
   });
 
-  it('a barra de alterações da tela de delivery grava o método por bairro', async () => {
-    const saveSettings = jest.fn();
-    useSettingsState.mockReturnValue({
-      ...baseState,
-      isDirty: true,
-      deliveryDirty: true,
-      saveSettings,
-    });
-
-    renderSettings('/app/configuracoes/delivery');
-    fireEvent.click(await screen.findByRole('button', { name: /salvar delivery/i }));
-    expect(saveSettings).toHaveBeenCalledWith('delivery');
-  });
-
   it('mantém rota antiga de delivery', async () => {
     renderSettings('/app/configuracoes/delivery');
     expect(await screen.findByText('Delivery habilitado')).toBeInTheDocument();

@@ -70,7 +70,6 @@ export function Settings() {
     updatePermission,
     saveSettings,
     isDirty,
-    deliveryDirty,
     discardChanges,
     getPaymentMethodLabel,
     getProfileLabel,
@@ -396,21 +395,7 @@ export function Settings() {
             <Button onClick={discardChanges} disabled={saving} sx={{ textTransform: 'none', fontWeight: 700 }}>
               Descartar
             </Button>
-            {activeSection === 'delivery' || activeSection === 'canais' ? (
-              deliveryDirty ? (
-                <Button
-                  variant="contained"
-                  disableElevation
-                  onClick={() => saveSettings('delivery')}
-                  disabled={saving}
-                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
-                >
-                  {saving ? 'Salvando...' : 'Salvar Delivery'}
-                </Button>
-              ) : (
-                <span className="settings-unsaved-bar__hint">Use o botão Salvar do card de pagamentos online.</span>
-              )
-            ) : SECTION_SAVE_TARGET[activeSection] ? (
+            {SECTION_SAVE_TARGET[activeSection] ? (
               <Button
                 variant="contained"
                 disableElevation

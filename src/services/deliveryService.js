@@ -85,10 +85,6 @@ export function toDeliverySettingsUi(data = {}) {
     deliveryFee: Number(data.deliveryFee || 0),
     deliveryFeeMode: data.feeMode || 'PER_NEIGHBORHOOD',
     deliveryAllNeighborhoodsFee: Number(data.allNeighborhoodsFee || 0),
-    deliveryPricingMethod: data.pricingMethod || 'NEIGHBORHOOD',
-    deliveryRadiusMaxKm: data.radiusMaxKm == null || data.radiusMaxKm === '' ? null : Number(data.radiusMaxKm),
-    deliveryRadiusPricePerKm: data.radiusPricePerKm == null || data.radiusPricePerKm === '' ? null : Number(data.radiusPricePerKm),
-    deliveryRadiusMinimumFee: data.radiusMinimumFee == null || data.radiusMinimumFee === '' ? null : Number(data.radiusMinimumFee),
     storePhone: formatStoreWhatsAppInput(data.phone),
     ...estimateFieldsFromApi(data),
     deliveryMinOrder: Number(data.minOrder || 0),
@@ -107,12 +103,6 @@ export const CLEARED_BRANDING_IMAGE = '__cleared_branding__';
 export function isBrandingImage(value) {
   const trimmed = String(value || '').trim();
   return Boolean(trimmed) && trimmed !== CLEARED_BRANDING_IMAGE;
-}
-
-function optionalNumber(value) {
-  if (value == null || value === '') return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
 }
 
 function brandingField(value) {
@@ -157,10 +147,6 @@ export function toDeliverySettingsPayload(ui = {}) {
     deliveryFee: Number(ui.deliveryFee || 0),
     feeMode: ui.deliveryFeeMode || 'PER_NEIGHBORHOOD',
     allNeighborhoodsFee: Number(ui.deliveryAllNeighborhoodsFee || 0),
-    pricingMethod: ui.deliveryPricingMethod || 'NEIGHBORHOOD',
-    radiusMaxKm: optionalNumber(ui.deliveryRadiusMaxKm),
-    radiusPricePerKm: optionalNumber(ui.deliveryRadiusPricePerKm),
-    radiusMinimumFee: optionalNumber(ui.deliveryRadiusMinimumFee),
     minOrder: Number(ui.deliveryMinOrder || 0),
     estimatedMinutes: eta.estimatedMinutes ?? null,
     estimatedMinutesMin: eta.estimatedMinutesMin ?? null,

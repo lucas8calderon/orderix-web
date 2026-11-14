@@ -151,10 +151,6 @@ const DEFAULT_DELIVERY = {
   acceptPrepaidPickup: true,
   deliveryFeeMode: 'PER_NEIGHBORHOOD',
   deliveryAllNeighborhoodsFee: 0,
-  deliveryPricingMethod: 'NEIGHBORHOOD',
-  deliveryRadiusMaxKm: null,
-  deliveryRadiusPricePerKm: null,
-  deliveryRadiusMinimumFee: null,
   storePhone: '',
 };
 
@@ -203,10 +199,6 @@ function deliveryPayloadFrom(current, savedImages = {}) {
     deliveryFee: current.deliveryFee,
     deliveryFeeMode: current.deliveryFeeMode || 'PER_NEIGHBORHOOD',
     deliveryAllNeighborhoodsFee: current.deliveryAllNeighborhoodsFee,
-    deliveryPricingMethod: current.deliveryPricingMethod || 'NEIGHBORHOOD',
-    deliveryRadiusMaxKm: current.deliveryRadiusMaxKm,
-    deliveryRadiusPricePerKm: current.deliveryRadiusPricePerKm,
-    deliveryRadiusMinimumFee: current.deliveryRadiusMinimumFee,
     deliveryMinOrder: current.deliveryMinOrder,
     deliveryEstimatedMinutes: current.deliveryEstimatedMinutes,
     deliveryEstimatedMinutesMin: current.deliveryEstimatedMinutesMin,
@@ -216,19 +208,6 @@ function deliveryPayloadFrom(current, savedImages = {}) {
     deliveryLogoUrl: brandingValueForSave(current.deliveryLogoUrl, savedImages.logo),
     deliveryCoverUrl: brandingValueForSave(current.deliveryCoverUrl, savedImages.cover),
   };
-}
-
-function radiusSettingsError(current) {
-  if (current?.deliveryPricingMethod !== 'BY_RADIUS') return '';
-  const max = Number(current.deliveryRadiusMaxKm);
-  if (!(max > 0)) return 'Informe a distância máxima em km, maior que zero.';
-  if (current.deliveryRadiusPricePerKm == null || current.deliveryRadiusPricePerKm === '' || Number(current.deliveryRadiusPricePerKm) < 0) {
-    return 'Informe o valor por km, maior ou igual a zero.';
-  }
-  if (current.deliveryRadiusMinimumFee != null && current.deliveryRadiusMinimumFee !== '' && Number(current.deliveryRadiusMinimumFee) < 0) {
-    return 'A taxa mínima deve ser maior ou igual a zero.';
-  }
-  return '';
 }
 
 function slowSaveMessage(saving) {
@@ -288,21 +267,6 @@ export function settingsSnapshot(settings) {
 const SALON_PAYMENT_FIELDS = Object.keys(DEFAULT_PAYMENT).filter((key) => !isDeliveryOnlinePaymentField(key));
 // O save do Delivery também grava o interruptor "Delivery ativo" e devolve slug/nome da loja.
 const DELIVERY_SAVED_FIELDS = [...Object.keys(DEFAULT_DELIVERY), 'deliveryEnabled', 'slug', 'storeName'];
-
-/** True quando algum campo gravado pelo Salvar do Delivery difere do último snapshot. */
-export function deliveryFieldsDirty(baseline, settings) {
-  if (baseline == null || settings == null) return false;
-  let previous;
-  try {
-    previous = JSON.parse(baseline);
-  } catch {
-    return false;
-  }
-  const current = trackedSettings(settings);
-  return DELIVERY_SAVED_FIELDS.some(
-    (field) => JSON.stringify(previous[field]) !== JSON.stringify(current[field])
-  );
-}
 const SAVED_FIELDS = {
   paymentMethods: SALON_PAYMENT_FIELDS,
   serviceFee: SALON_PAYMENT_FIELDS,
@@ -433,11 +397,6 @@ export const useSettingsState = () => {
       const estimate = deliveryEstimateForSave(current);
       if (estimate.error) {
         showToast(estimate.error, 'error');
-        return false;
-      }
-      const radiusError = radiusSettingsError(current);
-      if (radiusError) {
-        showToast(radiusError, 'error');
         return false;
       }
     }
@@ -600,7 +559,6 @@ export const useSettingsState = () => {
   }, [saveSection]);
 
   const isDirty = baseline != null && settingsSnapshot(settings) !== baseline;
-  const deliveryDirty = deliveryFieldsDirty(baseline, settings);
 
   const discardChanges = useCallback(() => {
     if (baseline == null) return;
@@ -650,7 +608,6 @@ export const useSettingsState = () => {
     updatePermission,
     saveSettings,
     isDirty,
-    deliveryDirty,
     discardChanges,
     getSectionTitle,
     getPaymentMethodLabel,

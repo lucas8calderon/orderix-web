@@ -85,7 +85,6 @@ import {
   moneyCents,
   servesAllNeighborhoods,
 } from './utils/neighborhoodPlace';
-import { radiusDeliveryBlocked } from './utils/radiusCheckout';
 import { clearServiceAddress, readServiceAddress, writeServiceAddress } from './utils/serviceAddress';
 import WeperPlatformPromo, { WEPER_PLATFORM_NOTE_DELIVERY } from '../../components/WeperPlatformPromo';
 import './PublicDelivery.css';
@@ -448,14 +447,11 @@ export default function PublicDelivery() {
   const promoBanners = useMemo(() => collectPromoBanners(catalog), [catalog]);
   const openArea = servesAllNeighborhoods(catalog);
   const flatFee = allNeighborhoodsFee(catalog);
-  const radiusFeeMessage = radiusDeliveryBlocked(catalog, checkout.fulfillment);
-  const quotedFee = radiusFeeMessage
-    ? 0
-    : openArea
-      ? flatFee
-      : catalog?.usesNeighborhoodPricing
-        ? Number(serviceAddress?.effectiveFee || 0)
-        : catalog?.deliveryFee;
+  const quotedFee = openArea
+    ? flatFee
+    : catalog?.usesNeighborhoodPricing
+      ? Number(serviceAddress?.effectiveFee || 0)
+      : catalog?.deliveryFee;
   const totals = cartTotals(cart, {
     deliveryFee: quotedFee,
     fulfillment: checkout.fulfillment,
@@ -567,7 +563,6 @@ export default function PublicDelivery() {
   };
 
   const validateCheckout = () => {
-    if (radiusFeeMessage) return radiusFeeMessage;
     if (!customer) return 'Entre ou crie uma conta para continuar.';
     if (!checkout.customerName.trim()) return 'Informe o nome.';
     if (!isValidBrazilianPhone(checkout.customerPhone)) return 'Informe um telefone válido.';
@@ -672,11 +667,9 @@ export default function PublicDelivery() {
             : (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId
               ? Number(serviceAddress.neighborhoodId)
               : null)),
-        expectedDeliveryFee: radiusFeeMessage
-          ? null
-          : deliverySelected && (openArea || (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId))
-            ? Number(openArea ? flatFee : (serviceAddress?.effectiveFee || 0))
-            : null,
+        expectedDeliveryFee: deliverySelected && (openArea || (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId))
+          ? Number(openArea ? flatFee : (serviceAddress?.effectiveFee || 0))
+          : null,
         addressId: checkout.addressId ? Number(checkout.addressId) : null,
         saveAddress: Boolean(customer) && deliverySelected && !checkout.addressId && checkout.saveAddress,
         items: cart.items.map((item) => ({
@@ -1074,7 +1067,6 @@ export default function PublicDelivery() {
             onClear={() => { clearCart(slug); setCart({ items: [] }); }}
             onContinue={() => setCartOpen(false)}
             onCheckout={beginCheckout}
-            deliveryFeeLabel={radiusFeeMessage ? 'Indisponível' : ''}
           />
         </DialogContent>
       </Dialog>
@@ -1316,11 +1308,7 @@ export default function PublicDelivery() {
           />
           <Box className="delivery-checkout-summary">
             <Box className="delivery-line"><span>Produtos</span><span>{formatCurrency(totals.subtotal)}</span></Box>
-            <Box className="delivery-line">
-              <span>Entrega</span>
-              <span>{radiusFeeMessage ? 'Indisponível' : formatCurrency(totals.deliveryFee)}</span>
-            </Box>
-            {radiusFeeMessage ? <Alert severity="warning" sx={{ mt: 1 }}>{radiusFeeMessage}</Alert> : null}
+            <Box className="delivery-line"><span>Entrega</span><span>{formatCurrency(totals.deliveryFee)}</span></Box>
             <Box className="delivery-checkout-total-main">
               <span>Total</span>
               <strong>{formatCurrency(totals.total)}</strong>
@@ -1331,7 +1319,7 @@ export default function PublicDelivery() {
           ) : null}
         </DialogContent>
         <DialogActions className="delivery-checkout-actions">
-          <Button className="delivery-checkout-confirm" variant="contained" fullWidth disabled={submitting || closed || !customer || Boolean(radiusFeeMessage)} onClick={submitOrder}>
+          <Button className="delivery-checkout-confirm" variant="contained" fullWidth disabled={submitting || closed || !customer} onClick={submitOrder}>
             {submitting ? 'Enviando...' : 'Confirmar pedido'}
           </Button>
           <Button className="delivery-checkout-back" onClick={() => setCheckoutOpen(false)}>Voltar</Button>
