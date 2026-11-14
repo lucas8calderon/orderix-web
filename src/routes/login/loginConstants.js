@@ -13,6 +13,7 @@ export const GOOGLE_BUTTON_TEXT = 'Entrar com Google';
 export const SECURITY_TEXT = 'Seus dados estão protegidos com segurança';
 export const FOOTER_TEXT = '© 2026 Weper Solutions. Todos os direitos reservados.';
 export const LOGIN_ERROR_TEXT = 'E-mail ou senha inválidos.';
+export const LOGIN_TIMEOUT_TEXT = 'O servidor demorou para responder. Aguarde um instante e tente entrar de novo.';
 export const ASIDE_CARD_TITLE = 'Gestão inteligente';
 export const ASIDE_CARD_DESCRIPTION =
   'Controle pedidos, equipe, cozinha e o painel da operação em um só lugar.';

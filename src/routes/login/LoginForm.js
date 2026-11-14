@@ -142,7 +142,9 @@ export default function LoginForm() {
         setLoginErrorText(
           typeof apiMessage === 'string' && apiMessage.trim()
             ? apiMessage.trim()
-            : LoginConstants.LOGIN_ERROR_TEXT,
+            : error?.response
+              ? LoginConstants.LOGIN_ERROR_TEXT
+              : LoginConstants.LOGIN_TIMEOUT_TEXT,
         );
         setLoginError(true);
         console.error('Error signing in:', error);
