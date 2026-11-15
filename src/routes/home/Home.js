@@ -131,9 +131,10 @@ export default function Home() {
       plan={tier}
       open={captureOpen}
       onClose={() => setCaptureOpen(false)}
+      onPlanChange={(next) => setTierId(next.id)}
       onReady={(lead) => {
         setCaptureOpen(false);
-        const next = new URLSearchParams({ plan: tier.code, lead: lead.token });
+        const next = new URLSearchParams({ plan: lead.planCode || tier.code, lead: lead.token });
         navigate(`${PATHS.SIGNUP}?${next.toString()}`);
       }}
     />

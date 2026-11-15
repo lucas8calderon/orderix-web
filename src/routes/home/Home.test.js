@@ -28,8 +28,14 @@ test('selected price and contact context follow the central pricing configuratio
   const dialog = screen.getByRole('dialog', { name: 'Você está a um passo de começar!' });
   expect(dialog).toHaveTextContent(tier.label);
   expect(dialog.textContent.replace(/\s/g, ' ')).toContain(formatPrice(tier.monthlyPrice).replace(/\s/g, ' '));
-  expect(within(dialog).getByRole('button', { name: 'Continuar para pagamento' })).toBeDisabled();
-  expect(within(dialog).getByRole('checkbox')).not.toBeChecked();
+  expect(within(dialog).getByRole('button', { name: 'Continuar' })).toBeDisabled();
+  expect(within(dialog).queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(dialog).not.toHaveTextContent('Autorizo');
+  const planSelect = within(dialog).getByLabelText('Quanto sua loja fatura por mês?');
+  expect(planSelect).toHaveValue(tier.code);
+  fireEvent.change(planSelect, { target: { value: PRICING_TIERS[0].code } });
+  expect(dialog).toHaveTextContent('Até R$ 1.000');
+  expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument();
   expect(openWhatsApp).not.toHaveBeenCalled();
 });
 
