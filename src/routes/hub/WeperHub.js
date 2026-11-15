@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 import HubHeader from './components/HubHeader';
+import HubHeroCard from './components/HubHeroCard';
 import HubLinkCard from './components/HubLinkCard';
+import HubSegmentsSection from './components/HubSegmentsSection';
 import HubDemoModal from './components/HubDemoModal';
 import HubFooter from './components/HubFooter';
-import { getActiveLinks } from './hubConfig';
+import { SECONDARY_LINKS } from './hubConfig';
 import { trackHubPageView, trackHubModalOpen } from './hubAnalytics';
-import './Hub.css';
+import './HubRedesign.css';
 
 /**
- * Weper Hub — Link-in-bio oficial
+ * Weper Hub — Link-in-bio oficial REDESIGNADO
  * URL: https://www.weper.com.br/links
+ * 
+ * REDESIGN: Layout premium, mobile-first, com hero card e seção de segmentos
  */
 export default function WeperHub() {
   const [demoModalOpen, setDemoModalOpen] = useState(false);
-  const links = getActiveLinks();
+  
+  // Usar apenas links secundários (o principal virou hero card)
+  const links = SECONDARY_LINKS.filter(link => link.active).sort((a, b) => a.order - b.order);
 
   // Configura metadados da página
   useEffect(() => {
@@ -61,11 +67,15 @@ export default function WeperHub() {
         <div className="hub-container">
           <HubHeader />
 
+          <HubHeroCard />
+
           <section className="hub-links" aria-label="Links oficiais da Weper">
             {links.map((link) => (
               <HubLinkCard key={link.id} link={link} onClick={handleLinkClick} />
             ))}
           </section>
+
+          <HubSegmentsSection />
 
           <HubFooter />
         </div>

@@ -3,11 +3,13 @@ import { trackBeforeNavigation, trackHubLinkClick } from '../hubAnalytics';
 
 /**
  * Card de link do Hub
+ * REDESIGN: mais clean com badges e indicadores visuais
  */
 export default function HubLinkCard({ link, onClick }) {
   const Icon = link.icon;
-  const isFeatured = link.featured;
   const isWhatsApp = link.highlight === 'whatsapp';
+  const showDemoLabel = link.id === 'demonstracoes';
+  const showPriceBadge = link.id === 'planos' && link.subtitle;
 
   const handleClick = async (e) => {
     // Se for modal, não navega
@@ -30,7 +32,6 @@ export default function HubLinkCard({ link, onClick }) {
 
   const classNames = [
     'hub-link-card',
-    isFeatured && 'hub-link-card--featured',
     isWhatsApp && 'hub-link-card--whatsapp',
   ]
     .filter(Boolean)
@@ -47,14 +48,15 @@ export default function HubLinkCard({ link, onClick }) {
       type={link.type === 'modal' ? 'button' : undefined}
     >
       <div className="hub-link-icon">
-        <Icon size={24} />
+        <Icon size={22} />
       </div>
       <div className="hub-link-content">
         <div className="hub-link-title">{link.title}</div>
         <div className="hub-link-description">{link.description}</div>
-        {link.subtitle && <div className="hub-link-subtitle">{link.subtitle}</div>}
+        {showDemoLabel && <div className="hub-link-demo-label">Ver demos</div>}
+        {showPriceBadge && <span className="hub-link-badge">{link.subtitle}</span>}
       </div>
-      <ArrowRight size={20} className="hub-link-arrow" aria-hidden="true" />
+      <ArrowRight size={18} className="hub-link-arrow" aria-hidden="true" />
     </Component>
   );
 }

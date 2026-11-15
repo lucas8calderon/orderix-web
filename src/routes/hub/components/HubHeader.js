@@ -2,18 +2,19 @@ import { WeperMark } from '../../home/components/WeperMark';
 
 /**
  * Cabeçalho do Hub: logo, slogan e introdução
+ * REDESIGN: mais compacto e com hierarquia clara
  */
 export default function HubHeader() {
   return (
     <header className="hub-header">
       <div className="hub-logo">
-        <WeperMark size={40} />
+        <WeperMark size={32} />
         <span className="hub-logo-text">Weper</span>
       </div>
       <p className="hub-slogan">Do pedido ao resultado</p>
-      <p className="hub-intro">
-        Tudo que seu negócio precisa para vender mais e gerenciar melhor.
-        Conheça nossas soluções.
+      <h1 className="hub-title">Tudo para seu negócio vender mais.</h1>
+      <p className="hub-description">
+        Delivery próprio, gestão de pedidos, mesas, cozinha, estoque, pagamentos e muito mais.
       </p>
     </header>
   );
