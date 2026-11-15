@@ -1,0 +1,48 @@
+# Render Blueprint para Weper Web
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Site de Produção
+  - type: web
+    name: weper-production-web
+    runtime: static
+    repo: https://github.com/lucas8calderon/orderix-web
+    branch: staging
+    buildCommand: npm ci && CI=false npm run build
+    staticPublishPath: build
+    autoDeploy: true
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # Site de Staging (Homologação)
+  - type: web
+    name: weper-staging-web
+    runtime: static
+    repo: https://github.com/lucas8calderon/orderix-web
+    branch: staging
+    buildCommand: npm ci && CI=false npm run build
+    staticPublishPath: build
+    autoDeploy: true
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: staging
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
