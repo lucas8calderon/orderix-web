@@ -102,6 +102,7 @@ export const PATHS = {
   ADMIN_PLANOS: '/admin/planos',
   ADMIN_ASSINATURAS: '/admin/assinaturas',
   ADMIN_CRM: '/admin/crm',
+  ADMIN_CONTRATACOES: '/admin/contratacoes',
   ADMIN_PARTNERS: '/admin/parceiros',
   LEGACY_DASHBOARD: '/dashboard',
   LEGACY_MASTER: '/master/dashboard',
@@ -131,6 +132,7 @@ export const PATHS = {
   SIGNUP: '/contratar',
   SIGNUP_RETURN: '/contratar/retorno',
   INVITE: '/convite',
+  HUB: '/links',
 };
 
 const STORE_ADMIN_ROLES = [ROLES.ADMIN, ROLES.STORE_ADMIN];
@@ -154,6 +156,7 @@ const PLATFORM_ADMIN_ROUTES = [
   PATHS.ADMIN_PLANOS,
   PATHS.ADMIN_ASSINATURAS,
   PATHS.ADMIN_CRM,
+  PATHS.ADMIN_CONTRATACOES,
   PATHS.ADMIN_PARTNERS,
 ];
 
@@ -253,6 +256,7 @@ export const PUBLIC_PATHS = [
   PATHS.SIGNUP,
   PATHS.SIGNUP_RETURN,
   PATHS.INVITE,
+  PATHS.HUB,
 ];
 
 export function isPlatformAdmin(user) {

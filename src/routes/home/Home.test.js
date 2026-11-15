@@ -24,7 +24,12 @@ test('selected price and contact context follow the central pricing configuratio
   const tier = PRICING_TIERS[4];
   fireEvent.change(screen.getByLabelText('Quanto sua loja processa por mês?'), { target: { value: tier.id } });
   expect(document.querySelector('.wp-price-value')).toHaveTextContent(formatPrice(tier.monthlyPrice).replace(/\s/g, ' '));
-  expect(screen.getByRole('link', { name: 'Assinar esta faixa' })).toHaveAttribute('href', `/contratar?plan=${tier.code}`);
+  fireEvent.click(screen.getByRole('button', { name: 'Assinar esta faixa' }));
+  const dialog = screen.getByRole('dialog', { name: 'Você está a um passo de começar!' });
+  expect(dialog).toHaveTextContent(tier.label);
+  expect(dialog.textContent.replace(/\s/g, ' ')).toContain(formatPrice(tier.monthlyPrice).replace(/\s/g, ' '));
+  expect(within(dialog).getByRole('button', { name: 'Continuar para pagamento' })).toBeDisabled();
+  expect(within(dialog).getByRole('checkbox')).not.toBeChecked();
   expect(openWhatsApp).not.toHaveBeenCalled();
 });
 

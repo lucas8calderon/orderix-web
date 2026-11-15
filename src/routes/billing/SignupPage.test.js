@@ -23,6 +23,15 @@ beforeEach(() => {
   axios.get.mockImplementation(() => new Promise(() => {}));
 });
 
+function fillContact(name = 'Maria') {
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: name } });
+  fireEvent.change(screen.getByLabelText('WhatsApp'), { target: { value: '11988887777' } });
+}
+
+function signupCall() {
+  return axios.post.mock.calls.find((call) => call[0] === '/api/public/billing/signup');
+}
+
 function setup(path = '/contratar?plan=PLAN_02') {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -61,13 +70,13 @@ test('pix signup does not ask for address or send a price', async () => {
   expect(screen.queryByLabelText(/CNPJ do estabelecimento/i)).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/boleto/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/7 dias grátis|teste gratuito|trial/i)).not.toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
-  await waitFor(() => expect(axios.post).toHaveBeenCalled());
-  const payload = axios.post.mock.calls[0][1];
-  expect(axios.post.mock.calls[0][0]).toBe('/api/public/billing/signup');
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  const payload = signupCall()[1];
+  expect(axios.post.mock.calls[0][0]).toBe('/api/public/billing/leads');
   expect(payload.planCode).toBe('PLAN_02');
   expect(payload.billingType).toBe('PIX');
   expect(payload.price).toBeUndefined();
@@ -92,12 +101,12 @@ test('referral field is prefilled from ref, editable, and shows a notice without
   const field = await screen.findByLabelText('Indicação? Insira o código');
   await waitFor(() => expect(field).toHaveValue('WPR-BK9ASD'));
   fireEvent.change(field, { target: { value: 'nao-existe' } });
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
-  await waitFor(() => expect(axios.post).toHaveBeenCalled());
-  expect(axios.post.mock.calls[0][1].partnerReferralCode).toBe('NAO-EXISTE');
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  expect(signupCall()[1].partnerReferralCode).toBe('NAO-EXISTE');
   expect(await screen.findByTestId('partner-referral-notice')).toHaveTextContent(/sem comissão de parceiro/i);
   expect(screen.getByTestId('pix-payload')).toHaveTextContent('000201');
 });
@@ -110,12 +119,12 @@ test('cleared referral field is not sent even when ref was stored', async () => 
   const field = await screen.findByLabelText('Indicação? Insira o código');
   await waitFor(() => expect(field).toHaveValue('K7M4NP'));
   fireEvent.change(field, { target: { value: '' } });
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
-  await waitFor(() => expect(axios.post).toHaveBeenCalled());
-  expect(axios.post.mock.calls[0][1].partnerReferralCode).toBeUndefined();
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  expect(signupCall()[1].partnerReferralCode).toBeUndefined();
   expect(screen.queryByTestId('partner-referral-notice')).not.toBeInTheDocument();
 });
 
@@ -145,7 +154,7 @@ test('generates QR from pix payload when Asaas omits encodedImage', async () => 
     },
   });
   setup('/contratar?plan=PLAN_TEST');
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Lucas' } });
+  fillContact('Lucas');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
@@ -167,7 +176,7 @@ test('status poll fills missing pix payload', async () => {
     },
   });
   setup('/contratar?plan=PLAN_TEST');
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Lucas' } });
+  fillContact('Lucas');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
@@ -180,7 +189,7 @@ test('card without postal code stays on the form', () => {
   selectPlan();
   fireEvent.click(screen.getByLabelText('Cartão'));
   expect(screen.getByLabelText('CEP')).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
@@ -191,11 +200,13 @@ test('card without postal code stays on the form', () => {
 test('api error stays visible and does not claim the store is active', async () => {
   axios.post.mockRejectedValue({ response: { data: { message: 'Plano inexistente.' } } });
   setup();
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Plano inexistente.');
+  expect(screen.getByLabelText('Nome completo')).toHaveValue('Maria');
+  expect(screen.getByLabelText('WhatsApp')).toHaveValue('(11) 98888-7777');
   expect(screen.queryByText('Pagamento em confirmação')).not.toBeInTheDocument();
 });
 
@@ -228,11 +239,11 @@ test('deep link PLAN_TEST preselects homologation plan and can submit', async ()
   expect(screen.getByLabelText(/Plano selecionado|faturamento mensal/i)).toHaveValue('PLAN_TEST');
   expect(screen.getByText(/Plano de homologação Asaas/i)).toBeInTheDocument();
   expect(screen.getByRole('option', { name: /Homologação/i })).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Lucas Homologação' } });
+  fillContact('Lucas Homologação');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
-  await waitFor(() => expect(axios.post).toHaveBeenCalled());
-  expect(axios.post.mock.calls[0][1].planCode).toBe('PLAN_TEST');
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  expect(signupCall()[1].planCode).toBe('PLAN_TEST');
   expect(await screen.findByTestId('signup-waiting')).toBeInTheDocument();
 });

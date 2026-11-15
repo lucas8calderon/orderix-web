@@ -162,15 +162,21 @@ const PrivacyPolicy = () => {
                 <li><strong>Cookies de Marketing:</strong> Personalizam anúncios e conteúdo</li>
               </ul>
               <p>
-                Nas páginas institucionais da Weper (página inicial, demonstrações e contratação)
-                usamos o Meta Pixel para medir os nossos anúncios no Facebook e no Instagram. Ele só
-                é ativado depois que você aceita os cookies de marketing no aviso exibido no site, não
-                recebe dados que você digita nos formulários e não é usado no painel, nos cardápios
-                ou no delivery das lojas.
+                Nas páginas institucionais da Weper (página inicial, demonstrações, páginas
+                de funcionalidades e contratação) podemos usar ferramentas opcionais, e só
+                depois da sua escolha no aviso de cookies. O Meta Pixel mede anúncios no
+                Facebook e no Instagram. O Google Analytics 4, carregado pelo Google Tag
+                Manager, mede visitas e o caminho até a assinatura. O Microsoft Clarity
+                grava o uso das páginas de forma agregada. Essas ferramentas não recebem
+                e-mail, telefone, CPF, CNPJ, dados de cartão nem o código do Pix, não rodam
+                no painel, nos cardápios ou no delivery das lojas, e podem ser recusadas ou
+                alteradas no próprio aviso. Este texto descreve o funcionamento atual do
+                site e pode ser revisto pelo jurídico antes de ser tratado como a redação
+                final da política.
               </p>
               <p>
-                Você pode gerenciar suas preferências de cookies através das configurações 
-                do seu navegador.
+                Você pode gerenciar suas preferências de cookies no aviso do site e também
+                nas configurações do seu navegador.
               </p>
             </div>
           </section>

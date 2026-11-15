@@ -140,6 +140,8 @@ describe('canAccessRoute', () => {
     expect(canAccessRoute(master, PATHS.ADMIN_RESTAURANTES)).toBe(true);
     expect(canAccessRoute(master, PATHS.ADMIN_ASSINATURAS)).toBe(true);
     expect(canAccessRoute(master, PATHS.ADMIN_CRM)).toBe(true);
+    expect(canAccessRoute(master, PATHS.ADMIN_CONTRATACOES)).toBe(true);
+    expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_CONTRATACOES)).toBe(false);
     expect(canAccessRoute(user({ role: ROLES.ADMIN }), PATHS.ADMIN_CRM)).toBe(false);
   });
 

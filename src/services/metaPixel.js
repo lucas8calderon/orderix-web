@@ -5,10 +5,23 @@
  * e depois que a pessoa aceita os cookies de marketing. Nunca roda no painel, no cardápio
  * ou no delivery das lojas clientes, e nunca envia dados pessoais.
  */
+import {
+  CONSENT_ACCEPTED,
+  CONSENT_KEY,
+  CONSENT_REJECTED,
+  getConsent,
+  hasMarketingConsent,
+  setConsent,
+} from '../analytics/analyticsConsent';
+
 export const META_PIXEL_ID = '998466659961823';
-export const CONSENT_KEY = 'weper-cookie-consent';
-export const CONSENT_ACCEPTED = 'accepted';
-export const CONSENT_REJECTED = 'rejected';
+export {
+  CONSENT_ACCEPTED,
+  CONSENT_KEY,
+  CONSENT_REJECTED,
+  getConsent,
+  setConsent,
+};
 
 const PIXEL_HOSTS = new Set(['weper.com.br', 'www.weper.com.br']);
 const MARKETING_PREFIXES = ['/demo', '/contratar'];
@@ -22,24 +35,8 @@ export function isMarketingPath(pathname = '') {
   return MARKETING_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-export function getConsent() {
-  try {
-    return window.localStorage.getItem(CONSENT_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setConsent(value) {
-  try {
-    window.localStorage.setItem(CONSENT_KEY, value);
-  } catch {
-    // Sem armazenamento: o aviso volta na próxima visita, e o pixel segue desligado.
-  }
-}
-
 function canTrack(pathname, hostname) {
-  return isMetaPixelHost(hostname) && isMarketingPath(pathname) && getConsent() === CONSENT_ACCEPTED;
+  return isMetaPixelHost(hostname) && isMarketingPath(pathname) && hasMarketingConsent();
 }
 
 /** Código base da Meta, sem o PageView automático (as trocas de página do SPA são rastreadas à parte). */

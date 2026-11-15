@@ -1,6 +1,7 @@
 /**
  * Assets da landing Weper (composições oficiais).
  */
+import { trackWhatsAppClick } from '../../analytics/analyticsService';
 import ecosystemDevices from '../../assets/images/landing/ecosystem-devices.webp';
 import desktopPdv from '../../assets/images/landing/desktop-pdv.webp';
 import lifestyleWaiter from '../../assets/images/landing/lifestyle-waiter.webp';
@@ -33,6 +34,11 @@ export const CONTACT_WHATSAPP_MESSAGE =
   'Olá! Gostaria de falar com a Weper sobre o meu estabelecimento.';
 
 export function openWhatsApp(message = CONTACT_WHATSAPP_MESSAGE) {
+  try {
+    trackWhatsAppClick();
+  } catch {
+    // A medição não pode impedir o contato.
+  }
   const text = encodeURIComponent(message);
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank', 'noopener,noreferrer');
 }

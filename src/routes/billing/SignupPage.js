@@ -26,6 +26,17 @@ import { formatPrice, getPlanTier, getSignupPlanOptions, TEST_PLAN } from '../..
 import { capturePartnerRef, getStoredPartnerRef } from '../../services/partnerReferral';
 import { PATHS } from '../../services/accessControl';
 import { trackMetaEvent } from '../../services/metaPixel';
+import { CONSENT_EVENT } from '../../analytics/analyticsConsent';
+import { trackGenerateLead, trackPlanSelected } from '../../analytics/analyticsService';
+import {
+  attemptKey,
+  captureSubscriptionLead,
+  maskWhatsApp,
+  readLeadSession,
+  validateName,
+  validateWhatsApp,
+} from '../../services/subscriptionLead';
+import { trackBeginCheckout, trackConfirmedPurchase } from '../../analytics/conversionTracking';
 import WeperMark from '../home/components/WeperMark';
 import ecosystemDevicesWebp from '../../assets/images/landing/ecosystem-devices.webp';
 import ecosystemDevicesJpg from '../../assets/images/landing/ecosystem-devices.jpg';
@@ -184,17 +195,9 @@ function maskCnpj(value) {
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
 }
 
-function maskPhone(value) {
-  const digits = onlyDigits(value).slice(0, 11);
-  if (digits.length <= 10) {
-    return digits
-      .replace(/(\d{2})(\d)/, '($1) $2')
-      .replace(/(\d{4})(\d{1,4})$/, '$1-$2');
-  }
-  return digits
-    .replace(/(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{5})(\d{1,4})$/, '$1-$2');
-}
+
+
+
 
 function maskCep(value) {
   const digits = onlyDigits(value).slice(0, 8);
@@ -279,6 +282,20 @@ export default function SignupPage() {
   ));
   const referralEdited = useRef(false);
   const pollRef = useRef(null);
+  const [consentEpoch, setConsentEpoch] = useState(0);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+
+  useEffect(() => {
+    const stored = readLeadSession();
+    const token = params.get('lead');
+    if (!stored || !token || stored.token !== token) return;
+    setMarketingOptIn(Boolean(stored.marketingOptIn));
+    setForm((current) => ({
+      ...current,
+      name: current.name || stored.name || '',
+      phone: current.phone || stored.whatsapp || '',
+    }));
+  }, [params]);
 
   const plan = getPlanTier(planCode);
   const planSelected = Boolean(plan) && signupPlans.some((tier) => tier.code === planCode);
@@ -309,6 +326,22 @@ export default function SignupPage() {
   useEffect(() => {
     persistSignupResult(result ? { ...result, paid: paymentConfirmed } : null);
   }, [result, paymentConfirmed]);
+
+  useEffect(() => {
+    const refresh = () => setConsentEpoch((current) => current + 1);
+    window.addEventListener(CONSENT_EVENT, refresh);
+    return () => window.removeEventListener(CONSENT_EVENT, refresh);
+  }, []);
+
+  useEffect(() => {
+    if (!paymentConfirmed || !result?.signupId) return;
+    trackConfirmedPurchase({
+      paid: true,
+      signupId: result.signupId,
+      planCode: plan?.code,
+      isRenewal: false,
+    });
+  }, [paymentConfirmed, result?.signupId, plan, consentEpoch]);
 
   useEffect(() => {
     // Anúncios: conta a assinatura uma vez por contratação (o pagamento confirmado pode reaparecer ao recarregar).
@@ -380,6 +413,7 @@ export default function SignupPage() {
   function selectPlan(code) {
     setPlanCode(code);
     setError('');
+    if (code) trackPlanSelected(code, 'signup_form');
   }
 
   async function submit(event) {
@@ -388,6 +422,11 @@ export default function SignupPage() {
     setError('');
     if (!planSelected) {
       setError('Selecione a faixa de faturamento para continuar.');
+      return;
+    }
+    const contactError = validateName(form.name) || validateWhatsApp(form.phone);
+    if (contactError) {
+      setError(contactError);
       return;
     }
     if (card && (!form.phone.trim() || !form.postalCode.trim() || !form.addressNumber.trim())) {
@@ -406,7 +445,7 @@ export default function SignupPage() {
       name: form.name.trim(),
       document: form.document.trim(),
       email: form.email.trim(),
-      phone: card ? form.phone.trim() : undefined,
+      phone: form.phone.trim(),
       postalCode: card ? form.postalCode.trim() : undefined,
       addressNumber: card ? form.addressNumber.trim() : undefined,
       partnerReferralCode,
@@ -427,6 +466,18 @@ export default function SignupPage() {
     };
     setPending(true);
     try {
+      const stored = readLeadSession();
+      const sameAttempt = stored && stored.planCode === planCode && stored.idempotencyKey;
+      const lead = await captureSubscriptionLead({
+        name: form.name,
+        whatsapp: form.phone,
+        planCode,
+        marketingOptIn,
+        source: params.get('lead') ? 'homepage_modal' : 'signup_page',
+        idempotencyKey: sameAttempt ? stored.idempotencyKey : attemptKey(`signup:${planCode}`),
+      });
+      if (lead.created && !isTestPlan) trackGenerateLead('signup_page', planCode);
+      payload.leadToken = lead.token;
       const response = await axios.post('/api/public/billing/signup', payload);
       setPaymentConfirmed(false);
       const pix = normalizeSignupPix(response.data);
@@ -439,6 +490,7 @@ export default function SignupPage() {
       setForm((current) => ({ ...current, number: '', ccv: '' }));
       if (!isTestPlan) {
         trackMetaEvent('InitiateCheckout', { value: plan.monthlyPrice, currency: 'BRL', content_name: plan.code });
+        trackBeginCheckout({ signupId: response.data?.signupId, planCode });
       }
     } catch (requestError) {
       const message = requestError?.response?.data?.message || 'Não foi possível iniciar a contratação.';
@@ -630,7 +682,7 @@ export default function SignupPage() {
                     </p>
                   ) : null}
 
-                  <form className="ct-form" onSubmit={submit}>
+                  <form className="ct-form" onSubmit={submit} data-clarity-mask="true">
                     <div className="ct-field">
                       <div className="ct-field-label-row">
                         <label htmlFor="plan">
@@ -757,6 +809,29 @@ export default function SignupPage() {
                         required
                       />
                     </div>
+
+                    <div className="ct-field">
+                      <label htmlFor="whatsapp">WhatsApp</label>
+                      <input
+                        id="whatsapp"
+                        value={form.phone}
+                        onChange={(event) => update('phone', maskWhatsApp(event.target.value))}
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="(00) 00000-0000"
+                        required
+                      />
+                    </div>
+
+                    <label className="ct-field" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                      <input
+                        type="checkbox"
+                        checked={marketingOptIn}
+                        onChange={(event) => setMarketingOptIn(event.target.checked)}
+                        style={{ marginTop: 4 }}
+                      />
+                      <span>Autorizo contatos promocionais da Weper. A contratação não depende desta autorização. <Link to={PATHS.PRIVACY} target="_blank" rel="noreferrer">Política de Privacidade</Link></span>
+                    </label>
 
                     <div className="ct-field-row">
                       <div className="ct-field">
@@ -907,16 +982,6 @@ export default function SignupPage() {
                             value={form.ccv}
                             onChange={(event) => update('ccv', onlyDigits(event.target.value).slice(0, 4))}
                             inputMode="numeric"
-                          />
-                        </div>
-                        <div className="ct-field">
-                          <label htmlFor="phone">Telefone</label>
-                          <input
-                            id="phone"
-                            value={form.phone}
-                            onChange={(event) => update('phone', maskPhone(event.target.value))}
-                            inputMode="tel"
-                            autoComplete="tel"
                           />
                         </div>
                         <div className="ct-field-row ct-field-row--compact">

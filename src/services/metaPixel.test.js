@@ -48,6 +48,15 @@ it('não carrega o pixel fora da produção ou fora das páginas institucionais'
   expect(window.fbq).toBeUndefined();
 });
 
+it('respeita o consentimento de marketing no formato novo, separado da estatística', () => {
+  window.localStorage.setItem(CONSENT_KEY, JSON.stringify({ v: 1, analytics: true, marketing: false }));
+  trackPageView('/', PROD);
+  expect(window.fbq).toBeUndefined();
+  window.localStorage.setItem(CONSENT_KEY, JSON.stringify({ v: 1, analytics: false, marketing: true }));
+  trackPageView('/', PROD);
+  expect(window.fbq).toBeDefined();
+});
+
 it('com aceite, inicia o pixel sem configuração automática e registra a visita e os eventos', () => {
   window.localStorage.setItem(CONSENT_KEY, CONSENT_ACCEPTED);
   trackPageView('/', PROD);

@@ -34,6 +34,7 @@ import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
+import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
@@ -54,6 +55,7 @@ import { createStore, updateStore } from './service/storesService';
 import { MasterOverview, statusColor } from './components/MasterOverview';
 import { MasterPlans } from './components/MasterPlans';
 import { MasterSubscriptions } from './components/MasterSubscriptions';
+import { MasterContratacoes } from './components/MasterContratacoes';
 import { MasterPartners } from './components/MasterPartners';
 import { CrmBoard } from './crm/CrmBoard';
 import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
@@ -261,6 +263,7 @@ const ADMIN_SECTIONS = {
   planos: PATHS.ADMIN_PLANOS,
   assinaturas: PATHS.ADMIN_ASSINATURAS,
   crm: PATHS.ADMIN_CRM,
+  contratacoes: PATHS.ADMIN_CONTRATACOES,
   parceiros: PATHS.ADMIN_PARTNERS,
 };
 
@@ -270,6 +273,7 @@ const ADMIN_TITLES = {
   planos: 'Planos',
   assinaturas: 'Assinaturas',
   crm: 'CRM',
+  contratacoes: 'Contratações',
   parceiros: 'Parceiros',
 };
 
@@ -366,6 +370,12 @@ export default function MasterDashboard() {
       ],
     },
     {
+      label: 'Comercial',
+      items: [
+        { key: 'contratacoes', title: 'Contratações', icon: <RequestQuoteOutlinedIcon />, to: PATHS.ADMIN_CONTRATACOES, selected: section === 'contratacoes' },
+      ],
+    },
+    {
       label: 'Relacionamento',
       items: [
         { key: 'crm', title: 'CRM', icon: <GroupsOutlinedIcon />, to: PATHS.ADMIN_CRM, selected: section === 'crm' },
@@ -400,13 +410,13 @@ export default function MasterDashboard() {
           </Box>
         ) : (
           <>
-        {loading && section !== 'assinaturas' && section !== 'parceiros' && (
+        {loading && section !== 'assinaturas' && section !== 'parceiros' && section !== 'contratacoes' && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress sx={{ color: 'var(--color-primary)' }} />
           </Box>
         )}
 
-        {!loading && error && section !== 'parceiros' && (
+        {!loading && error && section !== 'parceiros' && section !== 'contratacoes' && (
           <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" onClick={refetch}>Tentar novamente</Button>}>
             Não foi possível carregar os dados administrativos.
           </Alert>
@@ -426,6 +436,10 @@ export default function MasterDashboard() {
 
         {section === 'assinaturas' && (
           <MasterSubscriptions />
+        )}
+
+        {section === 'contratacoes' && (
+          <MasterContratacoes />
         )}
 
         {section === 'parceiros' && (

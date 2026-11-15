@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Menu, X, Smartphone, LayoutDashboard, UtensilsCrossed, ShoppingBag, ChefHat, Monitor, MessageCircle, CheckCircle2, Coffee, Pizza, Store, MoveRight } from 'lucide-react';
 import HeroTypewriter from './components/HeroTypewriter';
 import FeatureShowcase from './components/FeatureShowcase';
@@ -8,6 +8,9 @@ import { FEATURE_PAGES } from './features/featurePages';
 import { PRICING_TIERS, formatPrice, getMinimumPrice, getMaximumPrice } from '../../config/pricingTiers';
 import { PATHS } from '../../services/accessControl';
 import { capturePartnerRef } from '../../services/partnerReferral';
+import { usePlansView } from '../../analytics/usePlansView';
+import { trackPlanSelected, trackSubscriptionModalOpened } from '../../analytics/analyticsService';
+import SubscriptionCaptureModal from '../billing/SubscriptionCaptureModal';
 import { LANDING_IMAGES, openWhatsApp, WHATSAPP_DISPLAY } from './landingAssets';
 import './styles/Rebrand.css';
 
@@ -18,7 +21,7 @@ const SOLUTIONS = [
   { id: 'gestao', label: 'Gestão', Icon: LayoutDashboard, title: 'Faturamento, pedidos e ticket médio ficam no mesmo painel da operação.', text: 'Consulte faturamento, pedidos e ticket médio. Organize o catálogo e os acessos da equipe em um painel que conecta a operação.', points: ['Indicadores da operação', 'Catálogo e preços centralizados', 'Equipe e perfis de acesso'], stage: 'Da operação à decisão', steps: ['Vendas registradas', 'Indicadores reunidos', 'Próximos passos claros'] },
 ];
 const FAQS = [
-  ['Como faço para contratar?', 'Escolha a faixa na seção de preços e use Assinar esta faixa. A contratação pede o CPF ou CNPJ do responsável financeiro, Pix ou cartão. A loja só abre depois da confirmação do pagamento. Dúvidas continuam no WhatsApp.'],
+  ['Como faço para contratar?', 'Escolha a faixa na seção de preços e use Assinar esta faixa. Informe nome e WhatsApp e siga para o pagamento, com o CPF ou CNPJ do responsável financeiro, Pix ou cartão. A loja só abre depois da confirmação do pagamento. Dúvidas continuam no WhatsApp.'],
   ['O que muda entre as faixas de preço?', 'A mensalidade acompanha o volume mensal processado pela plataforma. Os recursos não são divididos entre as faixas: o que muda é o valor da assinatura conforme o movimento do negócio.'],
   ['Existe um limite para a mensalidade?', `Sim. No modelo atual, a mensalidade vai de ${formatPrice(getMinimumPrice())} a ${formatPrice(getMaximumPrice())}. Consulte todas as faixas na seção de preços.`],
   ['A Weper cobra comissão por pedido?', `Não. A Weper não cobra comissão nem taxa por pedido. A mensalidade segue o volume processado na plataforma, de ${formatPrice(getMinimumPrice())} a ${formatPrice(getMaximumPrice())}. Taxas de cartão, Pix ou banco não são da Weper: ficam com a instituição que processa o pagamento.`],
@@ -52,11 +55,20 @@ export default function Home() {
   const [activeSolution, setActiveSolution] = useState(0);
   const [tierId, setTierId] = useState(PRICING_TIERS[0].id);
   const menuButton = useRef(null);
+  const plansSection = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [captureOpen, setCaptureOpen] = useState(false);
+  usePlansView(plansSection);
   const solution = SOLUTIONS[activeSolution];
   // ?ref=CODIGO (link de parceiro): só guarda na sessão, sem atribuir conversão.
   useEffect(() => { capturePartnerRef(location.search); }, [location.search]);
   const tier = PRICING_TIERS.find(item => item.id === tierId) || PRICING_TIERS[0];
+  function openCapture() {
+    trackPlanSelected(tier.code, 'homepage_plans');
+    trackSubscriptionModalOpened(tier.code);
+    setCaptureOpen(true);
+  }
   useEffect(() => {
     const title = document.title;
     document.title = 'Weper | Sistema para salão, delivery e cozinha';
@@ -107,13 +119,23 @@ export default function Home() {
 
       <section id="demo" className="wp-section"><div className="wp-container"><div className="wp-section-heading"><div><span className="wp-kicker">CONHEÇA ANTES DE CONTRATAR</span><h2>Veja o cardápio<br /><em>como o seu cliente vê.</em></h2></div><p>O pedido desta página é só uma simulação.</p></div><div className="wp-demo-grid">{[{slug:'weper-burger', name:'Weper Burger', tag:'HAMBURGUERIA', cover:'/images/demo/burger/cover.jpg', description:'Combos, acompanhamentos e um pedido do seu jeito.'}, {slug:'weper-pizza',name:'Weper Pizza',tag:'PIZZARIA',cover:'/images/demo/pizza/cover.jpg',description:'Sabores e opções organizados para facilitar a escolha.'}, {slug:'weper-pastel',name:'Weper Pastel',tag:'PASTELARIA',cover:'/images/demo/pastel/cover.jpg',description:'Um cardápio simples de explorar, do começo ao fim.'}].map((demo,index) => <Link to={`/demo/${demo.slug}`} key={demo.slug} className={`wp-demo-card wp-demo-card--${index}`}><div className="wp-demo-art"><img src={demo.cover} alt="" /></div><div className="wp-demo-body"><span className="wp-kicker">{demo.tag}</span><h3>{demo.name}</h3><p>{demo.description}</p><span className="wp-text-link">Abrir cardápio simulado <ArrowRight size={17} /></span></div></Link>)}</div></div></section>
 
-      <section id="plans" className="wp-section wp-pricing-section"><div className="wp-container wp-pricing-grid"><div className="wp-pricing-copy"><span className="wp-kicker">PREÇO CLARO, DESDE O COMEÇO</span><h2>Uma mensalidade.<br /><em>Os recursos não mudam quando o movimento muda.</em></h2><p>A Weper não cobra comissão nem taxa por pedido. A mensalidade segue o volume processado na plataforma, de {formatPrice(getMinimumPrice())} a {formatPrice(getMaximumPrice())}. Taxas de cartão, Pix ou banco não são da Weper: ficam com a instituição que processa o pagamento.</p><ul className="wp-benefit-list"><li><CheckCircle2 />Recursos reunidos em uma assinatura</li><li><CheckCircle2 />Sem trocar de plano para liberar módulos</li><li><CheckCircle2 />Contato direto com a equipe pelo WhatsApp</li></ul><div className="wp-onboarding"><strong>Você escolhe a faixa e paga.</strong><p>Se quiser, a equipe orienta pelo WhatsApp.</p><span>Escolha a faixa <MoveRight size={16} /> Pague <MoveRight size={16} /> A loja abre</span></div></div><div className="wp-price-card"><div className="wp-price-top"><span>ASSINATURA WEPER</span><span>Plataforma completa</span></div><label htmlFor="wp-volume">Quanto sua loja processa por mês?</label><div className="wp-select-wrap"><select id="wp-volume" value={tier.id} onChange={event => setTierId(event.target.value)}>{PRICING_TIERS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select><ChevronDown size={18} /></div><div className="wp-price-value" aria-live="polite"><span>{formatPrice(tier.monthlyPrice)}</span><small>/mês</small></div><p className="wp-price-caption">Mensalidade para a faixa selecionada.</p><ContactButton to={`/contratar?plan=${tier.code}`}>Assinar esta faixa</ContactButton><p className="wp-price-note">A loja abre depois da confirmação do pagamento.<br />O valor sai do catálogo, não desta tela.</p><details className="wp-tier-details"><summary>Ver todas as faixas de preço <ChevronDown size={16} /></summary><table><caption>Mensalidade por volume processado</caption><thead><tr><th scope="col">Volume mensal</th><th scope="col">Mensalidade</th></tr></thead><tbody>{PRICING_TIERS.map(item => <tr key={item.id}><td>{item.label}</td><td>{formatPrice(item.monthlyPrice)}</td></tr>)}</tbody></table></details></div></div></section>
+      <section id="plans" ref={plansSection} className="wp-section wp-pricing-section"><div className="wp-container wp-pricing-grid"><div className="wp-pricing-copy"><span className="wp-kicker">PREÇO CLARO, DESDE O COMEÇO</span><h2>Uma mensalidade.<br /><em>Os recursos não mudam quando o movimento muda.</em></h2><p>A Weper não cobra comissão nem taxa por pedido. A mensalidade segue o volume processado na plataforma, de {formatPrice(getMinimumPrice())} a {formatPrice(getMaximumPrice())}. Taxas de cartão, Pix ou banco não são da Weper: ficam com a instituição que processa o pagamento.</p><ul className="wp-benefit-list"><li><CheckCircle2 />Recursos reunidos em uma assinatura</li><li><CheckCircle2 />Sem trocar de plano para liberar módulos</li><li><CheckCircle2 />Contato direto com a equipe pelo WhatsApp</li></ul><div className="wp-onboarding"><strong>Você escolhe a faixa e paga.</strong><p>Se quiser, a equipe orienta pelo WhatsApp.</p><span>Escolha a faixa <MoveRight size={16} /> Pague <MoveRight size={16} /> A loja abre</span></div></div><div className="wp-price-card" data-plans-sentinel=""><div className="wp-price-top"><span>ASSINATURA WEPER</span><span>Plataforma completa</span></div><label htmlFor="wp-volume">Quanto sua loja processa por mês?</label><div className="wp-select-wrap"><select id="wp-volume" value={tier.id} onChange={event => setTierId(event.target.value)}>{PRICING_TIERS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select><ChevronDown size={18} /></div><div className="wp-price-value" aria-live="polite"><span>{formatPrice(tier.monthlyPrice)}</span><small>/mês</small></div><p className="wp-price-caption">Mensalidade para a faixa selecionada.</p><button type="button" className="wp-button wp-button--primary" onClick={openCapture}>Assinar esta faixa<ArrowUpRight size={18} aria-hidden="true" /></button><p className="wp-price-note">A loja abre depois da confirmação do pagamento.<br />O valor sai do catálogo, não desta tela.</p><details className="wp-tier-details"><summary>Ver todas as faixas de preço <ChevronDown size={16} /></summary><table><caption>Mensalidade por volume processado</caption><thead><tr><th scope="col">Volume mensal</th><th scope="col">Mensalidade</th></tr></thead><tbody>{PRICING_TIERS.map(item => <tr key={item.id}><td>{item.label}</td><td>{formatPrice(item.monthlyPrice)}</td></tr>)}</tbody></table></details></div></div></section>
 
       <section id="faq" className="wp-section"><div className="wp-container wp-faq-grid"><div><span className="wp-kicker">PODE PERGUNTAR</span><h2>Antes de pagar</h2><p>Precisa entender como a Weper se encaixa no seu negócio?</p><button type="button" className="wp-text-link" onClick={() => openWhatsApp()}>Converse com a equipe <ArrowUpRight size={18} /></button></div><div className="wp-faq-list">{FAQS.map(([question,answer]) => <details key={question}><summary>{question}<ChevronDown size={19} /></summary><p>{answer}</p></details>)}</div></div></section>
 
       <section className="wp-final"><div className="wp-container wp-final-inner"><span className="wp-kicker">SEU NEGÓCIO. SEU PRÓXIMO PASSO.</span><h2>Quer ver a mensalidade<br /><em>da sua faixa?</em></h2><p>Se quiser, a equipe explica a faixa pelo WhatsApp.</p><ContactButton secondary>Falar com a equipe</ContactButton><span className="wp-final-mark" aria-hidden="true">W</span></div></section>
     </main>
-    <footer className="wp-footer"><div className="wp-container"><div className="wp-footer-top"><div><a href="#home" className="wp-logo" aria-label="Weper, início"><WeperMark size={32} /></a><p>Tecnologia para conectar<br />seu negócio ao próximo passo.</p></div><nav aria-label="Links do rodapé"><div><strong>Funcionalidades</strong>{FEATURE_PAGES.map(page => <Link key={page.path} to={page.path}>{page.label}</Link>)}</div><div><strong>Conheça a Weper</strong><a href="#solucoes">Soluções</a><a href="#demo">Demonstração</a><a href="#plans">Preços</a><Link to={PATHS.PARTNERS}>Parceiros</Link><Link to={PATHS.PARTNERS_LOGIN}>Área de Parceiros</Link></div><div><strong>Conte com a gente</strong><button onClick={() => openWhatsApp()} type="button">Fale com a equipe</button><Link to="/login">Acessar minha conta</Link><span>{WHATSAPP_DISPLAY}</span></div></nav></div><div className="wp-footer-bottom"><span>© {new Date().getFullYear()} Weper Solutions.</span><div><Link to="/privacy">Privacidade</Link><Link to="/terms">Termos de uso</Link></div></div></div></footer>
+    <footer className="wp-footer"><div className="wp-container"><div className="wp-footer-top"><div><a href="#home" className="wp-logo" aria-label="Weper, início"><WeperMark size={32} /></a><p>Tecnologia para conectar<br />seu negócio ao próximo passo.</p></div><nav aria-label="Links do rodapé"><div><strong>Funcionalidades</strong>{FEATURE_PAGES.map(page => <Link key={page.path} to={page.path}>{page.label}</Link>)}</div><div><strong>Conheça a Weper</strong><a href="#solucoes">Soluções</a><a href="#demo">Demonstração</a><a href="#plans">Preços</a><Link to={PATHS.PARTNERS}>Parceiros</Link><Link to={PATHS.PARTNERS_LOGIN}>Área de Parceiros</Link></div><div><strong>Conte com a gente</strong><button onClick={() => openWhatsApp()} type="button">Fale com a equipe</button><Link to="/login">Acessar minha conta</Link><span>{WHATSAPP_DISPLAY}</span></div></nav></div><div className="wp-footer-bottom"><span>© {new Date().getFullYear()} Weper Solutions.</span><div><Link to="/privacy">Privacidade</Link><Link to="/terms">Termos de uso</Link></div></div></div>    </footer>
     <button className="wp-contact-float" type="button" aria-label="Falar com a Weper pelo WhatsApp" onClick={() => openWhatsApp()}><MessageCircle size={22} /></button>
+    <SubscriptionCaptureModal
+      plan={tier}
+      open={captureOpen}
+      onClose={() => setCaptureOpen(false)}
+      onReady={(lead) => {
+        setCaptureOpen(false);
+        const next = new URLSearchParams({ plan: tier.code, lead: lead.token });
+        navigate(`${PATHS.SIGNUP}?${next.toString()}`);
+      }}
+    />
   </div>;
 }

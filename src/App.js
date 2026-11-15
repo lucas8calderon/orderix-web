@@ -21,6 +21,9 @@ import { PATHS } from './services/accessControl';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppThemeProvider } from './theme/ThemeContext';
 import { CookieConsent } from './commons/components/CookieConsent';
+import { noteArrival } from './analytics/campaignTracking';
+import { isCommercialPath } from './analytics/analyticsEvents';
+import { startCommercialListeners, trackAnalyticsPageView } from './analytics/analyticsService';
 import { trackPageView } from './services/metaPixel';
 import './services/apiConfig';
 
@@ -53,6 +56,7 @@ const PartnerProfilePage = lazy(() => import('./routes/partners/PartnerProfilePa
 const PartnerPayoutsPage = lazy(() => import('./routes/partners/PartnerPayoutsPage'));
 const DemoIndex = lazy(() => import('./routes/demo/DemoIndex'));
 const DemoStorePage = lazy(() => import('./routes/demo/DemoStorePage'));
+const WeperHub = lazy(() => import('./routes/hub/WeperHub'));
 
 function RouteFallback() {
   return (
@@ -120,13 +124,29 @@ function BlockedLayout() {
   );
 }
 
-/** Meta Pixel nas páginas institucionais: uma visita por troca de rota, só após o aceite. */
+/** Medição institucional: Meta Pixel e analytics, só depois do consentimento de cada categoria. */
 function MarketingTracking() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  useEffect(() => startCommercialListeners(), []);
   useEffect(() => {
+    if (isCommercialPath(pathname)) {
+      noteArrival(search, document.referrer, window.location.hostname);
+      trackAnalyticsPageView(pathname, search);
+    }
     trackPageView(pathname);
-  }, [pathname]);
-  return <CookieConsent pathname={pathname} onAccept={() => trackPageView(pathname)} />;
+  }, [pathname, search]);
+  return (
+    <CookieConsent
+      pathname={pathname}
+      onAccept={() => {
+        if (isCommercialPath(pathname)) {
+          noteArrival(window.location.search, document.referrer, window.location.hostname);
+          trackAnalyticsPageView(pathname, window.location.search);
+        }
+        trackPageView(pathname);
+      }}
+    />
+  );
 }
 
 function App() {
@@ -143,6 +163,14 @@ function App() {
           <Route path={PATHS.FORGOT_PASSWORD} element={<ForgotPassword />} />
           <Route path={PATHS.PRIVACY} element={<PrivacyPolicy />} />
           <Route path={PATHS.TERMS} element={<TermsOfUse />} />
+          <Route
+            path={PATHS.HUB}
+            element={(
+              <Suspense fallback={<RouteFallback />}>
+                <WeperHub />
+              </Suspense>
+            )}
+          />
           <Route
             path={PATHS.PARTNERS}
             element={(

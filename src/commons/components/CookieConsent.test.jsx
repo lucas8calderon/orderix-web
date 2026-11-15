@@ -39,3 +39,25 @@ it('não aparece no delivery das lojas, fora da produção ou depois de uma esco
   renderConsent();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+it('não trata fechar a personalização como consentimento', () => {
+  renderConsent();
+  fireEvent.click(screen.getByRole('button', { name: 'Personalizar' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+  expect(window.localStorage.getItem(CONSENT_KEY)).toBeNull();
+  expect(screen.getByRole('dialog', { name: 'Aviso de cookies' })).toBeInTheDocument();
+});
+
+it('salva uma preferência parcial e permite recusar depois', () => {
+  const onAccept = jest.fn();
+  renderConsent({ onAccept });
+  fireEvent.click(screen.getByRole('button', { name: 'Personalizar' }));
+  fireEvent.click(screen.getByRole('checkbox', { name: /Estatística/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar preferências' }));
+  const stored = JSON.parse(window.localStorage.getItem(CONSENT_KEY));
+  expect(stored).toEqual(expect.objectContaining({ analytics: true, marketing: false }));
+  expect(onAccept).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Preferências de cookies' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recusar' }));
+  expect(window.localStorage.getItem(CONSENT_KEY)).toBe(CONSENT_REJECTED);
+});
