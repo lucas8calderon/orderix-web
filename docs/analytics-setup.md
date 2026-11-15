@@ -1,6 +1,18 @@
 # Analytics comercial da Weper
 
-Este guia cobre a medição do site institucional: visita, planos, contratação e assinatura paga. O código já está no `orderix-web`. Nenhuma conta de Google ou Clarity foi criada por esta implementação, e nada disso publica o site.
+Este guia cobre a medição do site institucional: visita, planos, contratação e assinatura paga. O código já está no `orderix-web`. Nada disso publica o site.
+
+## Contas já criadas (2026-11-15)
+
+| Ferramenta | Identificador | Observação |
+|---|---|---|
+| GA4 | conta `Weper` (416249546), propriedade `Weper` (564371508), fluxo Web `https://www.weper.com.br` (16347496430), ID de medição `G-13XVKJPHRZ` | Fuso São Paulo, BRL. Métrica otimizada desligada. `purchase` já é evento principal. |
+| Tag Manager | conta `Weper`, contêiner `www.weper.com.br`, `GTM-TCXTQK6G` | Versão 2 publicada: tag do Google com `send_page_view=false` em Inicialização, tag de evento GA4 com `{{Event}}`, acionador `CE - eventos comerciais Weper` (regex `^(page_view\|plans_view\|plans_cta_click\|plan_selected\|begin_checkout\|whatsapp_click\|generate_lead\|purchase)$`) e variáveis `DLV - *`. Detecção automática de eventos e dados fornecidos pelo usuário desligados. |
+| Clarity | projeto `Weper`, `ze8gnb4ur8` | Mascaramento estrito. |
+
+As propriedades `biblia-diaria-6d74b` e `combustivel-ff424` da mesma conta Google não fazem parte da Weper e não foram alteradas.
+
+O site em produção só passa a enviar dados depois que essas três variáveis estiverem no serviço `weper-production-web` da Render e houver um build novo.
 
 Os scripts externos só entram no domínio de produção (`weper.com.br` e `www.weper.com.br`), depois do consentimento de estatística, e somente se o identificador correspondente estiver preenchido. Identificador vazio não quebra a página.
 
@@ -27,9 +39,9 @@ Preencher no serviço **weper-production-web** da Render, e gerar um build novo.
 
 | Variável | Onde é usada | Exemplo |
 |---|---|---|
-| `REACT_APP_GTM_CONTAINER_ID` | Frontend. Único script do GA4 | `GTM-XXXXXXX` |
-| `REACT_APP_GA4_MEASUREMENT_ID` | Não vira script. Conferência e configuração da tag no GTM | `G-XXXXXXXX` |
-| `REACT_APP_CLARITY_PROJECT_ID` | Frontend, só em produção | id do projeto Clarity |
+| `REACT_APP_GTM_CONTAINER_ID` | Frontend. Único script do GA4 | `GTM-TCXTQK6G` |
+| `REACT_APP_GA4_MEASUREMENT_ID` | Não vira script. Conferência e configuração da tag no GTM | `G-13XVKJPHRZ` |
+| `REACT_APP_CLARITY_PROJECT_ID` | Frontend, só em produção | `ze8gnb4ur8` |
 | `REACT_APP_CLARITY_ENABLED` | `true` libera o Clarity também em localhost. Sem isso, desenvolvimento não grava sessão | vazio |
 | `REACT_APP_ANALYTICS_DEBUG` | `true` libera o GTM fora de produção. Não usar no build de produção com o contêiner real de outro ambiente | vazio |
 | `REACT_APP_ANALYTICS_DISABLED` | `true` desliga a coleta | vazio |
@@ -66,7 +78,8 @@ Há um único caminho até o GA4: a tag do GTM. Não crie outra tag que carregue
 6. Tag de configuração: a tag do passo 1.
 7. Nome do evento: `{{Event}}`. Crie uma variável de camada de dados chamada `Event`, nome da variável de camada `event`, se o GTM não oferecer `{{Event}}` pronto. Na prática o nome do evento que o site envia já é o campo `event` do `dataLayer` (`page_view`, `plans_view`, `plan_selected`, `begin_checkout`, `whatsapp_click`, `generate_lead`, `purchase`, `plans_cta_click`).
 8. Parâmetros do evento: marque para enviar os campos da camada de dados listados na tabela acima (`plan_id`, `plan_name`, `value`, `currency`, `transaction_id`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `channel`, `first_channel`, `source_section`, `acquisition`). Não mapeie e-mail, telefone ou documento: o site não envia esses campos.
-9. Acionador: Evento personalizado, nome `.*`, "usar correspondência de regex", e exclua `gtm.js`, `gtm.dom`, `gtm.load` e `gtm.click` para não reenviar eventos internos do GTM ao GA4.
+9. Acionador: Evento personalizado com "usar correspondência de regex" e a lista fechada `^(page_view|plans_view|plans_cta_click|plan_selected|begin_checkout|whatsapp_click|generate_lead|purchase)$`. Eventos internos do GTM (`gtm.js`, `gtm.dom`, `gtm.load`, `gtm.click`) ficam de fora. Evento novo no site exige incluir o nome aqui.
+11. Não mapeie `source` e `medium` como parâmetros do evento: o GA4 os trata como campos próprios de origem e eles sobrescreveriam a atribuição do Google. `channel` já carrega essa informação.
 10. Não crie um segundo acionador de clique que também dispare `plan_selected` ou `purchase`. O site já faz isso.
 
 Para `purchase`, o GA4 espera `transaction_id`, `value` e `currency`. Eles já saem no evento. `transaction_id` é o id interno da tentativa de contratação, não um documento.
@@ -90,12 +103,13 @@ Desenvolvimento local: deixe as variáveis vazias em `.env.development`. O `npm 
 
 ## 6. Microsoft Clarity
 
-1. Acesse [clarity.microsoft.com](https://clarity.microsoft.com/) e crie um projeto para `www.weper.com.br`.
-2. Copie o ID do projeto.
-3. Coloque em `REACT_APP_CLARITY_PROJECT_ID` no mesmo serviço de produção e faça o build.
-4. No projeto Clarity, ative a máscara de texto sensível. O formulário de contratação já marca `data-clarity-mask="true"`.
-5. Não cole um segundo snippet do Clarity no HTML.
-6. O script é `async`. Em localhost ele não carrega, a menos que `REACT_APP_CLARITY_ENABLED=true`.
+1. O projeto já existe: **Weper**, ID `ze8gnb4ur8`, URL `https://www.weper.com.br` (Settings > Overview).
+2. O ID é público e já está em `.env.example` e `.env.development`.
+3. Coloque `REACT_APP_CLARITY_PROJECT_ID=ze8gnb4ur8` no serviço de produção (`weper-production-web`) e faça o build.
+4. Masking está em **Strict** (todo texto mascarado), para não gravar e-mail, telefone, CPF/CNPJ nem dados de pagamento. O formulário de contratação também marca `data-clarity-mask="true"`.
+5. Não há instalação via Google Tag Manager, plugin ou snippet manual: o próprio código (`loadClarity`) injeta o script. Não cole um segundo snippet nem crie tag do Clarity no GTM, senão as sessões duplicam.
+6. Em Settings > Setup, os cookies do Clarity ficam ligados (o script só carrega após consentimento de estatística). Integrações com Google Analytics e Google Ads não estão conectadas.
+7. O script é `async`. Em localhost ele não carrega, a menos que `REACT_APP_CLARITY_ENABLED=true`.
 
 ## 7. Consentimento
 
