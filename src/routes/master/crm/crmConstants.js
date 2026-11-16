@@ -111,6 +111,8 @@ export const CRM_ACTIVITY_TITLES = {
   PROPOSAL_SENT: 'Proposta enviada',
   CONVERTED: 'Convertido',
   CLOSED: 'Encerrado',
+  WHATSAPP_OPENED: 'WhatsApp aberto',
+  WHATSAPP_SEND_CONFIRMED: 'Envio de WhatsApp confirmado',
 };
 
 export const DUE_SOON_HOURS = 4;

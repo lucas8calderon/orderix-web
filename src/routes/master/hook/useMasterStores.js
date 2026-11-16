@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getStores, getStoresDashboard } from '../service/storesService';
 
-export function useMasterStores() {
+export function useMasterStores({ enabled = true } = {}) {
   const [stores, setStores] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,8 +25,12 @@ export function useMasterStores() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     fetchAll();
-  }, [fetchAll]);
+  }, [fetchAll, enabled]);
 
   return { stores, summary, loading, error, refetch: fetchAll };
 }

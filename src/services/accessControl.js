@@ -9,6 +9,7 @@ export const ROLES = {
   KITCHEN: 'KITCHEN',
   CASHIER: 'CASHIER',
   PARTNER: 'PARTNER',
+  CRM_OPERATOR: 'CRM_OPERATOR',
 };
 
 const ROLE_LABELS = {
@@ -20,6 +21,7 @@ const ROLE_LABELS = {
   [ROLES.KITCHEN]: 'Cozinha',
   [ROLES.CASHIER]: 'Caixa',
   [ROLES.PARTNER]: 'Parceiro',
+  [ROLES.CRM_OPERATOR]: 'Operador de CRM',
 };
 
 /** Nome do papel para exibir na interface; undefined quando o papel é desconhecido. */
@@ -125,6 +127,7 @@ export const PATHS = {
   PARTNERS: '/parceiros',
   PARTNERS_LOGIN: '/parceiros/login',
   PARTNERS_DASHBOARD: '/parceiros/dashboard',
+  PARTNERS_LEADS: '/parceiros/leads',
   PARTNERS_PROFILE: '/parceiros/perfil',
   PARTNERS_PAYOUTS: '/parceiros/pagamentos',
   PARTNERS_RECOVERY: '/parceiros/recuperar-acesso',
@@ -163,6 +166,7 @@ const PLATFORM_ADMIN_ROUTES = [
 /** Área autenticada do parceiro. Login, recuperação e redefinição são públicos. */
 const PARTNER_AREA_ROUTES = [
   PATHS.PARTNERS_DASHBOARD,
+  PATHS.PARTNERS_LEADS,
   PATHS.PARTNERS_PROFILE,
   PATHS.PARTNERS_PAYOUTS,
 ];
@@ -204,6 +208,10 @@ export const ROLE_ROUTES = {
     home: PATHS.PARTNERS_DASHBOARD,
     routes: PARTNER_AREA_ROUTES,
   },
+  [ROLES.CRM_OPERATOR]: {
+    home: PATHS.ADMIN_CRM,
+    routes: [PATHS.ADMIN_CRM],
+  },
 };
 
 /**
@@ -235,6 +243,7 @@ export const ROLE_PERMISSIONS = {
   [ROLES.KITCHEN]: ['store.kitchen'],
   [ROLES.WAITER]: ['store.waiter'],
   [ROLES.PARTNER]: ['partner.portal'],
+  [ROLES.CRM_OPERATOR]: ['crm.operate'],
 };
 
 export const PUBLIC_PATHS = [
@@ -266,6 +275,15 @@ export function isPlatformAdmin(user) {
 
 export function isPartner(user) {
   return user?.role === ROLES.PARTNER;
+}
+
+/** Leads do CRM só depois que a Weper ativa o cadastro. A API confirma de novo. */
+export function partnerCanOpenCrm(user) {
+  return isPartner(user) && user?.status === 'ACTIVE';
+}
+
+export function isCrmOperator(user) {
+  return user?.role === ROLES.CRM_OPERATOR;
 }
 
 /** Rotas da área autenticada do parceiro (exclui landing, login e recuperação). */
@@ -428,6 +446,11 @@ export function canAccessRoute(user, path) {
     return isPartnerAreaPath(normalized);
   }
 
+  // Operador de CRM não tem loja: só o quadro em /admin/crm.
+  if (isCrmOperator(user)) {
+    return normalized === PATHS.ADMIN_CRM || normalized.startsWith(`${PATHS.ADMIN_CRM}/`);
+  }
+
   if (normalized === PATHS.SUBSCRIPTION_BLOCKED) {
     return !isPlatformAdmin(user) && !isSubscriptionActive(user);
   }
@@ -458,6 +481,9 @@ export function canAccessRoute(user, path) {
 export function getPostLoginPath(user) {
   if (!user) {
     return PATHS.LOGIN;
+  }
+  if (isCrmOperator(user)) {
+    return PATHS.ADMIN_CRM;
   }
   if (isPlatformAdmin(user)) {
     return ROLE_ROUTES[user.role]?.home || PATHS.ADMIN_DASHBOARD;

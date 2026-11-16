@@ -48,6 +48,7 @@ import {
   formatDate,
   formatPlanSummary,
   getPostLoginPath,
+  isCrmOperator,
   toDateInputValue,
 } from '../../services/accessControl';
 import { useMasterStores } from './hook/useMasterStores';
@@ -281,7 +282,8 @@ export default function MasterDashboard() {
   const navigate = useNavigate();
   const { section } = useParams();
   const user = getCurrentUser();
-  const { stores, summary, loading, error, refetch } = useMasterStores();
+  const operator = isCrmOperator(user);
+  const { stores, summary, loading, error, refetch } = useMasterStores({ enabled: !operator });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -356,7 +358,10 @@ export default function MasterDashboard() {
     }
   };
 
-  const adminGroups = [
+  const crmItem = { key: 'crm', title: 'CRM', icon: <GroupsOutlinedIcon />, to: PATHS.ADMIN_CRM, selected: section === 'crm' };
+  const adminGroups = operator
+    ? [{ label: 'Relacionamento', items: [crmItem] }]
+    : [
     {
       label: 'Visão geral',
       items: [{ key: 'dashboard', title: 'Dashboard', icon: <DashboardOutlinedIcon />, to: PATHS.ADMIN_DASHBOARD, selected: section === 'dashboard' }],
@@ -384,6 +389,10 @@ export default function MasterDashboard() {
     },
   ];
 
+  if (operator && section !== 'crm') {
+    return <Navigate to={PATHS.ADMIN_CRM} replace />;
+  }
+
   if (section === 'restaurantes') {
     return <Navigate to={PATHS.ADMIN_ESTABELECIMENTOS} replace />;
   }
@@ -396,11 +405,11 @@ export default function MasterDashboard() {
     <AppShell
       logo={weperLogo}
       brandMark={weperMark}
-      contextLabel="Weper Master"
+      contextLabel={operator ? 'Weper CRM' : 'Weper Master'}
       contextHint={ADMIN_TITLES[section]}
       groups={adminGroups}
-      accountName={user?.name || 'Administração'}
-      accountHint="Gestão da plataforma"
+      accountName={user?.name || (operator ? 'CRM' : 'Administração')}
+      accountHint={operator ? 'Operação comercial' : 'Gestão da plataforma'}
       onLogout={handleLogout}
       flush={section === 'crm'}
     >

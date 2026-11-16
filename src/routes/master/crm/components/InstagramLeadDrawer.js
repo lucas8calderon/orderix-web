@@ -9,7 +9,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { businessTypeLabel } from '../crmConstants';
 import { INSTAGRAM_COLUMNS, formatWhen, instagramHandle, kindLabel, registerLabel, toneColor, toneOf } from '../instagramCrm';
+import { CrmWhatsAppActions } from './CrmWhatsAppActions';
 
 export function InstagramLeadDrawer({
   open,
@@ -27,6 +29,10 @@ export function InstagramLeadDrawer({
   onChangeStatus,
   onAddNote,
   onEdit,
+  canManage = true,
+  pendingWhatsApp = false,
+  onOpenWhatsApp = async () => {},
+  onConfirmWhatsApp = async () => {},
 }) {
   const [draft, setDraft] = useState('');
   const [note, setNote] = useState('');
@@ -55,15 +61,19 @@ export function InstagramLeadDrawer({
         {lead && (
           <>
             <Box>
-              <Typography variant="body2" color="text.secondary">{kindLabel(lead.leadKind)}</Typography>
+              <Typography variant="body2" color="text.secondary">{kindLabel(lead.leadKind)} · {businessTypeLabel(lead.businessType)}</Typography>
               <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 700 }}>{instagramHandle(lead)}</Typography>
+              <Typography variant="body2" color="text.primary">Telefone: {lead.phone || '—'}</Typography>
+              <Typography variant="body2" color="text.primary">Endereço: {[lead.address, lead.city, lead.state].filter(Boolean).join(' · ') || '—'}</Typography>
               <Typography variant="body2" color="text.primary">Cadastro: {formatWhen(lead.createdAt || lead.discoveredAt)}</Typography>
               <Typography variant="body2" color="text.primary">Último contato: {formatWhen(lead.lastContactAt)}</Typography>
               <Typography variant="body2" color="text.primary">Próximo acompanhamento: {formatWhen(lead.nextContactAt)}</Typography>
               <Typography variant="body2" sx={{ color: toneColor(tone), fontWeight: 700 }}>
                 {lead.prospectFlag || (tone === 'NONE' ? 'Sem prazo ativo' : 'Dentro do prazo')}
               </Typography>
-              <Button onClick={onEdit} color="primary" sx={{ textTransform: 'none', px: 0 }}>Editar dados</Button>
+              {canManage && (
+                <Button onClick={onEdit} color="primary" sx={{ textTransform: 'none', px: 0 }}>Editar dados</Button>
+              )}
             </Box>
             <TextField
               select
@@ -76,7 +86,7 @@ export function InstagramLeadDrawer({
                 <MenuItem key={column.id} value={column.id}>{column.label}</MenuItem>
               ))}
             </TextField>
-            {label && (
+            {label && (lead.instagramUsername || lead.instagram) && (
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>Mensagem preparada</Typography>
                 <TextField
@@ -99,16 +109,25 @@ export function InstagramLeadDrawer({
                     {label}
                   </Button>
                 </Stack>
-                <Button
-                  onClick={() => onSaveMessage(lead.id, draft)}
-                  disabled={saving}
-                  sx={{ textTransform: 'none', px: 0 }}
-                  color="primary"
-                >
-                  Salvar texto só neste lead
-                </Button>
+                {canManage && (
+                  <Button
+                    onClick={() => onSaveMessage(lead.id, draft)}
+                    disabled={saving}
+                    sx={{ textTransform: 'none', px: 0 }}
+                    color="primary"
+                  >
+                    Salvar texto só neste lead
+                  </Button>
+                )}
               </Box>
             )}
+            <CrmWhatsAppActions
+              phone={lead.phone}
+              saving={saving}
+              pendingConfirm={pendingWhatsApp}
+              onOpen={(message) => onOpenWhatsApp(lead.id, message)}
+              onConfirm={() => onConfirmWhatsApp(lead.id)}
+            />
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}>Observação</Typography>
               <TextField

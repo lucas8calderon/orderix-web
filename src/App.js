@@ -54,6 +54,7 @@ const PartnerResetPasswordPage = lazy(() => import('./routes/partners/PartnerRes
 const PartnerDashboardPage = lazy(() => import('./routes/partners/PartnerDashboardPage'));
 const PartnerProfilePage = lazy(() => import('./routes/partners/PartnerProfilePage'));
 const PartnerPayoutsPage = lazy(() => import('./routes/partners/PartnerPayoutsPage'));
+const PartnerLeadsPage = lazy(() => import('./routes/partners/PartnerLeadsPage'));
 const DemoIndex = lazy(() => import('./routes/demo/DemoIndex'));
 const DemoStorePage = lazy(() => import('./routes/demo/DemoStorePage'));
 const WeperHub = lazy(() => import('./routes/hub/WeperHub'));
@@ -205,6 +206,7 @@ function App() {
           />
           <Route element={<PartnerLayout />}>
             <Route path={PATHS.PARTNERS_DASHBOARD} element={<PartnerDashboardPage />} />
+            <Route path={PATHS.PARTNERS_LEADS} element={<PartnerLeadsPage />} />
             <Route path={PATHS.PARTNERS_PROFILE} element={<PartnerProfilePage />} />
             <Route path={PATHS.PARTNERS_PAYOUTS} element={<PartnerPayoutsPage />} />
           </Route>

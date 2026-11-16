@@ -82,6 +82,14 @@ export function archiveCrmLead(id) {
   return axios.delete(`${CRM_URL}/leads/${id}`);
 }
 
+export function openCrmWhatsApp(id, message) {
+  return axios.post(`${CRM_URL}/leads/${id}/whatsapp/opened`, { message });
+}
+
+export function confirmCrmWhatsApp(id) {
+  return axios.post(`${CRM_URL}/leads/${id}/whatsapp/confirm`);
+}
+
 export function getCrmInstagramTemplates() {
   return axios.get(`${CRM_URL}/instagram/templates`);
 }

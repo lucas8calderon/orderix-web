@@ -3,10 +3,11 @@ import { Alert, Button, Skeleton, Snackbar, Stack, TextField } from '@mui/materi
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import { Link } from 'react-router-dom';
-import { PATHS, formatCurrency, formatDate } from '../../services/accessControl';
+import { PATHS, formatCurrency, formatDate, partnerCanOpenCrm } from '../../services/accessControl';
 import { getCurrentUser } from '../../services/session';
 import {
   getApiErrorMessage,
@@ -187,6 +188,11 @@ export default function PartnerDashboardPage() {
           >
             Nova indicação
           </Button>
+          {partnerCanOpenCrm(sessionUser) && (
+            <Button component={Link} to={PATHS.PARTNERS_LEADS} variant="outlined" startIcon={<GroupsOutlinedIcon />}>
+              Leads
+            </Button>
+          )}
           <Button component={Link} to={PATHS.PARTNERS_PAYOUTS} variant="outlined" startIcon={<PaymentsOutlinedIcon />}>
             Pagamentos
           </Button>
@@ -204,6 +210,12 @@ export default function PartnerDashboardPage() {
             action={<Button color="inherit" size="small" onClick={loadDashboard}>Tentar novamente</Button>}
           >
             {dashboardError}
+          </Alert>
+        )}
+
+        {sessionUser?.status && sessionUser.status !== 'ACTIVE' && (
+          <Alert severity="info">
+            Os leads do CRM ficam disponíveis quando a Weper ativar seu cadastro.
           </Alert>
         )}
 

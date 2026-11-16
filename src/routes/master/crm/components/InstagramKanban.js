@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, MenuItem, Paper, Select, Stack, Typography } from '@mui/material';
 import { Draggable, DragDropContext } from 'react-beautiful-dnd';
 import { StrictModeDroppable } from './StrictModeDroppable';
+import { businessTypeLabel } from '../crmConstants';
 import { INSTAGRAM_COLUMNS, columnOf, flagOf, instagramHandle, kindLabel, timeInStage, toneColor, toneOf } from '../instagramCrm';
 
 export function InstagramKanban({ leads, onOpen, onChangeStatus }) {
@@ -79,7 +80,10 @@ function InstagramCard({ lead, index, onOpen, onChangeStatus }) {
             sx={{ borderLeft: `4px solid ${toneColor(tone)}` }}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>{lead.businessName}</Typography>
-            <Typography variant="body2" color="text.secondary">{instagramHandle(lead)}</Typography>
+            <Typography variant="body2" color="text.secondary">{instagramHandle(lead) || businessTypeLabel(lead.businessType)}</Typography>
+            {lead.phone && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{lead.phone}</Typography>
+            )}
             <Typography variant="caption" color="text.secondary">{kindLabel(lead.leadKind)}</Typography>
             <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>{timeInStage(lead)}</Typography>
             {flag && (

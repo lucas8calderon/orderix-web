@@ -14,6 +14,7 @@ import {
   hasStoreContext,
   isPartnerAreaPath,
   isPlatformAdmin,
+  partnerCanOpenCrm,
   isPublicPath,
   isStoreAdmin,
   toDateInputValue,
@@ -132,6 +133,19 @@ describe('canAccessRoute', () => {
     expect(canAccessRoute(waiter, PATHS.APP_ATENDIMENTO)).toBe(false);
   });
 
+  it('CRM_OPERATOR entra só no CRM e volta para /admin/crm depois do login', () => {
+    const operator = user({ role: ROLES.CRM_OPERATOR, storeId: null, subscriptionActive: false });
+    expect(getPostLoginPath(operator)).toBe(PATHS.ADMIN_CRM);
+    expect(canAccessRoute(operator, PATHS.ADMIN_CRM)).toBe(true);
+    expect(canAccessRoute(operator, PATHS.ADMIN_DASHBOARD)).toBe(false);
+    expect(canAccessRoute(operator, PATHS.ADMIN_ASSINATURAS)).toBe(false);
+    expect(canAccessRoute(operator, PATHS.ADMIN_ESTABELECIMENTOS)).toBe(false);
+    expect(canAccessRoute(operator, PATHS.ADMIN_PARTNERS)).toBe(false);
+    expect(canAccessRoute(operator, PATHS.APP_DASHBOARD)).toBe(false);
+    expect(hasPermission(operator, 'crm.operate')).toBe(true);
+    expect(hasPermission(operator, 'crm.manage')).toBe(false);
+  });
+
   it('MASTER não entra em /app e entra em /admin', () => {
     const master = user({ role: ROLES.MASTER, storeId: null });
     expect(canAccessRoute(master, PATHS.APP_DASHBOARD)).toBe(false);
@@ -237,6 +251,13 @@ describe('formatDate / toDateInputValue', () => {
 describe('parceiros', () => {
   const partner = { id: 5, role: ROLES.PARTNER, partnerId: 9, name: 'Ana Silva' };
 
+  it('só o parceiro ativo abre os leads na interface', () => {
+    expect(partnerCanOpenCrm({ role: ROLES.PARTNER, status: 'ACTIVE' })).toBe(true);
+    expect(partnerCanOpenCrm({ role: ROLES.PARTNER, status: 'PENDING_VERIFICATION' })).toBe(false);
+    expect(partnerCanOpenCrm({ role: ROLES.PARTNER })).toBe(false);
+    expect(partnerCanOpenCrm({ role: ROLES.CRM_OPERATOR, status: 'ACTIVE' })).toBe(false);
+  });
+
   it('PARTNER vai para o dashboard de parceiros após o login', () => {
     expect(getPostLoginPath(partner)).toBe(PATHS.PARTNERS_DASHBOARD);
     expect(getDefaultRouteByRole(partner)).toBe('/parceiros/dashboard');
@@ -244,10 +265,12 @@ describe('parceiros', () => {
 
   it('PARTNER acessa só a própria área, nunca /app, /admin ou bloqueio de assinatura', () => {
     expect(canAccessRoute(partner, PATHS.PARTNERS_DASHBOARD)).toBe(true);
+    expect(canAccessRoute(partner, PATHS.PARTNERS_LEADS)).toBe(true);
     expect(canAccessRoute(partner, PATHS.PARTNERS_PROFILE)).toBe(true);
     expect(canAccessRoute(partner, PATHS.PARTNERS_PAYOUTS)).toBe(true);
     expect(canAccessRoute(partner, PATHS.APP_DASHBOARD)).toBe(false);
     expect(canAccessRoute(partner, PATHS.ADMIN_DASHBOARD)).toBe(false);
+    expect(canAccessRoute(partner, PATHS.ADMIN_CRM)).toBe(false);
     expect(canAccessRoute(partner, PATHS.ADMIN_PARTNERS)).toBe(false);
     expect(canAccessRoute(partner, PATHS.SUBSCRIPTION_BLOCKED)).toBe(false);
   });

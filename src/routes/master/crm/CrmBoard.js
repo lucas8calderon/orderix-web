@@ -11,8 +11,12 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import { PageHeader } from '../../../commons/components/PageHeader';
+import { isPlatformAdmin } from '../../../services/accessControl';
+import { getCurrentUser } from '../../../services/session';
 import { CrmLostReasonDialog } from './components/CrmLostReasonDialog';
+import { CrmProspectingDialog } from './components/CrmProspectingDialog';
 import { InstagramKanban } from './components/InstagramKanban';
 import { InstagramLeadDrawer } from './components/InstagramLeadDrawer';
 import { InstagramLeadForm } from './components/InstagramLeadForm';
@@ -26,10 +30,12 @@ import {
 } from './instagramCrm';
 import {
   addInstagramLeadNote,
+  confirmCrmWhatsApp,
   createCrmLead,
   getCrmLead,
   getCrmLeadActivities,
   getCrmLeads,
+  openCrmWhatsApp,
   getInstagramFollowUpSettings,
   getInstagramLeadMessage,
   getInstagramMessageTemplates,
@@ -44,6 +50,7 @@ import {
 import './CrmBoard.css';
 
 export function CrmBoard() {
+  const canManage = isPlatformAdmin(getCurrentUser());
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,6 +69,8 @@ export function CrmBoard() {
   const [settings, setSettings] = useState(null);
   const [lostDialog, setLostDialog] = useState({ open: false, leadId: null });
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const [prospectingOpen, setProspectingOpen] = useState(false);
+  const [pendingWhatsAppId, setPendingWhatsAppId] = useState(null);
 
   const showToast = (messageText, severity = 'success') => setToast({ open: true, message: messageText, severity });
 
@@ -69,7 +78,7 @@ export function CrmBoard() {
     setLoading(true);
     setError('');
     try {
-      const response = await getCrmLeads({ channel: 'INSTAGRAM' });
+      const response = await getCrmLeads();
       setLeads(response.data || []);
     } catch (err) {
       setError(err?.response?.data?.message || 'Não foi possível carregar o CRM.');
@@ -105,7 +114,9 @@ export function CrmBoard() {
         if (!query) return true;
         const name = (lead.businessName || '').toLowerCase();
         const handle = (lead.instagramUsername || '').toLowerCase();
-        return name.includes(query) || handle.includes(query);
+        const phone = (lead.phone || '').toLowerCase();
+        const city = (lead.city || '').toLowerCase();
+        return name.includes(query) || handle.includes(query) || phone.includes(query) || city.includes(query);
       })
       .sort(urgentFirst ? compareUrgency : (a, b) => (b.id || 0) - (a.id || 0));
   }, [leads, filters, urgentFirst]);
@@ -218,10 +229,20 @@ export function CrmBoard() {
   return (
     <Box className="crm-board">
       <PageHeader
-        title="CRM Instagram"
-        description="Prospecção manual. O envio no Direct continua com você."
-        actions={(
+        title="CRM"
+        description={canManage
+          ? 'Leads compartilhados da Weper. Importar, cadastrar e excluir ficam com a administração.'
+          : 'Leads compartilhados da Weper. Atualize a etapa e registre o contato.'}
+        actions={canManage ? (
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<TravelExploreIcon />}
+              onClick={() => setProspectingOpen(true)}
+              sx={{ textTransform: 'none', minHeight: 44, width: { xs: '100%', sm: 'auto' } }}
+            >
+              Prospectar
+            </Button>
             <Button variant="outlined" onClick={openTemplates} sx={{ textTransform: 'none' }}>Templates</Button>
             <Button
               variant="contained"
@@ -232,7 +253,7 @@ export function CrmBoard() {
               Cadastrar lead
             </Button>
           </Stack>
-        )}
+        ) : null}
       />
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} className="ig-metrics">
@@ -246,7 +267,7 @@ export function CrmBoard() {
       <Box className="ig-filters">
         <TextField
           size="small"
-          label="Nome ou Instagram"
+          label="Nome, telefone ou Instagram"
           value={filters.q}
           onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
         />
@@ -310,7 +331,7 @@ export function CrmBoard() {
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress color="primary" /></Box>}
       {!loading && error && <Alert severity="error">{error}</Alert>}
       {!loading && !error && leads.length === 0 && (
-        <Alert severity="info">Nenhum lead de Instagram ainda. Cadastre um perfil para começar a prospecção.</Alert>
+        <Alert severity="info">Nenhum lead no CRM ainda.</Alert>
       )}
       {!loading && !error && leads.length > 0 && visible.length === 0 && (
         <Alert severity="info">Nenhum lead com esses filtros.</Alert>
@@ -338,7 +359,45 @@ export function CrmBoard() {
         loading={loadingDetails}
         saving={saving}
         settings={settings}
-        onClose={() => setDetails(null)}
+        canManage={canManage}
+        pendingWhatsApp={pendingWhatsAppId === details?.id}
+        onOpenWhatsApp={async (id, message) => {
+          setSaving(true);
+          try {
+            const response = await openCrmWhatsApp(id, message);
+            const url = response.data?.url;
+            if (!url) {
+              showToast('Este lead não tem um telefone válido para WhatsApp.', 'error');
+              return;
+            }
+            window.open(url, '_blank', 'noopener,noreferrer');
+            setPendingWhatsAppId(id);
+            const activityResponse = await getCrmLeadActivities(id);
+            setActivities(activityResponse.data || []);
+            showToast('WhatsApp aberto. Confirme o envio quando voltar. A etapa não mudou.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível abrir o WhatsApp.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onConfirmWhatsApp={async (id) => {
+          const previous = (leads.find((item) => item.id === id) || details)?.status;
+          setSaving(true);
+          try {
+            const response = await confirmCrmWhatsApp(id);
+            applyLead(response.data);
+            setPendingWhatsAppId(null);
+            showToast(previous === 'NEW' && response.data?.status === 'CONTACTED'
+              ? 'Envio confirmado. O lead foi para Contatado.'
+              : 'Envio confirmado. A etapa do lead foi mantida.');
+          } catch (err) {
+            showToast(err?.response?.data?.message || 'Não foi possível confirmar o envio.', 'error');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onClose={() => { setDetails(null); setPendingWhatsAppId(null); }}
         onEdit={() => { setEditing(details); setFormError(''); setFormOpen(true); }}
         onChangeStatus={requestStatus}
         onCopy={async (text) => {
@@ -434,6 +493,33 @@ export function CrmBoard() {
           }
         }}
       />
+      {canManage && (
+        <CrmProspectingDialog
+          open={prospectingOpen}
+          onClose={() => setProspectingOpen(false)}
+          onImported={async (data) => {
+            try {
+              await load();
+            } catch (err) {
+              showToast(err?.response?.data?.message || 'Não foi possível atualizar o quadro.', 'error');
+            }
+            if (data?.imported) {
+              showToast(`${data.imported} lead${data.imported === 1 ? '' : 's'} adicionado${data.imported === 1 ? '' : 's'} ao CRM.`);
+            }
+          }}
+          onOpenLead={async (leadId) => {
+            if (!leadId) return;
+            setProspectingOpen(false);
+            try {
+              const local = leads.find((lead) => lead.id === leadId);
+              const lead = local || (await getCrmLead(leadId)).data;
+              await openLead(lead);
+            } catch (err) {
+              showToast(err?.response?.data?.message || 'Não foi possível abrir o lead.', 'error');
+            }
+          }}
+        />
+      )}
       <CrmLostReasonDialog
         open={lostDialog.open}
         saving={saving}
