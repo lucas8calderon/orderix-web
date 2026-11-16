@@ -40,19 +40,20 @@ export function CrmWhatsAppPanel() {
   }, []);
   const save = async () => {
     setBusy(true); setError(''); setNotice('');
-    try { await whatsappApi.put('/template', { message }); setNotice('Mensagem salva para abrir as conversas pelo CRM.'); }
+    try { await whatsappApi.put('/template', { message }); setNotice('Primeiro contato salvo. Vale para Novo lead e Contatado.'); }
     catch (e) { setError(e.response?.data?.message || 'Não foi possível salvar a mensagem.'); }
     finally { setBusy(false); }
   };
   return <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
     <Typography variant="h6">Mensagem de primeiro contato no WhatsApp</Typography>
     <Typography variant="body2">
-      Use {'{{estabelecimento}}'} e {'{{segmento}}'} para personalizar. Abra o WhatsApp pelo card (envio manual)
-      ou enfileire contatos autorizados na fila automática abaixo.
+      Novo lead e Contatado abrem esta mensagem já preenchida. Aguardando retorno abre o texto de retorno.
+      As outras colunas abrem o chat sem mensagem. Você só confirma o envio no WhatsApp.
+      Use {'{{estabelecimento}}'} e {'{{segmento}}'} para personalizar o primeiro contato.
     </Typography>
     {error && <Alert severity="error">{error}</Alert>}
     {notice && <Alert severity="success">{notice}</Alert>}
-    <TextField fullWidth multiline minRows={3} label="Mensagem de primeiro contato" value={message} inputProps={{ maxLength: 2000 }} onChange={e => setMessage(e.target.value)} sx={{ my: 2 }} />
+    <TextField fullWidth multiline minRows={8} label="Mensagem de primeiro contato" value={message} inputProps={{ maxLength: 2000 }} onChange={e => setMessage(e.target.value)} sx={{ my: 2 }} />
     <Stack direction="row"><Button disabled={busy || !message.trim()} onClick={save}>Salvar mensagem</Button></Stack>
   </Paper>;
 }

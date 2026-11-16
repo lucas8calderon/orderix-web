@@ -343,7 +343,7 @@ export function CrmProspectingDialog({ open, onClose, onImported, onOpenLead }) 
                         >
                           Abrir no WhatsApp
                         </Button>
-                        <CrmInstagramButton instagram={item.lead?.instagram} />
+                        <CrmInstagramButton lead={item.lead} instagram={item.lead?.instagram} />
                         {item.leadId && (
                           <Button size="small" sx={{ textTransform: 'none' }} onClick={() => onOpenLead && onOpenLead(item.leadId)}>
                             Ver lead

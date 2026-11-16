@@ -5,7 +5,13 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import { Draggable } from 'react-beautiful-dnd';
-import { businessTypeLabel, followUpIndicator, locationLabel } from '../crmConstants';
+import {
+  businessTypeLabel,
+  followUpIndicator,
+  instagramOutreachLabel,
+  leadKindLabel,
+  locationLabel,
+} from '../crmConstants';
 import { openWhatsAppLead } from '../whatsappTemplate';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
@@ -21,6 +27,7 @@ export function CrmLeadCard({
   onChangeStatus,
   onArchive,
   onConfirmSend,
+  onInstagramUpdated,
 }) {
   const indicator = followUpIndicator(lead);
   const cardTone = indicator.cardClass || '';
@@ -77,8 +84,13 @@ export function CrmLeadCard({
               </Box>
             </Stack>
             <Typography variant="caption" color="text.secondary" display="block">
-              {businessTypeLabel(lead.businessType)}
+              {leadKindLabel(lead.leadKind)} · {businessTypeLabel(lead.businessType)}
             </Typography>
+            {lead.instagramOutreachStatus && lead.instagramOutreachStatus !== 'NONE' && (
+              <Typography variant="caption" color="text.secondary" display="block">
+                Instagram: {instagramOutreachLabel(lead.instagramOutreachStatus)}
+              </Typography>
+            )}
             <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.35 }}>
               <PlaceOutlinedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
               <Typography variant="caption">{locationLabel(lead)}</Typography>
@@ -115,7 +127,7 @@ export function CrmLeadCard({
                   </IconButton>
                 </span>
               </Tooltip>
-              <CrmInstagramButton variant="icon" instagram={lead.instagram} />
+              <CrmInstagramButton variant="icon" lead={lead} onUpdated={onInstagramUpdated} />
               <Tooltip title="Detalhes">
                 <IconButton size="small" aria-label="Detalhes" onClick={() => onOpen(lead)}>
                   <InfoOutlinedIcon fontSize="small" />

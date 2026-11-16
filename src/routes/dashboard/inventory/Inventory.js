@@ -50,8 +50,8 @@ export default function InventoryPanel() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const load = useCallback(() => {
-    setLoading(true);
+  const load = useCallback((silent = false) => {
+    if (!silent) setLoading(true);
     return Promise.all([getInventorySnapshot(), getInventoryMovements()])
       .then(([snapshot, movementResponse]) => {
         setItems(snapshot.data?.items || []);
@@ -59,13 +59,33 @@ export default function InventoryPanel() {
         setError('');
       })
       .catch((err) => {
-        setError(apiMessage(err, 'Não foi possível carregar o estoque.'));
+        if (!silent) setError(apiMessage(err, 'Não foi possível carregar o estoque.'));
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!silent) setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  // A baixa da venda já grava o saldo. Enquanto a seção está aberta, busca de novo
+  // para mostrar a quantidade atual sem o botão Atualizar.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      load(true);
+    };
+    const timer = setInterval(refresh, 12000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [load]);
 
   const openAdjust = (item, direction) => {

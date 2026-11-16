@@ -1,15 +1,60 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../../../services/apiConfig';
-/** Template centralizado da primeira mensagem. O envio continua manual no WhatsApp. */
-export const DEFAULT_WHATSAPP_MESSAGE = `Olá! Tudo bem? 👋
+/**
+ * O painel edita o primeiro contato. O backend escolhe o texto ao abrir:
+ * Novo lead e Contatado usam esse template; Aguardando retorno usa o follow-up;
+ * as outras colunas abrem o chat sem mensagem.
+ */
+export function whatsAppOpenHint(status) {
+  if (status === 'NEW' || status === 'CONTACTED') {
+    return 'A mensagem de primeiro contato já vem preenchida.';
+  }
+  if (status === 'WAITING_RESPONSE') {
+    return 'A mensagem de retorno já vem preenchida.';
+  }
+  return 'Esta coluna abre o WhatsApp sem mensagem pronta.';
+}
 
-Somos da Weper, uma plataforma que ajuda estabelecimentos a organizar pedidos, comandas, estoque, delivery próprio e cardápio digital.
+/** Texto inicial do primeiro contato. O painel usa a mensagem salva no backend. */
+export const DEFAULT_WHATSAPP_MESSAGE = `Olá! Tudo bem?
 
-Estamos buscando empreendedores para conhecer nossas soluções e possíveis parcerias.
+Somos da Weper e gostaríamos de apresentar uma oportunidade para ajudar o seu negócio a crescer, vender mais e ter mais autonomia!
 
-Posso te apresentar rapidamente como funciona?
+A Weper é uma plataforma completa de gestão e vendas, desenvolvida para facilitar a rotina de estabelecimentos de diferentes segmentos, reunindo diversas soluções em um só lugar:
 
-Se preferir não receber mensagens, é só me avisar.`;
+*Delivery próprio* — Receba pedidos diretamente dos seus clientes, sem depender de aplicativos de terceiros.
+
+*Cardápio Digital* — Personalizado com a identidade da sua marca.
+
+*Gestão de Mesas e Comandas* — Mais organização e agilidade nos atendimentos.
+
+*Aplicativo de Garçom e Painel de Cozinha* — Controle seus pedidos em tempo real.
+
+*Controle de Estoque e Vendas* — Acompanhe sua operação e seu faturamento.
+
+*Autoatendimento* — Mais praticidade e autonomia para seus clientes.
+
+*E sabe qual é o nosso grande diferencial?*
+
+Diferentemente de marketplaces como iFood, Keeta e 99Food, que trabalham com modelos de cobrança de comissões e taxas, a Weper não cobra comissão sobre suas vendas!
+
+- 100% do valor das vendas pertence ao seu estabelecimento, sem descontos de comissão da Weper.
+- Sem taxas por pedido ou percentual sobre seu faturamento cobrados pela Weper.
+- Mais liberdade para vender e fortalecer sua própria marca.
+
+Taxas de processamento de pagamentos de parceiros financeiros, quando aplicáveis, são independentes da Weper.
+
+*Experimente 7 dias grátis!*
+
+*Planos completos a partir de R$ 39,90/mês*, com soluções para ajudar seu negócio a crescer sem comprometer seu faturamento.
+
+Mais do que oferecer tecnologia, queremos construir parcerias de verdade! Nosso compromisso é ajudar empreendedores a simplificar suas operações, conquistar clientes e crescer de forma sustentável.
+
+Acreditamos que, quando nossos parceiros crescem, a Weper cresce junto!
+
+*Que tal conhecer a Weper e descobrir como podemos ajudar o seu estabelecimento?*
+
+Será um prazer apresentar nossas soluções, sem compromisso!`;
 
 export function whatsAppDigits(phone) {
   if (!phone) return '';

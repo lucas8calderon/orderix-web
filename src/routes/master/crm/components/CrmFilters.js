@@ -2,6 +2,8 @@ import React from 'react';
 import { Box, Button, Chip, FormControl, InputLabel, MenuItem, Select, Stack, TextField } from '@mui/material';
 import {
   CRM_BUSINESS_TYPES,
+  CRM_CHANNELS,
+  CRM_LEAD_KINDS,
   CRM_SOURCES,
   CRM_STATUSES,
   FOLLOW_UP_FILTERS,
@@ -39,7 +41,7 @@ export function CrmFilters({ filters, onChange, onQuickFollowUp, onClear }) {
       >
         <TextField
           size="small"
-          label="Buscar estabelecimento, responsável ou telefone"
+          label="Buscar nome, responsável, telefone ou Instagram"
           value={filters.q}
           onChange={(event) => onChange('q', event.target.value)}
           sx={{ flex: 1.4, minWidth: { md: 240 } }}
@@ -73,6 +75,24 @@ export function CrmFilters({ filters, onChange, onQuickFollowUp, onClear }) {
           onChange={(event) => onChange('city', event.target.value)}
           sx={{ minWidth: 140, flex: 1 }}
         />
+        <FormControl size="small" sx={{ minWidth: 150, flex: 1 }}>
+          <InputLabel>Tipo</InputLabel>
+          <Select label="Tipo" value={filters.leadKind || ''} onChange={(event) => onChange('leadKind', event.target.value)}>
+            <MenuItem value="">Todos</MenuItem>
+            {CRM_LEAD_KINDS.map((item) => (
+              <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
+          <InputLabel>Canal</InputLabel>
+          <Select label="Canal" value={filters.channel || ''} onChange={(event) => onChange('channel', event.target.value)}>
+            <MenuItem value="">Todos</MenuItem>
+            {CRM_CHANNELS.map((item) => (
+              <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
           <InputLabel>Origem</InputLabel>
           <Select label="Origem" value={filters.source} onChange={(event) => onChange('source', event.target.value)}>

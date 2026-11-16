@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
   FormControl,
@@ -50,6 +51,8 @@ const emptyForm = {
   categoryId: '',
   isAvailable: true,
   image: '',
+  trackInventory: false,
+  stockQuantity: '',
   variations: [],
   choiceGroups: [],
 };
@@ -167,6 +170,8 @@ export function ProductFormDialog({
         categoryId: product.categoryId != null ? String(product.categoryId) : '',
         isAvailable: product.isAvailable !== false,
         image: product.image || '',
+        trackInventory: product.trackInventory === true,
+        stockQuantity: product.stockQuantity != null ? String(product.stockQuantity) : '',
         variations: toVariationRows(product.variations),
         choiceGroups: toChoiceRows(product.mandatoryGroups),
       });
@@ -241,7 +246,18 @@ export function ProductFormDialog({
     : choicePrices.length
       ? true
       : !Number.isNaN(numericValue) && numericValue > 0;
-  const canSave = form.name.trim().length > 0 && hasCategory && priceReady && choicesValid && !saving;
+  const stockLocked = Boolean(product?.id && product.trackInventory);
+  const stockDigits = String(form.stockQuantity ?? '').replace(/\D/g, '');
+  const stockNumber = stockDigits === '' ? NaN : Number(stockDigits);
+  const inventoryReady = !form.trackInventory
+    || stockLocked
+    || (Number.isInteger(stockNumber) && stockNumber >= 0);
+  const canSave = form.name.trim().length > 0
+    && hasCategory
+    && priceReady
+    && choicesValid
+    && inventoryReady
+    && !saving;
 
   const updateVariation = (key, patch) => {
     setForm((prev) => ({
@@ -254,8 +270,9 @@ export function ProductFormDialog({
     onSave({
       ...form,
       categoryId: Number(form.categoryId),
-      value: numericValue,
       value: !usingVariations && choicePrices.length ? Math.min(...choicePrices) : numericValue,
+      trackInventory: Boolean(form.trackInventory),
+      stockQuantity: form.trackInventory && !stockLocked ? stockNumber : null,
       variations: variationRows.map((row, index) => ({
         id: row.id || null,
         name: row.name.trim(),
@@ -675,6 +692,45 @@ export function ProductFormDialog({
             Escolha onde o produto aparece no seu catálogo.
           </FormHelperText>
         </FormControl>
+
+<Typography component="h3" variant="subtitle2" sx={{ mt: 1, mb: 1 }}>Estoque</Typography>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={Boolean(form.trackInventory)}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, trackInventory: e.target.checked }))
+              }
+              color="primary"
+            />
+          }
+          label="Controlar estoque deste produto"
+        />
+        <FormHelperText sx={{ mb: form.trackInventory ? 1 : 2, ml: 0 }}>
+          {form.trackInventory
+            ? 'Cada venda desconta a quantidade comprada. O saldo aparece na seção Estoque.'
+            : 'Sem este controle, as vendas não alteram o estoque.'}
+        </FormHelperText>
+        {form.trackInventory ? (
+          <TextField
+            fullWidth
+            label="Quantidade em estoque"
+            value={stockLocked ? String(product?.stockQuantity ?? form.stockQuantity) : form.stockQuantity}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+              setForm((prev) => ({ ...prev, stockQuantity: digits }));
+            }}
+            disabled={stockLocked}
+            helperText={stockLocked
+              ? 'O saldo muda com as vendas. Para corrigir, use Entrada ou Saída na seção Estoque.'
+              : 'Informe quantas unidades você tem agora. Exemplo: 24 refrigerantes.'}
+            inputProps={{
+              inputMode: 'numeric',
+              'aria-label': 'Quantidade em estoque',
+            }}
+            sx={{ mb: 2 }}
+          />
+        ) : null}
 
 <Typography component="h3" variant="subtitle2" sx={{ mt: 1, mb: 1 }}>Disponibilidade e imagem</Typography>
         <FormControlLabel

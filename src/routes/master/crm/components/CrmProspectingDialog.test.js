@@ -108,7 +108,7 @@ describe('CrmProspectingDialog', () => {
     await waitFor(() => expect(onImported).toHaveBeenCalled());
     expect(await screen.findByText('Pronto para contato')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Abrir no WhatsApp' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Abrir no Instagram' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Instagram' })).toBeInTheDocument();
   });
 
   it('mostra empty state sem disparar outra busca', async () => {

@@ -24,13 +24,15 @@ import {
   businessTypeLabel,
   CRM_STATUSES,
   formatDateTime,
+  instagramOutreachLabel,
+  leadKindLabel,
   locationLabel,
   lostReasonLabel,
   phoneContactLabel,
   sourceLabel,
 } from '../crmConstants';
 import { buildInstagramUrl } from '../instagram';
-import { openWhatsAppLead } from '../whatsappTemplate';
+import { openWhatsAppLead, whatsAppOpenHint } from '../whatsappTemplate';
 import { CrmActivityTimeline } from './CrmActivityTimeline';
 import { CrmFollowUpIndicator } from './CrmFollowUpIndicator';
 import { CrmInstagramButton } from './CrmInstagramButton';
@@ -77,6 +79,7 @@ export function CrmLeadDetailsDialog({
   onChangeStatus,
   onConfirmSend,
   onArchive,
+  onInstagramUpdated,
   saving,
 }) {
   const isMobile = useIsMobile();
@@ -93,7 +96,9 @@ export function CrmLeadDetailsDialog({
 
   const content = (
     <>
-      <Typography color="text.secondary">{businessTypeLabel(lead.businessType)}</Typography>
+      <Typography color="text.secondary">
+        {lead.leadKindLabel || leadKindLabel(lead.leadKind)} · {businessTypeLabel(lead.businessType)}
+      </Typography>
       <Typography color="text.secondary" sx={{ mb: 1.5 }}>{locationLabel(lead)}</Typography>
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         <Button
@@ -116,14 +121,14 @@ export function CrmLeadDetailsDialog({
         >
           Marcar como enviada
         </Button>
-        <CrmInstagramButton instagram={lead.instagram} />
+        <CrmInstagramButton lead={lead} onUpdated={onInstagramUpdated} />
         <Button variant="outlined" onClick={onRegisterContact} sx={{ textTransform: 'none' }}>
           Registrar contato
         </Button>
       </Stack>
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        Abrir o WhatsApp não registra envio. Após colar e enviar a mensagem, use &quot;Marcar como enviada&quot;.
+        Abrir o WhatsApp não registra envio. {whatsAppOpenHint(lead.status)} Depois de enviar, use &quot;Marcar como enviada&quot;.
       </Typography>
       <CrmWhatsAppOptOut key={lead.id} lead={lead} onBlocked={setWhatsAppBlocked} />
 
@@ -140,7 +145,15 @@ export function CrmLeadDetailsDialog({
           <Field label="Responsável" value={lead.contactName} />
           <Field label={phoneContactLabel(lead)} value={lead.phone} />
           <Field label="E-mail" value={lead.email} />
-          <Field label="Instagram" value={lead.instagram} href={buildInstagramUrl(lead.instagram)} />
+          <Field
+            label="Instagram"
+            value={lead.instagramUsername ? `@${lead.instagramUsername}` : lead.instagram}
+            href={lead.instagramProfileUrl || buildInstagramUrl(lead.instagram)}
+          />
+          <Field
+            label="Contato no Instagram"
+            value={lead.instagramOutreachStatusLabel || instagramOutreachLabel(lead.instagramOutreachStatus)}
+          />
           <Field label="Site" value={lead.website} />
         </Stack>
       </Section>

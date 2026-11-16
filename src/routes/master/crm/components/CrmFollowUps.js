@@ -41,7 +41,7 @@ function FollowUpList({ title, leads, emptyLabel }) {
               >
                 WhatsApp
               </Button>
-              <CrmInstagramButton variant="compact" instagram={lead.instagram} />
+              <CrmInstagramButton variant="compact" lead={lead} />
             </Stack>
           </Stack>
         ))}

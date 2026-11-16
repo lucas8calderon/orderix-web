@@ -38,8 +38,28 @@ export const CRM_SOURCES = [
   { id: 'OTHER', label: 'Outro' },
 ];
 
+export const CRM_LEAD_KINDS = [
+  { id: 'ESTABLISHMENT', label: 'Estabelecimento' },
+  { id: 'INFLUENCER', label: 'Influenciador' },
+];
+
+export const CRM_CHANNELS = [
+  { id: 'WHATSAPP', label: 'WhatsApp' },
+  { id: 'INSTAGRAM', label: 'Instagram' },
+];
+
+export const CRM_INSTAGRAM_OUTREACH = {
+  NONE: 'Sem contato no Instagram',
+  PREPARED: 'Mensagem preparada',
+  COPIED: 'Mensagem copiada',
+  OPENED: 'Direct aberto',
+  SENT: 'Enviado',
+  REPLIED: 'Resposta recebida',
+};
+
 export const CRM_CONTACT_TYPES = [
   { id: 'WHATSAPP', label: 'WhatsApp' },
+  { id: 'INSTAGRAM', label: 'Instagram' },
   { id: 'CALL', label: 'Ligação' },
   { id: 'EMAIL', label: 'E-mail' },
   { id: 'MEETING', label: 'Reunião' },
@@ -114,6 +134,19 @@ export function adjacentStatus(current, direction) {
 
 export function businessTypeLabel(value) {
   return CRM_BUSINESS_TYPES.find((item) => item.id === value)?.label || value || '—';
+}
+
+export function leadKindLabel(value) {
+  return CRM_LEAD_KINDS.find((item) => item.id === value)?.label || 'Estabelecimento';
+}
+
+export function contactTypeLabel(value) {
+  return CRM_CONTACT_TYPES.find((item) => item.id === value)?.label || value || '—';
+}
+
+export function instagramOutreachLabel(value) {
+  if (!value || value === 'NONE') return CRM_INSTAGRAM_OUTREACH.NONE;
+  return CRM_INSTAGRAM_OUTREACH[value] || value;
 }
 
 export function sourceLabel(value) {

@@ -20,6 +20,8 @@ import { formatDate } from '../../../../services/accessControl';
 import {
   businessTypeLabel,
   CRM_LIST_COLUMNS,
+  instagramOutreachLabel,
+  leadKindLabel,
   locationLabel,
   statusLabel,
 } from '../crmConstants';
@@ -45,6 +47,7 @@ export function CrmLeadList({
   onChangeStatus,
   onArchive,
   onConfirmSend,
+  onInstagramUpdated,
 }) {
   const items = pageData?.items || [];
   const [activeField, activeDir] = (sort || 'nextContactAt,asc').split(',');
@@ -101,6 +104,12 @@ export function CrmLeadList({
               <TableRow key={lead.id} hover sx={{ cursor: 'pointer' }} onClick={() => onOpen(lead)}>
                 <TableCell>
                   <Typography fontWeight={700}>{lead.businessName}</Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {leadKindLabel(lead.leadKind)}
+                    {lead.instagramOutreachStatus && lead.instagramOutreachStatus !== 'NONE'
+                      ? ` · Instagram: ${instagramOutreachLabel(lead.instagramOutreachStatus)}`
+                      : ''}
+                  </Typography>
                 </TableCell>
                 <TableCell>{businessTypeLabel(lead.businessType)}</TableCell>
                 <TableCell>{locationLabel(lead)}</TableCell>
@@ -130,7 +139,7 @@ export function CrmLeadList({
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <CrmInstagramButton variant="icon" instagram={lead.instagram} />
+                    <CrmInstagramButton variant="icon" lead={lead} onUpdated={onInstagramUpdated} />
                     <Tooltip title="Detalhes">
                       <IconButton size="small" aria-label="Detalhes" onClick={() => onOpen(lead)}>
                         <InfoOutlinedIcon fontSize="small" />

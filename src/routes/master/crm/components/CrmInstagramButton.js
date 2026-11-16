@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, IconButton, SvgIcon, Tooltip } from '@mui/material';
 import { buildInstagramUrl, openInstagram } from '../instagram';
+import { CrmInstagramOutreachDialog } from './CrmInstagramOutreachDialog';
 
 function InstagramGlyph(props) {
   return (
@@ -10,31 +11,67 @@ function InstagramGlyph(props) {
   );
 }
 
-export function CrmInstagramButton({ instagram, variant = 'button', size = 'small' }) {
-  const url = buildInstagramUrl(instagram);
+export function CrmInstagramButton({
+  lead,
+  instagram,
+  variant = 'button',
+  size = 'small',
+  onUpdated,
+}) {
+  const value = lead?.instagram || lead?.instagramUsername || instagram;
+  const url = buildInstagramUrl(value);
+  const [open, setOpen] = useState(false);
   if (!url) return null;
 
-  const open = () => openInstagram(instagram);
+  const activate = (event) => {
+    event?.stopPropagation?.();
+    if (lead?.id) {
+      setOpen(true);
+      return;
+    }
+    openInstagram(value);
+  };
 
-  if (variant === 'icon') {
-    return (
-      <Tooltip title="Abrir Instagram">
-        <IconButton size={size} aria-label="Instagram" onClick={open}>
-          <InstagramGlyph fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    );
-  }
-
-  return (
+  const control = variant === 'icon' ? (
+    <Tooltip title="Mensagem no Instagram">
+      <IconButton
+        size={size}
+        aria-label="Instagram"
+        onClick={activate}
+        sx={{ color: 'var(--color-primary)' }}
+      >
+        <InstagramGlyph fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  ) : (
     <Button
       size={size}
       variant="outlined"
-      onClick={open}
+      aria-label="Instagram"
+      onClick={activate}
       startIcon={variant === 'compact' ? undefined : <InstagramGlyph fontSize="small" />}
-      sx={{ textTransform: 'none', minHeight: variant === 'compact' ? 36 : undefined }}
+      sx={{
+        textTransform: 'none',
+        minHeight: variant === 'compact' ? 36 : undefined,
+        color: 'var(--color-primary)',
+        borderColor: 'var(--color-primary)',
+      }}
     >
-      {variant === 'compact' ? 'Instagram' : 'Abrir no Instagram'}
+      Instagram
     </Button>
+  );
+
+  return (
+    <>
+      {control}
+      {lead?.id && (
+        <CrmInstagramOutreachDialog
+          open={open}
+          lead={lead}
+          onClose={() => setOpen(false)}
+          onUpdated={onUpdated}
+        />
+      )}
+    </>
   );
 }

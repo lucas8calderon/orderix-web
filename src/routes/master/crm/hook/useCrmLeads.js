@@ -19,6 +19,8 @@ const EMPTY_FILTERS = {
   city: '',
   source: '',
   followUp: '',
+  leadKind: '',
+  channel: '',
 };
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -50,7 +52,9 @@ export function useCrmLeads() {
     city: filters.city.trim() || undefined,
     source: filters.source || undefined,
     followUp: filters.followUp || undefined,
-  }), [debouncedQ, filters.status, filters.businessType, filters.city, filters.source, filters.followUp]);
+    leadKind: filters.leadKind || undefined,
+    channel: filters.channel || undefined,
+  }), [debouncedQ, filters.status, filters.businessType, filters.city, filters.source, filters.followUp, filters.leadKind, filters.channel]);
 
   const fetchMetrics = useCallback(async () => {
     const metricsResponse = await getCrmMetrics();
@@ -279,5 +283,6 @@ export function useCrmLeads() {
     registerContact,
     archiveLead,
     loadActivities,
+    patchLead,
   };
 }

@@ -21,6 +21,7 @@ import { formatDate, toDateInputValue } from '../../../../services/accessControl
 import {
   BRAZIL_STATES,
   CRM_BUSINESS_TYPES,
+  CRM_LEAD_KINDS,
   CRM_SOURCES,
   CRM_STATUSES,
   toDateTimeLocalValue,
@@ -35,6 +36,7 @@ const emptyForm = {
   instagram: '',
   website: '',
   businessType: 'HAMBURGER',
+  leadKind: 'ESTABLISHMENT',
   address: '',
   city: '',
   state: '',
@@ -57,6 +59,7 @@ function leadToForm(lead) {
     instagram: lead.instagram || '',
     website: lead.website || '',
     businessType: lead.businessType || 'OTHER',
+    leadKind: lead.leadKind || 'ESTABLISHMENT',
     address: lead.address || '',
     city: lead.city || '',
     state: lead.state || '',
@@ -88,6 +91,7 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
       businessName: form.businessName.trim(),
       phone: form.phone.trim(),
       businessType: form.businessType,
+      leadKind: form.leadKind,
       source: form.source,
       status: form.status,
     };
@@ -110,6 +114,11 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
   };
 
   const isEdit = Boolean(initialValues?.id);
+  const hasInstagram = Boolean(form.instagram.trim());
+  const instagramRequired = form.leadKind === 'INFLUENCER' || form.source === 'INSTAGRAM';
+  const canSave = Boolean(form.businessName.trim())
+    && (isEdit || Boolean(form.phone.trim()) || hasInstagram)
+    && (!instagramRequired || hasInstagram);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" {...dialogProps}>
@@ -120,10 +129,28 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
             {error}
           </Alert>
         )}
-        <Typography variant="subtitle2" sx={{ mt: 1, mb: 1.5 }}>Estabelecimento</Typography>
+        <Typography variant="subtitle2" sx={{ mt: 1, mb: 1.5 }}>
+          {form.leadKind === 'INFLUENCER' ? 'Influenciador' : 'Estabelecimento'}
+        </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Nome do estabelecimento" value={form.businessName} onChange={handleChange('businessName')} required />
+            <FormControl fullWidth>
+              <InputLabel>Tipo de lead</InputLabel>
+              <Select label="Tipo de lead" value={form.leadKind} onChange={handleChange('leadKind')}>
+                {CRM_LEAD_KINDS.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label={form.leadKind === 'INFLUENCER' ? 'Nome' : 'Nome do estabelecimento'}
+              value={form.businessName}
+              onChange={handleChange('businessName')}
+              required
+            />
           </Grid>
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
@@ -165,8 +192,10 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
               label="Telefone"
               value={form.phone}
               onChange={handleChange('phone')}
-              required={!isEdit}
-              helperText={isEdit ? 'Telefone do Google não confirma WhatsApp automaticamente.' : 'Informe DDD + número, ex.: 11999998888'}
+              required={!isEdit && !hasInstagram}
+              helperText={hasInstagram
+                ? 'Opcional quando o lead tem Instagram.'
+                : 'Informe DDD + número, ex.: 11999998888'}
             />
           </Grid>
           <Grid item xs={12}>
@@ -189,6 +218,7 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
               label="Instagram"
               value={form.instagram}
               onChange={handleChange('instagram')}
+              required={instagramRequired}
               helperText="Ex.: @cabanaburger ou instagram.com/cabanaburger"
             />
           </Grid>
@@ -270,7 +300,7 @@ export function CrmLeadFormDialog({ open, onClose, initialValues, onSubmit, savi
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saving || !form.businessName.trim() || (!isEdit && !form.phone.trim())}
+          disabled={saving || !canSave}
           sx={{ backgroundColor: 'var(--color-primary)', '&:hover': { backgroundColor: 'var(--color-primary-dark)' }, textTransform: 'none' }}
         >
           {saving ? 'Salvando...' : 'Salvar'}

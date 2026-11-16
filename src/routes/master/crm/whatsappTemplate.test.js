@@ -4,6 +4,7 @@ import {
   whatsAppDigits,
   openWhatsAppLead,
   prepareWhatsAppOpen,
+  whatsAppOpenHint,
 } from './whatsappTemplate';
 jest.mock('axios');
 
@@ -12,6 +13,15 @@ test('normaliza DDD 55 e monta wa.me só com número', () => {
   expect(whatsAppDigits('+1 202 555 0123')).toBe('12025550123');
   expect(buildWhatsAppUrl('(11) 99999-8888')).toBe('https://wa.me/5511999998888');
   expect(buildWhatsAppUrl('5511999998888')).toBe('https://wa.me/5511999998888');
+});
+
+test('a dica de abertura segue a coluna do card', () => {
+  expect(whatsAppOpenHint('NEW')).toMatch(/primeiro contato/);
+  expect(whatsAppOpenHint('CONTACTED')).toMatch(/primeiro contato/);
+  expect(whatsAppOpenHint('WAITING_RESPONSE')).toMatch(/retorno/);
+  expect(whatsAppOpenHint('INTERESTED')).toMatch(/sem mensagem/);
+  expect(whatsAppOpenHint('WON')).toMatch(/sem mensagem/);
+  expect(whatsAppOpenHint('LOST')).toMatch(/sem mensagem/);
 });
 
 test('prepareWhatsAppOpen ignora mensagem', () => {

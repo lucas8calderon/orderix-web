@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import InventoryPanel, { stockTone } from './Inventory';
 import { adjustInventory, getInventoryMovements, getInventorySnapshot } from '../../../services/inventoryService';
 
@@ -48,6 +48,31 @@ describe('InventoryPanel', () => {
         note: null,
       });
     });
+  });
+
+  it('atualiza o saldo enquanto a seção está aberta', async () => {
+    jest.useFakeTimers();
+    try {
+      render(<InventoryPanel />);
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(screen.getByText('Café')).toBeInTheDocument();
+      expect(getInventorySnapshot).toHaveBeenCalledTimes(1);
+
+      getInventorySnapshot.mockResolvedValue({
+        data: { items: [{ ...item, stockQuantity: 2 }] },
+      });
+      await act(async () => {
+        jest.advanceTimersByTime(12000);
+        await Promise.resolve();
+      });
+
+      expect(getInventorySnapshot).toHaveBeenCalledTimes(2);
+      expect(screen.getByText(/Saldo 2/)).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('grava saída como ajuste negativo', async () => {

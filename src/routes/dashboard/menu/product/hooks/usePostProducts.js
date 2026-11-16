@@ -18,8 +18,16 @@ export const usePostProducts = () => {
       isAvailable: product?.isAvailable !== false,
       value: Number(product?.value),
       quantity: product?.quantity ?? 0,
+      trackInventory: product?.trackInventory === true,
       variations: Array.isArray(product?.variations) ? product.variations : [],
     };
+
+    if (payload.trackInventory && product?.stockQuantity != null && product.stockQuantity !== '') {
+      const stockQuantity = Number(product.stockQuantity);
+      if (Number.isInteger(stockQuantity) && stockQuantity >= 0) {
+        payload.stockQuantity = stockQuantity;
+      }
+    }
 
     if (!payload.categoryId) {
       setErrorSavingProduct(true);

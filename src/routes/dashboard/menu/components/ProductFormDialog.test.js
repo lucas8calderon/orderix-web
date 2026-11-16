@@ -131,6 +131,91 @@ describe('ProductFormDialog variations', () => {
     }));
   });
 
+  it('grava a quantidade quando o produto entra na contagem do estoque', () => {
+    const onSave = jest.fn();
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={onSave}
+        product={{ categoryId: 1 }}
+        categories={categories}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Nome do produto'), {
+      target: { value: 'Refrigerante' },
+    });
+    typePrice(screen.getByLabelText('Preço em reais'), '600');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Controlar estoque deste produto' }));
+    expect(screen.getByRole('button', { name: 'Salvar produto' })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Quantidade em estoque'), { target: { value: '24' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Refrigerante',
+      trackInventory: true,
+      stockQuantity: 24,
+    }));
+  });
+
+  it('salva sem controle quando o estoque fica desmarcado', () => {
+    const onSave = jest.fn();
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={onSave}
+        product={{ categoryId: 1 }}
+        categories={categories}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Nome do produto'), {
+      target: { value: 'Água' },
+    });
+    typePrice(screen.getByLabelText('Preço em reais'), '300');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Água',
+      trackInventory: false,
+      stockQuantity: null,
+    }));
+  });
+
+  it('mantém o saldo atual de um produto que já controla estoque', () => {
+    const onSave = jest.fn();
+    render(
+      <ProductFormDialog
+        open
+        onClose={jest.fn()}
+        onSave={onSave}
+        product={{
+          id: 8,
+          name: 'Refrigerante',
+          value: 6,
+          categoryId: 1,
+          trackInventory: true,
+          stockQuantity: 24,
+        }}
+        categories={categories}
+      />
+    );
+
+    const quantity = screen.getByLabelText('Quantidade em estoque');
+    expect(quantity).toBeDisabled();
+    expect(quantity).toHaveValue('24');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar produto' }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      id: 8,
+      trackInventory: true,
+      stockQuantity: null,
+    }));
+  });
+
   it('preenche o preço pelo assistente sem salvar o produto', () => {
     const onSave = jest.fn();
     render(

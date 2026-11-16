@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { CRM_ACTIVITY_TITLES, formatDateTime, statusLabel } from '../crmConstants';
+import { CRM_ACTIVITY_TITLES, contactTypeLabel, formatDateTime, statusLabel } from '../crmConstants';
 
 export function CrmActivityTimeline({ activities, loading }) {
   if (loading) {
@@ -45,15 +45,22 @@ export function CrmActivityTimeline({ activities, loading }) {
               </Typography>
             ) : activity.type === 'CONTACT_REGISTERED' && activity.contactType ? (
               <Typography variant="body2" color="text.secondary">
-                {activity.contactType}
+                {contactTypeLabel(activity.contactType)}
                 {activity.description
                   ? ` · ${activity.description}`
                   : ''}
               </Typography>
             ) : activity.type !== 'CREATED' ? (
-              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                {activity.description}
-              </Typography>
+              <>
+                {activity.contactType === 'INSTAGRAM' && (
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Instagram
+                  </Typography>
+                )}
+                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {activity.description}
+                </Typography>
+              </>
             ) : null}
           </Box>
         </Box>

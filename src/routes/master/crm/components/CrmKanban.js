@@ -17,6 +17,7 @@ export function CrmKanban({
   onChangeStatus,
   onArchive,
   onConfirmSend,
+  onInstagramUpdated,
 }) {
   const grouped = CRM_STATUSES.reduce((acc, column) => {
     acc[column.id] = leads.filter((lead) => lead.status === column.id);
@@ -105,6 +106,7 @@ export function CrmKanban({
                       onChangeStatus={onChangeStatus}
                       onArchive={onArchive}
                       onConfirmSend={onConfirmSend}
+                      onInstagramUpdated={onInstagramUpdated}
                     />
                   ))}
                   {provided.placeholder}
