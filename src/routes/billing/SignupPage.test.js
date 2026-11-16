@@ -53,6 +53,9 @@ test('starts without a preselected plan and blocks submit until one is chosen', 
   expect(screen.getByRole('option', { name: /Selecione a faixa de faturamento/i })).toBeDisabled();
   expect(screen.getByText('Selecione um plano')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Continuar para o pagamento/i })).toBeDisabled();
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(screen.queryByText(/contatos promocionais/i)).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Termos de Uso' })).toBeInTheDocument();
   expect(axios.post).not.toHaveBeenCalled();
 });
 
@@ -77,6 +80,7 @@ test('pix signup does not ask for address or send a price', async () => {
   await waitFor(() => expect(signupCall()).toBeTruthy());
   const payload = signupCall()[1];
   expect(axios.post.mock.calls[0][0]).toBe('/api/public/billing/leads');
+  expect(axios.post.mock.calls[0][1].marketingOptIn).toBe(false);
   expect(payload.planCode).toBe('PLAN_02');
   expect(payload.billingType).toBe('PIX');
   expect(payload.price).toBeUndefined();

@@ -283,13 +283,11 @@ export default function SignupPage() {
   const referralEdited = useRef(false);
   const pollRef = useRef(null);
   const [consentEpoch, setConsentEpoch] = useState(0);
-  const [marketingOptIn, setMarketingOptIn] = useState(false);
 
   useEffect(() => {
     const stored = readLeadSession();
     const token = params.get('lead');
     if (!stored || !token || stored.token !== token) return;
-    setMarketingOptIn(Boolean(stored.marketingOptIn));
     setForm((current) => ({
       ...current,
       name: current.name || stored.name || '',
@@ -472,7 +470,7 @@ export default function SignupPage() {
         name: form.name,
         whatsapp: form.phone,
         planCode,
-        marketingOptIn,
+        marketingOptIn: false,
         source: params.get('lead') ? 'homepage_modal' : 'signup_page',
         idempotencyKey: sameAttempt ? stored.idempotencyKey : attemptKey(`signup:${planCode}`),
       });
@@ -822,16 +820,6 @@ export default function SignupPage() {
                         required
                       />
                     </div>
-
-                    <label className="ct-field" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                      <input
-                        type="checkbox"
-                        checked={marketingOptIn}
-                        onChange={(event) => setMarketingOptIn(event.target.checked)}
-                        style={{ marginTop: 4 }}
-                      />
-                      <span>Autorizo contatos promocionais da Weper. A contratação não depende desta autorização. <Link to={PATHS.PRIVACY} target="_blank" rel="noreferrer">Política de Privacidade</Link></span>
-                    </label>
 
                     <div className="ct-field-row">
                       <div className="ct-field">
