@@ -1,8 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import { PATHS } from '../../../services/accessControl';
 import { trackBeforeNavigation, trackHubLinkClick } from '../hubAnalytics';
-import desktopImage from '../../../assets/images/landing/features/gestao-dashboard.webp';
-import mobileImage from '../../../assets/images/landing/flow-phone-menu.webp';
+import mockupImage from '../../../assets/images/landing/mockup-painel-completo.png';
 
 /**
  * Card Hero Principal do Hub - Conheça a Weper
@@ -34,15 +33,9 @@ export default function HubHeroCard() {
       </div>
       <div className="hub-hero-mockups">
         <img
-          src={desktopImage}
-          alt="Dashboard Weper"
-          className="hub-hero-desktop"
-          loading="eager"
-        />
-        <img
-          src={mobileImage}
-          alt="App mobile Weper"
-          className="hub-hero-mobile"
+          src={mockupImage}
+          alt="Painel completo Weper - Do pedido ao resultado"
+          className="hub-hero-mockup"
           loading="eager"
         />
       </div>

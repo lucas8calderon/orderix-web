@@ -9,7 +9,6 @@ export default function HubHeader() {
     <header className="hub-header">
       <div className="hub-logo">
         <WeperMark size={32} />
-        <span className="hub-logo-text">Weper</span>
       </div>
       <p className="hub-slogan">Do pedido ao resultado</p>
       <h1 className="hub-title">Tudo para seu negócio vender mais.</h1>

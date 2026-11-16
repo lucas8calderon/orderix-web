@@ -28,13 +28,13 @@ const SEGMENTS = [
     id: 'marmitaria',
     name: 'Marmitaria',
     icon: UtensilsCrossed,
-    url: '/demo/weper-pastel', // Usar pastel como placeholder
+    url: 'https://www.weper.com.br/delivery/marmita',
   },
   {
     id: 'japones',
     name: 'Japonês',
     icon: Fish,
-    url: '/demo/weper-burger', // Placeholder até ter demo específica
+    url: 'https://www.weper.com.br/delivery/japa',
   },
 ];
 
