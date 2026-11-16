@@ -1,9 +1,15 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Home from './Home';
 import { openWhatsApp } from './landingAssets';
 import { PRICING_TIERS, formatPrice } from '../../config/pricingTiers';
 import { FEATURE_PAGES } from './features/featurePages';
+
+jest.mock('axios', () => ({
+  post: jest.fn(),
+  get: jest.fn(),
+}));
 
 jest.mock('./landingAssets', () => ({
   openWhatsApp: jest.fn(),
@@ -142,5 +148,46 @@ test('captura ?ref= do link de parceiro em sessionStorage no mount', () => {
   window.sessionStorage.clear();
   render(<MemoryRouter initialEntries={['/?ref=Parc-01']}><Home /></MemoryRouter>);
   expect(window.sessionStorage.getItem('weper.partnerRef')).toBe('PARC-01');
+  window.sessionStorage.clear();
+});
+
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
+}
+
+test('visita com ?ref=E3FUVE chega em /contratar com esse código, sem trocar o lead', async () => {
+  window.sessionStorage.clear();
+  document.cookie = 'weper_partner_ref=3Z2D853K; Path=/';
+  window.sessionStorage.setItem('weper.partnerRef', '3Z2D853K');
+  axios.post.mockResolvedValue({
+    data: {
+      leadToken: '06c21c5b-1544-4b93-a78c-9da9cd81e7c3',
+      planCode: 'PLAN_05',
+      created: true,
+    },
+  });
+  render(
+    <MemoryRouter initialEntries={['/?ref=E3FUVE']}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/contratar" element={<LocationProbe />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  fireEvent.change(screen.getByLabelText('Quanto sua loja processa por mês?'), { target: { value: 'tier-5' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Assinar esta faixa' }));
+  const dialog = screen.getByRole('dialog', { name: 'Você está a um passo de começar!' });
+  fireEvent.change(within(dialog).getByLabelText('Nome completo'), { target: { value: 'Lucas Calderon' } });
+  fireEvent.change(within(dialog).getByLabelText('WhatsApp'), { target: { value: '11977844172' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Continuar' }));
+  const location = await screen.findByTestId('location');
+  expect(location).toHaveTextContent('/contratar?plan=PLAN_05&lead=06c21c5b-1544-4b93-a78c-9da9cd81e7c3&ref=E3FUVE');
+  expect(window.sessionStorage.getItem('weper.partnerRef')).toBe('E3FUVE');
+  await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
+    '/api/public/billing/leads',
+    expect.objectContaining({ planCode: 'PLAN_05', name: 'Lucas Calderon' }),
+    expect.any(Object),
+  ));
   window.sessionStorage.clear();
 });

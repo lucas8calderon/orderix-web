@@ -115,6 +115,51 @@ test('referral field is prefilled from ref, editable, and shows a notice without
   expect(screen.getByTestId('pix-payload')).toHaveTextContent('000201');
 });
 
+test('ref da URL prevalece sobre código antigo e segue no pagamento junto com o lead', async () => {
+  axios.post.mockImplementation((url) => {
+    if (url === '/api/public/billing/leads') {
+      return Promise.resolve({
+        data: {
+          leadToken: '06c21c5b-1544-4b93-a78c-9da9cd81e7c3',
+          planCode: 'PLAN_05',
+          created: false,
+        },
+      });
+    }
+    return Promise.resolve({ data: { signupId: 9, pixPayload: '000201' } });
+  });
+  window.sessionStorage.setItem('weper.partnerRef', '3Z2D853K');
+  document.cookie = 'weper_partner_ref=3Z2D853K; Path=/';
+  setup('/contratar?plan=PLAN_05&lead=06c21c5b-1544-4b93-a78c-9da9cd81e7c3&ref=E3FUVE');
+  const field = screen.getByLabelText('Indicação? Insira o código');
+  expect(field).toHaveValue('E3FUVE');
+  fillContact('Lucas Calderon');
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  expect(signupCall()[1].partnerReferralCode).toBe('E3FUVE');
+  expect(signupCall()[1].leadToken).toBe('06c21c5b-1544-4b93-a78c-9da9cd81e7c3');
+  expect(signupCall()[1].planCode).toBe('PLAN_05');
+  expect(window.sessionStorage.getItem('weper.partnerRef')).toBe('E3FUVE');
+});
+
+test('sem ref o campo começa vazio e o código digitado é o que segue no pagamento', async () => {
+  axios.post.mockResolvedValue({ data: { signupId: 10, pixPayload: '000201' } });
+  setup('/contratar?plan=PLAN_05&lead=06c21c5b-1544-4b93-a78c-9da9cd81e7c3');
+  const field = screen.getByLabelText('Indicação? Insira o código');
+  expect(field).toHaveValue('');
+  fireEvent.change(field, { target: { value: 'digitado' } });
+  expect(field).toHaveValue('DIGITADO');
+  fillContact();
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  expect(signupCall()[1].partnerReferralCode).toBe('DIGITADO');
+  expect(axios.post.mock.calls[0][0]).toBe('/api/public/billing/leads');
+});
+
 test('cleared referral field is not sent even when ref was stored', async () => {
   axios.post.mockResolvedValue({
     data: { signupId: 8, pixPayload: '000201' },

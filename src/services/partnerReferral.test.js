@@ -6,6 +6,7 @@ import {
   clearStoredPartnerRef,
   getStoredPartnerRef,
   normalizePartnerRef,
+  withPartnerRef,
 } from './partnerReferral';
 
 function clearCookies() {
@@ -53,10 +54,41 @@ describe('partnerReferral', () => {
     expect(getStoredPartnerRef()).toBeNull();
   });
 
-  it('first-touch: não sobrescreve ref já capturado', () => {
-    expect(capturePartnerRef('?ref=WPR-FIRST')).toBe('WPR-FIRST');
-    expect(capturePartnerRef('?ref=WPR-SECOND')).toBe('WPR-FIRST');
-    expect(getStoredPartnerRef()).toBe('WPR-FIRST');
+  it('ref da URL desta visita substitui código já gravado', () => {
+    expect(capturePartnerRef('?ref=3Z2D853K')).toBe('3Z2D853K');
+    expect(capturePartnerRef('?ref=E3FUVE')).toBe('E3FUVE');
+    expect(getStoredPartnerRef()).toBe('E3FUVE');
+    expect(document.cookie).toContain('weper_partner_ref=E3FUVE');
+  });
+
+  it('sem ref na URL, mantém o código já gravado', () => {
+    expect(capturePartnerRef('?ref=E3FUVE')).toBe('E3FUVE');
+    expect(capturePartnerRef('?plan=PLAN_05&lead=06c21c5b-1544-4b93-a78c-9da9cd81e7c3')).toBe('E3FUVE');
+    expect(getStoredPartnerRef()).toBe('E3FUVE');
+  });
+
+  it('withPartnerRef leva o ref da visita e preserva plan e lead', () => {
+    window.sessionStorage.setItem(PARTNER_REF_STORAGE_KEY, '3Z2D853K');
+    const params = new URLSearchParams({
+      plan: 'PLAN_05',
+      lead: '06c21c5b-1544-4b93-a78c-9da9cd81e7c3',
+    });
+    withPartnerRef(params, '?ref=E3FUVE');
+    expect(params.get('plan')).toBe('PLAN_05');
+    expect(params.get('lead')).toBe('06c21c5b-1544-4b93-a78c-9da9cd81e7c3');
+    expect(params.get('ref')).toBe('E3FUVE');
+  });
+
+  it('withPartnerRef sem ref na URL usa o gravado e, sem nenhum, não inventa código', () => {
+    const empty = new URLSearchParams({ plan: 'PLAN_05', lead: 'abc' });
+    withPartnerRef(empty, '');
+    expect(empty.get('ref')).toBeNull();
+    expect(empty.get('lead')).toBe('abc');
+    capturePartnerRef('?ref=E3FUVE');
+    const params = new URLSearchParams({ plan: 'PLAN_05', lead: 'abc' });
+    withPartnerRef(params, '?plan=PLAN_05');
+    expect(params.get('ref')).toBe('E3FUVE');
+    expect(params.get('lead')).toBe('abc');
   });
 
   it('recupera do cookie quando sessionStorage está vazio', () => {

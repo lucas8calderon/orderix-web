@@ -7,7 +7,7 @@ import { WeperMark } from './components/WeperMark';
 import { FEATURE_PAGES } from './features/featurePages';
 import { PRICING_TIERS, formatPrice, getMinimumPrice, getMaximumPrice } from '../../config/pricingTiers';
 import { PATHS } from '../../services/accessControl';
-import { capturePartnerRef } from '../../services/partnerReferral';
+import { capturePartnerRef, withPartnerRef } from '../../services/partnerReferral';
 import { usePlansView } from '../../analytics/usePlansView';
 import { trackPlanSelected, trackSubscriptionModalOpened } from '../../analytics/analyticsService';
 import SubscriptionCaptureModal from '../billing/SubscriptionCaptureModal';
@@ -135,6 +135,7 @@ export default function Home() {
       onReady={(lead) => {
         setCaptureOpen(false);
         const next = new URLSearchParams({ plan: lead.planCode || tier.code, lead: lead.token });
+        withPartnerRef(next, location.search);
         navigate(`${PATHS.SIGNUP}?${next.toString()}`);
       }}
     />

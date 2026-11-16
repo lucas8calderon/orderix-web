@@ -23,7 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { formatPrice, getPlanTier, getSignupPlanOptions, TEST_PLAN } from '../../config/pricingTiers';
-import { capturePartnerRef, getStoredPartnerRef } from '../../services/partnerReferral';
+import { capturePartnerRef, getStoredPartnerRef, normalizePartnerRef } from '../../services/partnerReferral';
 import { PATHS } from '../../services/accessControl';
 import { trackMetaEvent } from '../../services/metaPixel';
 import { CONSENT_EVENT } from '../../analytics/analyticsConsent';
@@ -241,11 +241,9 @@ function CheckoutSteps({ phase, paymentConfirmed }) {
 export default function SignupPage() {
   const [params] = useSearchParams();
   useEffect(() => {
-    capturePartnerRef(params.toString() ? `?${params.toString()}` : window.location.search);
-    if (!referralEdited.current) {
-      const stored = getStoredPartnerRef();
-      if (stored) setReferralCodeInput(stored);
-    }
+    const search = params.toString() ? `?${params.toString()}` : window.location.search;
+    const captured = capturePartnerRef(search);
+    if (!referralEdited.current && captured) setReferralCodeInput(captured);
   }, [params]);
 
   const requestedPlan = params.get('plan');
@@ -273,7 +271,9 @@ export default function SignupPage() {
   const [copied, setCopied] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(() => Boolean(readStoredSignupResult()?.paid));
   const [qrImageFailed, setQrImageFailed] = useState(false);
-  const [referralCodeInput, setReferralCodeInput] = useState(() => getStoredPartnerRef() || '');
+  const [referralCodeInput, setReferralCodeInput] = useState(
+    () => normalizePartnerRef(params.get('ref')) || getStoredPartnerRef() || '',
+  );
   const [planHintOpen, setPlanHintOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(() => (
     typeof window !== 'undefined'

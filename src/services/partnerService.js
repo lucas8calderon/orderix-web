@@ -174,6 +174,11 @@ export async function getPartnerDashboard() {
   return response.data;
 }
 
+export async function getPartnerLeaderboard() {
+  const response = await axios.get(`${PORTAL_URL}/leaderboard`);
+  return response.data;
+}
+
 export const EARNINGS_RANGES = ['6m', '12m', 'ytd'];
 
 export async function getPartnerEarnings(range = '6m') {

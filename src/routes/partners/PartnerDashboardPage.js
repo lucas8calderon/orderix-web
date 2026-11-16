@@ -13,7 +13,9 @@ import {
   getApiErrorMessage,
   getPartnerDashboard,
   getPartnerEarnings,
+  getPartnerLeaderboard,
 } from '../../services/partnerService';
+import PartnerLeaderboard from './PartnerLeaderboard';
 import { buildPublicReferralLink } from '../../services/partnerReferral';
 import PartnerEarningsChart from './PartnerEarningsChart';
 import PartnerReferralDialog from './PartnerReferralDialog';
@@ -75,6 +77,10 @@ export default function PartnerDashboardPage() {
   const [earningsError, setEarningsError] = useState('');
   const earningsRequest = useRef(0);
 
+  const [leaderboard, setLeaderboard] = useState(null);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [leaderboardError, setLeaderboardError] = useState('');
+
   const [referralOpen, setReferralOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
@@ -113,7 +119,20 @@ export default function PartnerDashboardPage() {
     return () => { document.title = previous; };
   }, []);
 
+  const loadLeaderboard = useCallback(async () => {
+    setLeaderboardLoading(true);
+    setLeaderboardError('');
+    try {
+      setLeaderboard(await getPartnerLeaderboard());
+    } catch (error) {
+      setLeaderboardError(getApiErrorMessage(error, 'Não foi possível carregar o ranking.'));
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }, []);
+
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
+  useEffect(() => { loadLeaderboard(); }, [loadLeaderboard]);
   useEffect(() => { loadEarnings(range); }, [loadEarnings, range]);
 
   const firstName = dashboard?.firstName || sessionUser?.firstName || 'parceiro';
@@ -233,6 +252,15 @@ export default function PartnerDashboardPage() {
             ))}
           </div>
         </section>
+
+        <PartnerLeaderboard
+          leaderboard={leaderboard}
+          loading={leaderboardLoading}
+          error={leaderboardError}
+          onRetry={loadLeaderboard}
+          onInvite={handleCopy}
+          inviteDisabled={!referralLink}
+        />
 
         <section className="partner-card" aria-labelledby="partner-link-title">
           <h2 id="partner-link-title" className="partner-card-title">Seu link de indicação</h2>

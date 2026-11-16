@@ -22,11 +22,17 @@ import { InstagramLeadDrawer } from './components/InstagramLeadDrawer';
 import { InstagramLeadForm } from './components/InstagramLeadForm';
 import { InstagramColumnJump, InstagramTemplatesDialog } from './components/InstagramTemplatesDialog';
 import {
+  clearLocationFilters,
+  distinctBusinessTypes,
+  distinctCities,
+  filterBoardLeads,
+  matchesBoardFilters,
+} from './crmBoardFilters';
+import {
   INSTAGRAM_LEAD_KINDS,
   columnOf,
   compareUrgency,
   isOverdue,
-  withinCreatedRange,
 } from './instagramCrm';
 import {
   addInstagramLeadNote,
@@ -54,7 +60,9 @@ export function CrmBoard() {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ q: '', kind: '', status: '', overdue: false, from: '', to: '' });
+  const [filters, setFilters] = useState({
+    q: '', kind: '', status: '', overdue: false, from: '', to: '', city: '', businessType: '',
+  });
   const [urgentFirst, setUrgentFirst] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -104,22 +112,19 @@ export function CrmBoard() {
   }, [leads]);
 
   const visible = useMemo(() => {
-    const query = filters.q.trim().toLowerCase();
-    return leads
-      .filter((lead) => !filters.kind || lead.leadKind === filters.kind)
-      .filter((lead) => !filters.status || columnOf(lead.status) === filters.status)
-      .filter((lead) => !filters.overdue || isOverdue(lead))
-      .filter((lead) => withinCreatedRange(lead, filters.from, filters.to))
-      .filter((lead) => {
-        if (!query) return true;
-        const name = (lead.businessName || '').toLowerCase();
-        const handle = (lead.instagramUsername || '').toLowerCase();
-        const phone = (lead.phone || '').toLowerCase();
-        const city = (lead.city || '').toLowerCase();
-        return name.includes(query) || handle.includes(query) || phone.includes(query) || city.includes(query);
-      })
+    return filterBoardLeads(leads, filters)
       .sort(urgentFirst ? compareUrgency : (a, b) => (b.id || 0) - (a.id || 0));
   }, [leads, filters, urgentFirst]);
+
+  const cityOptions = useMemo(
+    () => distinctCities(leads.filter((lead) => matchesBoardFilters(lead, filters, { ignore: ['city'] }))),
+    [leads, filters],
+  );
+
+  const typeOptions = useMemo(
+    () => distinctBusinessTypes(leads.filter((lead) => matchesBoardFilters(lead, filters, { ignore: ['businessType'] }))),
+    [leads, filters],
+  );
 
   const refreshDetails = async (lead) => {
     setDetails(lead);
@@ -323,6 +328,39 @@ export function CrmBoard() {
           value={filters.to}
           onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
         />
+        <TextField
+          select
+          size="small"
+          label="Cidade"
+          value={filters.city}
+          onChange={(event) => setFilters((prev) => ({ ...prev, city: event.target.value }))}
+        >
+          <MenuItem value="">Todas</MenuItem>
+          {cityOptions.length === 0 && (
+            <MenuItem value="__none_city" disabled>Nenhuma cidade nos leads</MenuItem>
+          )}
+          {cityOptions.map((city) => <MenuItem key={city} value={city}>{city}</MenuItem>)}
+        </TextField>
+        <TextField
+          select
+          size="small"
+          label="Tipo de estabelecimento"
+          value={filters.businessType}
+          onChange={(event) => setFilters((prev) => ({ ...prev, businessType: event.target.value }))}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {typeOptions.length === 0 && (
+            <MenuItem value="__none_type" disabled>Nenhum tipo nos leads</MenuItem>
+          )}
+          {typeOptions.map((type) => <MenuItem key={type.id} value={type.id}>{type.label}</MenuItem>)}
+        </TextField>
+        <Button
+          className="ig-sort"
+          disabled={!filters.city && !filters.businessType}
+          onClick={() => setFilters((prev) => clearLocationFilters(prev))}
+        >
+          Limpar cidade e tipo
+        </Button>
         <Button className="ig-sort" onClick={() => setUrgentFirst((prev) => !prev)}>
           {urgentFirst ? 'Mais urgentes primeiro' : 'Ordem recente'}
         </Button>
