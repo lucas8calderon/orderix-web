@@ -15,6 +15,8 @@ export const HUB_EVENTS = {
   WHATSAPP_CLICK: 'hub_whatsapp_click',
   PLANS_CLICK: 'hub_plans_click',
   PARTNER_CLICK: 'hub_partner_click',
+  SEGMENT_CLICK: 'hub_segment_click',
+  SEGMENT_DEMO_CLICK: 'hub_segment_demo_click',
 };
 
 /**
@@ -30,7 +32,7 @@ export function trackHubPageView() {
 /**
  * Rastreia clique em card de link
  */
-export function trackHubLinkClick(linkId, linkName, destinationUrl) {
+export function trackHubLinkClick(linkId, linkName, destinationUrl, extras) {
   const params = {
     link_id: linkId,
     link_name: linkName,
@@ -39,6 +41,10 @@ export function trackHubLinkClick(linkId, linkName, destinationUrl) {
 
   if (destinationUrl) {
     params.destination_url = destinationUrl;
+  }
+
+  if (extras?.segment_id) {
+    params.segment_id = extras.segment_id;
   }
 
   // Eventos específicos para links estratégicos
@@ -78,8 +84,35 @@ export function trackHubDemoClick(demoId, demoName, destinationUrl) {
 }
 
 /**
- * Registra evento antes da navegação externa
- * Usa sendBeacon quando disponível para garantir envio
+ * Abertura do modal de segmento. Um clique no card dispara só este evento.
+ */
+export function trackHubSegmentClick(segmentId) {
+  return track(HUB_EVENTS.SEGMENT_CLICK, {
+    segment_id: segmentId,
+    page_path: '/links',
+  }, { pathname: '/links' });
+}
+
+/**
+ * Clique em "Ver demonstração" no modal.
+ * Não dispara hub_segment_click nem hub_link_click junto.
+ */
+export function trackHubSegmentDemoClick(segmentId, destinationUrl) {
+  const params = {
+    segment_id: segmentId,
+    page_path: '/links',
+  };
+
+  if (destinationUrl) {
+    params.destination_url = destinationUrl;
+  }
+
+  return track(HUB_EVENTS.SEGMENT_DEMO_CLICK, params, { pathname: '/links' });
+}
+
+/**
+ * Registra evento antes da navegação externa.
+ * Usa um atraso curto para o evento sair antes da troca de página.
  */
 export function trackBeforeNavigation(eventFn) {
   try {

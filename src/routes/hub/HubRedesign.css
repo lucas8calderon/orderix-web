@@ -1,11 +1,13 @@
-/* ===== WEPER HUB REDESIGN — Premium & Clean ===== */
+/* ===== WEPER HUB REDESIGN COMPLETO — Layout de Referência ===== */
 
+/* Reset e Base */
 .hub-page {
   min-height: 100vh;
   background: #F8FAFC;
   display: flex;
   flex-direction: column;
-  padding: 20px 16px 32px;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 
 .hub-container {
@@ -14,24 +16,156 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
-/* ===== CABEÇALHO COMPACTO ===== */
+/* ===== CABEÇALHO COMPLETO ===== */
 .hub-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   text-align: center;
   padding-bottom: 8px;
 }
 
-.hub-logo {
+/* Indicadores superiores */
+.hub-header-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.hub-online-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.hub-online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  animation: hubPulse 2s ease-in-out infinite;
+}
+
+@keyframes hubPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.hub-online-text {
+  text-transform: capitalize;
+}
+
+.hub-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.hub-header-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #64748B;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.hub-header-icon-btn:hover {
+  border-color: #2563EB;
+  color: #2563EB;
+  background: #F8FAFC;
+}
+
+.hub-header-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Logo circular com selo de verificação.
+   O selo é irmão do círculo: o overflow hidden fica só na imagem. */
+.hub-logo-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-inline: auto;
   margin-bottom: 4px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.hub-logo-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+.hub-logo-circle .weper-mark {
+  display: flex;
+  line-height: 0;
+}
+
+.hub-logo-circle .weper-mark picture {
+  display: flex;
+  line-height: 0;
+}
+
+.weper-verified-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  /* Centro do selo sobre a borda do círculo, em qualquer tamanho do avatar. */
+  transform: translate(-6%, -6%);
+  width: 26%;
+  height: 26%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1683ff;
+  color: #ffffff;
+  border: 3px solid #ffffff;
+  box-sizing: border-box;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.weper-verified-badge svg {
+  display: block;
+  width: 52%;
+  height: 52%;
+}
+
+.hub-brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .hub-slogan {
@@ -39,17 +173,19 @@
   font-weight: 600;
   color: #2563EB;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
+/* Título e descrição */
 .hub-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #0F172A;
   line-height: 1.3;
-  margin: 0;
+  margin: 8px 0 0 0;
   letter-spacing: -0.01em;
+  max-width: 360px;
 }
 
 .hub-description {
@@ -60,95 +196,193 @@
   max-width: 380px;
 }
 
-/* ===== CARD PRINCIPAL HERO ===== */
-.hub-hero-card {
-  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-  border-radius: 16px;
-  padding: 24px;
+/* ===== INDICADORES ===== */
+.hub-stats {
+  margin-top: 4px;
+  padding: 24px 20px;
+  background: #FAFBFC;
+  border-radius: 14px;
+  border: 1px solid #F1F5F9;
+}
+
+.hub-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.hub-stat-item {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
-  position: relative;
-  overflow: hidden;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
 }
 
-.hub-hero-content {
-  position: relative;
-  z-index: 2;
-}
-
-.hub-hero-title {
-  font-size: 20px;
+.hub-stat-value {
+  font-size: 28px;
   font-weight: 700;
-  color: #FFFFFF;
-  margin: 0 0 6px 0;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.hub-stat-label {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
   line-height: 1.3;
 }
 
-.hub-hero-description {
-  font-size: 14px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 16px 0;
+/* ===== BANNER PRINCIPAL ===== */
+.hub-banner-link {
+  display: block;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
 }
 
-.hub-hero-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #FFFFFF;
-  color: #2563EB;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 12px 20px;
-  border-radius: 10px;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  align-self: flex-start;
+.hub-banner-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
 }
 
-.hub-hero-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.hub-hero-cta:active {
+.hub-banner-link:active {
   transform: translateY(0);
 }
 
-.hub-hero-mockups {
-  position: relative;
-  width: 100%;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hub-hero-mockup {
+.hub-banner-image {
   width: 100%;
   height: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: block;
+  object-fit: cover;
 }
 
-/* ===== CARDS SECUNDÁRIOS ===== */
-.hub-links {
-  display: flex;
-  flex-direction: column;
+/* ===== CARDS DE DESTAQUE (2 colunas) ===== */
+.hub-featured-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+  margin-top: 4px;
 }
 
-.hub-link-card {
+.hub-link-card--featured {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
   padding: 16px;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-decoration: none;
+  color: #0F172A;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  position: relative;
+}
+
+.hub-link-card--featured:hover {
+  border-color: #2563EB;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  transform: translateY(-2px);
+}
+
+.hub-link-card--featured:active {
+  transform: translateY(0);
+}
+
+.hub-link-card--featured .hub-link-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563EB;
+  display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hub-link-card--featured .hub-link-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hub-link-card--featured .hub-link-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  line-height: 1.3;
+}
+
+.hub-link-card--featured .hub-link-description {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+.hub-link-card--featured .hub-link-arrow-wrapper {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hub-link-card--featured .hub-link-arrow {
+  color: #94A3B8;
+  transition: all 0.2s ease;
+}
+
+.hub-link-card--featured:hover .hub-link-arrow {
+  color: #2563EB;
+  transform: translate(2px, -2px);
+}
+
+/* ===== SEÇÃO ACESSO RÁPIDO ===== */
+.hub-quick-access {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.hub-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.hub-quick-access-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Cards em formato de lista */
+.hub-link-card--list {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-decoration: none;
   color: #0F172A;
   transition: all 0.2s ease;
@@ -156,29 +390,29 @@
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
-.hub-link-card:hover {
+.hub-link-card--list:hover {
   border-color: #2563EB;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
   transform: translateY(-1px);
 }
 
-.hub-link-card:active {
+.hub-link-card--list:active {
   transform: translateY(0);
 }
 
-.hub-link-icon {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+.hub-link-card--list .hub-link-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   background: rgba(37, 99, 235, 0.08);
   color: #2563EB;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.hub-link-content {
+.hub-link-card--list .hub-link-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -186,15 +420,15 @@
   min-width: 0;
 }
 
-.hub-link-title {
-  font-size: 15px;
+.hub-link-card--list .hub-link-title {
+  font-size: 14px;
   font-weight: 600;
   color: #0F172A;
   line-height: 1.3;
 }
 
-.hub-link-description {
-  font-size: 13px;
+.hub-link-card--list .hub-link-description {
+  font-size: 12px;
   color: #64748B;
   line-height: 1.4;
 }
@@ -202,137 +436,114 @@
 .hub-link-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #2563EB;
   background: rgba(37, 99, 235, 0.08);
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   margin-top: 4px;
   align-self: flex-start;
 }
 
-.hub-link-demo-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #2563EB;
-  margin-top: 2px;
-}
-
-.hub-link-arrow {
+.hub-link-card--list .hub-link-arrow-wrapper {
   flex-shrink: 0;
-  color: #94A3B8;
-  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.hub-link-card:hover .hub-link-arrow {
+.hub-link-card--list .hub-link-arrow {
+  color: #94A3B8;
+  transition: all 0.2s ease;
+}
+
+.hub-link-card--list:hover .hub-link-arrow {
   transform: translateX(3px);
   color: #2563EB;
 }
 
-/* Card WhatsApp Especial */
+/* ===== CARD WHATSAPP ESPECIAL ===== */
 .hub-link-card--whatsapp {
-  background: linear-gradient(135deg, rgba(37, 211, 102, 0.06) 0%, rgba(37, 211, 102, 0.1) 100%);
-  border-color: #25D366;
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.08) 0%, rgba(37, 211, 102, 0.12) 100%);
+  border: 1.5px solid #25D366;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: #0F172A;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.1);
+  margin-top: 4px;
 }
 
 .hub-link-card--whatsapp:hover {
   border-color: #25D366;
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.15);
-}
-
-.hub-link-card--whatsapp .hub-link-icon {
-  background: rgba(37, 211, 102, 0.12);
-  color: #25D366;
-}
-
-.hub-link-card--whatsapp .hub-link-arrow {
-  background: #25D366;
-  color: #FFFFFF;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hub-link-card--whatsapp:hover .hub-link-arrow {
-  transform: translateX(0) scale(1.05);
-}
-
-/* ===== SEÇÃO EXPLORE POR SEGMENTO ===== */
-.hub-segments {
-  margin-top: 12px;
-}
-
-.hub-segments-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0F172A;
-  margin: 0 0 12px 0;
-  text-align: left;
-}
-
-.hub-segments-scroll {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 2px 12px 2px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.hub-segments-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.hub-segment-card {
-  flex-shrink: 0;
-  width: 110px;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-.hub-segment-card:hover,
-.hub-segment-card:active {
-  border-color: #2563EB;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 6px 16px rgba(37, 211, 102, 0.2);
   transform: translateY(-2px);
 }
 
-.hub-segment-icon {
+.hub-link-card--whatsapp:active {
+  transform: translateY(0);
+}
+
+.hub-link-card--whatsapp .hub-link-icon {
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563EB;
+  background: rgba(37, 211, 102, 0.15);
+  color: #25D366;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  flex-shrink: 0;
 }
 
-.hub-segment-name {
-  font-size: 13px;
-  font-weight: 600;
+.hub-link-card--whatsapp .hub-link-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hub-link-card--whatsapp .hub-link-title {
+  font-size: 15px;
+  font-weight: 700;
   color: #0F172A;
-  text-align: center;
   line-height: 1.3;
 }
 
-/* ===== MODAL REDESIGN ===== */
+.hub-link-card--whatsapp .hub-link-description {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+.hub-link-card--whatsapp .hub-link-arrow-wrapper {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #25D366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+}
+
+.hub-link-card--whatsapp .hub-link-arrow {
+  color: #FFFFFF;
+}
+
+.hub-link-card--whatsapp:hover .hub-link-arrow-wrapper {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+/* ===== MODAL DE DEMONSTRAÇÕES ===== */
 .hub-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -407,6 +618,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  padding: 0;
 }
 
 .hub-modal-close:hover {
@@ -490,12 +702,57 @@
   color: #2563EB;
 }
 
-/* ===== RODAPÉ SIMPLIFICADO ===== */
+/* ===== RODAPÉ ===== */
 .hub-footer {
   margin-top: 24px;
   padding-top: 20px;
   text-align: center;
   border-top: 1px solid #F1F5F9;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hub-footer-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.hub-footer-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hub-footer-button:hover:not(:disabled) {
+  border-color: #2563EB;
+  color: #2563EB;
+  background: #F8FAFC;
+}
+
+.hub-footer-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.hub-footer-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hub-footer-button--share {
+  padding: 10px;
+  min-width: 40px;
 }
 
 .hub-footer-text {
@@ -503,17 +760,6 @@
   color: #94A3B8;
   margin: 0;
   line-height: 1.5;
-}
-
-.hub-footer-link {
-  color: #2563EB;
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.2s ease;
-}
-
-.hub-footer-link:hover {
-  opacity: 0.8;
 }
 
 /* ===== ANIMAÇÕES ===== */
@@ -537,7 +783,33 @@
   }
 }
 
-/* ===== RESPONSIVIDADE TABLET/DESKTOP ===== */
+/* ===== RESPONSIVIDADE TABLET ===== */
+@media (min-width: 375px) {
+  .hub-page {
+    padding: 20px 16px;
+  }
+
+  .hub-title {
+    font-size: 22px;
+  }
+}
+
+@media (min-width: 430px) {
+  .hub-logo-wrapper {
+    width: 88px;
+    height: 88px;
+  }
+
+  .hub-stat-value {
+    font-size: 32px;
+  }
+
+  .hub-stat-label {
+    font-size: 13px;
+  }
+}
+
+/* ===== RESPONSIVIDADE DESKTOP ===== */
 @media (min-width: 768px) {
   .hub-page {
     padding: 32px 24px 48px;
@@ -545,12 +817,15 @@
 
   .hub-container {
     max-width: 560px;
-    gap: 24px;
+    gap: 20px;
   }
 
   .hub-header {
-    gap: 10px;
-    padding-bottom: 12px;
+    gap: 14px;
+  }
+
+  .hub-brand-name {
+    font-size: 28px;
   }
 
   .hub-slogan {
@@ -558,7 +833,8 @@
   }
 
   .hub-title {
-    font-size: 28px;
+    font-size: 26px;
+    max-width: 480px;
   }
 
   .hub-description {
@@ -566,42 +842,50 @@
     max-width: 480px;
   }
 
-  .hub-hero-card {
-    padding: 32px;
-    flex-direction: row;
-    align-items: center;
-    gap: 24px;
+  .hub-logo-wrapper {
+    width: 96px;
+    height: 96px;
   }
 
-  .hub-hero-content {
-    flex: 1;
+  .hub-stats {
+    padding: 28px 24px;
   }
 
-  .hub-hero-mockups {
-    flex: 0 0 300px;
-    margin: 0;
+  .hub-stats-grid {
+    gap: 32px;
+    max-width: 540px;
   }
 
-  .hub-hero-mockup {
-    width: 100%;
+  .hub-stat-value {
+    font-size: 36px;
   }
 
-  .hub-links {
+  .hub-stat-label {
+    font-size: 13px;
+  }
+
+  .hub-banner-link {
+    border-radius: 18px;
+  }
+
+  .hub-featured-cards {
     gap: 12px;
   }
 
-  .hub-link-card {
+  .hub-link-card--featured {
     padding: 18px;
   }
 
-  .hub-segments-scroll {
-    justify-content: center;
-    flex-wrap: wrap;
-    overflow-x: visible;
+  .hub-quick-access {
+    gap: 14px;
   }
 
-  .hub-segment-card {
-    width: 120px;
+  .hub-quick-access-list {
+    gap: 10px;
+  }
+
+  .hub-link-card--list {
+    padding: 16px 18px;
   }
 
   .hub-modal-backdrop {
@@ -640,27 +924,41 @@
   }
 }
 
-/* Movimento Reduzido */
+/* ===== MOVIMENTO REDUZIDO (Acessibilidade) ===== */
 @media (prefers-reduced-motion: reduce) {
-  .hub-link-card,
-  .hub-hero-cta,
-  .hub-segment-card,
+  .hub-banner-link,
+  .hub-link-card--featured,
+  .hub-link-card--list,
+  .hub-link-card--whatsapp,
   .hub-demo-card,
   .hub-modal-backdrop,
-  .hub-modal {
+  .hub-modal,
+  .hub-online-dot {
     animation: none;
     transition: none;
   }
 
-  .hub-link-card:hover,
-  .hub-hero-cta:hover,
-  .hub-segment-card:hover,
+  .hub-banner-link:hover,
+  .hub-link-card--featured:hover,
+  .hub-link-card--list:hover,
+  .hub-link-card--whatsapp:hover,
   .hub-demo-card:hover {
     transform: none;
   }
 
-  .hub-link-card:hover .hub-link-arrow,
+  .hub-link-arrow,
+  .hub-demo-arrow {
+    transition: none;
+  }
+
+  .hub-link-card--featured:hover .hub-link-arrow,
+  .hub-link-card--list:hover .hub-link-arrow,
   .hub-demo-card:hover .hub-demo-arrow {
     transform: none;
   }
+}
+
+/* ===== DARK MODE (Futuro) ===== */
+@media (prefers-color-scheme: dark) {
+  /* Preparado para implementação futura */
 }

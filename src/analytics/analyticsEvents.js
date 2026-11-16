@@ -43,6 +43,8 @@ const ALLOWED_PARAMS = new Set([
   'first_utm_medium',
   'first_utm_campaign',
   'has_partner_ref',
+  'segment_id',
+  'destination_url',
 ]);
 
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];

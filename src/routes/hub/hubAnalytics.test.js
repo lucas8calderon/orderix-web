@@ -5,6 +5,8 @@ import {
   trackHubLinkClick,
   trackHubModalOpen,
   trackHubDemoClick,
+  trackHubSegmentClick,
+  trackHubSegmentDemoClick,
 } from './hubAnalytics';
 
 jest.mock('../../analytics/analyticsService');
@@ -23,6 +25,8 @@ describe('hubAnalytics', () => {
       expect(HUB_EVENTS.WHATSAPP_CLICK).toBe('hub_whatsapp_click');
       expect(HUB_EVENTS.PLANS_CLICK).toBe('hub_plans_click');
       expect(HUB_EVENTS.PARTNER_CLICK).toBe('hub_partner_click');
+      expect(HUB_EVENTS.SEGMENT_CLICK).toBe('hub_segment_click');
+      expect(HUB_EVENTS.SEGMENT_DEMO_CLICK).toBe('hub_segment_demo_click');
     });
   });
 
@@ -44,6 +48,21 @@ describe('hubAnalytics', () => {
   });
 
   describe('trackHubLinkClick', () => {
+    it('inclui o segmento no clique de Conhecer a Weper', () => {
+      trackHubLinkClick('conhecer-weper', 'Conhecer a Weper', '/', { segment_id: 'lanchonetes' });
+      expect(track).toHaveBeenCalledWith(
+        HUB_EVENTS.LINK_CLICK,
+        expect.objectContaining({
+          link_id: 'conhecer-weper',
+          link_name: 'Conhecer a Weper',
+          destination_url: '/',
+          segment_id: 'lanchonetes',
+        }),
+        expect.objectContaining({ pathname: '/links' })
+      );
+      expect(track).toHaveBeenCalledTimes(1);
+    });
+
     it('rastreia clique genérico em link', () => {
       trackHubLinkClick('funcionalidades', 'Funcionalidades', '/#funcionalidades');
       expect(track).toHaveBeenCalledWith(
@@ -104,6 +123,41 @@ describe('hubAnalytics', () => {
           page_path: '/links',
         }),
         expect.objectContaining({ pathname: '/links' })
+      );
+    });
+  });
+
+  describe('trackHubSegmentClick', () => {
+    it('rastreia o segmento sem destino de demonstração', () => {
+      trackHubSegmentClick('lanchonetes');
+      expect(track).toHaveBeenCalledWith(
+        HUB_EVENTS.SEGMENT_CLICK,
+        expect.objectContaining({
+          segment_id: 'lanchonetes',
+          page_path: '/links',
+        }),
+        expect.objectContaining({ pathname: '/links' })
+      );
+      expect(track).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('trackHubSegmentDemoClick', () => {
+    it('rastreia a abertura da demonstração sem duplicar o clique genérico', () => {
+      trackHubSegmentDemoClick('hamburguerias', '/demo/weper-burger');
+      expect(track).toHaveBeenCalledWith(
+        HUB_EVENTS.SEGMENT_DEMO_CLICK,
+        expect.objectContaining({
+          segment_id: 'hamburguerias',
+          destination_url: '/demo/weper-burger',
+          page_path: '/links',
+        }),
+        expect.objectContaining({ pathname: '/links' })
+      );
+      expect(track).not.toHaveBeenCalledWith(
+        HUB_EVENTS.SEGMENT_CLICK,
+        expect.anything(),
+        expect.anything()
       );
     });
   });
