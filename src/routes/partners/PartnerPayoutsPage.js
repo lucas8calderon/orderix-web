@@ -56,6 +56,8 @@ function PayoutDetailDialog({ payoutId, summary, onClose }) {
       ['Valor', formatCurrency(view.amount)],
       ['Previsto para', formatDate(view.scheduledAt)],
       ['Pago em', formatDateTime(view.paidAt)],
+      ['Identificador', view.pixIdentifier || '—'],
+      ['Comprovante', view.receiptRef || '—'],
     ]
     : [];
 
@@ -101,23 +103,23 @@ const PAYOUT_COLUMNS = [
 
 function commissionKindLabel(item) {
   const percent = Number(item.commissionPercent);
-  if (item.commissionKind === 'FIRST_MONTH' || percent === 100) {
-    return '1ª mensalidade (100%)';
+  if (item.commissionKind === 'FIRST_MONTH' || percent === 100 || item.cycleNumber === 1) {
+    return 'Primeira';
   }
-  if (item.commissionKind === 'RENEWAL' || percent === 10) {
-    return 'Renovação (10%)';
+  if (item.commissionKind === 'RENEWAL' || Number.isFinite(percent)) {
+    return 'Recorrente';
   }
-  return item.commissionPercent != null ? `${item.commissionPercent}%` : '—';
+  return '—';
 }
 
 const COMMISSION_COLUMNS = [
-  { key: 'establishment', label: 'Estabelecimento', render: (item) => item.establishmentName || '—' },
+  { key: 'competence', label: 'Data', render: (item) => formatDate(item.competenceDate) },
+  { key: 'establishment', label: 'Cliente', render: (item) => item.establishmentName || '—' },
+  { key: 'cycle', label: 'Mensalidade', render: (item) => item.cycleNumber || '—' },
   { key: 'kind', label: 'Tipo', render: (item) => commissionKindLabel(item) },
+  { key: 'percent', label: 'Percentual', render: (item) => (item.commissionPercent != null ? `${item.commissionPercent}%` : '—') },
   { key: 'amount', label: 'Valor', align: 'right', render: (item) => formatCurrency(item.commissionAmount) },
   { key: 'status', label: 'Status', render: (item) => <PartnerStatusChip kind="commission" value={item.status} /> },
-  { key: 'competence', label: 'Competência', render: (item) => formatDate(item.competenceDate) },
-  { key: 'eligibility', label: 'Elegível em', render: (item) => formatDate(item.eligibilityDate) },
-  { key: 'paidAt', label: 'Pago em', render: (item) => formatDateTime(item.paidAt) },
 ];
 
 export default function PartnerPayoutsPage() {

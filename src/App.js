@@ -7,6 +7,7 @@ import Home from './routes/home/Home';
 import SignupPage from './routes/billing/SignupPage';
 import SignupReturnPage from './routes/billing/SignupReturnPage';
 import MercadoPagoReturnPage from './routes/dashboard/settings/MercadoPagoReturnPage';
+import SaasMercadoPagoReturnPage from './routes/master/SaasMercadoPagoReturnPage';
 import AcceptInvitePage from './routes/billing/AcceptInvitePage';
 import Login from './routes/login/Login';
 import ForgotPassword from './routes/login/ForgotPassword';
@@ -317,6 +318,7 @@ function App() {
           </Route>
 
           <Route path={PATHS.ADMIN} element={<AdminLayout />}>
+            <Route path="financeiro/mercado-pago/retorno" element={<SaasMercadoPagoReturnPage />} />
             <Route index element={<MasterDashboard />} />
             <Route path=":section" element={<MasterDashboard />} />
           </Route>

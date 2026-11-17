@@ -35,6 +35,7 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
+import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AppShell } from '../../commons/components/AppShell';
 import weperLogo from '../../assets/images/weper-logo.png';
@@ -58,6 +59,7 @@ import { MasterPlans } from './components/MasterPlans';
 import { MasterSubscriptions } from './components/MasterSubscriptions';
 import { MasterContratacoes } from './components/MasterContratacoes';
 import { MasterPartners } from './components/MasterPartners';
+import MasterFinance from './components/MasterFinance';
 import { CrmBoard } from './crm/CrmBoard';
 import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
 import { getCurrentUser } from '../../services/session';
@@ -266,6 +268,7 @@ const ADMIN_SECTIONS = {
   crm: PATHS.ADMIN_CRM,
   contratacoes: PATHS.ADMIN_CONTRATACOES,
   parceiros: PATHS.ADMIN_PARTNERS,
+  financeiro: PATHS.ADMIN_FINANCEIRO,
 };
 
 const ADMIN_TITLES = {
@@ -276,6 +279,7 @@ const ADMIN_TITLES = {
   crm: 'CRM',
   contratacoes: 'Contratações',
   parceiros: 'Parceiros',
+  financeiro: 'Financeiro',
 };
 
 export default function MasterDashboard() {
@@ -385,6 +389,7 @@ export default function MasterDashboard() {
       items: [
         { key: 'crm', title: 'CRM', icon: <GroupsOutlinedIcon />, to: PATHS.ADMIN_CRM, selected: section === 'crm' },
         { key: 'parceiros', title: 'Parceiros', icon: <HandshakeOutlinedIcon />, to: PATHS.ADMIN_PARTNERS, selected: section === 'parceiros' },
+        { key: 'financeiro', title: 'Financeiro', icon: <AccountBalanceOutlinedIcon />, to: PATHS.ADMIN_FINANCEIRO, selected: section === 'financeiro' },
       ],
     },
   ];
@@ -419,13 +424,13 @@ export default function MasterDashboard() {
           </Box>
         ) : (
           <>
-        {loading && section !== 'assinaturas' && section !== 'parceiros' && section !== 'contratacoes' && (
+        {loading && section !== 'assinaturas' && section !== 'parceiros' && section !== 'contratacoes' && section !== 'financeiro' && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress sx={{ color: 'var(--color-primary)' }} />
           </Box>
         )}
 
-        {!loading && error && section !== 'parceiros' && section !== 'contratacoes' && (
+        {!loading && error && section !== 'parceiros' && section !== 'contratacoes' && section !== 'financeiro' && (
           <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" onClick={refetch}>Tentar novamente</Button>}>
             Não foi possível carregar os dados administrativos.
           </Alert>
@@ -453,6 +458,10 @@ export default function MasterDashboard() {
 
         {section === 'parceiros' && (
           <MasterPartners />
+        )}
+
+        {section === 'financeiro' && (
+          <MasterFinance />
         )}
 
         {!loading && !error && section === 'estabelecimentos' && (

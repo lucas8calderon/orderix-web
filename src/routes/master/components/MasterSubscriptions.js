@@ -17,6 +17,8 @@ import axios from 'axios';
 import '../../../services/apiConfig';
 import { PageHeader } from '../../../commons/components/PageHeader';
 import { SUBSCRIPTION_STATUS_LABELS, formatCurrency, formatDate } from '../../../services/accessControl';
+import PlanChangeDialog from './PlanChangeDialog';
+import { planChangeHistoryLine } from '../planChangeMessage';
 
 const ACTION_LABEL = {
   SUSPEND: 'Suspensão',
@@ -51,6 +53,8 @@ export function MasterSubscriptions() {
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [planChangeOpen, setPlanChangeOpen] = useState(false);
+  const [planChanges, setPlanChanges] = useState([]);
 
   async function load() {
     const response = await axios.get('/api/billing/subscriptions');
@@ -70,6 +74,12 @@ export function MasterSubscriptions() {
     }
     const response = await axios.get(`/api/billing/subscriptions/${row.storeId}`);
     setSelected(response.data);
+    try {
+      const changes = await axios.get(`/api/billing/subscriptions/${row.storeId}/plan-changes`);
+      setPlanChanges(changes.data || []);
+    } catch (failure) {
+      setPlanChanges([]);
+    }
   }
 
   async function act(path, success) {
@@ -170,6 +180,7 @@ export function MasterSubscriptions() {
               <Button variant="outlined" onClick={() => act(`/api/billing/subscriptions/${selected.storeId}/exempt`, 'Loja marcada como isenta, sem nova cobrança Asaas.')}>Marcar isenta</Button>
               <Button variant="contained" onClick={() => act(`/api/billing/subscriptions/${selected.storeId}/cancel`, 'Renovação encerrada. O acesso segue até o fim do ciclo pago.')}>Cancelar renovação</Button>
               <Button variant="text" onClick={resend}>Reenviar convite</Button>
+              <Button variant="contained" onClick={() => setPlanChangeOpen(true)}>Alterar plano</Button>
             </Stack>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>
@@ -186,6 +197,18 @@ export function MasterSubscriptions() {
               ) : null}
             </Stack>
           )}
+          {planChanges.length > 0 ? (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2">Histórico de alterações</Typography>
+              {planChanges.map((change) => (
+                <Typography key={change.id} variant="body2">
+                  {planChangeHistoryLine(change)}
+                  {change.createdByName ? ` Responsável: ${change.createdByName}.` : ''}
+                  {change.errorMessage ? ` ${change.errorMessage}` : ''}
+                </Typography>
+              ))}
+            </Box>
+          ) : null}
           {(selected.audits || []).length > 0 ? (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2">Auditoria</Typography>
@@ -197,6 +220,13 @@ export function MasterSubscriptions() {
             </Box>
           ) : null}
         </Box>
+      ) : null}
+      {planChangeOpen && selected?.storeId ? (
+        <PlanChangeDialog
+          storeId={selected.storeId}
+          onClose={() => setPlanChangeOpen(false)}
+          onChanged={() => openDetail(selected)}
+        />
       ) : null}
     </>
   );

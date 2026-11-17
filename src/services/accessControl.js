@@ -106,6 +106,7 @@ export const PATHS = {
   ADMIN_CRM: '/admin/crm',
   ADMIN_CONTRATACOES: '/admin/contratacoes',
   ADMIN_PARTNERS: '/admin/parceiros',
+  ADMIN_FINANCEIRO: '/admin/financeiro',
   LEGACY_DASHBOARD: '/dashboard',
   LEGACY_MASTER: '/master/dashboard',
   PUBLIC_MENU: '/cardapio',
@@ -161,6 +162,7 @@ const PLATFORM_ADMIN_ROUTES = [
   PATHS.ADMIN_CRM,
   PATHS.ADMIN_CONTRATACOES,
   PATHS.ADMIN_PARTNERS,
+  PATHS.ADMIN_FINANCEIRO,
 ];
 
 /** Área autenticada do parceiro. Login, recuperação e redefinição são públicos. */

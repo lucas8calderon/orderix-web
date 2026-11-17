@@ -181,7 +181,6 @@ export default function PartnerDashboardPage() {
 
   const total = toNumber(dashboard?.totalReferrals);
   const converted = toNumber(dashboard?.convertedReferrals);
-  const rate = conversionRate(total, converted);
   const reserved = toNumber(dashboard?.reservedCommissions);
 
   return (
@@ -271,25 +270,32 @@ export default function PartnerDashboardPage() {
 
           <dl className="pd-stats">
             <div>
+              <dt>Clientes indicados</dt>
+              <dd>{firstLoad ? '–' : total}</dd>
+            </div>
+            <div>
+              <dt>Ativos</dt>
+              <dd>{firstLoad ? '–' : (dashboard?.activeClients ?? converted)}</dd>
+            </div>
+            <div>
+              <dt>Receita gerada</dt>
+              <dd className="is-money">{firstLoad ? '–' : formatCurrency(dashboard?.generatedRevenue)}</dd>
+            </div>
+            <div>
+              <dt>Comissão acumulada</dt>
+              <dd>{firstLoad ? '–' : formatCurrency(dashboard?.accumulatedCommission)}</dd>
+            </div>
+            <div>
+              <dt>Saldo pendente</dt>
+              <dd>{firstLoad ? '–' : formatCurrency(dashboard?.pendingBalance ?? (toNumber(dashboard?.pendingCommissions) + reserved))}</dd>
+            </div>
+            <div>
               <dt>Disponível</dt>
-              <dd className="is-money">{firstLoad ? '–' : formatCurrency(dashboard?.availableCommissions)}</dd>
+              <dd className="is-money">{firstLoad ? '–' : formatCurrency(dashboard?.availableBalance ?? dashboard?.availableCommissions)}</dd>
             </div>
             <div>
-              <dt>A receber</dt>
-              <dd>{firstLoad ? '–' : formatCurrency(toNumber(dashboard?.pendingCommissions) + reserved)}</dd>
-            </div>
-            <div>
-              <dt>Já recebido</dt>
+              <dt>Total recebido</dt>
               <dd>{firstLoad ? '–' : formatCurrency(dashboard?.totalReceived)}</dd>
-            </div>
-            <div>
-              <dt>Indicações</dt>
-              <dd>
-                {firstLoad ? '–' : total}
-                {!firstLoad && rate != null && (
-                  <span className="pd-stats-sub">{converted} {converted === 1 ? 'cliente' : 'clientes'} · {rate}%</span>
-                )}
-              </dd>
             </div>
           </dl>
 
