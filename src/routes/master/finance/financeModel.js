@@ -21,6 +21,23 @@ export function commissionKindLabel(item) {
   return 'Recorrente';
 }
 
+export const MERCADO_PAGO_SETUP_MISSING =
+  'Faltam configurações do aplicativo Mercado Pago no servidor. O botão fica indisponível até isso ser resolvido.';
+
+export function mercadoPagoConnectView(gateway) {
+  const selected = gateway?.activeGateway === 'MERCADO_PAGO';
+  const connected = gateway?.mercadoPagoConnectionType === 'OAUTH';
+  const available = Boolean(gateway?.mercadoPagoOauthAvailable);
+  return {
+    visible: selected || connected,
+    connected,
+    buttonDisabled: !available,
+    unavailableMessage: available
+      ? ''
+      : (gateway?.mercadoPagoOauthUnavailableMessage || MERCADO_PAGO_SETUP_MISSING),
+  };
+}
+
 export function mercadoPagoAccountLabel(gateway) {
   if (!gateway || gateway.mercadoPagoConnectionType !== 'OAUTH') return '';
   const id = gateway.mercadoPagoAccountId

@@ -34,10 +34,11 @@ import {
   saveGatewaySettings,
   startSaasMercadoPagoOAuth,
   testGatewayConnection,
+  testSaasMercadoPago,
   updatePartnerPercent,
   disconnectSaasMercadoPagoOAuth,
 } from '../service/financeAdminService';
-import { AUTOMATIC_PAYOUT_REASON, FIRST_MONTH_PERCENT, PERCENT_OPTIONS, mercadoPagoAccountLabel, recurringLabel } from '../finance/financeModel';
+import { AUTOMATIC_PAYOUT_REASON, FIRST_MONTH_PERCENT, PERCENT_OPTIONS, mercadoPagoAccountLabel, mercadoPagoConnectView, recurringLabel } from '../finance/financeModel';
 
 const emptyGateway = {
   activeGateway: 'ASAAS',
@@ -333,7 +334,7 @@ export default function MasterFinance() {
 function MercadoPagoSaasConnect({ gateway, disabled, onReload }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const connected = gateway.mercadoPagoConnectionType === 'OAUTH';
+  const view = mercadoPagoConnectView(gateway);
   const label = mercadoPagoAccountLabel(gateway);
 
   const connect = async () => {
@@ -345,6 +346,19 @@ function MercadoPagoSaasConnect({ gateway, disabled, onReload }) {
       window.location.assign(response.url);
     } catch (failure) {
       setError(messageOf(failure, 'Não foi possível abrir o Mercado Pago. Tente de novo.'));
+      setBusy(false);
+    }
+  };
+
+  const testAccount = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await testSaasMercadoPago();
+      await onReload();
+    } catch (failure) {
+      setError(messageOf(failure, 'O teste da conta Weper falhou.'));
+    } finally {
       setBusy(false);
     }
   };
@@ -365,37 +379,46 @@ function MercadoPagoSaasConnect({ gateway, disabled, onReload }) {
     }
   };
 
+  if (!view.visible) return null;
+
   return (
     <Box sx={{ mt: 2, mb: 1 }}>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>Conta Mercado Pago da Weper</Typography>
-      {connected ? (
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        Esta conexão cobra as assinaturas da plataforma. Não é a conta de delivery de uma loja e não pede Access Token, Public Key nem segredo de webhook.
+      </Typography>
+      {view.connected ? (
         <>
           <Alert severity="success">
-            Mercado Pago conectado{label ? ` (${label})` : ''}. Marque Mercado Pago acima e salve. As assinaturas novas caem nessa conta. Nenhuma loja está ligada a ela.
+            Mercado Pago conectado{label ? ` (${label})` : ''}. Salve com Mercado Pago marcado para as assinaturas novas caírem nessa conta.
           </Alert>
-          <Button type="button" variant="outlined" color="error" sx={{ mt: 1 }} onClick={disconnect} disabled={busy || disabled}>
-            {busy ? 'Desconectando...' : 'Desconectar'}
-          </Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1 }}>
+            <Button type="button" variant="outlined" onClick={testAccount} disabled={busy || disabled}>
+              {busy ? 'Testando...' : 'Testar conexão'}
+            </Button>
+            <Button type="button" variant="outlined" onClick={connect} disabled={busy || disabled || view.buttonDisabled}>
+              Reconectar
+            </Button>
+            <Button type="button" variant="outlined" color="error" onClick={disconnect} disabled={busy || disabled}>
+              {busy ? 'Desconectando...' : 'Desconectar'}
+            </Button>
+          </Stack>
         </>
-      ) : gateway.mercadoPagoOauthAvailable ? (
+      ) : (
         <>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Esta conexão é da Weper, não de uma loja. Clique no botão, entre na conta Mercado Pago que deve receber as mensalidades e autorize. Não precisa preencher Access Token, Public Key nem segredo de webhook.
-          </Typography>
+          {!view.buttonDisabled ? null : (
+            <Alert severity="warning" sx={{ mb: 1 }}>{view.unavailableMessage}</Alert>
+          )}
           <Button
             type="button"
             variant="contained"
             onClick={connect}
-            disabled={busy || disabled}
+            disabled={busy || disabled || view.buttonDisabled}
             sx={{ bgcolor: '#009EE3', '&:hover': { bgcolor: '#0087C2' } }}
           >
-            {busy ? 'Abrindo o Mercado Pago...' : 'Conectar com Mercado Pago'}
+            {busy ? 'Abrindo o Mercado Pago...' : 'Conectar Mercado Pago'}
           </Button>
         </>
-      ) : (
-        <Alert severity="info">
-          O botão abre a autorização do Mercado Pago com o mesmo aplicativo já usado no Delivery. Ele aparece quando esse aplicativo está configurado no servidor.
-        </Alert>
       )}
       {error ? <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert> : null}
     </Box>

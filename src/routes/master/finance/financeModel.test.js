@@ -1,4 +1,4 @@
-import { AUTOMATIC_PAYOUT_REASON, commissionKindLabel, mercadoPagoAccountLabel, recurringLabel } from './financeModel';
+import { AUTOMATIC_PAYOUT_REASON, commissionKindLabel, mercadoPagoAccountLabel, mercadoPagoConnectView, recurringLabel } from './financeModel';
 
 test('a primeira mensalidade aparece como primeira e a seguinte como recorrente', () => {
   expect(commissionKindLabel({ cycleNumber: 1, commissionPercent: 100 })).toBe('Primeira');
@@ -17,6 +17,19 @@ test('a conta conectada da Weper mostra o número e o ambiente, sem token', () =
     mercadoPagoLiveMode: true,
   })).toBe('conta nº 241983636 · produção');
   expect(mercadoPagoAccountLabel({ mercadoPagoConnectionType: null })).toBe('');
+});
+
+test('selecionar Mercado Pago mostra o botão mesmo sem o aplicativo no servidor', () => {
+  const view = mercadoPagoConnectView({
+    activeGateway: 'MERCADO_PAGO',
+    mercadoPagoOauthAvailable: false,
+    mercadoPagoOauthUnavailableMessage: 'Falta MERCADO_PAGO_OAUTH_CLIENT_ID no servidor. O botão fica indisponível até isso ser resolvido.',
+  });
+  expect(view.visible).toBe(true);
+  expect(view.connected).toBe(false);
+  expect(view.buttonDisabled).toBe(true);
+  expect(view.unavailableMessage).toMatch(/CLIENT_ID/);
+  expect(view.unavailableMessage).not.toMatch(/secret|token/i);
 });
 
 test('o repasse automático permanece indisponível na interface', () => {

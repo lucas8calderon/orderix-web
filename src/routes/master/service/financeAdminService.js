@@ -19,6 +19,11 @@ export async function testGatewayConnection() {
   return response.data;
 }
 
+export async function testSaasMercadoPago() {
+  const response = await axios.post(`${GATEWAYS_URL}/mercadopago/test`);
+  return response.data;
+}
+
 export async function startSaasMercadoPagoOAuth() {
   const response = await axios.post(`${GATEWAYS_URL}/mercadopago/oauth/start`);
   return response.data;
