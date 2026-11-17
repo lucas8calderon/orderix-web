@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Button, Skeleton, Snackbar, Stack, TextField } from '@mui/material';
+import { Alert, Button, IconButton, Skeleton, Snackbar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import CheckIcon from '@mui/icons-material/Check';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import { Link } from 'react-router-dom';
-import { PATHS, formatCurrency, formatDate, partnerCanOpenCrm } from '../../services/accessControl';
+import { PATHS, formatCurrency, formatDate } from '../../services/accessControl';
 import { getCurrentUser } from '../../services/session';
 import {
   getApiErrorMessage,
@@ -15,12 +13,16 @@ import {
   getPartnerEarnings,
   getPartnerLeaderboard,
 } from '../../services/partnerService';
-import PartnerLeaderboard from './PartnerLeaderboard';
 import { buildPublicReferralLink } from '../../services/partnerReferral';
 import PartnerEarningsChart from './PartnerEarningsChart';
+import PartnerLeaderboard from './PartnerLeaderboard';
 import PartnerReferralDialog from './PartnerReferralDialog';
 import PartnerReferralsPanel from './PartnerReferralsPanel';
 import PartnerShell from './PartnerShell';
+import './PartnerDashboard.css';
+
+const WHATSAPP_MESSAGE =
+  'Oi! Queria te indicar a Weper, um sistema para restaurante que junta pedidos, mesas, cozinha e delivery num lugar só. Dá uma olhada:';
 
 function shareableCode(dashboard) {
   return dashboard?.shareCode || dashboard?.referralCode || '';
@@ -32,6 +34,10 @@ function buildReferralLink(dashboard) {
     return buildPublicReferralLink(code, window.location.origin);
   }
   return dashboard?.referralLink || '';
+}
+
+function displayLink(link) {
+  return String(link || '').replace(/^https?:\/\//, '');
 }
 
 async function copyText(text) {
@@ -51,18 +57,15 @@ async function copyText(text) {
   if (!ok) throw new Error('copy-failed');
 }
 
-function Kpi({ label, value, hint, accent, loading }) {
-  return (
-    <div className={accent ? 'partner-kpi is-accent' : 'partner-kpi'}>
-      <p className="partner-kpi-label">{label}</p>
-      {loading ? (
-        <Skeleton variant="text" width="70%" sx={{ fontSize: 24 }} />
-      ) : (
-        <p className="partner-kpi-value">{value}</p>
-      )}
-      {hint && !loading && <p className="partner-kpi-hint">{hint}</p>}
-    </div>
-  );
+function toNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+export function conversionRate(total, converted) {
+  const all = toNumber(total);
+  if (all <= 0) return null;
+  return Math.round((toNumber(converted) / all) * 100);
 }
 
 export default function PartnerDashboardPage() {
@@ -83,6 +86,7 @@ export default function PartnerDashboardPage() {
 
   const [referralOpen, setReferralOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [copied, setCopied] = useState('');
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
 
   const loadDashboard = useCallback(async () => {
@@ -113,12 +117,6 @@ export default function PartnerDashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    const previous = document.title;
-    document.title = 'Painel do Parceiro | Weper';
-    return () => { document.title = previous; };
-  }, []);
-
   const loadLeaderboard = useCallback(async () => {
     setLeaderboardLoading(true);
     setLeaderboardError('');
@@ -131,96 +129,63 @@ export default function PartnerDashboardPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Painel do Parceiro | Weper';
+    return () => { document.title = previous; };
+  }, []);
+
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
   useEffect(() => { loadLeaderboard(); }, [loadLeaderboard]);
   useEffect(() => { loadEarnings(range); }, [loadEarnings, range]);
 
-  const firstName = dashboard?.firstName || sessionUser?.firstName || 'parceiro';
+  const firstName = dashboard?.firstName || sessionUser?.firstName || '';
   const referralLink = buildReferralLink(dashboard);
   const shareCode = shareableCode(dashboard);
-  const legacyStillValid = Boolean(
-    dashboard?.referralCode && shareCode && dashboard.referralCode !== shareCode,
-  );
+  const firstLoad = dashboardLoading && !dashboard;
   const showToast = (message, severity = 'success') => setToast({ open: true, message, severity });
 
-  const handleCopy = async () => {
-    if (!referralLink) return;
+  const flagCopied = (key) => {
+    setCopied(key);
+    window.setTimeout(() => setCopied((current) => (current === key ? '' : current)), 2000);
+  };
+
+  const copyWithFeedback = async (text) => {
     try {
-      await copyText(referralLink);
-      showToast('Link de indicação copiado!');
+      await copyText(text);
+      return true;
     } catch {
-      showToast('Não foi possível copiar. Selecione o link e copie manualmente.', 'error');
+      showToast('Não foi possível copiar. Selecione o texto e copie manualmente.', 'error');
+      return false;
     }
+  };
+
+  const handleCopyLink = async () => {
+    if (referralLink && await copyWithFeedback(referralLink)) flagCopied('link');
   };
 
   const handleCopyCode = async () => {
-    if (!shareCode) return;
-    try {
-      await copyText(shareCode);
-      showToast('Código de indicação copiado!');
-    } catch {
-      showToast('Não foi possível copiar. Selecione o código e copie manualmente.', 'error');
-    }
+    if (shareCode && await copyWithFeedback(shareCode)) flagCopied('code');
   };
-
-  const whatsappShare = referralLink
-    ? `https://wa.me/?text=${encodeURIComponent(`Conheça a Weper, plataforma para estabelecimentos: ${referralLink}`)}`
-    : '';
 
   const handleReferralCreated = () => {
     setReferralOpen(false);
     setRefreshKey((key) => key + 1);
     loadDashboard();
-    showToast('Indicação enviada com sucesso!');
+    showToast('Indicação registrada. Acompanhe o andamento em Minhas indicações.');
   };
 
-  const kpis = [
-    { label: 'Indicações', value: dashboard?.totalReferrals ?? 0 },
-    { label: 'Convertidas', value: dashboard?.convertedReferrals ?? 0 },
-    { label: 'Previstas', value: formatCurrency(dashboard?.estimatedCommissions) },
-    { label: 'Pendentes', value: formatCurrency(dashboard?.pendingCommissions) },
-    { label: 'Disponível', value: formatCurrency(dashboard?.availableCommissions), accent: true },
-    { label: 'Em processamento', value: formatCurrency(dashboard?.reservedCommissions) },
-    { label: 'Recebidas', value: formatCurrency(dashboard?.totalReceived) },
-    {
-      label: 'Próximo pagamento',
-      value: dashboard?.nextPayoutDate ? formatDate(dashboard.nextPayoutDate) : 'Sob aprovação',
-      hint: dashboard?.nextPayoutDate ? undefined : 'Lotes Pix só após aprovação admin',
-    },
-  ];
+  const whatsappHref = referralLink
+    ? `https://wa.me/?text=${encodeURIComponent(`${WHATSAPP_MESSAGE} ${referralLink}`)}`
+    : undefined;
+
+  const total = toNumber(dashboard?.totalReferrals);
+  const converted = toNumber(dashboard?.convertedReferrals);
+  const rate = conversionRate(total, converted);
+  const reserved = toNumber(dashboard?.reservedCommissions);
 
   return (
     <PartnerShell>
-      <div className="partner-page-head">
-        <div>
-          <h1 className="partner-page-title">Olá, {firstName}! <span aria-hidden="true">👋</span></h1>
-          <p className="partner-page-subtitle">
-            Acompanhe suas indicações, comissões e pagamentos da Weper.
-          </p>
-        </div>
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setReferralOpen(true)}
-            sx={{ bgcolor: 'var(--color-primary)', '&:hover': { bgcolor: 'var(--color-primary-dark)' } }}
-          >
-            Nova indicação
-          </Button>
-          {partnerCanOpenCrm(sessionUser) && (
-            <Button component={Link} to={PATHS.PARTNERS_LEADS} variant="outlined" startIcon={<GroupsOutlinedIcon />}>
-              Leads
-            </Button>
-          )}
-          <Button component={Link} to={PATHS.PARTNERS_PAYOUTS} variant="outlined" startIcon={<PaymentsOutlinedIcon />}>
-            Pagamentos
-          </Button>
-          <Button component={Link} to={PATHS.PARTNERS_PROFILE} variant="outlined" startIcon={<PersonOutlineIcon />}>
-            Perfil
-          </Button>
-        </Stack>
-      </div>
-
       <div className="partner-stack">
         {dashboardError && (
           <Alert
@@ -245,95 +210,110 @@ export default function PartnerDashboardPage() {
           </Alert>
         )}
 
-        <section aria-label="Indicadores">
-          <div className="partner-kpis">
-            {kpis.map((kpi) => (
-              <Kpi key={kpi.label} {...kpi} loading={dashboardLoading && !dashboard} />
-            ))}
+        <section className="partner-card pd-top" aria-labelledby="pd-top-title">
+          <div className="pd-top-head">
+            <div>
+              <h1 id="pd-top-title" className="pd-title">{firstName ? `Olá, ${firstName}` : 'Olá'}</h1>
+              <p className="pd-lead">Compartilhe seu link. Cada loja que assinar gera comissão para você.</p>
+            </div>
+            <Button
+              variant="text"
+              startIcon={<AddIcon />}
+              onClick={() => setReferralOpen(true)}
+              sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
+            >
+              Indicar estabelecimento
+            </Button>
           </div>
-        </section>
 
-        <PartnerLeaderboard
-          leaderboard={leaderboard}
-          loading={leaderboardLoading}
-          error={leaderboardError}
-          onRetry={loadLeaderboard}
-          onInvite={handleCopy}
-          inviteDisabled={!referralLink}
-        />
-
-        <section className="partner-card" aria-labelledby="partner-link-title">
-          <h2 id="partner-link-title" className="partner-card-title">Seu link de indicação</h2>
-          <p className="partner-card-subtitle">
-            Compartilhe o link ou peça para o cliente digitar o código em Contratar.
-          </p>
-          {dashboardLoading && !dashboard ? (
-            <Skeleton variant="rounded" height={48} />
+          {firstLoad ? (
+            <Skeleton variant="rounded" height={46} />
           ) : (
-            <>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  value={referralLink || 'Link indisponível no momento'}
-                  inputProps={{ readOnly: true, 'aria-label': 'Link de indicação' }}
-                  onFocus={(event) => event.target.select()}
-                />
-                <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-                  <Button variant="contained" startIcon={<ContentCopyOutlinedIcon />} onClick={handleCopy} disabled={!referralLink}>
-                    Copiar
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<WhatsAppIcon />}
-                    component="a"
-                    href={whatsappShare || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    disabled={!referralLink}
-                  >
-                    Compartilhar
-                  </Button>
-                </Stack>
-              </Stack>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 1.5 }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  label="Código para digitar"
-                  value={shareCode || 'Código indisponível no momento'}
-                  inputProps={{
-                    readOnly: true,
-                    'aria-label': 'Código de indicação',
-                    style: { fontFamily: 'ui-monospace, monospace', fontWeight: 700, letterSpacing: '0.14em' },
-                  }}
-                  onFocus={(event) => event.target.select()}
-                />
+            <div className="pd-link">
+              <span className="pd-link-url" title={referralLink} aria-label="Seu link de indicação">
+                {referralLink ? displayLink(referralLink) : 'Link indisponível no momento'}
+              </span>
+              <div className="pd-link-actions">
                 <Button
-                  variant="outlined"
-                  startIcon={<ContentCopyOutlinedIcon />}
-                  onClick={handleCopyCode}
-                  disabled={!shareCode}
-                  sx={{ flexShrink: 0, alignSelf: { sm: 'center' } }}
+                  variant="contained"
+                  disableElevation
+                  startIcon={copied === 'link' ? <CheckIcon /> : <ContentCopyOutlinedIcon />}
+                  onClick={handleCopyLink}
+                  disabled={!referralLink}
+                  sx={{ textTransform: 'none', fontWeight: 700, minWidth: 132 }}
                 >
-                  Copiar código
+                  {copied === 'link' ? 'Copiado' : 'Copiar link'}
                 </Button>
-              </Stack>
-              <p className="partner-kpi-hint" style={{ marginTop: 10 }}>
-                O cliente cola este código no campo “Indicação? Insira o código”.
-                {legacyStillValid ? ' Links já enviados com o código anterior continuam válidos.' : ''}
-              </p>
-            </>
+                <IconButton
+                  component="a"
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  disabled={!referralLink}
+                  aria-label="Enviar link no WhatsApp"
+                  className="pd-wa"
+                >
+                  <WhatsAppIcon />
+                </IconButton>
+              </div>
+            </div>
           )}
+
+          {shareCode && (
+            <p className="pd-code">
+              Código para digitar na contratação:{' '}
+              <button type="button" className="pd-code-chip" onClick={handleCopyCode} aria-label={`Copiar código ${shareCode}`}>
+                {shareCode}
+                {copied === 'code' ? <CheckIcon sx={{ fontSize: 13 }} /> : <ContentCopyOutlinedIcon sx={{ fontSize: 13 }} />}
+              </button>
+            </p>
+          )}
+
+          <dl className="pd-stats">
+            <div>
+              <dt>Disponível</dt>
+              <dd className="is-money">{firstLoad ? '–' : formatCurrency(dashboard?.availableCommissions)}</dd>
+            </div>
+            <div>
+              <dt>A receber</dt>
+              <dd>{firstLoad ? '–' : formatCurrency(toNumber(dashboard?.pendingCommissions) + reserved)}</dd>
+            </div>
+            <div>
+              <dt>Já recebido</dt>
+              <dd>{firstLoad ? '–' : formatCurrency(dashboard?.totalReceived)}</dd>
+            </div>
+            <div>
+              <dt>Indicações</dt>
+              <dd>
+                {firstLoad ? '–' : total}
+                {!firstLoad && rate != null && (
+                  <span className="pd-stats-sub">{converted} {converted === 1 ? 'cliente' : 'clientes'} · {rate}%</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+
+          <p className="pd-foot">
+            Próximo pagamento: {firstLoad ? '–' : (dashboard?.nextPayoutDate ? formatDate(dashboard.nextPayoutDate) : 'após aprovação')}
+            <Link to={PATHS.PARTNERS_PAYOUTS} className="pd-foot-link">Ver pagamentos</Link>
+          </p>
         </section>
 
-        <PartnerEarningsChart
-          earnings={earnings}
-          loading={earningsLoading}
-          error={earningsError}
-          range={range}
-          onRangeChange={setRange}
-        />
+        <div className="pd-grid">
+          <PartnerLeaderboard
+            leaderboard={leaderboard}
+            loading={leaderboardLoading}
+            error={leaderboardError}
+            onRetry={loadLeaderboard}
+          />
+          <PartnerEarningsChart
+            earnings={earnings}
+            loading={earningsLoading}
+            error={earningsError}
+            range={range}
+            onRangeChange={setRange}
+          />
+        </div>
 
         <PartnerReferralsPanel onNewReferral={() => setReferralOpen(true)} refreshKey={refreshKey} />
       </div>

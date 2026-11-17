@@ -17,10 +17,13 @@ export const DEMO_LEADERBOARD_ENTRIES = Object.freeze([
 export const LEADERBOARD_SIMULATION_NOTE =
   'Dados ilustrativos para demonstrar o funcionamento do ranking. Não representam comissões reais.';
 
-export const LEADERBOARD_INVITE_NOTE =
-  'Cada indicação é uma oportunidade de aumentar seus ganhos. Continue divulgando a Weper!';
-
 export const LEADERBOARD_UNRANKED_COPY = 'Você ainda não tem posição neste mês.';
+
+export const LEADERBOARD_UNRANKED_HINT =
+  'Uma loja convertida já coloca você no ranking.';
+
+export const LEADERBOARD_LEADER_HINT =
+  'Você está na frente. Cada nova loja aumenta a distância para o segundo lugar.';
 
 export function formatLeaderboardMoney(value) {
   return formatCurrency(value);
@@ -65,6 +68,25 @@ export function viewerPositionCopy(leaderboard) {
   const rank = Number(leaderboard.viewerRank);
   if (!Number.isInteger(rank) || rank < 1) return LEADERBOARD_UNRANKED_COPY;
   return `Você está em ${rank}º lugar neste mês`;
+}
+
+/**
+ * Frase de "próximo passo" abaixo da posição (só no modo REAL).
+ * A distância usa apenas valores que vieram no payload: a linha do parceiro
+ * (viewer) e a linha da posição imediatamente acima. Sem as duas, não há frase.
+ */
+export function viewerChaseCopy(leaderboard) {
+  if (isLeaderboardSimulation(leaderboard)) return null;
+  const rank = Number(leaderboard.viewerRank);
+  if (!Number.isInteger(rank) || rank < 1) return LEADERBOARD_UNRANKED_HINT;
+  if (rank === 1) return LEADERBOARD_LEADER_HINT;
+  const entries = orderedLeaderboardEntries(leaderboard.entries);
+  const viewer = entries.find((entry) => entry?.viewer === true);
+  const ahead = entries.find((entry) => Number(entry?.position) === rank - 1);
+  if (!viewer || !ahead) return null;
+  const gap = (Number(ahead.amount) || 0) - (Number(viewer.amount) || 0);
+  if (!(gap > 0)) return null;
+  return `Faltam ${formatCurrency(gap)} em comissões para você passar o ${rank - 1}º lugar.`;
 }
 
 export function leaderboardPeriodLabel(year, month, fallbackLabel) {

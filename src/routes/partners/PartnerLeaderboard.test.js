@@ -1,11 +1,14 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import axios from 'axios';
 import PartnerLeaderboard from './PartnerLeaderboard';
 import {
   DEMO_LEADERBOARD_ENTRIES,
+  LEADERBOARD_LEADER_HINT,
   LEADERBOARD_SIMULATION_NOTE,
   LEADERBOARD_UNRANKED_COPY,
+  LEADERBOARD_UNRANKED_HINT,
   formatLeaderboardMoney,
+  viewerChaseCopy,
   viewerPositionCopy,
 } from './partnerLeaderboardModel';
 
@@ -27,18 +30,8 @@ function demoLeaderboard(overrides = {}) {
   };
 }
 
-function renderBoard(leaderboard, props = {}) {
-  const onInvite = props.onInvite || jest.fn();
-  render(
-    <PartnerLeaderboard
-      leaderboard={leaderboard}
-      loading={false}
-      error=""
-      onInvite={onInvite}
-      inviteDisabled={props.inviteDisabled}
-    />,
-  );
-  return { onInvite };
+function renderBoard(leaderboard) {
+  render(<PartnerLeaderboard leaderboard={leaderboard} loading={false} error="" />);
 }
 
 describe('PartnerLeaderboard', () => {
@@ -53,9 +46,8 @@ describe('PartnerLeaderboard', () => {
     expect(screen.getByRole('heading', { name: 'Ranking de Parceiros' })).toBeInTheDocument();
     expect(screen.getByText('Simulação')).toBeInTheDocument();
     expect(screen.getByText(LEADERBOARD_SIMULATION_NOTE)).toBeInTheDocument();
-    expect(screen.getByText('Ganhos acumulados · Novembro 2026')).toBeInTheDocument();
+    expect(screen.getByText(/Comissões de Novembro 2026/)).toBeInTheDocument();
     expect(normalized(screen.getByTestId('partner-lb-highest'))).toBe(formatLeaderboardMoney(4850).replace(/\u00a0/g, ' '));
-    expect(normalized(screen.getByTestId('partner-lb-average'))).toBe(formatLeaderboardMoney(2722).replace(/\u00a0/g, ' '));
     expect(formatLeaderboardMoney(4850).replace(/\u00a0/g, ' ')).toBe('R$ 4.850,00');
     expect(screen.getByTestId('partner-lb-participants')).toHaveTextContent('10');
 
@@ -91,7 +83,34 @@ describe('PartnerLeaderboard', () => {
     expect(screen.queryByText('Simulação')).not.toBeInTheDocument();
     expect(screen.queryByText(LEADERBOARD_SIMULATION_NOTE)).not.toBeInTheDocument();
     expect(screen.queryByText('Ricardo M.')).not.toBeInTheDocument();
-    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(screen.getByTestId('partner-lb-participants')).toHaveTextContent('12');
+    // Sem a linha do 6º lugar no payload, não há como calcular a distância.
+    expect(screen.queryByTestId('partner-lb-chase')).not.toBeInTheDocument();
+  });
+
+  it('no modo REAL mostra quanto falta para passar o lugar de cima', () => {
+    renderBoard({
+      mode: 'REAL',
+      simulation: false,
+      periodLabel: 'Novembro 2026',
+      participantCount: 8,
+      viewerRank: 5,
+      entries: [
+        { position: 1, displayName: 'Ana P.', amount: 300 },
+        { position: 2, displayName: 'Beto R.', amount: 250 },
+        { position: 3, displayName: 'Caio S.', amount: 200 },
+        { position: 4, displayName: 'Duda T.', amount: 150 },
+        { position: 5, displayName: 'Você S.', amount: 105.5, viewer: true },
+      ],
+    });
+
+    expect(normalized(screen.getByTestId('partner-lb-chase'))).toBe(
+      `Faltam ${formatLeaderboardMoney(44.5).replace(/ /g, ' ')} em comissões para você passar o 4º lugar.`,
+    );
+    expect(screen.getByText('você')).toBeInTheDocument();
+    expect(viewerChaseCopy({ mode: 'REAL', simulation: false, viewerRank: 1, entries: [] })).toBe(LEADERBOARD_LEADER_HINT);
+    expect(viewerChaseCopy({ mode: 'REAL', simulation: false, viewerRank: null })).toBe(LEADERBOARD_UNRANKED_HINT);
+    expect(viewerChaseCopy({ mode: 'DEMO', simulation: true, viewerRank: 3 })).toBeNull();
   });
 
   it('no modo REAL não inventa posição quando o parceiro não tem comissão no mês', () => {
@@ -130,15 +149,5 @@ describe('PartnerLeaderboard', () => {
     expect(screen.getByTestId('partner-leaderboard-position')).toHaveTextContent(
       'Você está em 14º lugar neste mês',
     );
-  });
-
-  it('o botão de convite reutiliza o callback do link já existente', () => {
-    const { onInvite } = renderBoard(demoLeaderboard());
-    fireEvent.click(screen.getByRole('button', { name: 'Convidar estabelecimentos' }));
-    expect(onInvite).toHaveBeenCalledTimes(1);
-
-    onInvite.mockClear();
-    renderBoard(demoLeaderboard(), { onInvite, inviteDisabled: true });
-    expect(screen.getAllByRole('button', { name: 'Convidar estabelecimentos' })[1]).toBeDisabled();
   });
 });

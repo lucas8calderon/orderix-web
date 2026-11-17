@@ -17,7 +17,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import { EmptyState } from '../../commons/components/EmptyState';
 import { formatCurrency, formatDate } from '../../services/accessControl';
@@ -81,18 +80,13 @@ export default function PartnerReferralsPanel({ onNewReferral, refreshKey = 0 })
 
   return (
     <section className="partner-card" aria-labelledby="partner-referrals-title">
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
-        <div>
-          <h2 id="partner-referrals-title" className="partner-card-title">Minhas indicações</h2>
-          <p className="partner-card-subtitle" style={{ margin: 0 }}>Acompanhe o andamento de cada estabelecimento indicado.</p>
-        </div>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={onNewReferral}>
-          Nova indicação
-        </Button>
+      <div style={{ marginBottom: 16 }}>
+        <h2 id="partner-referrals-title" className="partner-card-title">Minhas indicações</h2>
+        <p className="partner-card-subtitle" style={{ margin: 0 }}>Veja em que etapa está cada estabelecimento que você indicou.</p>
       </div>
 
       <form onSubmit={applyFilters} aria-label="Filtrar indicações">
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 2 }} alignItems={{ md: 'flex-end' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }} alignItems={{ sm: 'flex-end' }}>
           <TextField
             size="small"
             label="Buscar por nome"
@@ -109,24 +103,6 @@ export default function PartnerReferralsPanel({ onNewReferral, refreshKey = 0 })
               ))}
             </Select>
           </FormControl>
-          <TextField
-            size="small"
-            type="date"
-            label="De"
-            value={filters.from}
-            onChange={setFilter('from')}
-            InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1, minWidth: 150 }}
-          />
-          <TextField
-            size="small"
-            type="date"
-            label="Até"
-            value={filters.to}
-            onChange={setFilter('to')}
-            InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1, minWidth: 150 }}
-          />
           <Stack direction="row" spacing={1}>
             <Button type="submit" variant="outlined" startIcon={<SearchIcon />}>Filtrar</Button>
             {(hasFilters || Object.values(filters).some(Boolean)) && (

@@ -14,9 +14,9 @@ import { formatCurrency } from '../../services/accessControl';
 import { EARNINGS_RANGE_OPTIONS, formatPeriodLabel } from './partnerConstants';
 
 export const EARNINGS_SERIES = [
-  { key: 'estimated', label: 'Previstas', color: '#60A5FA' },
-  { key: 'pending', label: 'Pendentes', color: '#F59E0B' },
-  { key: 'paid', label: 'Recebidas', color: '#16A34A' },
+  { key: 'estimated', label: 'Previstas', color: '#BFDBFE' },
+  { key: 'pending', label: 'A receber', color: '#60A5FA' },
+  { key: 'paid', label: 'Recebidas', color: '#1D4ED8' },
 ];
 
 const toNumber = (value) => {
@@ -50,8 +50,7 @@ export default function PartnerEarningsChart({ earnings, loading, error, range, 
     <section className="partner-card" aria-labelledby="partner-earnings-title">
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
         <div>
-          <h2 id="partner-earnings-title" className="partner-card-title">Comissões por mês</h2>
-          <p className="partner-card-subtitle" style={{ margin: 0 }}>Previstas, pendentes e recebidas</p>
+          <h2 id="partner-earnings-title" className="partner-card-title">Suas comissões mês a mês</h2>
         </div>
         <ToggleButtonGroup
           exclusive
@@ -89,7 +88,7 @@ export default function PartnerEarningsChart({ earnings, loading, error, range, 
             padding: 16,
           }}
         >
-          <strong style={{ fontSize: 15 }}>Sem movimentações no período</strong>
+          <strong style={{ fontSize: 15 }}>Nenhuma comissão neste período</strong>
           <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', maxWidth: 360 }}>
             {earnings?.emptyMessage || 'Ainda não há movimentações de comissão neste período.'}
           </span>

@@ -1,0 +1,200 @@
+/* Painel do Parceiro (/parceiros/dashboard).
+   Cartão de topo com link e números; abaixo, ranking e gráfico. */
+
+.pd-top {
+  padding: 24px;
+}
+
+.pd-top-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 18px;
+}
+
+.pd-title {
+  margin: 0;
+  font-size: clamp(22px, 3.6vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.pd-lead {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* Link */
+.pd-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 5px 5px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-muted);
+}
+
+.pd-link-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  user-select: all;
+}
+
+.pd-link-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pd-wa.MuiIconButton-root {
+  color: #16a34a;
+}
+
+.pd-code {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.pd-code-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.pd-code-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pd-code-chip:focus-visible,
+.pd-foot-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Números */
+.pd-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 12px;
+  margin: 22px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.pd-stats div {
+  min-width: 0;
+}
+
+.pd-stats dt {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.pd-stats dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.pd-stats dd.is-money {
+  color: var(--color-success);
+}
+
+.pd-stats-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--color-text-secondary);
+}
+
+.pd-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.pd-foot-link {
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.pd-foot-link::after {
+  content: ' →';
+}
+
+.pd-foot-link:hover {
+  text-decoration: underline;
+}
+
+/* Ranking + gráfico */
+.pd-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (max-width: 519px) {
+  .pd-link {
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+
+  .pd-link-url {
+    flex-basis: 100%;
+    padding: 2px 4px 4px;
+  }
+
+  .pd-link-actions {
+    flex: 1;
+  }
+
+  .pd-link-actions .MuiButton-root {
+    flex: 1;
+  }
+}
+
+@media (min-width: 700px) {
+  .pd-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .pd-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
