@@ -3,9 +3,13 @@ import { Box, MenuItem, Paper, Select, Stack, Typography } from '@mui/material';
 import { Draggable, DragDropContext } from 'react-beautiful-dnd';
 import { StrictModeDroppable } from './StrictModeDroppable';
 import { businessTypeLabel } from '../crmConstants';
-import { INSTAGRAM_COLUMNS, columnOf, flagOf, instagramHandle, kindLabel, timeInStage, toneColor, toneOf } from '../instagramCrm';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import { getCurrentUser } from '../../../../services/session';
+import { INSTAGRAM_COLUMNS, assigneeOf, columnOf, flagOf, instagramHandle, kindLabel, timeInStage, toneColor, toneOf } from '../instagramCrm';
 
 export function InstagramKanban({ leads, onOpen, onChangeStatus }) {
+  const viewer = getCurrentUser();
+  const viewerId = viewer?.userId ?? viewer?.id ?? null;
   const grouped = INSTAGRAM_COLUMNS.reduce((acc, column) => {
     acc[column.id] = [];
     return acc;
@@ -39,6 +43,7 @@ export function InstagramKanban({ leads, onOpen, onChangeStatus }) {
                       key={lead.id}
                       lead={lead}
                       index={index}
+                      viewerId={viewerId}
                       onOpen={onOpen}
                       onChangeStatus={onChangeStatus}
                     />
@@ -59,9 +64,10 @@ export function InstagramKanban({ leads, onOpen, onChangeStatus }) {
   );
 }
 
-function InstagramCard({ lead, index, onOpen, onChangeStatus }) {
+function InstagramCard({ lead, index, viewerId, onOpen, onChangeStatus }) {
   const tone = toneOf(lead);
   const flag = flagOf(lead);
+  const assignee = assigneeOf(lead, viewerId);
   return (
     <Draggable draggableId={String(lead.id)} index={index}>
       {(provided) => (
@@ -79,6 +85,14 @@ function InstagramCard({ lead, index, onOpen, onChangeStatus }) {
             }}
             sx={{ borderLeft: `4px solid ${toneColor(tone)}` }}
           >
+            <span
+              className={`ig-assignee is-${assignee.kind}`}
+              title={assignee.title}
+              data-testid="ig-assignee"
+            >
+              <PersonOutlineIcon aria-hidden="true" sx={{ fontSize: 14 }} />
+              {assignee.label}
+            </span>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>{lead.businessName}</Typography>
             <Typography variant="body2" color="text.secondary">{instagramHandle(lead) || businessTypeLabel(lead.businessType)}</Typography>
             {lead.phone && (

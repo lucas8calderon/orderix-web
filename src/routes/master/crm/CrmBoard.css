@@ -203,6 +203,38 @@
   font-weight: 700;
 }
 
+.ig-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin-bottom: 6px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ig-assignee.is-taken {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.ig-assignee.is-mine {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.ig-assignee.is-free {
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
 .ig-card {
   margin: 8px;
   padding: 10px;

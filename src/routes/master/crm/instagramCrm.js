@@ -26,6 +26,22 @@ export function columnOf(status) {
   return LEGACY_COLUMN[status] || status;
 }
 
+/**
+ * Tag de responsável do card. O backend grava o primeiro parceiro ou operador
+ * que movimentou o lead (assignedUserId / assignedUserName); admin não assume.
+ */
+export function assigneeOf(lead, viewerId) {
+  const id = lead?.assignedUserId;
+  if (id == null) {
+    return { kind: 'free', label: 'Sem responsável', title: 'Ninguém assumiu este lead ainda' };
+  }
+  const name = String(lead?.assignedUserName || '').trim() || 'Parceiro';
+  if (viewerId != null && String(viewerId) === String(id)) {
+    return { kind: 'mine', label: 'Você', title: `Você é o responsável (${name})` };
+  }
+  return { kind: 'taken', label: name, title: `Responsável: ${name}` };
+}
+
 export function kindLabel(kind) {
   return INSTAGRAM_LEAD_KINDS.find((item) => item.id === kind)?.label || 'Estabelecimento Comercial';
 }

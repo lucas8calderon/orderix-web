@@ -1,4 +1,5 @@
 import {
+  assigneeOf,
   columnOf,
   compareUrgency,
   formatWhen,
@@ -7,6 +8,16 @@ import {
 } from './instagramCrm';
 
 describe('instagram CRM', () => {
+  it('mostra o responsável do card, "Você" para o próprio e "Sem responsável" quando livre', () => {
+    expect(assigneeOf({}, 10)).toMatchObject({ kind: 'free', label: 'Sem responsável' });
+    expect(assigneeOf({ assignedUserId: 11, assignedUserName: 'Bruno Lima' }, 10))
+      .toMatchObject({ kind: 'taken', label: 'Bruno Lima' });
+    expect(assigneeOf({ assignedUserId: 10, assignedUserName: 'Ana Souza' }, 10))
+      .toMatchObject({ kind: 'mine', label: 'Você' });
+    expect(assigneeOf({ assignedUserId: 12, assignedUserName: '  ' }, null))
+      .toMatchObject({ kind: 'taken', label: 'Parceiro' });
+  });
+
   it('agrupa etapas antigas nas colunas novas', () => {
     expect(columnOf('INTERESTED')).toBe('NEGOTIATING');
     expect(columnOf('DEMO')).toBe('NEGOTIATING');
