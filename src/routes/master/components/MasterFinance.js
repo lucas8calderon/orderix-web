@@ -371,7 +371,7 @@ function MercadoPagoSaasConnect({ gateway, disabled, onReload }) {
       {connected ? (
         <>
           <Alert severity="success">
-            Mercado Pago conectado{label ? ` (${label})` : ''}. As mensalidades novas caem nessa conta quando o gateway ativo for Mercado Pago.
+            Mercado Pago conectado{label ? ` (${label})` : ''}. Marque Mercado Pago acima e salve. As assinaturas novas caem nessa conta. Nenhuma loja está ligada a ela.
           </Alert>
           <Button type="button" variant="outlined" color="error" sx={{ mt: 1 }} onClick={disconnect} disabled={busy || disabled}>
             {busy ? 'Desconectando...' : 'Desconectar'}
@@ -380,12 +380,8 @@ function MercadoPagoSaasConnect({ gateway, disabled, onReload }) {
       ) : gateway.mercadoPagoOauthAvailable ? (
         <>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Entre na conta Mercado Pago da Weper, a que deve receber as mensalidades. Não use a conta de uma loja.
-            No aplicativo, mantenha a URL do Delivery e acrescente também a URL de retorno abaixo.
+            Esta conexão é da Weper, não de uma loja. Clique no botão, entre na conta Mercado Pago que deve receber as mensalidades e autorize. Não precisa preencher Access Token, Public Key nem segredo de webhook.
           </Typography>
-          {gateway.mercadoPagoRedirectUri ? (
-            <Typography variant="body2" sx={{ mb: 1, wordBreak: 'break-all' }}>{gateway.mercadoPagoRedirectUri}</Typography>
-          ) : null}
           <Button
             type="button"
             variant="contained"
@@ -398,7 +394,7 @@ function MercadoPagoSaasConnect({ gateway, disabled, onReload }) {
         </>
       ) : (
         <Alert severity="info">
-          O botão usa o mesmo aplicativo do Delivery. Ele aparece quando esse aplicativo e a URL de retorno da Weper estão configurados no servidor.
+          O botão abre a autorização do Mercado Pago com o mesmo aplicativo já usado no Delivery. Ele aparece quando esse aplicativo está configurado no servidor.
         </Alert>
       )}
       {error ? <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert> : null}
