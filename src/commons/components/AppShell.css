@@ -392,3 +392,13 @@
     padding: 20px 24px;
   }
 }
+
+.weper-shell-footer {
+  padding: 4px 12px 0;
+}
+
+.weper-shell-footer .MuiButton-root {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+}

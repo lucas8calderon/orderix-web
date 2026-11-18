@@ -14,6 +14,10 @@ import { canAccessRoute, getPostLoginPath, getRoleLabel, getVisibleDashboardItem
 import { AppShell } from '../../commons/components/AppShell';
 import { GraceBillingNotice } from './GraceBillingNotice';
 import { NewOrderAlert } from './newOrderAlert/NewOrderAlert';
+import WelcomeOnboarding from './onboarding/WelcomeOnboarding';
+import SetupChecklist from './onboarding/SetupChecklist';
+import HelpMenu from './onboarding/HelpMenu';
+import { useOnboarding } from './onboarding/useOnboarding';
 import weperLogo from '../../assets/images/weper-logo.png';
 import weperMark from '../../assets/images/weper-mark-w.png';
 import './Workspace.css';
@@ -34,6 +38,7 @@ export default function Dashboard() {
   const { section } = useParams();
   const [navIntent, setNavIntent] = React.useState(null);
   const selectedItem = visibleItems.find((item) => item.slug === section);
+  const onboarding = useOnboarding(user);
 
   const goToScreen = (title, intent) => {
     const item = visibleItems.find((entry) => entry.title === title);
@@ -101,14 +106,38 @@ export default function Dashboard() {
       accountHint="Gestão do estabelecimento"
       onLogout={handleLogout}
       onNavigate={() => setNavIntent(null)}
+      renderFooter={onboarding.eligible
+        ? ({ collapsed }) => (
+          <HelpMenu compact={collapsed} onWelcome={onboarding.openWelcome} onChecklist={onboarding.showChecklist} />
+        )
+        : undefined}
     >
       <GraceBillingNotice />
       {selectedItem.slug === 'dashboard' && <section className="workspace-launchpad" aria-label="Acessos rápidos">
         <div className="workspace-launchpad__intro"><span>Seu centro de controle</span><strong>Vamos cuidar do seu negócio.</strong><p>Acompanhe os resultados e vá direto para a próxima tarefa.</p></div>
         <div className="workspace-launchpad__links">{visibleItems.filter(item => ['atendimento', 'cozinha', 'produtos', 'configuracoes'].includes(item.slug)).map(item => <Link key={item.slug} to={item.path}>{item.icon}<span>{item.title}</span></Link>)}</div>
       </section>}
+      {selectedItem.slug === 'dashboard' && onboarding.eligible ? (
+        <SetupChecklist
+          checklist={onboarding.checklist}
+          onDismiss={onboarding.dismissChecklist}
+          onAcknowledge={onboarding.acknowledgeChecklist}
+        />
+      ) : null}
       {screens[selectedItem.slug]}
       <NewOrderAlert />
+      {onboarding.eligible ? (
+        <WelcomeOnboarding
+          open={onboarding.welcomeOpen}
+          storeName={onboarding.storeName}
+          initialStep={onboarding.initialStep}
+          onStep={onboarding.onStep}
+          onFinish={(reason) => {
+            onboarding.onFinish(reason);
+            if (reason === 'complete') navigate(PATHS.APP_DASHBOARD);
+          }}
+        />
+      ) : null}
     </AppShell>
   );
 }

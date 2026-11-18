@@ -1,0 +1,378 @@
+/* Onboarding de boas-vindas e checklist. Cores do tema MUI (claro e escuro) via variáveis. */
+
+.onb-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: 16px;
+  border-radius: 20px !important;
+  border: 1px solid var(--mui-palette-divider, rgba(15, 23, 42, 0.08));
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12) !important;
+  overflow-x: hidden;
+  animation: onb-fade 240ms ease-out both;
+}
+
+.onb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 16px 0 22px;
+}
+
+.onb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.onb-brand svg {
+  color: #2563eb;
+}
+
+.onb-count {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.onb-progress {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 12px 22px 0;
+}
+
+.onb-progress-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.2);
+  transition: background-color 300ms ease;
+}
+
+.onb-progress-bar.is-on {
+  background: #2563eb;
+}
+
+.onb-step {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px 32px 8px;
+  text-align: center;
+}
+
+.onb-step--next {
+  animation: onb-in-next 280ms ease-out both;
+}
+
+.onb-step--prev {
+  animation: onb-in-prev 280ms ease-out both;
+}
+
+.onb-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  animation: onb-pop 320ms ease-out both;
+}
+
+.onb-icon--last {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.onb-title {
+  font-size: 26px !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.5px;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+
+.onb-subtitle {
+  font-size: 15px !important;
+  font-weight: 650 !important;
+}
+
+.onb-body {
+  max-width: 520px;
+}
+
+.onb-body p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.78;
+}
+
+.onb-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onb-features li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(100, 116, 139, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.onb-features svg {
+  flex: none;
+  color: #2563eb;
+}
+
+.onb-highlight {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.onb-points {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.onb-points li::before {
+  content: '✓';
+  margin-right: 8px;
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.onb-support {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 650;
+  color: #2563eb;
+}
+
+.onb-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 22px;
+}
+
+.onb-actions .MuiButton-root {
+  min-height: 44px;
+  border-radius: 12px;
+  text-transform: none;
+  font-weight: 700;
+}
+
+.onb-ghost {
+  opacity: 0.75;
+}
+
+/* Checklist do dashboard */
+.onb-checklist {
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--mui-palette-divider, rgba(15, 23, 42, 0.08));
+  background: var(--workspace-card-bg, transparent);
+}
+
+.onb-checklist-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.onb-checklist-title {
+  font-size: 16px !important;
+  font-weight: 750 !important;
+}
+
+.onb-checklist-sub {
+  font-size: 13px !important;
+  opacity: 0.72;
+}
+
+.onb-checklist-count {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0.75;
+  padding-top: 4px;
+}
+
+.onb-checklist-progress {
+  margin: 12px 0 6px;
+  height: 6px !important;
+  border-radius: 999px;
+}
+
+.onb-checklist-list {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onb-checklist-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.onb-checklist-list li.is-done .onb-checklist-label {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.onb-checklist-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.onb-checklist-check,
+.onb-checklist-success {
+  flex: none;
+  color: #16a34a;
+}
+
+.onb-checklist-dot {
+  flex: none;
+  opacity: 0.45;
+}
+
+.onb-checklist-go {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #2563eb;
+}
+
+.onb-checklist-go:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.onb-checklist-go:focus-visible,
+.onb-support:focus-visible,
+.onb-checklist-help a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.onb-checklist-help {
+  margin: 8px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.onb-checklist-help a {
+  color: #2563eb;
+  font-weight: 650;
+}
+
+@keyframes onb-fade {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes onb-in-next {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes onb-in-prev {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes onb-pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 560px) {
+  .onb-step {
+    padding: 22px 18px 4px;
+  }
+
+  .onb-title {
+    font-size: 21px !important;
+  }
+
+  .onb-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .onb-features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .onb-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding: 16px 18px 18px;
+  }
+
+  .onb-actions .MuiButton-root {
+    width: 100%;
+  }
+
+  .onb-checklist {
+    padding: 14px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onb-dialog,
+  .onb-step--next,
+  .onb-step--prev,
+  .onb-icon {
+    animation: none;
+  }
+
+  .onb-progress-bar {
+    transition: none;
+  }
+}
+
+/* Texto só para leitor de tela (o painel não tem utilitário global). */
+.onb-dialog .sr-only,
+.onb-checklist .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

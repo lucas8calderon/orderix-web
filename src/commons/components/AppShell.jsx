@@ -62,6 +62,8 @@ export function AppShell({
   accountHint,
   onLogout,
   onNavigate,
+  /** Conteúdo opcional acima da conta (ex.: menu Ajuda). Recebe { collapsed }. */
+  renderFooter,
   flush = false,
   className = '',
   children,
@@ -191,6 +193,7 @@ export function AppShell({
         })}
       </Box>
 
+      {renderFooter ? <Box className="weper-shell-footer">{renderFooter({ collapsed })}</Box> : null}
       <Box className="weper-shell-account">
         <Tooltip
           title={collapsed ? [displayName, secondaryLine].filter(Boolean).join(' · ') : ''}
