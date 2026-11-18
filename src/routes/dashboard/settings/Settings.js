@@ -36,6 +36,7 @@ import { FeesSection } from './components/FeesSection';
 import { PermissionsSection } from './components/PermissionsSection';
 import { CompanySection } from './components/CompanySection';
 import { SubscriptionRenewalCard } from './components/SubscriptionRenewalCard';
+import { SubscriptionPixInvoices } from './components/SubscriptionPixInvoices';
 import { SettingsSectionCard } from './components/SettingsSectionCard';
 import './Settings.css';
 import { SettingsFinder } from './components/SettingsFinder';
@@ -324,6 +325,7 @@ export function Settings() {
     case 'empresa':
       sectionContent = (
         <div className="settings-section-stack">
+          <SubscriptionPixInvoices />
           <SubscriptionRenewalCard />
           {companySection}
         </div>

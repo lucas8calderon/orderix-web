@@ -4,6 +4,16 @@ import { API_BASE_URL } from '../../../services/apiConfig';
 const GATEWAYS_URL = `${API_BASE_URL}/api/admin/billing/gateways`;
 const FINANCE_URL = `${API_BASE_URL}/api/admin/partners`;
 
+/** Mensalidades Pix (Mercado Pago). Filtros vazios não são enviados. */
+export async function listPixInvoices(filters = {}) {
+  const params = {};
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== '') params[key] = value;
+  });
+  const response = await axios.get(`${API_BASE_URL}/api/admin/billing/invoices`, { params });
+  return response.data;
+}
+
 export async function getGatewaySettings() {
   const response = await axios.get(GATEWAYS_URL);
   return response.data;

@@ -329,7 +329,8 @@ describe('com Mercado Pago ativo', () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
     axios.post.mockResolvedValue({ data: { signupId: 77 } });
     setup();
-    await waitFor(() => expect(screen.getByRole('button', { name: /Pix/ })).toBeDisabled());
+    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    fireEvent.click(screen.getByLabelText('Cartão'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
@@ -355,7 +356,8 @@ describe('com Mercado Pago ativo', () => {
   test('conta da Weper não conectada bloqueia antes de chamar o Mercado Pago', async () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: false, message: 'A contratação com cartão está temporariamente indisponível.' });
     setup();
-    await waitFor(() => expect(screen.getByRole('button', { name: /Pix/ })).toBeDisabled());
+    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    fireEvent.click(screen.getByLabelText('Cartão'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
@@ -367,11 +369,31 @@ describe('com Mercado Pago ativo', () => {
     expect(axios.post).not.toHaveBeenCalled();
   });
 
+  test('Pix com Mercado Pago gera o QR sem pedir cartão nem token', async () => {
+    mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
+    axios.post.mockResolvedValue({ data: { signupId: 88, pixPayload: '000201MPPIX', pixEncodedImage: 'iVBORw0KGgo=' } });
+    setup();
+    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    fillContact();
+    fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+    fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+
+    await waitFor(() => expect(signupCall()).toBeTruthy());
+    const payload = signupCall()[1];
+    expect(payload.billingType).toBe('PIX');
+    expect(payload.creditCardToken).toBeUndefined();
+    expect(payload.card).toBeUndefined();
+    expect(createCardToken).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('pix-payload')).toHaveTextContent('000201MPPIX');
+  });
+
   test('cartão recusado na tokenização fica no formulário', async () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
     createCardToken.mockRejectedValue(new Error('invalid'));
     setup();
-    await waitFor(() => expect(screen.getByRole('button', { name: /Pix/ })).toBeDisabled());
+    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    fireEvent.click(screen.getByLabelText('Cartão'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });

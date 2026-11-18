@@ -22,6 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 import { PageHeader } from '../../../commons/components/PageHeader';
+import MasterPixInvoices from './MasterPixInvoices';
 import { formatCurrency } from '../../../services/accessControl';
 import {
   blockPartnerPayouts,
@@ -213,6 +214,8 @@ export default function MasterFinance() {
               <Button variant="outlined" disabled={busy} onClick={testConnection}>Testar conexão</Button>
             </Stack>
           </Paper>
+
+          <MasterPixInvoices />
 
           <Paper sx={{ p: 3, borderRadius: 2.5 }}>
             <Typography variant="h6">Configurações de comissões</Typography>
@@ -443,8 +446,14 @@ function Metric({ label, value }) {
   );
 }
 
-function formatWhen(value) {
+export function formatWhen(value) {
   if (!value) return '—';
+  if (Array.isArray(value)) {
+    // LocalDateTime do Jackson pode chegar como [ano, mês, dia, hora, minuto, segundo, nano].
+    const [year, month, day, hour = 0, minute = 0] = value;
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(day)}/${pad(month)}/${year} ${pad(hour)}:${pad(minute)}`;
+  }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('pt-BR');
 }

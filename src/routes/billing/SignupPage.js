@@ -298,10 +298,6 @@ export default function SignupPage() {
 
   const mercadoPago = checkoutGateway?.gateway === 'MERCADO_PAGO';
 
-  useEffect(() => {
-    // Com Mercado Pago, a assinatura nova é só no cartão recorrente.
-    if (mercadoPago) setBillingType('CREDIT_CARD');
-  }, [mercadoPago]);
 
   useEffect(() => {
     const stored = readLeadSession();
@@ -454,7 +450,7 @@ export default function SignupPage() {
       setError('Informe os dados do cartão para repasse. Eles não ficam salvos nesta tela.');
       return;
     }
-    if (mercadoPago && !checkoutGateway.available) {
+    if (mercadoPago && card && !checkoutGateway.available) {
       setError(checkoutGateway.message || 'A contratação com cartão está temporariamente indisponível.');
       return;
     }
@@ -486,7 +482,7 @@ export default function SignupPage() {
         : undefined,
     };
     setPending(true);
-    if (mercadoPago) {
+    if (mercadoPago && card) {
       try {
         payload.creditCardToken = await createMercadoPagoCardToken(checkoutGateway.mercadoPagoPublicKey, {
           holderName: form.holderName.trim() || form.name.trim(),
@@ -913,13 +909,12 @@ export default function SignupPage() {
                           className={`ct-pay-option ct-pay-option--pix${billingType === 'PIX' ? ' is-selected' : ''}`}
                           onClick={() => setBillingType('PIX')}
                           aria-pressed={billingType === 'PIX'}
-                          disabled={mercadoPago}
                         >
                           <strong>
                             <WalletCards size={18} aria-hidden="true" />
                             Pix
                           </strong>
-                          <span>{mercadoPago ? 'Indisponível no momento. Use o cartão.' : 'Pagamento rápido e seguro.'}</span>
+                          <span>{mercadoPago ? 'Pague por Pix todo mês. O QR chega antes do vencimento.' : 'Pagamento rápido e seguro.'}</span>
                         </button>
                         <button
                           type="button"
@@ -941,7 +936,6 @@ export default function SignupPage() {
                             name="billing"
                             checked={!card}
                             onChange={() => setBillingType('PIX')}
-                            disabled={mercadoPago}
                           />
                           Pix
                         </label>

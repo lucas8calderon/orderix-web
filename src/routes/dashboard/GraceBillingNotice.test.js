@@ -13,7 +13,7 @@ beforeEach(() => {
 test('grace keeps the store operating and shows the billing notice', () => {
   getCurrentUser.mockReturnValue({ subscriptionActive: true, subscriptionStatus: 'OVERDUE' });
   render(<GraceBillingNotice />);
-  expect(screen.getByRole('status')).toHaveTextContent(/loja segue operando por até 7 dias/i);
+  expect(screen.getByRole('status')).toHaveTextContent(/loja segue operando por até 8 dias/i);
 });
 
 test('an active paid cycle shows no notice', () => {
