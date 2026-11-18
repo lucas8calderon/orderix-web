@@ -24,6 +24,7 @@ beforeEach(() => {
 });
 
 function fillContact(name = 'Maria') {
+  fireEvent.change(screen.getByLabelText('Nome do estabelecimento'), { target: { value: 'Pizzaria Bella Napoli' } });
   fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: name } });
   fireEvent.change(screen.getByLabelText('WhatsApp'), { target: { value: '11988887777' } });
 }
@@ -95,7 +96,7 @@ test('pix signup does not ask for address or send a price', async () => {
   await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/signup/42/status'));
 });
 
-test('referral field is prefilled from ref, editable, and shows a notice without blocking payment', async () => {
+test('referral field is prefilled from ref, editable, and never shows commission details to the client', async () => {
   axios.post.mockResolvedValue({
     data: {
       signupId: 7,
@@ -114,8 +115,9 @@ test('referral field is prefilled from ref, editable, and shows a notice without
   fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   expect(signupCall()[1].partnerReferralCode).toBe('NAO-EXISTE');
-  expect(await screen.findByTestId('partner-referral-notice')).toHaveTextContent(/sem comissão de parceiro/i);
-  expect(screen.getByTestId('pix-payload')).toHaveTextContent('000201');
+  expect(await screen.findByTestId('pix-payload')).toHaveTextContent('000201');
+  expect(screen.queryByTestId('partner-referral-notice')).not.toBeInTheDocument();
+  expect(screen.queryByText(/sem comissão de parceiro/i)).not.toBeInTheDocument();
 });
 
 test('ref da URL prevalece sobre código antigo e segue no pagamento junto com o lead', async () => {
@@ -496,4 +498,73 @@ describe('Pix pelo Mercado Pago', () => {
     expect(screen.getByRole('radio', { name: 'Cartão de crédito' })).toBeChecked();
     expect(screen.getByText('Indisponível no momento. Use o cartão de crédito.')).toBeInTheDocument();
   });
+});
+
+test('cartão enviado mostra processamento, não a tela de Pix nem pagamento confirmado', async () => {
+  axios.post.mockImplementation((url) => (
+    url === '/api/public/billing/leads'
+      ? Promise.resolve({ data: { token: 'lead-9', created: true } })
+      : Promise.resolve({ data: { signupId: 12, billingType: 'CREDIT_CARD' } })
+  ));
+  setup();
+  fillContact();
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+  fireEvent.change(screen.getByLabelText('Nome do titular'), { target: { value: 'MARIA' } });
+  fireEvent.change(screen.getByLabelText('Número do cartão'), { target: { value: '4111111111111111' } });
+  fireEvent.change(screen.getByLabelText('Mês'), { target: { value: '11' } });
+  fireEvent.change(screen.getByLabelText('Ano'), { target: { value: '2030' } });
+  fireEvent.change(screen.getByLabelText('CVV'), { target: { value: '123' } });
+  fireEvent.change(screen.getByLabelText('CEP'), { target: { value: '01310100' } });
+  fireEvent.change(screen.getByLabelText('Número'), { target: { value: '10' } });
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão/i }));
+
+  expect(await screen.findByTestId('signup-card-processing')).toHaveTextContent('Confirmando seu pagamento');
+  expect(screen.queryByText(/Pague com Pix/)).not.toBeInTheDocument();
+  expect(screen.queryByText('Pagamento confirmado!')).not.toBeInTheDocument();
+});
+
+test('pagamento confirmado pelo status mostra a confirmação com o convite e o e-mail mascarado', async () => {
+  axios.post.mockResolvedValue({ data: { signupId: 56, pixPayload: '000201' } });
+  axios.get.mockImplementation((url) => (
+    url.includes('/status')
+      ? Promise.resolve({ data: { signupId: 56, paid: true, storeActive: true, inviteStatus: 'SENT', maskedEmail: 'ma***@example.com' } })
+      : new Promise(() => {})
+  ));
+  setup('/contratar?plan=PLAN_TEST');
+  fillContact();
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Continuar com Pix/i }));
+
+  expect(await screen.findByText('Pagamento confirmado!')).toBeInTheDocument();
+  expect(await screen.findByText('ma***@example.com')).toBeInTheDocument();
+  expect(screen.getByLabelText('Concluída')).toBeInTheDocument();
+  expect(screen.queryByText(/maria@example.com/)).not.toBeInTheDocument();
+});
+
+test('nome do estabelecimento é obrigatório e segue no pagamento', async () => {
+  axios.post.mockImplementation((url) => (
+    url === '/api/public/billing/leads'
+      ? Promise.resolve({ data: { token: 'lead-1', created: true } })
+      : Promise.resolve({ data: { signupId: 31, pixPayload: '000201' } })
+  ));
+  setup();
+  fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: 'Maria' } });
+  fireEvent.change(screen.getByLabelText('WhatsApp'), { target: { value: '11988887777' } });
+  fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Continuar com Pix/i }));
+
+  expect(screen.getByRole('alert')).toHaveTextContent('Informe o nome do estabelecimento');
+  expect(signupCall()).toBeUndefined();
+
+  fireEvent.change(screen.getByLabelText('Nome do estabelecimento'), { target: { value: '  Pizzaria   Bella Napoli ' } });
+  fireEvent.click(screen.getByRole('button', { name: /Continuar com Pix/i }));
+
+  await waitFor(() => expect(signupCall()).toBeTruthy());
+  expect(signupCall()[1].storeName).toBe('Pizzaria Bella Napoli');
+  expect(signupCall()[1].name).toBe('Maria');
 });

@@ -40,6 +40,7 @@ import {
 import { trackBeginCheckout, trackConfirmedPurchase } from '../../analytics/conversionTracking';
 import { createMercadoPagoCardToken, fetchSignupGateway } from '../../services/mercadoPagoSdk';
 import WeperMark from '../home/components/WeperMark';
+import SignupConfirmation from './SignupConfirmation';
 import ecosystemDevicesWebp from '../../assets/images/landing/ecosystem-devices.webp';
 import ecosystemDevicesJpg from '../../assets/images/landing/ecosystem-devices.jpg';
 import '../home/styles/Rebrand.css';
@@ -114,6 +115,7 @@ function persistSignupResult(value) {
 }
 
 const EMPTY = {
+  storeName: '',
   person: 'FISICA',
   name: '',
   document: '',
@@ -230,7 +232,11 @@ function CheckoutSteps({ phase, paymentConfirmed }) {
               <span className={`ct-step-line${isDone || isActive ? ' is-done' : ''}`} aria-hidden="true" />
             ) : null}
             <div className={`ct-step${isActive ? ' is-active' : ''}${isDone ? ' is-done' : ''}`}>
-              <span className="ct-step-index">{index + 1}</span>
+              <span className="ct-step-index">
+                {isActive && index === steps.length - 1 && paymentConfirmed
+                  ? <Check size={14} strokeWidth={3} aria-label="Concluída" />
+                  : index + 1}
+              </span>
               <span className="ct-step-label">{step.label}</span>
             </div>
           </div>
@@ -385,7 +391,9 @@ export default function SignupPage() {
   }, [paymentConfirmed, result?.signupId, isTestPlan, plan]);
 
   useEffect(() => {
-    if (!result?.signupId || paymentConfirmed) return undefined;
+    // Depois do pagamento, continua consultando só enquanto o convite ainda está sendo preparado.
+    const waitingInvite = paymentConfirmed && (!result?.inviteStatus || result.inviteStatus === 'PENDING');
+    if (!result?.signupId || (paymentConfirmed && !waitingInvite)) return undefined;
 
     let cancelled = false;
 
@@ -399,6 +407,12 @@ export default function SignupPage() {
           const next = { ...current };
           if (response.data?.storeActive != null) {
             next.storeActive = Boolean(response.data.storeActive);
+          }
+          if (response.data?.inviteStatus) {
+            next.inviteStatus = response.data.inviteStatus;
+          }
+          if (response.data?.maskedEmail) {
+            next.maskedEmail = response.data.maskedEmail;
           }
           if (statusPix.pixPayload && !normalizeSignupPix(current).pixPayload) {
             next.pixPayload = statusPix.pixPayload;
@@ -428,7 +442,7 @@ export default function SignupPage() {
         pollRef.current = null;
       }
     };
-  }, [result?.signupId, paymentConfirmed]);
+  }, [result?.signupId, paymentConfirmed, result?.inviteStatus]);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -453,6 +467,15 @@ export default function SignupPage() {
       setError('Selecione a faixa de faturamento para continuar.');
       return;
     }
+    const storeName = form.storeName.trim().replace(/\s+/g, ' ');
+    if (storeName.length < 2) {
+      setError('Informe o nome do estabelecimento. É ele que aparece na sua loja e no delivery.');
+      return;
+    }
+    if (storeName.length > 120) {
+      setError('O nome do estabelecimento pode ter até 120 caracteres.');
+      return;
+    }
     const contactError = validateName(form.name) || validateWhatsApp(form.phone);
     if (contactError) {
       setError(contactError);
@@ -475,6 +498,7 @@ export default function SignupPage() {
     const payload = {
       planCode,
       billingType,
+      storeName,
       name: form.name.trim(),
       document: form.document.trim(),
       email: form.email.trim(),
@@ -643,34 +667,19 @@ export default function SignupPage() {
 
               {result ? (
                 <div className="ct-result">
-                  {result.partnerReferralNotice ? (
-                    <p className="ct-note" role="status" data-testid="partner-referral-notice">
-                      {result.partnerReferralNotice}
-                    </p>
-                  ) : null}
-                  <h2 id="ct-checkout-title">
-                    {paymentConfirmed ? 'Pagamento confirmado' : 'Pague com Pix para ativar'}
-                  </h2>
                   {paymentConfirmed ? (
-                    <>
+                    <SignupConfirmation inviteStatus={result.inviteStatus} maskedEmail={result.maskedEmail} />
+                  ) : result.billingType === 'CREDIT_CARD' ? (
+                    <div className="ct-processing" role="status" data-testid="signup-card-processing">
+                      <h2 id="ct-checkout-title">Confirmando seu pagamento</h2>
                       <p>
-                        Recebemos a confirmação. O convite com a senha chega no e-mail informado.
-                        Só então use o login da Weper — não é preciso entrar agora.
+                        Estamos aguardando a confirmação do cartão. Isso costuma levar poucos minutos.
+                        Mantenha esta página aberta.
                       </p>
-                      <p className="ct-status" data-testid="signup-paid">
-                        {result.storeActive
-                          ? 'Loja liberada. Verifique seu e-mail para o convite.'
-                          : 'Pagamento ok. Aguardamos o e-mail de convite para o primeiro acesso.'}
-                      </p>
-                      <p>
-                        <Link className="ct-invoice-link" to={PATHS.LOGIN}>
-                          Já recebi o convite — ir ao login
-                          <ArrowRight size={16} aria-hidden="true" />
-                        </Link>
-                      </p>
-                    </>
+                    </div>
                   ) : (
                     <>
+                      <h2 id="ct-checkout-title">Pague com Pix para ativar</h2>
                       <p>
                         Escaneie o QR ou copie o código no app do banco. Fique nesta página até a confirmação.
                         O convite e o login só ficam disponíveis depois do pagamento.
@@ -815,6 +824,23 @@ export default function SignupPage() {
                           )}
                         </ul>
                       ) : null}
+                    </div>
+
+                    <div className="ct-field">
+                      <label htmlFor="storeName">Nome do estabelecimento</label>
+                      <input
+                        id="storeName"
+                        value={form.storeName}
+                        onChange={(event) => update('storeName', event.target.value)}
+                        autoComplete="organization"
+                        maxLength={120}
+                        placeholder="Ex.: Pizzaria Bella Napoli"
+                        aria-describedby="storeName-note"
+                        required
+                      />
+                      <p className="ct-field-note" id="storeName-note">
+                        Nome que aparece na sua loja, no cardápio e no delivery.
+                      </p>
                     </div>
 
                     <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
