@@ -24,7 +24,7 @@ export function loadMercadoPago() {
   });
 }
 
-const ASAAS_CHECKOUT = { gateway: 'ASAAS', available: true, mercadoPagoPublicKey: '', message: '' };
+const ASAAS_CHECKOUT = { gateway: 'ASAAS', available: true, mercadoPagoPublicKey: '', message: '', pixAvailable: true };
 
 /**
  * Gateway das contratações novas. Com Mercado Pago, traz só a public key da conta Weper.
@@ -40,6 +40,8 @@ export async function fetchSignupGateway() {
       available: Boolean(data.available && data.mercadoPagoPublicKey),
       mercadoPagoPublicKey: String(data.mercadoPagoPublicKey || ''),
       message: String(data.message || ''),
+      // Ausente em API antiga: trata como disponível para não esconder o Pix sem motivo.
+      pixAvailable: data.pixAvailable !== false,
     };
   } catch {
     return ASAAS_CHECKOUT;

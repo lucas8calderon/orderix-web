@@ -818,40 +818,99 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  align-items: stretch;
 }
 
 .ct-pay-option {
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
+  min-height: 100%;
   padding: 14px;
-  border: 1.5px solid var(--ct-border);
+  border: 2px solid var(--ct-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--ct-paper);
   color: var(--ct-ink);
   cursor: pointer;
-  text-align: left;
-  font: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
-.ct-pay-option:focus-visible {
-  outline: 2px solid var(--ct-primary);
-  outline-offset: 2px;
+.ct-pay-option:hover {
+  border-color: var(--ct-light);
 }
 
-.ct-pay-top {
-  display: flex;
+.ct-pay-option.is-selected {
+  border-color: var(--ct-primary);
+  background: var(--ct-soft);
+}
+
+.ct-pay-option:has(.ct-pay-radio:focus-visible) {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.ct-pay-option.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ct-pay-option.is-disabled:hover {
+  border-color: var(--ct-border);
+}
+
+/* O rádio nativo garante teclado (setas) e leitor de tela; o indicador visual é o círculo. */
+.ct-pay-radio {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.ct-pay-row {
+  display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  min-height: 22px;
+}
+
+.ct-pay-row strong {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .ct-pay-icon {
+  flex: none;
   color: var(--ct-muted);
+  transition: color 160ms ease;
+}
+
+.ct-pay-option.is-selected .ct-pay-icon {
+  color: var(--ct-primary);
+}
+
+.ct-pay-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--ct-border);
+  border-radius: 50%;
+  background: var(--ct-paper);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.ct-pay-option.is-selected .ct-pay-check {
+  border-color: var(--ct-primary);
+  box-shadow: inset 0 0 0 3px var(--ct-paper), inset 0 0 0 9px var(--ct-primary);
+}
+
+.ct-pay-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
 }
 
 .ct-pay-badge {
@@ -862,47 +921,20 @@
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 1px 8px;
   white-space: nowrap;
 }
 
-.ct-pay-option strong {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.ct-pay-desc,
-.ct-pay-extra {
-  font-size: 12px;
-  line-height: 1.4;
+.ct-pay-tag {
+  font-size: 11px;
   color: var(--ct-muted);
+  white-space: nowrap;
 }
 
-.ct-pay-extra {
-  color: var(--ct-ink);
-  font-weight: 600;
-}
-
-.ct-pay-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
+.ct-pay-desc {
+  font-size: 12.5px;
+  line-height: 1.45;
   color: var(--ct-muted);
-}
-
-.ct-pay-option.is-selected {
-  border-color: var(--ct-primary);
-  background: #f5f9ff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-.ct-pay-option.is-selected .ct-pay-icon,
-.ct-pay-option.is-selected .ct-pay-state {
-  color: var(--ct-primary);
 }
 
 .ct-pay-note {
@@ -918,6 +950,87 @@
 .ct-pay-note svg {
   flex: none;
   margin-top: 2px;
+}
+
+.ct-pix-error {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #7f1d1d;
+  font-size: 13px;
+}
+
+.ct-pix-error strong {
+  font-size: 14px;
+}
+
+.ct-pix-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ct-pix-retry,
+.ct-pix-switch {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.ct-pix-retry {
+  border: 0;
+  background: var(--ct-primary);
+  color: #fff;
+}
+
+.ct-pix-retry:hover {
+  background: var(--ct-primary-hover);
+}
+
+.ct-pix-retry:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.ct-pix-switch {
+  border: 1px solid var(--ct-border);
+  background: #fff;
+  color: var(--ct-ink);
+}
+
+.ct-pix-retry:focus-visible,
+.ct-pix-switch:focus-visible {
+  outline: 2px solid var(--ct-primary);
+  outline-offset: 2px;
+}
+
+/* Em telas estreitas, os cards ficam um abaixo do outro, cartão primeiro. */
+@media (max-width: 560px) {
+  .ct-pay-options {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-pay-option {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-pay-option,
+  .ct-pay-icon,
+  .ct-pay-check,
+  .ct-pix-retry,
+  .ct-pix-switch {
+    transition: none;
+  }
 }
 
 .ct-card-fields {

@@ -7,8 +7,6 @@ import {
   ArrowRight,
   Bike,
   Check,
-  CheckCircle2,
-  Circle,
   ClipboardList,
   CreditCard,
   Gauge,
@@ -17,7 +15,6 @@ import {
   Lock,
   Percent,
   QrCode,
-  RefreshCw,
   ShieldCheck,
   Smartphone,
   Store,
@@ -302,6 +299,19 @@ export default function SignupPage() {
   }, []);
 
   const mercadoPago = checkoutGateway?.gateway === 'MERCADO_PAGO';
+  // Pix mensal do Mercado Pago só fica disponível com a conta da Weper conectada.
+  const pixUnavailable = mercadoPago && checkoutGateway?.pixAvailable === false;
+  const [pixError, setPixError] = useState(false);
+
+  useEffect(() => {
+    if (pixUnavailable) setBillingType('CREDIT_CARD');
+  }, [pixUnavailable]);
+
+  function selectBilling(next) {
+    setBillingType(next);
+    setPixError(false);
+    setError('');
+  }
 
 
   useEffect(() => {
@@ -438,6 +448,7 @@ export default function SignupPage() {
     event.preventDefault();
     if (pending) return;
     setError('');
+    setPixError(false);
     if (!planSelected) {
       setError('Selecione a faixa de faturamento para continuar.');
       return;
@@ -531,8 +542,13 @@ export default function SignupPage() {
         trackBeginCheckout({ signupId: response.data?.signupId, planCode });
       }
     } catch (requestError) {
-      const message = requestError?.response?.data?.message || 'Não foi possível iniciar a contratação.';
-      setError(message);
+      if (billingType === 'PIX' && mercadoPago) {
+        // Falha ao gerar o Pix: mensagem amigável e nova tentativa; os dados do formulário ficam.
+        setPixError(true);
+      } else {
+        const message = requestError?.response?.data?.message || 'Não foi possível iniciar a contratação.';
+        setError(message);
+      }
     } finally {
       setPending(false);
     }
@@ -908,71 +924,62 @@ export default function SignupPage() {
 
                     <div className="ct-pay-section">
                       <div className="ct-pay-head">
-                        <p className="ct-legend">Forma de pagamento</p>
+                        <p className="ct-legend" id="pay-legend">Forma de pagamento</p>
                         <span className="ct-pay-hint">Escolha como pagar</span>
                       </div>
-                      <div className="ct-pay-options" role="radiogroup" aria-label="Forma de pagamento">
-                        <button
-                          type="button"
-                          className={`ct-pay-option ct-pay-option--card${card ? ' is-selected' : ''}`}
-                          onClick={() => setBillingType('CREDIT_CARD')}
-                          aria-pressed={card}
-                        >
-                          <span className="ct-pay-top">
-                            <CreditCard size={18} aria-hidden="true" className="ct-pay-icon" />
-                            <em className="ct-pay-badge">Recomendado</em>
-                          </span>
-                          <strong>Cartão de crédito</strong>
-                          <span className="ct-pay-desc">Cobrança automática todo mês, sem precisar pagar novamente.</span>
-                          <span className="ct-pay-extra">Mais praticidade: configure uma vez e pronto.</span>
-                          <span className="ct-pay-state">
-                            {card ? <CheckCircle2 size={15} aria-hidden="true" /> : <Circle size={15} aria-hidden="true" />}
-                            {card ? 'Selecionado' : 'Selecionar'}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          className={`ct-pay-option ct-pay-option--pix${billingType === 'PIX' ? ' is-selected' : ''}`}
-                          onClick={() => setBillingType('PIX')}
-                          aria-pressed={billingType === 'PIX'}
-                        >
-                          <span className="ct-pay-top">
-                            <QrCode size={18} aria-hidden="true" className="ct-pay-icon" />
-                          </span>
-                          <strong>Pix</strong>
-                          <span className="ct-pay-desc">Pague por Pix a cada mês para manter sua assinatura ativa.</span>
-                          <span className="ct-pay-state">
-                            {billingType === 'PIX' ? <CheckCircle2 size={15} aria-hidden="true" /> : <Circle size={15} aria-hidden="true" />}
-                            {billingType === 'PIX' ? 'Selecionado' : 'Selecionar'}
-                          </span>
-                        </button>
-                      </div>
-                      <p className="ct-pay-note" data-testid="pay-note">
-                        <RefreshCw size={14} aria-hidden="true" />
-                        {card
-                          ? 'Sua assinatura será renovada automaticamente no cartão, conforme as condições contratadas.'
-                          : 'Com Pix, você recebe uma nova cobrança a cada mês e paga manualmente para manter a assinatura ativa.'}
-                      </p>
-                      <div className="sr-only">
-                        <label>
+                      <div className="ct-pay-options" role="radiogroup" aria-labelledby="pay-legend">
+                        <label className={`ct-pay-option${card ? ' is-selected' : ''}`}>
                           <input
                             type="radio"
                             name="billing"
-                            checked={!card}
-                            onChange={() => setBillingType('PIX')}
-                          />
-                          Pix
-                        </label>
-                        <label>
-                          <input
-                            type="radio"
-                            name="billing"
+                            className="ct-pay-radio"
+                            value="CREDIT_CARD"
                             checked={card}
-                            onChange={() => setBillingType('CREDIT_CARD')}
+                            onChange={() => selectBilling('CREDIT_CARD')}
+                            aria-label="Cartão de crédito"
+                            aria-describedby="pay-card-desc"
                           />
-                          Cartão
+                          <span className="ct-pay-row">
+                            <CreditCard size={18} aria-hidden="true" className="ct-pay-icon" />
+                            <strong>Cartão de crédito</strong>
+                            <span className="ct-pay-check" aria-hidden="true" />
+                          </span>
+                          <span className="ct-pay-tags">
+                            <em className="ct-pay-badge">Recomendado</em>
+                            <span className="ct-pay-tag">Renovação automática</span>
+                          </span>
+                          <span className="ct-pay-desc" id="pay-card-desc">Pague automaticamente todos os meses.</span>
+                        </label>
+                        <label className={`ct-pay-option${billingType === 'PIX' ? ' is-selected' : ''}${pixUnavailable ? ' is-disabled' : ''}`}>
+                          <input
+                            type="radio"
+                            name="billing"
+                            className="ct-pay-radio"
+                            value="PIX"
+                            checked={billingType === 'PIX'}
+                            onChange={() => selectBilling('PIX')}
+                            disabled={pixUnavailable}
+                            aria-label="Pix"
+                            aria-describedby="pay-pix-desc"
+                          />
+                          <span className="ct-pay-row">
+                            <QrCode size={18} aria-hidden="true" className="ct-pay-icon" />
+                            <strong>Pix</strong>
+                            <span className="ct-pay-check" aria-hidden="true" />
+                          </span>
+                          <span className="ct-pay-desc" id="pay-pix-desc">
+                            {pixUnavailable
+                              ? 'Indisponível no momento. Use o cartão de crédito.'
+                              : 'Pague sua mensalidade manualmente a cada vencimento.'}
+                          </span>
                         </label>
                       </div>
+                      <p className="ct-pay-note" data-testid="pay-note" aria-live="polite">
+                        <Info size={14} aria-hidden="true" />
+                        {card
+                          ? 'Seu cartão será cobrado automaticamente a cada renovação, conforme as condições contratadas.'
+                          : 'Você receberá uma nova cobrança Pix a cada mês e deverá realizar o pagamento manualmente.'}
+                      </p>
                     </div>
 
                     {card ? (
@@ -1057,8 +1064,28 @@ export default function SignupPage() {
 
                     {error ? <p className="ct-alert" role="alert">{error}</p> : null}
 
-                    <button className="ct-submit" type="submit" disabled={pending || !planSelected}>
-                      {pending ? 'Enviando…' : (card ? 'Assinar com cartão' : 'Continuar com Pix')}
+                    {pixError && !card ? (
+                      <div className="ct-pix-error" role="alert" data-testid="pix-error">
+                        <strong>Não conseguimos gerar seu Pix.</strong>
+                        <span>Tente novamente em alguns instantes ou escolha cartão de crédito.</span>
+                        <div className="ct-pix-error-actions">
+                          <button
+                            type="button"
+                            className="ct-pix-retry"
+                            onClick={() => submit({ preventDefault() {} })}
+                            disabled={pending}
+                          >
+                            Tentar novamente
+                          </button>
+                          <button type="button" className="ct-pix-switch" onClick={() => selectBilling('CREDIT_CARD')}>
+                            Usar cartão de crédito
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <button className="ct-submit" type="submit" disabled={pending || !planSelected} aria-busy={pending}>
+                      {pending ? 'Processando…' : (card ? 'Assinar com cartão' : 'Continuar com Pix')}
                       {!pending ? <ArrowRight size={18} aria-hidden="true" /> : null}
                     </button>
 

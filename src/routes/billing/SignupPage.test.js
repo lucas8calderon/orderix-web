@@ -244,7 +244,7 @@ test('status poll fills missing pix payload', async () => {
 test('card without postal code stays on the form', () => {
   setup('/contratar');
   selectPlan();
-  fireEvent.click(screen.getByLabelText('Cartão'));
+  fireEvent.click(screen.getByLabelText('Cartão de crédito'));
   expect(screen.getByLabelText('CEP')).toBeInTheDocument();
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
@@ -341,7 +341,7 @@ describe('com Mercado Pago ativo', () => {
     setup();
     await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
     await act(async () => {});
-    fireEvent.click(screen.getByLabelText('Cartão'));
+    fireEvent.click(screen.getByLabelText('Cartão de crédito'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
@@ -369,7 +369,7 @@ describe('com Mercado Pago ativo', () => {
     setup();
     await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
     await act(async () => {});
-    fireEvent.click(screen.getByLabelText('Cartão'));
+    fireEvent.click(screen.getByLabelText('Cartão de crédito'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
@@ -408,7 +408,7 @@ describe('com Mercado Pago ativo', () => {
     setup();
     await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
     await act(async () => {});
-    fireEvent.click(screen.getByLabelText('Cartão'));
+    fireEvent.click(screen.getByLabelText('Cartão de crédito'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
@@ -420,20 +420,80 @@ describe('com Mercado Pago ativo', () => {
   });
 });
 
-
-test('cartão vem selecionado e recomendado; Pix explica a cobrança mensal e muda o botão', () => {
+test('cartão vem primeiro, selecionado e recomendado; a nota e o botão acompanham a escolha', () => {
   setup();
-  const cardOption = screen.getByRole('button', { name: /Cartão de crédito/ });
-  expect(cardOption).toHaveAttribute('aria-pressed', 'true');
-  expect(cardOption).toHaveTextContent('Recomendado');
-  expect(screen.getByRole('button', { name: /^Pix/ })).not.toHaveTextContent('Recomendado');
-  expect(screen.getByTestId('pay-note')).toHaveTextContent('renovada automaticamente no cartão');
+  const radios = screen.getAllByRole('radio').filter((radio) => radio.getAttribute('name') === 'billing');
+  expect(radios.map((radio) => radio.getAttribute('aria-label'))).toEqual(['Cartão de crédito', 'Pix']);
+  const cardRadio = screen.getByRole('radio', { name: 'Cartão de crédito' });
+  expect(cardRadio).toBeChecked();
+  expect(cardRadio.closest('label')).toHaveTextContent('Recomendado');
+  expect(screen.getByRole('radio', { name: 'Pix' }).closest('label')).not.toHaveTextContent('Recomendado');
+  expect(screen.getByTestId('pay-note')).toHaveTextContent('Seu cartão será cobrado automaticamente a cada renovação');
+  expect(screen.queryByText('Selecionado')).not.toBeInTheDocument();
+  expect(screen.queryByText('Selecionar')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Assinar com cartão/i })).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: /^Pix/ }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Pix' }));
 
-  expect(screen.getByTestId('pay-note')).toHaveTextContent('paga manualmente');
+  expect(screen.getByRole('radio', { name: 'Pix' })).toBeChecked();
+  expect(screen.getByTestId('pay-note')).toHaveTextContent('deverá realizar o pagamento manualmente');
   expect(screen.getByTestId('pay-note')).not.toHaveTextContent('automaticamente');
   expect(screen.getByRole('button', { name: /Continuar com Pix/i })).toBeInTheDocument();
   expect(screen.queryByLabelText('CEP')).not.toBeInTheDocument();
+});
+
+describe('Pix pelo Mercado Pago', () => {
+  function mockGateway(data) {
+    axios.get.mockImplementation((url) => (
+      url === '/api/public/billing/gateway' ? Promise.resolve({ data }) : new Promise(() => {})
+    ));
+  }
+
+  async function fillPixForm() {
+    setup();
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
+    await act(async () => {});
+    fillContact();
+    fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+    fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Pix' }));
+  }
+
+  test('falha ao gerar mostra mensagem amigável, mantém os dados e tenta de novo na mesma contratação', async () => {
+    mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public', pixAvailable: true });
+    axios.post.mockImplementation((url) => {
+      if (url === '/api/public/billing/leads') return Promise.resolve({ data: { token: 'lead-1', created: true } });
+      return Promise.reject({ response: { status: 503, data: { message: 'BillingUnavailable detalhe técnico' } } });
+    });
+    await fillPixForm();
+
+    fireEvent.click(screen.getByRole('button', { name: /Continuar com Pix/i }));
+
+    const box = await screen.findByTestId('pix-error');
+    expect(box).toHaveTextContent('Não conseguimos gerar seu Pix.');
+    expect(box).toHaveTextContent('Tente novamente em alguns instantes ou escolha cartão de crédito.');
+    expect(screen.queryByText(/detalhe técnico/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nome completo')).toHaveValue('Maria');
+
+    axios.post.mockImplementation((url) => {
+      if (url === '/api/public/billing/leads') return Promise.resolve({ data: { token: 'lead-1', created: false } });
+      return Promise.resolve({ data: { signupId: 91, pixPayload: '000201RETRY', pixEncodedImage: 'iVBORw0KGgo=' } });
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByTestId('pix-payload')).toHaveTextContent('000201RETRY');
+    const signupCalls = axios.post.mock.calls.filter((call) => call[0] === '/api/public/billing/signup');
+    expect(signupCalls).toHaveLength(2);
+    expect(signupCalls[1][1].email).toBe('maria@example.com');
+    expect(signupCalls[1][1].billingType).toBe('PIX');
+  });
+
+  test('sem a conta da Weper conectada, Pix aparece indisponível e o cartão fica selecionado', async () => {
+    mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public', pixAvailable: false });
+    setup();
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Pix' })).toBeDisabled());
+
+    expect(screen.getByRole('radio', { name: 'Cartão de crédito' })).toBeChecked();
+    expect(screen.getByText('Indisponível no momento. Use o cartão de crédito.')).toBeInTheDocument();
+  });
 });
