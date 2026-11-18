@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+﻿import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 import SignupPage, {
@@ -52,7 +52,7 @@ test('starts without a preselected plan and blocks submit until one is chosen', 
   expect(planSelect).toHaveValue('');
   expect(screen.getByRole('option', { name: /Selecione a faixa de faturamento/i })).toBeDisabled();
   expect(screen.getByText('Selecione um plano')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Continuar para o pagamento/i })).toBeDisabled();
+  expect(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i })).toBeDisabled();
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   expect(screen.queryByText(/contatos promocionais/i)).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Termos de Uso' })).toBeInTheDocument();
@@ -69,6 +69,7 @@ test('pix signup does not ask for address or send a price', async () => {
     },
   });
   setup();
+  fireEvent.click(screen.getByLabelText('Pix'));
   expect(screen.queryByLabelText('CEP')).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/CNPJ do estabelecimento/i)).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/boleto/i)).not.toBeInTheDocument();
@@ -76,7 +77,8 @@ test('pix signup does not ask for address or send a price', async () => {
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   const payload = signupCall()[1];
   expect(axios.post.mock.calls[0][0]).toBe('/api/public/billing/leads');
@@ -108,7 +110,8 @@ test('referral field is prefilled from ref, editable, and shows a notice without
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   expect(signupCall()[1].partnerReferralCode).toBe('NAO-EXISTE');
   expect(await screen.findByTestId('partner-referral-notice')).toHaveTextContent(/sem comissão de parceiro/i);
@@ -136,7 +139,8 @@ test('ref da URL prevalece sobre código antigo e segue no pagamento junto com o
   fillContact('Lucas Calderon');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   expect(signupCall()[1].partnerReferralCode).toBe('E3FUVE');
   expect(signupCall()[1].leadToken).toBe('06c21c5b-1544-4b93-a78c-9da9cd81e7c3');
@@ -154,7 +158,8 @@ test('sem ref o campo começa vazio e o código digitado é o que segue no pagam
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   expect(signupCall()[1].partnerReferralCode).toBe('DIGITADO');
   expect(axios.post.mock.calls[0][0]).toBe('/api/public/billing/leads');
@@ -171,7 +176,8 @@ test('cleared referral field is not sent even when ref was stored', async () => 
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   expect(signupCall()[1].partnerReferralCode).toBeUndefined();
   expect(screen.queryByTestId('partner-referral-notice')).not.toBeInTheDocument();
@@ -206,7 +212,8 @@ test('generates QR from pix payload when Asaas omits encodedImage', async () => 
   fillContact('Lucas');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   expect(await screen.findByTestId('pix-payload')).toHaveTextContent('0002012655');
   expect(screen.getByRole('button', { name: /Copiar código Pix/i })).toBeInTheDocument();
   expect(document.querySelector('svg')).toBeTruthy();
@@ -228,7 +235,8 @@ test('status poll fills missing pix payload', async () => {
   fillContact('Lucas');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   expect(await screen.findByTestId('pix-missing')).toBeInTheDocument();
   expect(await screen.findByTestId('pix-payload')).toHaveTextContent('000201STATUS');
 });
@@ -241,7 +249,7 @@ test('card without postal code stays on the form', () => {
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   expect(screen.getByRole('alert')).toHaveTextContent('telefone, CEP e número');
   expect(axios.post).not.toHaveBeenCalled();
 });
@@ -252,7 +260,8 @@ test('api error stays visible and does not claim the store is active', async () 
   fillContact();
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Plano inexistente.');
   expect(screen.getByLabelText('Nome completo')).toHaveValue('Maria');
   expect(screen.getByLabelText('WhatsApp')).toHaveValue('(11) 98888-7777');
@@ -266,7 +275,7 @@ test('shows commercial comparison outside the checkout form', () => {
   ))).toBeInTheDocument();
   expect(screen.getByText(/Marketplaces de delivery/i)).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Contratar a Weper' })).toBeInTheDocument();
-  const form = screen.getByRole('button', { name: /Continuar para o pagamento/i }).closest('form');
+  const form = screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }).closest('form');
   expect(form).not.toHaveTextContent('iFood');
 });
 
@@ -291,7 +300,8 @@ test('deep link PLAN_TEST preselects homologation plan and can submit', async ()
   fillContact('Lucas Homologação');
   fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '529.982.247-25' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'lucas@example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+  fireEvent.click(screen.getByLabelText('Pix'));
+  fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
   await waitFor(() => expect(signupCall()).toBeTruthy());
   expect(signupCall()[1].planCode).toBe('PLAN_TEST');
   expect(await screen.findByTestId('signup-waiting')).toBeInTheDocument();
@@ -329,13 +339,14 @@ describe('com Mercado Pago ativo', () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
     axios.post.mockResolvedValue({ data: { signupId: 77 } });
     setup();
-    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
+    await act(async () => {});
     fireEvent.click(screen.getByLabelText('Cartão'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
     fillCard();
-    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
 
     await waitFor(() => expect(signupCall()).toBeTruthy());
     expect(window.MercadoPago).toHaveBeenCalledWith('APP_USR-public', { locale: 'pt-BR' });
@@ -356,13 +367,14 @@ describe('com Mercado Pago ativo', () => {
   test('conta da Weper não conectada bloqueia antes de chamar o Mercado Pago', async () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: false, message: 'A contratação com cartão está temporariamente indisponível.' });
     setup();
-    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
+    await act(async () => {});
     fireEvent.click(screen.getByLabelText('Cartão'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
     fillCard();
-    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('temporariamente indisponível');
     expect(createCardToken).not.toHaveBeenCalled();
@@ -373,11 +385,13 @@ describe('com Mercado Pago ativo', () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
     axios.post.mockResolvedValue({ data: { signupId: 88, pixPayload: '000201MPPIX', pixEncodedImage: 'iVBORw0KGgo=' } });
     setup();
-    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
+    await act(async () => {});
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
-    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+    fireEvent.click(screen.getByLabelText('Pix'));
+    fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
 
     await waitFor(() => expect(signupCall()).toBeTruthy());
     const payload = signupCall()[1];
@@ -392,15 +406,34 @@ describe('com Mercado Pago ativo', () => {
     mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
     createCardToken.mockRejectedValue(new Error('invalid'));
     setup();
-    await waitFor(() => expect(screen.getByText(/Pague por Pix todo mês/)).toBeInTheDocument());
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/api/public/billing/gateway'));
+    await act(async () => {});
     fireEvent.click(screen.getByLabelText('Cartão'));
     fillContact();
     fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
     fillCard();
-    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Assinar com cartão|Continuar com Pix/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível validar o cartão');
     expect(signupCall()).toBeUndefined();
   });
+});
+
+
+test('cartão vem selecionado e recomendado; Pix explica a cobrança mensal e muda o botão', () => {
+  setup();
+  const cardOption = screen.getByRole('button', { name: /Cartão de crédito/ });
+  expect(cardOption).toHaveAttribute('aria-pressed', 'true');
+  expect(cardOption).toHaveTextContent('Recomendado');
+  expect(screen.getByRole('button', { name: /^Pix/ })).not.toHaveTextContent('Recomendado');
+  expect(screen.getByTestId('pay-note')).toHaveTextContent('renovada automaticamente no cartão');
+  expect(screen.getByRole('button', { name: /Assinar com cartão/i })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /^Pix/ }));
+
+  expect(screen.getByTestId('pay-note')).toHaveTextContent('paga manualmente');
+  expect(screen.getByTestId('pay-note')).not.toHaveTextContent('automaticamente');
+  expect(screen.getByRole('button', { name: /Continuar com Pix/i })).toBeInTheDocument();
+  expect(screen.queryByLabelText('CEP')).not.toBeInTheDocument();
 });

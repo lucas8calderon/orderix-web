@@ -793,6 +793,27 @@
   color: var(--ct-primary);
 }
 
+.ct-pay-section {
+  display: grid;
+  gap: 10px;
+}
+
+.ct-pay-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ct-pay-head .ct-legend {
+  margin: 0;
+}
+
+.ct-pay-hint {
+  font-size: 12px;
+  color: var(--ct-muted);
+}
+
 .ct-pay-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -803,26 +824,73 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  padding: 14px 14px 12px;
+  gap: 6px;
+  padding: 14px;
   border: 1.5px solid var(--ct-border);
   border-radius: 12px;
   background: #fff;
+  color: var(--ct-ink);
   cursor: pointer;
   text-align: left;
+  font: inherit;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.ct-pay-option strong {
-  display: inline-flex;
+.ct-pay-option:focus-visible {
+  outline: 2px solid var(--ct-primary);
+  outline-offset: 2px;
+}
+
+.ct-pay-top {
+  display: flex;
+  width: 100%;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  min-height: 22px;
+}
+
+.ct-pay-icon {
+  color: var(--ct-muted);
+}
+
+.ct-pay-badge {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.ct-pay-option strong {
   font-size: 14px;
   font-weight: 700;
 }
 
-.ct-pay-option span {
+.ct-pay-desc,
+.ct-pay-extra {
   font-size: 12px;
+  line-height: 1.4;
+  color: var(--ct-muted);
+}
+
+.ct-pay-extra {
+  color: var(--ct-ink);
+  font-weight: 600;
+}
+
+.ct-pay-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--ct-muted);
 }
 
@@ -832,12 +900,24 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-.ct-pay-option--pix.is-selected strong svg {
-  color: #00b37e;
+.ct-pay-option.is-selected .ct-pay-icon,
+.ct-pay-option.is-selected .ct-pay-state {
+  color: var(--ct-primary);
 }
 
-.ct-pay-option--card.is-selected strong svg {
-  color: var(--ct-primary);
+.ct-pay-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ct-muted);
+}
+
+.ct-pay-note svg {
+  flex: none;
+  margin-top: 2px;
 }
 
 .ct-card-fields {

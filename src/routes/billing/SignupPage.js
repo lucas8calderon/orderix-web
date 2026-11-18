@@ -7,6 +7,8 @@ import {
   ArrowRight,
   Bike,
   Check,
+  CheckCircle2,
+  Circle,
   ClipboardList,
   CreditCard,
   Gauge,
@@ -14,6 +16,8 @@ import {
   LayoutDashboard,
   Lock,
   Percent,
+  QrCode,
+  RefreshCw,
   ShieldCheck,
   Smartphone,
   Store,
@@ -264,7 +268,8 @@ export default function SignupPage() {
   }, [requestedPlan, includeTestPlan]);
 
   const [planCode, setPlanCode] = useState(initialPlan);
-  const [billingType, setBillingType] = useState('PIX');
+  // Cartão vem selecionado (cobrança automática); Pix continua disponível, pago mês a mês.
+  const [billingType, setBillingType] = useState('CREDIT_CARD');
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -901,34 +906,53 @@ export default function SignupPage() {
                       <p className="ct-field-note">Opcional. Você pode alterar o código antes de pagar.</p>
                     </div>
 
-                    <div>
-                      <p className="ct-legend" style={{ marginBottom: 8 }}>Forma de pagamento</p>
+                    <div className="ct-pay-section">
+                      <div className="ct-pay-head">
+                        <p className="ct-legend">Forma de pagamento</p>
+                        <span className="ct-pay-hint">Escolha como pagar</span>
+                      </div>
                       <div className="ct-pay-options" role="radiogroup" aria-label="Forma de pagamento">
-                        <button
-                          type="button"
-                          className={`ct-pay-option ct-pay-option--pix${billingType === 'PIX' ? ' is-selected' : ''}`}
-                          onClick={() => setBillingType('PIX')}
-                          aria-pressed={billingType === 'PIX'}
-                        >
-                          <strong>
-                            <WalletCards size={18} aria-hidden="true" />
-                            Pix
-                          </strong>
-                          <span>{mercadoPago ? 'Pague por Pix todo mês. O QR chega antes do vencimento.' : 'Pagamento rápido e seguro.'}</span>
-                        </button>
                         <button
                           type="button"
                           className={`ct-pay-option ct-pay-option--card${card ? ' is-selected' : ''}`}
                           onClick={() => setBillingType('CREDIT_CARD')}
                           aria-pressed={card}
                         >
-                          <strong>
-                            <CreditCard size={18} aria-hidden="true" />
-                            Cartão de crédito
-                          </strong>
-                          <span>Pague com seu cartão de crédito.</span>
+                          <span className="ct-pay-top">
+                            <CreditCard size={18} aria-hidden="true" className="ct-pay-icon" />
+                            <em className="ct-pay-badge">Recomendado</em>
+                          </span>
+                          <strong>Cartão de crédito</strong>
+                          <span className="ct-pay-desc">Cobrança automática todo mês, sem precisar pagar novamente.</span>
+                          <span className="ct-pay-extra">Mais praticidade: configure uma vez e pronto.</span>
+                          <span className="ct-pay-state">
+                            {card ? <CheckCircle2 size={15} aria-hidden="true" /> : <Circle size={15} aria-hidden="true" />}
+                            {card ? 'Selecionado' : 'Selecionar'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`ct-pay-option ct-pay-option--pix${billingType === 'PIX' ? ' is-selected' : ''}`}
+                          onClick={() => setBillingType('PIX')}
+                          aria-pressed={billingType === 'PIX'}
+                        >
+                          <span className="ct-pay-top">
+                            <QrCode size={18} aria-hidden="true" className="ct-pay-icon" />
+                          </span>
+                          <strong>Pix</strong>
+                          <span className="ct-pay-desc">Pague por Pix a cada mês para manter sua assinatura ativa.</span>
+                          <span className="ct-pay-state">
+                            {billingType === 'PIX' ? <CheckCircle2 size={15} aria-hidden="true" /> : <Circle size={15} aria-hidden="true" />}
+                            {billingType === 'PIX' ? 'Selecionado' : 'Selecionar'}
+                          </span>
                         </button>
                       </div>
+                      <p className="ct-pay-note" data-testid="pay-note">
+                        <RefreshCw size={14} aria-hidden="true" />
+                        {card
+                          ? 'Sua assinatura será renovada automaticamente no cartão, conforme as condições contratadas.'
+                          : 'Com Pix, você recebe uma nova cobrança a cada mês e paga manualmente para manter a assinatura ativa.'}
+                      </p>
                       <div className="sr-only">
                         <label>
                           <input
@@ -1034,7 +1058,7 @@ export default function SignupPage() {
                     {error ? <p className="ct-alert" role="alert">{error}</p> : null}
 
                     <button className="ct-submit" type="submit" disabled={pending || !planSelected}>
-                      {pending ? 'Enviando…' : 'Continuar para o pagamento'}
+                      {pending ? 'Enviando…' : (card ? 'Assinar com cartão' : 'Continuar com Pix')}
                       {!pending ? <ArrowRight size={18} aria-hidden="true" /> : null}
                     </button>
 
