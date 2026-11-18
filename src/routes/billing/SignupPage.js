@@ -37,6 +37,7 @@ import {
   validateWhatsApp,
 } from '../../services/subscriptionLead';
 import { trackBeginCheckout, trackConfirmedPurchase } from '../../analytics/conversionTracking';
+import { createMercadoPagoCardToken, fetchSignupGateway } from '../../services/mercadoPagoSdk';
 import WeperMark from '../home/components/WeperMark';
 import ecosystemDevicesWebp from '../../assets/images/landing/ecosystem-devices.webp';
 import ecosystemDevicesJpg from '../../assets/images/landing/ecosystem-devices.jpg';
@@ -283,6 +284,24 @@ export default function SignupPage() {
   const referralEdited = useRef(false);
   const pollRef = useRef(null);
   const [consentEpoch, setConsentEpoch] = useState(0);
+  const [checkoutGateway, setCheckoutGateway] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchSignupGateway().then((value) => {
+      if (!cancelled) setCheckoutGateway(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const mercadoPago = checkoutGateway?.gateway === 'MERCADO_PAGO';
+
+  useEffect(() => {
+    // Com Mercado Pago, a assinatura nova é só no cartão recorrente.
+    if (mercadoPago) setBillingType('CREDIT_CARD');
+  }, [mercadoPago]);
 
   useEffect(() => {
     const stored = readLeadSession();
@@ -435,6 +454,10 @@ export default function SignupPage() {
       setError('Informe os dados do cartão para repasse. Eles não ficam salvos nesta tela.');
       return;
     }
+    if (mercadoPago && !checkoutGateway.available) {
+      setError(checkoutGateway.message || 'A contratação com cartão está temporariamente indisponível.');
+      return;
+    }
     const typedReferral = referralCodeInput.trim();
     const partnerReferralCode = typedReferral || undefined;
     const payload = {
@@ -447,7 +470,7 @@ export default function SignupPage() {
       postalCode: card ? form.postalCode.trim() : undefined,
       addressNumber: card ? form.addressNumber.trim() : undefined,
       partnerReferralCode,
-      card: card
+      card: card && !mercadoPago
         ? {
             holderName: form.holderName.trim() || form.name.trim(),
             number: onlyDigits(form.number),
@@ -463,6 +486,22 @@ export default function SignupPage() {
         : undefined,
     };
     setPending(true);
+    if (mercadoPago) {
+      try {
+        payload.creditCardToken = await createMercadoPagoCardToken(checkoutGateway.mercadoPagoPublicKey, {
+          holderName: form.holderName.trim() || form.name.trim(),
+          number: form.number,
+          expiryMonth: form.expiryMonth,
+          expiryYear: form.expiryYear,
+          ccv: form.ccv,
+          document: form.document,
+        });
+      } catch {
+        setError('Não foi possível validar o cartão. Confira número, validade, CVV e CPF/CNPJ.');
+        setPending(false);
+        return;
+      }
+    }
     try {
       const stored = readLeadSession();
       const sameAttempt = stored && stored.planCode === planCode && stored.idempotencyKey;
@@ -874,12 +913,13 @@ export default function SignupPage() {
                           className={`ct-pay-option ct-pay-option--pix${billingType === 'PIX' ? ' is-selected' : ''}`}
                           onClick={() => setBillingType('PIX')}
                           aria-pressed={billingType === 'PIX'}
+                          disabled={mercadoPago}
                         >
                           <strong>
                             <WalletCards size={18} aria-hidden="true" />
                             Pix
                           </strong>
-                          <span>Pagamento rápido e seguro.</span>
+                          <span>{mercadoPago ? 'Indisponível no momento. Use o cartão.' : 'Pagamento rápido e seguro.'}</span>
                         </button>
                         <button
                           type="button"
@@ -901,6 +941,7 @@ export default function SignupPage() {
                             name="billing"
                             checked={!card}
                             onChange={() => setBillingType('PIX')}
+                            disabled={mercadoPago}
                           />
                           Pix
                         </label>

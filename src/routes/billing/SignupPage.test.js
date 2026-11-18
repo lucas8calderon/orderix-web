@@ -296,3 +296,89 @@ test('deep link PLAN_TEST preselects homologation plan and can submit', async ()
   expect(signupCall()[1].planCode).toBe('PLAN_TEST');
   expect(await screen.findByTestId('signup-waiting')).toBeInTheDocument();
 });
+
+describe('com Mercado Pago ativo', () => {
+  let createCardToken;
+
+  beforeEach(() => {
+    createCardToken = jest.fn().mockResolvedValue({ id: 'tok_mp_123' });
+    window.MercadoPago = jest.fn(() => ({ createCardToken }));
+  });
+
+  afterEach(() => {
+    delete window.MercadoPago;
+  });
+
+  function mockGateway(data) {
+    axios.get.mockImplementation((url) => (
+      url === '/api/public/billing/gateway' ? Promise.resolve({ data }) : new Promise(() => {})
+    ));
+  }
+
+  function fillCard() {
+    fireEvent.change(screen.getByLabelText('Nome do titular'), { target: { value: 'MARIA SILVA' } });
+    fireEvent.change(screen.getByLabelText('Número do cartão'), { target: { value: '5031433215406351' } });
+    fireEvent.change(screen.getByLabelText('Mês'), { target: { value: '11' } });
+    fireEvent.change(screen.getByLabelText('Ano'), { target: { value: '2030' } });
+    fireEvent.change(screen.getByLabelText('CVV'), { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText('CEP'), { target: { value: '01310100' } });
+    fireEvent.change(screen.getByLabelText('Número'), { target: { value: '100' } });
+  }
+
+  test('gera o token no navegador e não envia o número do cartão à Weper', async () => {
+    mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
+    axios.post.mockResolvedValue({ data: { signupId: 77 } });
+    setup();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Pix/ })).toBeDisabled());
+    fillContact();
+    fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+    fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+    fillCard();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+
+    await waitFor(() => expect(signupCall()).toBeTruthy());
+    expect(window.MercadoPago).toHaveBeenCalledWith('APP_USR-public', { locale: 'pt-BR' });
+    expect(createCardToken).toHaveBeenCalledWith(expect.objectContaining({
+      cardNumber: '5031433215406351',
+      cardExpirationMonth: '11',
+      cardExpirationYear: '2030',
+      identificationType: 'CPF',
+      identificationNumber: '52998224725',
+    }));
+    const payload = signupCall()[1];
+    expect(payload.billingType).toBe('CREDIT_CARD');
+    expect(payload.creditCardToken).toBe('tok_mp_123');
+    expect(payload.card).toBeUndefined();
+    expect(JSON.stringify(payload)).not.toContain('5031433215406351');
+  });
+
+  test('conta da Weper não conectada bloqueia antes de chamar o Mercado Pago', async () => {
+    mockGateway({ gateway: 'MERCADO_PAGO', available: false, message: 'A contratação com cartão está temporariamente indisponível.' });
+    setup();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Pix/ })).toBeDisabled());
+    fillContact();
+    fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+    fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+    fillCard();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporariamente indisponível');
+    expect(createCardToken).not.toHaveBeenCalled();
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  test('cartão recusado na tokenização fica no formulário', async () => {
+    mockGateway({ gateway: 'MERCADO_PAGO', available: true, mercadoPagoPublicKey: 'APP_USR-public' });
+    createCardToken.mockRejectedValue(new Error('invalid'));
+    setup();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Pix/ })).toBeDisabled());
+    fillContact();
+    fireEvent.change(screen.getByLabelText('CPF'), { target: { value: '52998224725' } });
+    fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'maria@example.com' } });
+    fillCard();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar para o pagamento/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível validar o cartão');
+    expect(signupCall()).toBeUndefined();
+  });
+});

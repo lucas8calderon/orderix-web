@@ -20,9 +20,9 @@ import {
   isPixPaid,
   tokenizeDeliveryAsaasCard,
 } from '../../../services/deliveryPaymentService';
+import { loadMercadoPago } from '../../../services/mercadoPagoSdk';
 import './DeliveryCardCheckout.css';
 
-const SDK_URL = 'https://sdk.mercadopago.com/js/v2';
 const PAGBANK_SDK_URL = 'https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js';
 
 function paintThenContinue() {
@@ -43,27 +43,6 @@ function newKey() {
     return window.crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random()}`;
-}
-
-function loadMercadoPago() {
-  if (window.MercadoPago) {
-    return Promise.resolve(window.MercadoPago);
-  }
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-mp-sdk="1"]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.MercadoPago), { once: true });
-      existing.addEventListener('error', () => reject(new Error('sdk')), { once: true });
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = SDK_URL;
-    script.async = true;
-    script.dataset.mpSdk = '1';
-    script.onload = () => resolve(window.MercadoPago);
-    script.onerror = () => reject(new Error('sdk'));
-    document.body.appendChild(script);
-  });
 }
 
 function loadPagBank() {
