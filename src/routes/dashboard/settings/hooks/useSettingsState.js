@@ -161,6 +161,7 @@ function mergeSavedDelivery(prev, sent, received) {
   return {
     ...prev,
     ...received,
+    companyInfo: prev.companyInfo,
     deliveryLogoUrl: keepIfNewer('deliveryLogoUrl'),
     deliveryCoverUrl: keepIfNewer('deliveryCoverUrl'),
   };

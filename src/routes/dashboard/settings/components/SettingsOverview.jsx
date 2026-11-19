@@ -97,7 +97,8 @@ export function SettingsOverview({ settings, onNavigate, onSettingChange, saving
     ? settings.deliveryLogoUrl
     : (settings?.companyInfo?.logoUrl || '');
   const banner = isBrandingImage(settings?.deliveryCoverUrl) ? settings.deliveryCoverUrl : '';
-  const address = settings?.storeAddress || settings?.companyInfo?.address || '';
+  const fiscalAddress = String(settings?.companyInfo?.address || '').trim();
+  const address = fiscalAddress || settings?.storeAddress || '';
   const phone = settings?.companyInfo?.phone || '';
   const cnpj = settings?.companyInfo?.cnpj || '';
   const segment = storeSegment(settings);
@@ -215,7 +216,7 @@ export function SettingsOverview({ settings, onNavigate, onSettingChange, saving
                 ) : null}
               </ul>
               <p className="settings-identity__hint">
-                Telefone e CNPJ são editados em Empresa.
+                Endereço, telefone e CNPJ da empresa são editados em Empresa.
               </p>
               <button
                 type="button"
@@ -316,7 +317,7 @@ export function SettingsOverview({ settings, onNavigate, onSettingChange, saving
             <QuickCard
               icon={BusinessIcon}
               title="Dados da Empresa"
-              text="Dados de identificação e contato. Dados fiscais salvos apenas neste navegador."
+              text="Nome, CNPJ, endereço e telefone gravados nesta loja."
               onClick={() => onNavigate('empresa')}
             />
             <QuickCard

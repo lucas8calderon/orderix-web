@@ -51,7 +51,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
           onChange={(e) => onSettingChange('companyInfo', 'companyName', e.target.value)}
           className="setting-input"
           fullWidth
-          inputProps={{ maxLength: 160 }}
+          inputProps={{ maxLength: 160, autoComplete: 'off', name: 'company-fiscal-name' }}
         />
         <TextField
           label="CNPJ"
@@ -59,7 +59,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
           onChange={(e) => onSettingChange('companyInfo', 'cnpj', formatCnpjInput(e.target.value))}
           className="setting-input"
           fullWidth
-          inputProps={{ inputMode: 'numeric' }}
+          inputProps={{ inputMode: 'numeric', autoComplete: 'off', name: 'company-fiscal-cnpj' }}
         />
         <TextField
           label="Endereço"
@@ -69,7 +69,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
           fullWidth
           multiline
           rows={2}
-          inputProps={{ maxLength: 512 }}
+          inputProps={{ maxLength: 512, autoComplete: 'off', name: 'company-fiscal-address' }}
         />
         <TextField
           label="Telefone"
@@ -77,7 +77,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
           onChange={(e) => onSettingChange('companyInfo', 'phone', formatStoreWhatsAppInput(e.target.value))}
           className="setting-input"
           fullWidth
-          inputProps={{ inputMode: 'tel' }}
+          inputProps={{ inputMode: 'tel', autoComplete: 'off', name: 'company-fiscal-phone' }}
         />
         <Box className="upload-section">
           <Typography className="setting-label">Logotipo da empresa</Typography>

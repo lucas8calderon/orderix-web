@@ -113,6 +113,8 @@ describe('Settings page navigation', () => {
     expect(screen.getByRole('button', { name: /editar informações/i })).toBeInTheDocument();
     expect(screen.getByText('Personalização visual')).toBeInTheDocument();
     expect(screen.getByText('Delivery ativo')).toBeInTheDocument();
+    expect(screen.getByText('Rua A')).toBeInTheDocument();
+    expect(screen.queryByText('Rua A, 1')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /KP-IM609/ })).not.toBeInTheDocument();
   });
 

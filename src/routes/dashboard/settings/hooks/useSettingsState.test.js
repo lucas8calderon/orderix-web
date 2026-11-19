@@ -185,6 +185,61 @@ describe('useSettingsState delivery branding', () => {
     expect(result.current.toast.message).toMatch(/cnpj válido/i);
   });
 
+  it('substitui o endereço padrão da entrega pelo endereço salvo na empresa e mantém isso ao recarregar', async () => {
+    const deliveryDefault = 'Rua das Flores, 123 - Centro';
+    const savedAddress = 'Avenida Central, 9';
+    settingsStorage.getDeliveryConfig.mockResolvedValue({
+      deliveryEnabled: true,
+      deliveryFee: 5,
+      storeAddress: deliveryDefault,
+    });
+    settingsStorage.getCompanyProfile.mockResolvedValue({
+      companyName: 'Padaria do Bairro',
+      cnpj: '11.222.333/0001-81',
+      address: '',
+      phone: '',
+    });
+    settingsStorage.updateCompanyProfile.mockImplementation(async (ui) => ({
+      ...ui,
+      address: ui.address,
+    }));
+
+    const first = renderHook(() => useSettingsState());
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.settings.storeAddress).toBe(deliveryDefault);
+    expect(first.result.current.settings.companyInfo.address).toBe('');
+
+    act(() => {
+      first.result.current.updateSetting('companyInfo', 'address', savedAddress);
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await first.result.current.saveSettings('companyInfo');
+    });
+
+    expect(saved).toBe(true);
+    expect(settingsStorage.updateCompanyProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ address: savedAddress })
+    );
+    expect(settingsStorage.updateDeliveryConfig).not.toHaveBeenCalled();
+    expect(first.result.current.settings.companyInfo.address).toBe(savedAddress);
+    expect(first.result.current.settings.storeAddress).toBe(deliveryDefault);
+
+    first.unmount();
+    settingsStorage.getCompanyProfile.mockResolvedValue({
+      companyName: 'Padaria do Bairro',
+      cnpj: '11.222.333/0001-81',
+      address: savedAddress,
+      phone: '',
+    });
+
+    const reloaded = renderHook(() => useSettingsState());
+    await waitFor(() => expect(reloaded.result.current.settings.companyInfo.address).toBe(savedAddress));
+    expect(reloaded.result.current.settings.companyInfo.address).not.toBe(deliveryDefault);
+    expect(reloaded.result.current.settings.storeAddress).toBe(deliveryDefault);
+  });
+
   it('recoloca os dados da empresa gravados ao carregar', async () => {
     settingsStorage.getCompanyProfile.mockResolvedValue({
       companyName: 'Padaria do Bairro',

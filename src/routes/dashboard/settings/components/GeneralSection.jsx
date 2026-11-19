@@ -52,7 +52,8 @@ export function GeneralSection({ settings, onNavigate }) {
   const logo = isBrandingImage(settings?.deliveryLogoUrl) ? settings.deliveryLogoUrl : '';
   const phone = settings?.companyInfo?.phone || '—';
   const cnpj = settings?.companyInfo?.cnpj || '—';
-  const address = settings?.storeAddress || settings?.companyInfo?.address || '';
+  const fiscalAddress = String(settings?.companyInfo?.address || '').trim();
+  const address = fiscalAddress || settings?.storeAddress || '';
 
   return (
     <div className="settings-overview-grid">

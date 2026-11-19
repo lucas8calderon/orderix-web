@@ -22,6 +22,50 @@ describe('CompanySection', () => {
     fileToCompressedDataUrl.mockReset();
   });
 
+  it('mostra o endereço fiscal salvo e ignora o endereço de retirada', () => {
+    render(
+      <CompanySection
+        settings={{
+          ...settings,
+          storeAddress: 'Rua das Flores, 123 - Centro',
+          companyInfo: {
+            companyName: 'Minions',
+            cnpj: '',
+            address: 'Avenida Central, 9',
+            phone: '',
+          },
+        }}
+        onSettingChange={jest.fn()}
+        onSave={jest.fn()}
+        saving={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Endereço')).toHaveValue('Avenida Central, 9');
+  });
+
+  it('não preenche o endereço da empresa com o endereço de retirada', () => {
+    render(
+      <CompanySection
+        settings={{
+          ...settings,
+          storeAddress: 'Rua das Flores, 123 - Centro',
+          companyInfo: {
+            companyName: '',
+            cnpj: '',
+            address: '',
+            phone: '',
+          },
+        }}
+        onSettingChange={jest.fn()}
+        onSave={jest.fn()}
+        saving={false}
+      />
+    );
+
+    expect(screen.getByLabelText('Endereço')).toHaveValue('');
+  });
+
   it('explica que os dados da empresa são gravados', () => {
     render(
       <CompanySection
