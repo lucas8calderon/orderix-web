@@ -138,9 +138,10 @@ describe('PlaceOrderDialog', () => {
     renderDialog({ kind: 'table', id: 8, number: 3 });
 
     expect(await screen.findByRole('button', { name: 'Ver produtos de Porções' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Chips PDV' }));
     expect(categoryChipLabels()).toEqual(['Todas', 'Bebidas', 'Porções']);
-    await openCategory('Porções');
-    expect(screen.getByRole('button', { name: 'Bebidas' })).toHaveTextContent('Bebidas · 2');
+    fireEvent.click(screen.getByRole('button', { name: 'Porções' }));
+    expect(screen.getByRole('button', { name: 'Bebidas' })).toHaveTextContent('2');
 
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar Barca de Batata' }));
     fireEvent.click(screen.getByRole('button', { name: 'Bebidas' }));

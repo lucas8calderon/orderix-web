@@ -1,57 +1,91 @@
+import CheckIcon from '@mui/icons-material/Check';
 import { Box, ButtonBase, Typography } from '@mui/material';
 import { resolveMenuImage } from '../../menu/utils/defaultMenuImage';
 
-/** Primeira tela do PDV: um card por categoria, como no app do garçom. */
-export function CategoryGrid({ categories, counts, onSelect }) {
-  if (!categories.length) {
-    return (
-      <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-        Nenhum produto disponível nesta loja.
-      </Typography>
-    );
-  }
+/** Fileira horizontal de categorias: foto, nome e quantidade. */
+export function CategoryGrid({ categories, counts, value, onSelect, dimmed = false }) {
+  if (!categories?.length) return null;
   return (
     <Box
       component="ul"
       aria-label="Categorias do cardápio"
       sx={{
         listStyle: 'none',
-        p: 0,
+        p: 0.25,
         m: 0,
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(180px, 1fr))' },
-        gap: 1.5,
+        minWidth: 0,
+        maxWidth: '100%',
+        display: 'flex',
+        gap: 1.25,
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        opacity: dimmed ? 0.55 : 1,
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': { display: 'none' },
       }}
     >
       {categories.map((category) => {
         const count = counts?.[category.id] || 0;
         const available = category.available !== false;
+        const selected = value === category.id;
         return (
-          <Box component="li" key={category.id} sx={{ minWidth: 0 }}>
+          <Box component="li" key={category.id} sx={{ flex: '0 0 auto' }}>
             <ButtonBase
               onClick={() => onSelect(category.id)}
+              aria-pressed={selected}
               aria-label={available ? `Ver produtos de ${category.name}` : `Ver produtos de ${category.name}, indisponível`}
               sx={{
-                width: '100%',
+                width: 136,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'stretch',
+                textAlign: 'left',
                 borderRadius: '16px',
                 overflow: 'hidden',
-                border: '1px solid var(--color-border)',
+                border: '2px solid',
+                borderColor: selected ? 'var(--color-primary)' : 'var(--color-border)',
                 backgroundColor: 'var(--color-surface)',
+                boxShadow: 'var(--color-shadow)',
                 opacity: available ? 1 : 0.88,
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)' },
+                transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                '&:hover': { boxShadow: 'var(--color-shadow-hover)' },
               }}
             >
-              <Box sx={{ position: 'relative', backgroundColor: 'var(--color-surface-muted, #f8fafc)' }}>
+              <Box sx={{ position: 'relative' }}>
                 <Box
                   component="img"
                   src={resolveMenuImage(category.image)}
                   alt=""
-                  sx={{ display: 'block', width: '100%', height: { xs: 110, sm: 130 }, objectFit: 'cover' }}
+                  sx={{
+                    display: 'block',
+                    width: '100%',
+                    height: 92,
+                    objectFit: 'cover',
+                    backgroundColor: 'var(--color-surface-muted)',
+                  }}
                 />
+                {selected ? (
+                  <Box
+                    component="span"
+                    aria-hidden="true"
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      width: 22,
+                      height: 22,
+                      borderRadius: '999px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'var(--color-primary)',
+                      color: '#fff',
+                    }}
+                  >
+                    <CheckIcon sx={{ fontSize: 16 }} />
+                  </Box>
+                ) : null}
                 {!available ? (
                   <Box
                     component="span"
@@ -72,11 +106,20 @@ export function CategoryGrid({ categories, counts, onSelect }) {
                   </Box>
                 ) : null}
               </Box>
-              <Box sx={{ px: 1.5, py: 1.1, backgroundColor: available ? 'var(--color-primary)' : '#64748b', color: '#fff', textAlign: 'center' }}>
-                <Typography sx={{ fontWeight: 800, fontSize: 15, lineHeight: 1.25 }} noWrap title={category.name}>
+              <Box sx={{ px: 1.25, pt: 1, pb: 1.15 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                    lineHeight: 1.25,
+                    color: available ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  }}
+                  noWrap
+                  title={category.name}
+                >
                   {category.name}
                 </Typography>
-                <Typography sx={{ fontSize: 12, opacity: 0.85 }}>
+                <Typography sx={{ mt: 0.25, fontSize: 12, lineHeight: 1.3, color: 'var(--color-text-secondary)' }}>
                   {count} {count === 1 ? 'produto' : 'produtos'}
                 </Typography>
               </Box>

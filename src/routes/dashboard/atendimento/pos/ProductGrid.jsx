@@ -6,7 +6,7 @@ const gridSx = {
   p: 0,
   m: 0,
   display: 'grid',
-  gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(160px, 1fr))' },
+  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))',
   gap: 1.5,
 };
 

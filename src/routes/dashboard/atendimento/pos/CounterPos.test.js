@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { CounterPos } from './CounterPos';
+import { PDV_CATEGORY_LAYOUT_KEY } from './CategoryViewSwitch';
 import { getAllCategories } from '../../menu/category/service/categoryService';
 import { getAllProducts } from '../../menu/product/service/productService';
 import { createFloorOrder } from '../service/accountService';
@@ -125,7 +126,7 @@ describe('PDV de balcão', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Café adicionado ao pedido');
     expect(screen.getByLabelText('Quantidade de Café')).toHaveTextContent('1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Porções' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos de Porções' }));
     expect(screen.queryByRole('button', { name: 'Adicionar Café' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Quantidade de Café')).toHaveTextContent('1');
 
@@ -148,15 +149,17 @@ describe('PDV de balcão', () => {
     });
     renderPos();
 
-    expect(await screen.findByRole('button', { name: 'Ver produtos de Bebidas, indisponível' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Bebidas indisponível' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos de Bebidas, indisponível' }));
+    const bebidas = await screen.findByRole('button', { name: 'Ver produtos de Bebidas, indisponível' });
+    expect(bebidas).toHaveTextContent('Indisponível');
+    fireEvent.click(bebidas);
 
     expect(await screen.findByRole('button', { name: 'Café indisponível' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Doce esgotado indisponível' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Café indisponível' }));
     expect(screen.queryByLabelText('Quantidade de Café')).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Chips PDV' }));
+    expect(screen.getByRole('button', { name: 'Bebidas indisponível' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
     expect(screen.getByRole('button', { name: 'Café indisponível' })).toBeDisabled();
   });
@@ -270,15 +273,51 @@ describe('PDV de balcão', () => {
     expect(screen.getByRole('button', { name: 'Ver produtos de Porções' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Adicionar Café' })).not.toBeInTheDocument();
 
+    expect(screen.getByRole('button', { name: 'Ver produtos de Todas' })).toHaveAttribute('aria-pressed', 'true');
+
     await openCategory('Porções');
     expect(screen.getByRole('heading', { name: 'Porções' })).toBeInTheDocument();
+    expect(screen.getByText('2 itens encontrados')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ver produtos de Porções' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('button', { name: 'Adicionar Café' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Categorias' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos de Todas' }));
     expect(screen.getByRole('button', { name: 'Ver produtos de Bebidas' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Porções' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Porções' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver produtos de Porções' }));
     fireEvent.change(screen.getByLabelText('Buscar produto'), { target: { value: 'cafe' } });
     expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
+  });
+
+  it('alterna entre cards e chips e lembra a escolha na sessão', async () => {
+    const view = renderPos();
+    expect(await screen.findByRole('button', { name: 'Cards' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('CATEGORIAS')).toBeInTheDocument();
+    expect(screen.queryByRole('toolbar', { name: 'Categorias' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chips PDV' }));
+    expect(screen.getByRole('button', { name: 'Chips PDV' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'Ver produtos de Bebidas' })).not.toBeInTheDocument();
+    const toolbar = screen.getByRole('toolbar', { name: 'Categorias' });
+    expect(within(toolbar).getAllByRole('button').map((chip) => chip.getAttribute('aria-label')))
+      .toEqual(['Todas', 'Bebidas', 'Porções']);
+    expect(sessionStorage.getItem(PDV_CATEGORY_LAYOUT_KEY)).toBe('chips');
+
+    fireEvent.click(within(toolbar).getByRole('button', { name: 'Bebidas' }));
+    expect(screen.getByRole('heading', { name: 'Bebidas' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Adicionar Barca de Batata' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+    expect(screen.getByRole('button', { name: 'Ver produtos de Bebidas' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Adicionar Café' })).toBeInTheDocument();
+    expect(sessionStorage.getItem(PDV_CATEGORY_LAYOUT_KEY)).toBe('cards');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chips PDV' }));
+    view.unmount();
+    renderPos();
+    expect(await screen.findByRole('toolbar', { name: 'Categorias' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ver produtos de Bebidas' })).not.toBeInTheDocument();
   });
 
   it('exige o nome do cliente e mostra os campos abaixo dos itens', async () => {

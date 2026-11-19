@@ -1,27 +1,45 @@
 import { Box, Chip } from '@mui/material';
-import { ALL_CATEGORIES, OTHER_CATEGORY } from './catalogView';
 
 function CategoryChip({ label, count, selected, onSelect, unavailable = false }) {
-  const text = unavailable
-    ? `${label} · indisponível`
-    : (count != null ? `${label} · ${count}` : label);
   return (
     <Chip
-      label={text}
       clickable
       variant={selected ? 'filled' : 'outlined'}
       aria-pressed={selected}
       aria-label={unavailable ? `${label} indisponível` : label}
       onClick={onSelect}
+      label={(
+        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+          <span>{label}</span>
+          <Box
+            component="span"
+            sx={{
+              minWidth: 18,
+              height: 18,
+              px: 0.6,
+              borderRadius: '999px',
+              fontSize: 12,
+              fontWeight: 700,
+              lineHeight: '18px',
+              textAlign: 'center',
+              color: selected ? '#fff' : 'var(--color-text-secondary)',
+              bgcolor: selected ? 'rgba(255,255,255,0.22)' : 'transparent',
+            }}
+          >
+            {count}
+          </Box>
+        </Box>
+      )}
       sx={{
         flex: '0 0 auto',
-        height: 40,
+        height: 36,
         borderRadius: '999px',
         fontWeight: selected ? 700 : 600,
         ...(selected
           ? {
               bgcolor: 'var(--color-primary)',
               color: '#fff',
+              borderColor: 'var(--color-primary)',
               '&:hover': { bgcolor: 'var(--color-primary-dark)' },
             }
           : {
@@ -35,51 +53,35 @@ function CategoryChip({ label, count, selected, onSelect, unavailable = false })
   );
 }
 
-// No celular os chips rolam na horizontal; a partir do tablet quebram linha para todas ficarem visíveis.
-export function ProductCategoryFilter({ chips, hasOthers, value, onChange, counts, disabled = false }) {
-  if ((!chips || chips.length === 0) && !hasOthers) return null;
-  const count = (id) => (counts ? counts[id] || 0 : undefined);
+export function ProductCategoryFilter({ categories, value, onChange, counts, disabled = false }) {
+  if (!categories?.length) return null;
   return (
-    <Box sx={{ minWidth: 0, opacity: disabled ? 0.55 : 1 }}>
+    <Box sx={{ minWidth: 0, maxWidth: '100%', opacity: disabled ? 0.55 : 1 }}>
       <Box
         role="toolbar"
         aria-label="Categorias"
         sx={{
           display: 'flex',
-          flexWrap: { xs: 'nowrap', sm: 'wrap' },
+          flexWrap: 'nowrap',
           gap: 1,
-          overflowX: { xs: 'auto', sm: 'visible' },
+          overflowX: 'auto',
           overflowY: 'hidden',
           pb: 0.5,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
-          maskImage: { xs: 'linear-gradient(to right, #000 85%, transparent)', sm: 'none' },
+          '&::-webkit-scrollbar': { display: 'none' },
         }}
       >
-        <CategoryChip
-          label="Todas"
-          count={count(ALL_CATEGORIES)}
-          selected={value === ALL_CATEGORIES}
-          onSelect={() => onChange(ALL_CATEGORIES)}
-        />
-        {(chips || []).map((category) => (
+        {categories.map((category) => (
           <CategoryChip
             key={category.id}
             label={category.name}
-            count={count(category.id)}
+            count={counts?.[category.id] || 0}
             selected={value === category.id}
             unavailable={category.available === false}
             onSelect={() => onChange(category.id)}
           />
         ))}
-        {hasOthers ? (
-          <CategoryChip
-            label="Outros"
-            count={count(OTHER_CATEGORY)}
-            selected={value === OTHER_CATEGORY}
-            onSelect={() => onChange(OTHER_CATEGORY)}
-          />
-        ) : null}
       </Box>
     </Box>
   );

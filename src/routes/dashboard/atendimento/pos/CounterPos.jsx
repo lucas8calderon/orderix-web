@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Alert, Box, Button, Drawer, Typography } from '@mui/material';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { EmptyState } from '../../../../commons/components/EmptyState';
@@ -31,6 +30,12 @@ import {
   productNeedsCustomization,
 } from './catalogView';
 import { CategoryGrid } from './CategoryGrid';
+import {
+  CATEGORY_LAYOUT_CHIPS,
+  CategoryViewSwitch,
+  readPdvCategoryLayout,
+  writePdvCategoryLayout,
+} from './CategoryViewSwitch';
 import { clearCounterDraft, readCounterDraft, writeCounterDraft } from './counterDraft';
 import { OrderCart } from './OrderCart';
 import { ProductCategoryFilter } from './ProductCategoryFilter';
@@ -84,6 +89,7 @@ export function CounterPos({
   const [ready, setReady] = useState(false);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
+  const [categoryLayout, setCategoryLayout] = useState(readPdvCategoryLayout);
   const [customerName, setCustomerName] = useState(customerLocked ? target.customerName || '' : '');
   const [nameError, setNameError] = useState('');
   const [customerNote, setCustomerNote] = useState(target?.customerIdentificationNote || '');
@@ -165,14 +171,18 @@ export function CounterPos({
     () => filterCatalogProducts(catalogProducts, { query, categoryFilter }),
     [catalogProducts, query, categoryFilter],
   );
-  // Sem busca e sem categoria escolhida, o PDV mostra primeiro os cards das categorias.
-  const showCategories = !searching && categoryFilter === ALL_CATEGORIES;
-  const categoryCards = useMemo(() => (
-    categoryChips.hasOthers
+  // Cards e chips filtram a mesma lista. Sem busca e em "Todas", o PDV mostra só o filtro.
+  const categoryChosen = categoryFilter !== ALL_CATEGORIES;
+  const showProducts = searching || categoryChosen;
+  const categoryCards = useMemo(() => {
+    const items = categoryChips.hasOthers
       ? [...categoryChips.chips, { id: OTHER_CATEGORY, name: 'Outros', image: categoryChips.othersImage }]
-      : categoryChips.chips
-  ), [categoryChips]);
+      : categoryChips.chips;
+    return [{ id: ALL_CATEGORIES, name: 'Todas', image: null }, ...items];
+  }, [categoryChips]);
+  const showCategoryBand = categoryChips.chips.length > 0 || categoryChips.hasOthers;
   const selectedCategory = categoryCards.find((category) => category.id === categoryFilter);
+  const currentCategoryName = selectedCategory?.name || 'Todas';
   const totals = useMemo(() => cartTotals(lines), [lines]);
   const hasDraft = Boolean((!customerLocked && customerName.trim()) || observation.trim() || lines.length);
   const canSubmit = lines.length > 0 || (customerCreate && customerName.trim());
@@ -335,6 +345,16 @@ export function CounterPos({
     </Alert>
   ) : null;
 
+  const selectCategory = (value) => {
+    setQuery('');
+    setCategoryFilter(value);
+  };
+
+  const changeCategoryLayout = (layout) => {
+    setCategoryLayout(layout);
+    writePdvCategoryLayout(layout);
+  };
+
   const totalLabel = formatCurrency(totals.total);
   const primary = isCounter
     ? { label: `Cobrar · ${totalLabel}`, disabled: lines.length === 0 }
@@ -397,64 +417,104 @@ export function CounterPos({
         ) : null}
         <Box className="counter-pos__filters">
           <ProductSearch value={query} onChange={setQuery} inputRef={searchRef} />
-          <ProductCategoryFilter
-            chips={categoryChips.chips}
-            hasOthers={categoryChips.hasOthers}
-            counts={counts}
-            value={categoryFilter}
-            disabled={searching}
-            onChange={(value) => {
-              setQuery('');
-              setCategoryFilter(value);
-            }}
-          />
+          {showCategoryBand ? (
+            <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
+                  <Typography
+                    component="span"
+                    sx={{
+                      flex: '0 0 auto',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: 'var(--color-text-secondary)',
+                    }}
+                  >
+                    CATEGORIAS
+                  </Typography>
+                  <Typography
+                    component="span"
+                    noWrap
+                    title={currentCategoryName}
+                    sx={{ fontSize: 15, fontWeight: 700, color: 'var(--color-primary)' }}
+                  >
+                    {currentCategoryName}
+                  </Typography>
+                </Box>
+                <CategoryViewSwitch value={categoryLayout} onChange={changeCategoryLayout} />
+              </Box>
+              {categoryLayout === CATEGORY_LAYOUT_CHIPS ? (
+                <ProductCategoryFilter
+                  categories={categoryCards}
+                  counts={counts}
+                  value={categoryFilter}
+                  disabled={searching}
+                  onChange={selectCategory}
+                />
+              ) : (
+                <CategoryGrid
+                  categories={categoryCards}
+                  counts={counts}
+                  value={categoryFilter}
+                  dimmed={searching}
+                  onSelect={selectCategory}
+                />
+              )}
+            </Box>
+          ) : null}
         </Box>
         {catalogError ? (
           <EmptyState title="Não foi possível carregar o cardápio" description={catalogError} actionLabel="Tentar de novo" onAction={reload} />
         ) : null}
         {(loading || !loaded) && !catalogError ? <Loading loadingMessage="Carregando cardápio..." /> : null}
         {loaded && !loading && !catalogError ? (
-          showCategories ? (
-            <CategoryGrid categories={categoryCards} counts={counts} onSelect={setCategoryFilter} />
-          ) : (
           <>
-          {selectedCategory && !searching ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                startIcon={<ArrowBackIcon />}
-                onClick={() => setCategoryFilter(ALL_CATEGORIES)}
-                sx={{ textTransform: 'none', fontWeight: 700 }}
-              >
-                Categorias
-              </Button>
-              <Typography component="h3" sx={{ fontWeight: 800, fontSize: 18 }}>{selectedCategory.name}</Typography>
-              {selectedCategory.available === false ? (
-                <Box
-                  component="span"
-                  sx={{
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: '999px',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--status-danger-text)',
-                    bgcolor: 'var(--status-danger-bg)',
-                  }}
-                >
-                  Indisponível
-                </Box>
-              ) : null}
-            </Box>
-          ) : null}
-          <ProductGrid
-            products={visible}
-            highlightedId={highlightedId}
-            query={query}
-            categorySelected={categoryFilter !== ALL_CATEGORIES}
-            onAdd={addProduct}
-          />
+            {showProducts ? (
+              <>
+                {categoryChosen && !searching && selectedCategory ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                      <Typography component="h3" noWrap sx={{ fontWeight: 800, fontSize: 18 }}>
+                        {selectedCategory.name}
+                      </Typography>
+                      {selectedCategory.available === false ? (
+                        <Box
+                          component="span"
+                          sx={{
+                            px: 1,
+                            py: 0.25,
+                            borderRadius: '999px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: 'var(--status-danger-text)',
+                            bgcolor: 'var(--status-danger-bg)',
+                          }}
+                        >
+                          Indisponível
+                        </Box>
+                      ) : null}
+                    </Box>
+                    <Typography sx={{ flex: '0 0 auto', fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                      {visible.length === 1 ? '1 item encontrado' : `${visible.length} itens encontrados`}
+                    </Typography>
+                  </Box>
+                ) : null}
+                <ProductGrid
+                  products={visible}
+                  highlightedId={highlightedId}
+                  query={query}
+                  categorySelected={categoryChosen}
+                  onAdd={addProduct}
+                />
+              </>
+            ) : null}
+            {!showCategoryBand && !showProducts ? (
+              <Typography aria-live="polite" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                Nenhum produto disponível nesta loja.
+              </Typography>
+            ) : null}
           </>
-          )
         ) : null}
       </Box>
 
