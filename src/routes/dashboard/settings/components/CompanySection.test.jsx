@@ -22,6 +22,38 @@ describe('CompanySection', () => {
     fileToCompressedDataUrl.mockReset();
   });
 
+  it('explica que os dados da empresa são gravados', () => {
+    render(
+      <CompanySection
+        settings={settings}
+        onSettingChange={jest.fn()}
+        onSave={jest.fn()}
+        saving={false}
+      />
+    );
+
+    expect(screen.getByText(/gravados nesta loja/i)).toBeInTheDocument();
+    expect(screen.queryByText(/ficam só nesta tela/i)).not.toBeInTheDocument();
+  });
+
+  it('mascara CNPJ e telefone enquanto digita', () => {
+    const onSettingChange = jest.fn();
+    render(
+      <CompanySection
+        settings={settings}
+        onSettingChange={onSettingChange}
+        onSave={jest.fn()}
+        saving={false}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('CNPJ'), { target: { value: '11222333000181' } });
+    expect(onSettingChange).toHaveBeenCalledWith('companyInfo', 'cnpj', '11.222.333/0001-81');
+
+    fireEvent.change(screen.getByLabelText('Telefone'), { target: { value: '1134567890' } });
+    expect(onSettingChange).toHaveBeenCalledWith('companyInfo', 'phone', '(11) 3456-7890');
+  });
+
   it('processa o arquivo e guarda o logotipo para salvar', async () => {
     const onSettingChange = jest.fn();
     fileToCompressedDataUrl.mockResolvedValue('data:image/jpeg;base64,logo');

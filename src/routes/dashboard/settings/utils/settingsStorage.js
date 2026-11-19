@@ -22,6 +22,12 @@ import {
   toDeliverySettingsUi,
   updateDeliverySettings,
 } from '../../../../services/deliveryService';
+import {
+  getCompanyProfile as fetchCompanyProfile,
+  toCompanyProfilePayload,
+  toCompanyProfileUi,
+  updateCompanyProfile as saveCompanyProfile,
+} from '../../../../services/companyProfileService';
 
 function toPublicMenuUi(data = {}) {
   return {
@@ -33,7 +39,7 @@ function toPublicMenuUi(data = {}) {
   };
 }
 
-// Mock apenas para blocos ainda não migrados (fiscal).
+// Mock apenas para blocos ainda não migrados (tema, idioma e afins).
 let mockSettings = {
   deliveryFee: 5.00,
   deliveryByDistance: false,
@@ -42,11 +48,6 @@ let mockSettings = {
   averagePrepTime: 25,
   allowFutureOrders: true,
   maxActiveTables: 20,
-  companyName: 'Padaria Belas Artes',
-  cnpj: '12.345.678/0001-90',
-  address: 'Rua das Flores, 123 - Centro',
-  phone: '(11) 3456-7890',
-  logo: null,
   theme: 'light',
   language: 'pt',
   realTimeNotifications: true,
@@ -100,19 +101,30 @@ export const settingsStorage = {
     return toDeliverySettingsUi(response.data || {});
   },
 
+  async getCompanyProfile() {
+    const response = await fetchCompanyProfile();
+    return toCompanyProfileUi(response.data || {});
+  },
+
+  async updateCompanyProfile(companyUi) {
+    const response = await saveCompanyProfile(toCompanyProfilePayload(companyUi));
+    return toCompanyProfileUi(response.data || {});
+  },
+
   async updateDeliveryConfig(deliveryUi) {
     const response = await updateDeliverySettings(toDeliverySettingsPayload(deliveryUi));
     return toDeliverySettingsUi(response.data || {});
   },
 
   async getSettings() {
-    const [payment, publicMenu, hours, delivery] = await Promise.all([
+    const [payment, publicMenu, hours, delivery, companyInfo] = await Promise.all([
       this.getPaymentConfig(),
       this.getPublicMenuConfig(),
       this.getHoursConfig(),
       this.getDeliveryConfig(),
+      this.getCompanyProfile(),
     ]);
-    return { ...mockSettings, ...payment, ...publicMenu, ...hours, ...delivery };
+    return { ...mockSettings, ...payment, ...publicMenu, ...hours, ...delivery, companyInfo };
   },
 
   async updateSettings(newSettings) {

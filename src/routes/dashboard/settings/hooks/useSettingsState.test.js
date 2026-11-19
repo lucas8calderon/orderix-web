@@ -10,10 +10,12 @@ jest.mock('../utils/settingsStorage', () => ({
     getPublicMenuConfig: jest.fn(),
     getHoursConfig: jest.fn(),
     getDeliveryConfig: jest.fn(),
+    getCompanyProfile: jest.fn(),
     updatePaymentConfig: jest.fn(),
     updatePublicMenuConfig: jest.fn(),
     updateHoursConfig: jest.fn(),
     updateDeliveryConfig: jest.fn(),
+    updateCompanyProfile: jest.fn(),
   },
 }));
 
@@ -31,6 +33,12 @@ describe('useSettingsState delivery branding', () => {
       storeAddress: '',
       deliveryLogoUrl: '',
       deliveryCoverUrl: '',
+    });
+    settingsStorage.getCompanyProfile.mockResolvedValue({
+      companyName: '',
+      cnpj: '',
+      address: '',
+      phone: '',
     });
   });
 
@@ -125,23 +133,23 @@ describe('useSettingsState delivery branding', () => {
     expect(result.current.toast.message).toMatch(/não gravou logo\/banner/i);
   });
 
-  it('grava o logotipo ao salvar a seção empresa', async () => {
-    const logo = 'data:image/jpeg;base64,logodaempresa';
-    settingsStorage.updateDeliveryConfig.mockResolvedValue({
-      deliveryEnabled: true,
-      deliveryFee: 5,
-      deliveryMinOrder: 0,
-      deliveryEstimatedMinutes: 40,
-      storeAddress: '',
-      deliveryLogoUrl: logo,
-      deliveryCoverUrl: '',
-    });
+  it('grava nome, CNPJ, endereço e telefone ao salvar a seção empresa', async () => {
+    const company = {
+      companyName: 'Padaria do Bairro',
+      cnpj: '11.222.333/0001-81',
+      address: 'Rua A, 10',
+      phone: '(11) 3456-7890',
+    };
+    settingsStorage.updateCompanyProfile.mockResolvedValue(company);
 
     const { result } = renderHook(() => useSettingsState());
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => {
-      result.current.updateSetting('deliveryLogoUrl', null, logo);
+      result.current.updateSetting('companyInfo', 'companyName', company.companyName);
+      result.current.updateSetting('companyInfo', 'cnpj', company.cnpj);
+      result.current.updateSetting('companyInfo', 'address', company.address);
+      result.current.updateSetting('companyInfo', 'phone', company.phone);
     });
 
     let saved;
@@ -150,11 +158,47 @@ describe('useSettingsState delivery branding', () => {
     });
 
     expect(saved).toBe(true);
-    expect(settingsStorage.updateDeliveryConfig).toHaveBeenCalledWith(
-      expect.objectContaining({ deliveryLogoUrl: logo })
+    expect(settingsStorage.updateCompanyProfile).toHaveBeenCalledWith(
+      expect.objectContaining(company)
     );
-    expect(result.current.settings.deliveryLogoUrl).toBe(logo);
-    expect(result.current.toast.message).toMatch(/logotipo salvo/i);
+    expect(settingsStorage.updateDeliveryConfig).not.toHaveBeenCalled();
+    expect(result.current.settings.companyInfo).toEqual(company);
+    expect(result.current.toast.message).toMatch(/dados da empresa salvos/i);
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it('não envia CNPJ inválido', async () => {
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.updateSetting('companyInfo', 'cnpj', '12.345.678/0001-90');
+    });
+
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveSettings('companyInfo');
+    });
+
+    expect(saved).toBe(false);
+    expect(settingsStorage.updateCompanyProfile).not.toHaveBeenCalled();
+    expect(result.current.toast.message).toMatch(/cnpj válido/i);
+  });
+
+  it('recoloca os dados da empresa gravados ao carregar', async () => {
+    settingsStorage.getCompanyProfile.mockResolvedValue({
+      companyName: 'Padaria do Bairro',
+      cnpj: '11.222.333/0001-81',
+      address: 'Rua A, 10',
+      phone: '(11) 3456-7890',
+    });
+
+    const { result } = renderHook(() => useSettingsState());
+    await waitFor(() => expect(result.current.settings.companyInfo.companyName).toBe('Padaria do Bairro'));
+    expect(result.current.settings.companyInfo.cnpj).toBe('11.222.333/0001-81');
+    expect(result.current.settings.companyInfo.address).toBe('Rua A, 10');
+    expect(result.current.settings.companyInfo.phone).toBe('(11) 3456-7890');
+    expect(result.current.isDirty).toBe(false);
   });
 
   it('salva WhatsApp válido, a resposta devolve o número e o form mostra de novo', async () => {
@@ -472,6 +516,12 @@ describe('useSettingsState alterações pendentes', () => {
     settingsStorage.getPublicMenuConfig.mockResolvedValue({});
     settingsStorage.getHoursConfig.mockResolvedValue({ schedule: [] });
     settingsStorage.getDeliveryConfig.mockResolvedValue({ deliveryEnabled: true, deliveryFee: 5 });
+    settingsStorage.getCompanyProfile.mockResolvedValue({
+      companyName: '',
+      cnpj: '',
+      address: '',
+      phone: '',
+    });
   });
 
   it('marca alteração, descarta e limpa ao salvar só a seção gravada', async () => {
@@ -533,6 +583,12 @@ describe('useSettingsState escopo do salvar de pagamentos', () => {
     settingsStorage.getPublicMenuConfig.mockResolvedValue({});
     settingsStorage.getHoursConfig.mockResolvedValue({ schedule: [] });
     settingsStorage.getDeliveryConfig.mockResolvedValue({ deliveryEnabled: true });
+    settingsStorage.getCompanyProfile.mockResolvedValue({
+      companyName: '',
+      cnpj: '',
+      address: '',
+      phone: '',
+    });
     settingsStorage.updatePaymentConfig.mockResolvedValue({ paymentMethods: { PIX: true } });
   });
 

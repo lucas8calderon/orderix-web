@@ -6,6 +6,8 @@ import {
   DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { CLEARED_BRANDING_IMAGE, isBrandingImage } from '../../../../services/deliveryService';
+import { formatStoreWhatsAppInput } from '../../../../utils/phoneInput';
+import { formatCnpjInput } from '../../../../utils/cnpjInput';
 import { fileToCompressedDataUrl } from '../../menu/utils/compressImage';
 import { SettingsSectionCard } from './SettingsSectionCard';
 
@@ -37,7 +39,7 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
     <SettingsSectionCard
       icon={BusinessIcon}
       title="Dados Fiscais e Empresa"
-      description="O logotipo é gravado ao escolher o arquivo e aparece na loja e no Delivery. Nome, CNPJ e telefone ainda ficam só nesta tela."
+      description="Nome, CNPJ, endereço e telefone são gravados nesta loja e continuam aqui depois de recarregar. O logotipo é gravado ao escolher o arquivo e aparece na loja e no Delivery."
       actionLabel={saving ? 'Salvando...' : 'Salvar'}
       onAction={() => onSave('companyInfo')}
       actionDisabled={saving}
@@ -45,33 +47,37 @@ export function CompanySection({ settings, onSettingChange, onSave, saving }) {
       <Box className="company-fields">
         <TextField
           label="Nome da empresa"
-          value={settings.companyInfo.companyName}
+          value={settings.companyInfo?.companyName || ''}
           onChange={(e) => onSettingChange('companyInfo', 'companyName', e.target.value)}
           className="setting-input"
           fullWidth
+          inputProps={{ maxLength: 160 }}
         />
         <TextField
           label="CNPJ"
-          value={settings.companyInfo.cnpj}
-          onChange={(e) => onSettingChange('companyInfo', 'cnpj', e.target.value)}
+          value={settings.companyInfo?.cnpj || ''}
+          onChange={(e) => onSettingChange('companyInfo', 'cnpj', formatCnpjInput(e.target.value))}
           className="setting-input"
           fullWidth
+          inputProps={{ inputMode: 'numeric' }}
         />
         <TextField
           label="Endereço"
-          value={settings.companyInfo.address}
+          value={settings.companyInfo?.address || ''}
           onChange={(e) => onSettingChange('companyInfo', 'address', e.target.value)}
           className="setting-input"
           fullWidth
           multiline
           rows={2}
+          inputProps={{ maxLength: 512 }}
         />
         <TextField
           label="Telefone"
-          value={settings.companyInfo.phone}
-          onChange={(e) => onSettingChange('companyInfo', 'phone', e.target.value)}
+          value={settings.companyInfo?.phone || ''}
+          onChange={(e) => onSettingChange('companyInfo', 'phone', formatStoreWhatsAppInput(e.target.value))}
           className="setting-input"
           fullWidth
+          inputProps={{ inputMode: 'tel' }}
         />
         <Box className="upload-section">
           <Typography className="setting-label">Logotipo da empresa</Typography>

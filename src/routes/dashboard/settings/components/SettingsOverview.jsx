@@ -215,8 +215,7 @@ export function SettingsOverview({ settings, onNavigate, onSettingChange, saving
                 ) : null}
               </ul>
               <p className="settings-identity__hint">
-                Telefone e CNPJ são editados em Empresa
-                {phone || cnpj ? ' e ainda podem ser só rascunho local.' : '.'}
+                Telefone e CNPJ são editados em Empresa.
               </p>
               <button
                 type="button"

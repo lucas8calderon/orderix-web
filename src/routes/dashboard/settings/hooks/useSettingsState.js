@@ -4,6 +4,7 @@ import { isValidStoreWhatsApp } from '../../../public-delivery/utils/neighborhoo
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput, normalizeStoreWhatsApp } from '../../../../utils/phoneInput';
 import { settingsStorage } from '../utils/settingsStorage';
 import { brandingValueForSave, deliveryEstimateForSave } from '../../../../services/deliveryService';
+import { companyProfileEchoes, companyProfileError } from '../../../../services/companyProfileService';
 
 const MOCK_PERMISSIONS = {
   admin: {
@@ -40,12 +41,11 @@ const MOCK_PERMISSIONS = {
   },
 };
 
-const MOCK_COMPANY = {
-  companyName: 'Padaria Belas Artes',
-  cnpj: '12.345.678/0001-90',
-  address: 'Rua das Flores, 123 - Centro',
-  phone: '(11) 3456-7890',
-  logoUrl: '',
+const EMPTY_COMPANY = {
+  companyName: '',
+  cnpj: '',
+  address: '',
+  phone: '',
 };
 
 const DEFAULT_PAYMENT = {
@@ -253,9 +253,9 @@ function apiErrorMessage(error, fallback, { saving = false } = {}) {
   return error?.message || fallback;
 }
 
-// Permissões e dados fiscais ainda não vão para o servidor; ficam fora do controle de alterações pendentes.
+// Permissões ainda não vão para o servidor; ficam fora do controle de alterações pendentes.
 function trackedSettings(settings) {
-  const { permissions, companyInfo, ...rest } = settings || {};
+  const { permissions, ...rest } = settings || {};
   return rest;
 }
 
@@ -274,7 +274,7 @@ const SAVED_FIELDS = {
   publicMenu: Object.keys(DEFAULT_PUBLIC_MENU),
   hours: [...Object.keys(DEFAULT_HOURS), 'deliveryEnabled'],
   delivery: DELIVERY_SAVED_FIELDS,
-  companyInfo: DELIVERY_SAVED_FIELDS,
+  companyInfo: ['companyInfo'],
 };
 
 export function markSectionSaved(baseline, current, section) {
@@ -295,7 +295,7 @@ export const useSettingsState = () => {
     ...DEFAULT_HOURS,
     ...DEFAULT_DELIVERY,
     permissions: MOCK_PERMISSIONS,
-    companyInfo: MOCK_COMPANY,
+    companyInfo: EMPTY_COMPANY,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -303,6 +303,7 @@ export const useSettingsState = () => {
   const [baseline, setBaseline] = useState(null);
   const settingsRef = useRef(settings);
   const serverImagesRef = useRef({ logo: '', cover: '' });
+  const companyLoadedRef = useRef(false);
   settingsRef.current = settings;
 
   const rememberServerImages = useCallback((delivery) => {
@@ -318,20 +319,42 @@ export const useSettingsState = () => {
 
   useEffect(() => {
     let cancelled = false;
+    let companyWarning = null;
+    const companyPromise = settingsStorage.getCompanyProfile()
+      .then((company) => ({ company, loaded: true }))
+      .catch((error) => {
+        companyWarning = error;
+        return { company: { ...EMPTY_COMPANY }, loaded: false };
+      });
     Promise.all([
       settingsStorage.getPaymentConfig(),
       settingsStorage.getPublicMenuConfig(),
       settingsStorage.getHoursConfig(),
       settingsStorage.getDeliveryConfig(),
+      companyPromise,
     ])
-      .then(([payment, publicMenu, hours, delivery]) => {
+      .then(([payment, publicMenu, hours, delivery, companyResult]) => {
         if (cancelled) return;
+        companyLoadedRef.current = companyResult.loaded;
         rememberServerImages(delivery);
         setSettings((prev) => {
-          const next = { ...prev, ...payment, ...publicMenu, ...hours, ...delivery };
+          const next = {
+            ...prev,
+            ...payment,
+            ...publicMenu,
+            ...hours,
+            ...delivery,
+            companyInfo: companyResult.company || { ...EMPTY_COMPANY },
+          };
           setBaseline(settingsSnapshot(next));
           return next;
         });
+        if (companyWarning) {
+          showToast(
+            apiErrorMessage(companyWarning, 'Não foi possível carregar os dados da empresa.'),
+            'error'
+          );
+        }
       })
       .catch((error) => {
         if (cancelled) return;
@@ -388,7 +411,7 @@ export const useSettingsState = () => {
     }
 
     const current = settingsRef.current;
-    if (section === 'companyInfo' || section === 'delivery') {
+    if (section === 'delivery') {
       const phone = storePhoneDigits(current.storePhone);
       if (phone && !isValidStoreWhatsApp(phone)) {
         showToast('Informe um WhatsApp válido com DDD', 'error');
@@ -402,31 +425,27 @@ export const useSettingsState = () => {
     }
 
     if (section === 'companyInfo') {
+      if (!companyLoadedRef.current) {
+        showToast('Recarregue a página antes de salvar os dados da empresa.', 'error');
+        return false;
+      }
+      const companyError = companyProfileError(current.companyInfo);
+      if (companyError) {
+        showToast(companyError, 'error');
+        return false;
+      }
       setSaving(true);
       try {
-        const deliveryPayload = deliveryPayloadFrom(current, serverImagesRef.current);
-        const delivery = await settingsStorage.updateDeliveryConfig(deliveryPayload);
-        rememberServerImages(delivery);
-        const sentLogo = Boolean((deliveryPayload.deliveryLogoUrl || '').trim());
-        const gotLogo = Boolean((delivery.deliveryLogoUrl || '').trim());
-        if (sentLogo && !gotLogo) {
-          showToast(
-            'O servidor não gravou o logotipo. Tente uma imagem menor.',
-            'error'
-          );
+        const company = await settingsStorage.updateCompanyProfile(current.companyInfo);
+        if (!companyProfileEchoes(current.companyInfo, company)) {
+          showToast('O servidor não gravou os dados da empresa.', 'error');
           return false;
         }
-        const phoneResult = confirmSavedStorePhone(deliveryPayload, delivery);
-        if (!phoneResult.ok) {
-          setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, phoneResult.delivery));
-          showToast('O servidor não gravou o WhatsApp da loja.', 'error');
-          return false;
-        }
-        setSettings((prev) => mergeSavedDelivery(prev, deliveryPayload, delivery));
-        showToast('Logotipo salvo com sucesso.');
+        setSettings((prev) => ({ ...prev, companyInfo: company }));
+        showToast('Dados da empresa salvos.');
         return true;
       } catch (error) {
-        showToast(apiErrorMessage(error, 'Não foi possível salvar o logotipo.', { saving: true }), 'error');
+        showToast(apiErrorMessage(error, 'Não foi possível salvar os dados da empresa.', { saving: true }), 'error');
         return false;
       } finally {
         setSaving(false);
