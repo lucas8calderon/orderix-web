@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/currencyInput';
 import { cepDigits, formatCepInput } from '../../../../utils/cepInput';
-import { lookupCep } from '../../../../services/viaCepService';
+import { CEP_NOT_FOUND, lookupCep } from '../../../../services/viaCepService';
 import { simulateDeliveryDistance } from '../../../../services/deliveryService';
 
 const STATES = [
@@ -24,6 +24,8 @@ function moneyField(value) {
 export function DeliveryDistanceSection({ settings, onSettingChange }) {
   const [simulating, setSimulating] = useState(false);
   const [simulation, setSimulation] = useState(null);
+  const [cepHint, setCepHint] = useState('');
+  const lastDestinationCep = useRef('');
   const [destination, setDestination] = useState({
     postalCode: '',
     street: '',
@@ -48,6 +50,52 @@ export function DeliveryDistanceSection({ settings, onSettingChange }) {
       // O CEP só adianta o preenchimento. A confirmação continua na Geoapify, ao salvar.
     }
   };
+
+  useEffect(() => {
+    const cep = cepDigits(destination.postalCode);
+    if (cep.length !== 8) {
+      lastDestinationCep.current = '';
+      setCepHint('');
+      return undefined;
+    }
+    if (lastDestinationCep.current === cep) return undefined;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setCepHint('Consultando CEP...');
+      lookupCep(cep, { signal: controller.signal })
+        .then((found) => {
+          if (controller.signal.aborted) return;
+          lastDestinationCep.current = cep;
+          setDestination((prev) => {
+            if (cepDigits(prev.postalCode) !== cep) return prev;
+            return {
+              ...prev,
+              postalCode: found.postalCode || prev.postalCode,
+              street: found.street,
+              neighborhood: found.neighborhood,
+              city: found.city,
+              state: found.state || prev.state,
+            };
+          });
+          setCepHint(found.street
+            ? 'Endereço encontrado. Confira o número.'
+            : 'CEP encontrado. Informe rua e número.');
+        })
+        .catch((err) => {
+          if (err?.name === 'AbortError' || controller.signal.aborted) return;
+          lastDestinationCep.current = '';
+          setCepHint(err?.code === CEP_NOT_FOUND
+            ? 'CEP não encontrado. Confira ou preencha o endereço.'
+            : 'Não foi possível consultar o CEP. Preencha o endereço.');
+        });
+    }, 280);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [destination.postalCode]);
 
   const simulate = async () => {
     setSimulating(true);
@@ -157,16 +205,25 @@ export function DeliveryDistanceSection({ settings, onSettingChange }) {
           A simulação usa a configuração já salva e o mesmo cálculo do checkout.
         </Typography>
         <TextField
-          label="Rua de destino"
-          value={destination.street}
-          onChange={(event) => setDestination((prev) => ({ ...prev, street: event.target.value }))}
+          label="CEP"
+          value={destination.postalCode}
+          onChange={(event) => setDestination((prev) => ({ ...prev, postalCode: formatCepInput(event.target.value) }))}
+          helperText={cepHint || 'Informe o CEP para preencher a rua, o bairro e a cidade.'}
+          inputProps={{ inputMode: 'numeric', autoComplete: 'postal-code' }}
         />
-        <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: '140px 1fr 1fr 100px' } }}>
+        <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: '1fr 140px' } }}>
+          <TextField
+            label="Rua"
+            value={destination.street}
+            onChange={(event) => setDestination((prev) => ({ ...prev, street: event.target.value }))}
+          />
           <TextField
             label="Número"
             value={destination.number}
             onChange={(event) => setDestination((prev) => ({ ...prev, number: event.target.value }))}
           />
+        </Box>
+        <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 100px' } }}>
           <TextField
             label="Bairro"
             value={destination.neighborhood}
@@ -186,11 +243,6 @@ export function DeliveryDistanceSection({ settings, onSettingChange }) {
             {STATES.map((state) => <MenuItem key={state} value={state}>{state}</MenuItem>)}
           </TextField>
         </Box>
-        <TextField
-          label="CEP"
-          value={destination.postalCode}
-          onChange={(event) => setDestination((prev) => ({ ...prev, postalCode: formatCepInput(event.target.value) }))}
-        />
         <Button variant="outlined" disabled={simulating} onClick={simulate}>
           {simulating ? 'Calculando...' : 'Simular'}
         </Button>
