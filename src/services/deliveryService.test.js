@@ -69,6 +69,18 @@ describe('deliveryService helpers', () => {
       address: 'Rua A, 10',
       logoUrl: 'https://cdn.example.com/logo.png',
       coverUrl: 'https://cdn.example.com/cover.jpg',
+      pricingMethod: 'NEIGHBORHOOD',
+      roundingMode: 'PROPORTIONAL',
+      maxDistanceKm: null,
+      pricePerKm: null,
+      clearMinimumDeliveryFee: true,
+      originPostalCode: '',
+      originStreet: '',
+      originNumber: '',
+      originComplement: '',
+      originNeighborhood: '',
+      originCity: '',
+      originState: '',
     });
   });
 

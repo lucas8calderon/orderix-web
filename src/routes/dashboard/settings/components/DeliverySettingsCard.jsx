@@ -24,6 +24,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '../../../../utils/curre
 import { CLEARED_STORE_PHONE, formatStoreWhatsAppInput } from '../../../../utils/phoneInput';
 import { SettingsSectionCard } from './SettingsSectionCard';
 import { DeliveryNeighborhoodsSection } from './DeliveryNeighborhoodsSection';
+import { DeliveryDistanceSection } from './DeliveryDistanceSection';
 
 function ChannelPaymentOptions({
   title,
@@ -353,7 +354,26 @@ export const DeliverySettingsCard = React.memo(function DeliverySettingsCard({
         </Box>
       </DeliveryGroup>
 
-      <DeliveryNeighborhoodsSection settings={settings} onSettingChange={onSettingChange} />
+      <Box sx={{ display: 'grid', gap: 1, mb: 2 }}>
+        <Typography variant="subtitle1">Configuração de entrega</Typography>
+        <RadioGroup
+          value={settings?.deliveryPricingMethod || 'NEIGHBORHOOD'}
+          onChange={(event) => onSettingChange('deliveryPricingMethod', null, event.target.value)}
+        >
+          <FormControlLabel value="NEIGHBORHOOD" control={<Radio />} label="Entrega por bairro" />
+          <FormControlLabel value="BY_RADIUS" control={<Radio />} label="Entrega por distância" />
+        </RadioGroup>
+      </Box>
+      {settings?.deliveryPricingMethod === 'BY_RADIUS' ? (
+        <>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Os bairros já cadastrados continuam guardados. Eles voltam a valer se você escolher a entrega por bairro.
+          </Typography>
+          <DeliveryDistanceSection settings={settings} onSettingChange={onSettingChange} />
+        </>
+      ) : (
+        <DeliveryNeighborhoodsSection settings={settings} onSettingChange={onSettingChange} />
+      )}
     </SettingsSectionCard>
   );
 });

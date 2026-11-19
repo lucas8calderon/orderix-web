@@ -5,6 +5,7 @@ import { formatCurrency } from '../../../services/accessControl';
 import { itemKey, lineTotal } from '../../../services/deliveryCart';
 
 export default function DeliveryCartPanel({
+  deliveryFeeText,
   items,
   totals,
   closed,
@@ -60,7 +61,7 @@ export default function DeliveryCartPanel({
       </ul>
       <Divider sx={{ my: 1 }} />
       <div className="delivery-line"><span>Produtos</span><span>{formatCurrency(totals.subtotal)}</span></div>
-      <div className="delivery-line"><span>Entrega</span><span>{formatCurrency(totals.deliveryFee)}</span></div>
+      <div className="delivery-line"><span>Entrega</span><span>{deliveryFeeText || formatCurrency(totals.deliveryFee)}</span></div>
       <div className="delivery-line"><strong>Total</strong><strong>{formatCurrency(totals.total)}</strong></div>
       <div className="delivery-cart-panel-actions">
         <Button onClick={onClear}>Limpar</Button>

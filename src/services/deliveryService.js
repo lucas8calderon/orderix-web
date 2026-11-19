@@ -94,7 +94,32 @@ export function toDeliverySettingsUi(data = {}) {
     deliveryPublicPath: data.publicPath || '',
     deliveryLogoUrl: data.logoUrl || '',
     deliveryCoverUrl: data.coverUrl || '',
+    deliveryPricingMethod: data.pricingMethod || 'NEIGHBORHOOD',
+    deliveryMaxDistanceKm: data.maxDistanceKm ?? '',
+    deliveryPricePerKm: data.pricePerKm ?? '',
+    deliveryMinimumFee: data.minimumDeliveryFee ?? '',
+    deliveryRoundingMode: data.roundingMode || 'PROPORTIONAL',
+    originPostalCode: data.originPostalCode || '',
+    originStreet: data.originStreet || '',
+    originNumber: data.originNumber || '',
+    originComplement: data.originComplement || '',
+    originNeighborhood: data.originNeighborhood || '',
+    originCity: data.originCity || '',
+    originState: data.originState || '',
+    originValidated: Boolean(data.originValidated),
   };
+}
+
+export function quoteDeliveryDistance(slug, payload, signal) {
+  return axios.post(
+    `${API_BASE_URL}/api/public/delivery/${encodeURIComponent(slug)}/quote`,
+    payload,
+    { signal, timeout: 20000 }
+  );
+}
+
+export function simulateDeliveryDistance(payload) {
+  return axios.post(`${API_BASE_URL}/stores/me/delivery/distance/simulate`, payload, { timeout: 20000 });
 }
 
 /** Marca remoção explícita. Campo vazio no estado não apaga o que já está no servidor. */
@@ -160,6 +185,28 @@ export function toDeliverySettingsPayload(ui = {}) {
   } else {
     const phone = normalizeStoreWhatsApp(ui.storePhone);
     if (phone) payload.phone = phone;
+  }
+  if (ui.deliveryPricingMethod) {
+    payload.pricingMethod = ui.deliveryPricingMethod;
+    payload.roundingMode = ui.deliveryRoundingMode || 'PROPORTIONAL';
+    payload.maxDistanceKm = ui.deliveryMaxDistanceKm === '' || ui.deliveryMaxDistanceKm == null
+      ? null
+      : Number(ui.deliveryMaxDistanceKm);
+    payload.pricePerKm = ui.deliveryPricePerKm === '' || ui.deliveryPricePerKm == null
+      ? null
+      : Number(ui.deliveryPricePerKm);
+    if (ui.deliveryMinimumFee === '' || ui.deliveryMinimumFee == null) {
+      payload.clearMinimumDeliveryFee = true;
+    } else {
+      payload.minimumDeliveryFee = Number(ui.deliveryMinimumFee);
+    }
+    payload.originPostalCode = ui.originPostalCode || '';
+    payload.originStreet = ui.originStreet || '';
+    payload.originNumber = ui.originNumber || '';
+    payload.originComplement = ui.originComplement || '';
+    payload.originNeighborhood = ui.originNeighborhood || '';
+    payload.originCity = ui.originCity || '';
+    payload.originState = ui.originState || '';
   }
   return payload;
 }

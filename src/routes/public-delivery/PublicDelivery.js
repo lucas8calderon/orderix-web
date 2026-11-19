@@ -26,7 +26,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { formatCurrency } from '../../services/accessControl';
 import { scheduleForDisplay } from '../../services/storeHoursService';
 import StoreClosedHoursCard from '../../commons/components/StoreClosedHoursCard';
-import { createDeliveryOrder, getDeliveryCatalog } from '../../services/deliveryService';
+import { createDeliveryOrder, getDeliveryCatalog, quoteDeliveryDistance } from '../../services/deliveryService';
 import { createDeliveryPixPayment, createInfinitePayCheckout, isInfinitePayCheckoutUrl } from '../../services/deliveryPaymentService';
 import DeliveryCardCheckout from './components/DeliveryCardCheckout';
 import { listDeliveryCustomerAddresses, createDeliveryCustomerAddress } from '../../services/deliveryCustomerService';
@@ -131,6 +131,8 @@ export default function PublicDelivery() {
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkout, setCheckout] = useState(emptyCheckout);
+  const [distanceQuote, setDistanceQuote] = useState(null);
+  const [quotingDistance, setQuotingDistance] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '' });
@@ -421,6 +423,76 @@ export default function PublicDelivery() {
     };
   }, [checkoutOpen, checkout.fulfillment, checkout.addressId, checkout.postalCode]);
 
+  const distancePricing = catalog?.pricingMethod === 'BY_RADIUS';
+  const distanceAddressKey = [
+    cepDigits(checkout.postalCode),
+    checkout.street.trim(),
+    checkout.number.trim(),
+    checkout.neighborhood.trim(),
+    checkout.city.trim(),
+    checkout.state.trim(),
+  ].join('|');
+
+  useEffect(() => {
+    if (!checkoutOpen || !distancePricing || checkout.fulfillment !== 'DELIVERY') {
+      return undefined;
+    }
+    const complete = isValidCep(checkout.postalCode)
+      && checkout.street.trim()
+      && checkout.number.trim()
+      && checkout.neighborhood.trim()
+      && checkout.city.trim()
+      && checkout.state.trim().length === 2;
+    if (!complete) {
+      setDistanceQuote(null);
+      setQuotingDistance(false);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setQuotingDistance(true);
+    setDistanceQuote(null);
+    const timer = setTimeout(() => {
+      quoteDeliveryDistance(slug, {
+        postalCode: cepDigits(checkout.postalCode),
+        street: checkout.street.trim(),
+        number: checkout.number.trim(),
+        complement: checkout.complement,
+        neighborhood: checkout.neighborhood.trim(),
+        city: checkout.city.trim(),
+        state: checkout.state.trim(),
+        addressId: checkout.addressId ? Number(checkout.addressId) : null,
+      }, controller.signal).then((response) => {
+        setDistanceQuote(response.data);
+      }).catch((err) => {
+        if (controller.signal.aborted) return;
+        setDistanceQuote({
+          status: 'UNAVAILABLE',
+          message: err?.response?.data?.message || 'O cálculo da entrega está temporariamente indisponível.',
+        });
+      }).finally(() => {
+        if (!controller.signal.aborted) setQuotingDistance(false);
+      });
+    }, 800);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [
+    checkoutOpen,
+    distancePricing,
+    checkout.fulfillment,
+    distanceAddressKey,
+    checkout.complement,
+    checkout.addressId,
+    slug,
+    checkout.postalCode,
+    checkout.street,
+    checkout.number,
+    checkout.neighborhood,
+    checkout.city,
+    checkout.state,
+  ]);
+
   const filteredCategories = useMemo(() => {
     const term = query.trim().toLowerCase();
     return (catalog?.categories || [])
@@ -447,11 +519,16 @@ export default function PublicDelivery() {
   const promoBanners = useMemo(() => collectPromoBanners(catalog), [catalog]);
   const openArea = servesAllNeighborhoods(catalog);
   const flatFee = allNeighborhoodsFee(catalog);
-  const quotedFee = openArea
-    ? flatFee
-    : catalog?.usesNeighborhoodPricing
-      ? Number(serviceAddress?.effectiveFee || 0)
-      : catalog?.deliveryFee;
+  const distanceFee = distancePricing && distanceQuote?.status === 'AVAILABLE'
+    ? Number(distanceQuote.deliveryFee || 0)
+    : null;
+  const quotedFee = distancePricing
+    ? (distanceFee ?? 0)
+    : openArea
+      ? flatFee
+      : catalog?.usesNeighborhoodPricing
+        ? Number(serviceAddress?.effectiveFee || 0)
+        : catalog?.deliveryFee;
   const totals = cartTotals(cart, {
     deliveryFee: quotedFee,
     fulfillment: checkout.fulfillment,
@@ -566,7 +643,12 @@ export default function PublicDelivery() {
     if (!customer) return 'Entre ou crie uma conta para continuar.';
     if (!checkout.customerName.trim()) return 'Informe o nome.';
     if (!isValidBrazilianPhone(checkout.customerPhone)) return 'Informe um telefone válido.';
-    if (deliverySelected && catalog?.usesNeighborhoodPricing && !hasServiceNeighborhood(catalog, serviceAddress)) {
+    if (deliverySelected && distancePricing) {
+      if (quotingDistance) return 'Calculando a taxa de entrega...';
+      if (distanceQuote?.status !== 'AVAILABLE') {
+        return distanceQuote?.message || 'Calcule a taxa de entrega antes de confirmar.';
+      }
+    } else if (deliverySelected && catalog?.usesNeighborhoodPricing && !hasServiceNeighborhood(catalog, serviceAddress)) {
       return openArea
         ? 'Informe o endereço e o bairro antes de confirmar.'
         : 'Escolha o endereço e um bairro atendido antes de confirmar.';
@@ -660,16 +742,19 @@ export default function PublicDelivery() {
         city: checkout.city,
         state: checkout.state,
         reference: checkout.reference,
-        neighborhoodId: !deliverySelected
+        neighborhoodId: !deliverySelected || distancePricing
           ? null
           : (openArea
             ? (serviceAddress?.neighborhoodId ? Number(serviceAddress.neighborhoodId) : null)
             : (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId
               ? Number(serviceAddress.neighborhoodId)
               : null)),
-        expectedDeliveryFee: deliverySelected && (openArea || (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId))
-          ? Number(openArea ? flatFee : (serviceAddress?.effectiveFee || 0))
-          : null,
+        quoteId: deliverySelected && distancePricing ? distanceQuote?.quoteId : null,
+        expectedDeliveryFee: deliverySelected && distancePricing
+          ? Number(distanceQuote?.deliveryFee || 0)
+          : deliverySelected && (openArea || (catalog?.usesNeighborhoodPricing && serviceAddress?.neighborhoodId))
+            ? Number(openArea ? flatFee : (serviceAddress?.effectiveFee || 0))
+            : null,
         addressId: checkout.addressId ? Number(checkout.addressId) : null,
         saveAddress: Boolean(customer) && deliverySelected && !checkout.addressId && checkout.saveAddress,
         items: cart.items.map((item) => ({
@@ -896,6 +981,7 @@ export default function PublicDelivery() {
                 <DeliveryCartPanel
                   items={cart.items}
                   totals={totals}
+                  deliveryFeeText={distancePricing ? 'Calculada no endereço' : ''}
                   closed={closed}
                   showContinue={false}
                   onQuantity={(key, quantity) => setCart((prev) => updateCartQuantity(prev, key, quantity))}
@@ -1061,6 +1147,7 @@ export default function PublicDelivery() {
           <DeliveryCartPanel
             items={cart.items}
             totals={totals}
+            deliveryFeeText={distancePricing ? 'Calculada no endereço' : ''}
             closed={closed}
             onQuantity={(key, quantity) => setCart((prev) => updateCartQuantity(prev, key, quantity))}
             onRemove={(key) => setCart((prev) => removeCartItem(prev, key))}
@@ -1150,7 +1237,7 @@ export default function PublicDelivery() {
             }))}
           />
           {deliverySelected ? (
-            catalog?.usesNeighborhoodPricing ? (
+            catalog?.usesNeighborhoodPricing && !distancePricing ? (
               <Box sx={{ mb: 2 }}>
                 {serviceAddress?.neighborhood ? (
                   <>
@@ -1175,7 +1262,15 @@ export default function PublicDelivery() {
               </Box>
             ) : (
             <>
-              {openArea ? (
+              {distancePricing ? (
+                <Alert severity={distanceQuote?.status === 'AVAILABLE' ? 'success' : distanceQuote ? 'warning' : 'info'} sx={{ mb: 1.5 }}>
+                  {quotingDistance ? 'Calculando a distância pelas ruas...' : (distanceQuote?.message || 'Informe o endereço para calcular a taxa.')}
+                  {distanceQuote?.status === 'AVAILABLE'
+                    ? ` Distância: ${String(distanceQuote.distanceKm).replace('.', ',')} km. Taxa: ${formatCurrency(distanceQuote.deliveryFee)}.`
+                    : ''}
+                  {distanceQuote?.attribution ? ` ${distanceQuote.attribution}` : ''}
+                </Alert>
+              ) : openArea ? (
                 <Alert severity="info" sx={{ mb: 1.5 }}>
                   {allNeighborhoodsFeeLabel(flatFee, formatCurrency)}
                 </Alert>
@@ -1308,7 +1403,14 @@ export default function PublicDelivery() {
           />
           <Box className="delivery-checkout-summary">
             <Box className="delivery-line"><span>Produtos</span><span>{formatCurrency(totals.subtotal)}</span></Box>
-            <Box className="delivery-line"><span>Entrega</span><span>{formatCurrency(totals.deliveryFee)}</span></Box>
+            <Box className="delivery-line">
+              <span>Entrega</span>
+              <span>
+                {deliverySelected && distancePricing && distanceFee == null
+                  ? 'A calcular'
+                  : formatCurrency(totals.deliveryFee)}
+              </span>
+            </Box>
             <Box className="delivery-checkout-total-main">
               <span>Total</span>
               <strong>{formatCurrency(totals.total)}</strong>
@@ -1319,7 +1421,7 @@ export default function PublicDelivery() {
           ) : null}
         </DialogContent>
         <DialogActions className="delivery-checkout-actions">
-          <Button className="delivery-checkout-confirm" variant="contained" fullWidth disabled={submitting || closed || !customer} onClick={submitOrder}>
+          <Button className="delivery-checkout-confirm" variant="contained" fullWidth disabled={submitting || closed || !customer || (deliverySelected && distancePricing && distanceQuote?.status !== 'AVAILABLE')} onClick={submitOrder}>
             {submitting ? 'Enviando...' : 'Confirmar pedido'}
           </Button>
           <Button className="delivery-checkout-back" onClick={() => setCheckoutOpen(false)}>Voltar</Button>

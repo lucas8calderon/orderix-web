@@ -60,6 +60,7 @@ import { MasterSubscriptions } from './components/MasterSubscriptions';
 import { MasterContratacoes } from './components/MasterContratacoes';
 import { MasterPartners } from './components/MasterPartners';
 import MasterFinance from './components/MasterFinance';
+import MasterGeoapifyUsage from './components/MasterGeoapifyUsage';
 import { CrmBoard } from './crm/CrmBoard';
 import { useDialogResponsiveProps } from '../../commons/hooks/useResponsive';
 import { getCurrentUser } from '../../services/session';
@@ -461,7 +462,10 @@ export default function MasterDashboard() {
         )}
 
         {section === 'financeiro' && (
-          <MasterFinance />
+          <>
+            <MasterFinance />
+            <MasterGeoapifyUsage />
+          </>
         )}
 
         {!loading && !error && section === 'estabelecimentos' && (

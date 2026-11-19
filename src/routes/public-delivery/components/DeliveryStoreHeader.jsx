@@ -27,7 +27,9 @@ export default function DeliveryStoreHeader({
   const typeLabel = storeTypeLabel(catalog);
   const openArea = servesAllNeighborhoods(catalog);
   const fee = openArea ? allNeighborhoodsFee(catalog) : Number(catalog.deliveryFee || 0);
+  const distancePricing = catalog.pricingMethod === 'BY_RADIUS';
   const showFee = offersDelivery(fulfillmentModes)
+    && !distancePricing
     && !catalog.usesNeighborhoodPricing
     && (openArea || fee > 0);
   const freeOpenArea = openArea && fee === 0;
@@ -100,6 +102,12 @@ export default function DeliveryStoreHeader({
             <span className="delivery-store-info-item" data-testid="delivery-estimate">
               <AccessTimeIcon fontSize="inherit" />
               <span>{estimateLabel}</span>
+            </span>
+          ) : null}
+          {distancePricing && offersDelivery(fulfillmentModes) ? (
+            <span className="delivery-store-info-item">
+              <LocalShippingOutlinedIcon fontSize="inherit" />
+              <span><strong>Taxa</strong>por distância</span>
             </span>
           ) : null}
           {showFee ? (
